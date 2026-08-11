@@ -2,11 +2,28 @@
 
 # TuneItAll
 
+[![Android CI](https://github.com/Majkey25/TuneItAll/actions/workflows/android.yml/badge.svg)](https://github.com/Majkey25/TuneItAll/actions/workflows/android.yml)
+[![Release](https://img.shields.io/github/v/release/Majkey25/TuneItAll?include_prereleases&sort=semver)](https://github.com/Majkey25/TuneItAll/releases)
+[![Downloads](https://img.shields.io/github/downloads/Majkey25/TuneItAll/total)](https://github.com/Majkey25/TuneItAll/releases)
+[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases)
+[![Kotlin](https://img.shields.io/badge/Kotlin-native-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+[![License](https://img.shields.io/badge/license-proprietary-lightgrey)](LICENSE)
+
 TuneItAll is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: pre-release `0.1.0`. TuneItAll is not published on Google Play yet.
+Status: public testing release `0.1.0-alpha.1`. TuneItAll is not published on
+Google Play yet.
+
+## Download
+
+[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.1.0-alpha.1/TuneItAll-v0.1.0-alpha.1-debug.apk)
+
+The current APK supports Android 8.0 and newer. It is a debug-signed testing
+build distributed through GitHub, so Android may ask for permission to install
+an app from this source. The APK and its SHA-256 checksum are also available on
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.1.0-alpha.1).
 
 ## Features
 
@@ -93,10 +110,12 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-A reviewed `vX.Y.Z` tag triggers the signed release workflow only when all four
-keystore secrets are configured. It creates a draft GitHub release; Play upload
-remains a deliberate manual step. See [release process](docs/releasing.md),
-[architecture](docs/architecture.md), and [security policy](SECURITY.md).
+Pre-release tags such as `v0.1.0-alpha.1` build a verified, debug-signed APK and
+publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
+signed release workflow only when all four keystore secrets are configured. It
+creates a draft GitHub release; Play upload remains a deliberate manual step.
+See [release process](docs/releasing.md), [architecture](docs/architecture.md),
+and [security policy](SECURITY.md).
 
 ## Store assets and release documents
 

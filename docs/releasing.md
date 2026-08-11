@@ -1,5 +1,22 @@
 # Release process
 
+## GitHub testing APK
+
+1. Increment `versionCode` and set `versionName` to the matching pre-release
+   version, for example `0.1.0-alpha.1`.
+2. Update `CHANGELOG.md` and both Fastlane changelog files.
+3. Run `./tools/build.ps1 -AllowUnsigned` and connected-device tests.
+4. Push a matching `v*-alpha.*`, `v*-beta.*`, or `v*-rc.*` tag. The preview
+   workflow publishes a verified debug-signed APK and SHA-256 checksum as a
+   GitHub prerelease.
+
+Preview APKs are for direct testing only. They do not use the private Play upload
+key and must not be promoted to a stable release. The repository secret
+`TUNEITALL_PREVIEW_KEYSTORE_BASE64` keeps preview signatures stable between
+GitHub Actions runs.
+
+## Stable Play release
+
 1. Complete `docs/store/release-checklist.md`.
 2. Increment `versionCode` and `versionName`; update `CHANGELOG.md` and both
    Fastlane changelog files.

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 — Unreleased
+## 0.1.0-alpha.1 — 2026-08-11
 
 - Initial native Android tuner.
 - Guitar 6/7/8/9, bass 4, ukulele, and chromatic support.

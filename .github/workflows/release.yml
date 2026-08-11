@@ -2,7 +2,11 @@ name: Draft signed release
 
 on:
   push:
-    tags: ["v*"]
+    tags:
+      - "v*"
+      - "!v*-alpha.*"
+      - "!v*-beta.*"
+      - "!v*-rc.*"
 
 permissions:
   contents: write
@@ -16,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      TUNEITALL_KEYSTORE_PATH: ${{ runner.temp }}/tuneitall-upload.jks
+      TUNEITALL_KEYSTORE_PATH: ${{ github.workspace }}/tuneitall-upload.jks
       TUNEITALL_KEYSTORE_PASSWORD: ${{ secrets.TUNEITALL_KEYSTORE_PASSWORD }}
       TUNEITALL_KEY_ALIAS: ${{ secrets.TUNEITALL_KEY_ALIAS }}
       TUNEITALL_KEY_PASSWORD: ${{ secrets.TUNEITALL_KEY_PASSWORD }}
