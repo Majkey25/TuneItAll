@@ -1,0 +1,1 @@
+Initial pre-release with guitar, bass, ukulele, a dedicated chromatic tuner, click-free string-tap reference tones, stable confirmation excluded from pitch detection, sensitivity control, favorites, custom tunings, and adjustable A4.

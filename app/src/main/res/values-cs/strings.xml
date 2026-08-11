@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TuneItAll</string>
+    <string name="microphone_explanation">Přístup k mikrofonu je potřeba pro poslech nástroje. Zvuk zůstává v tomto zařízení.</string>
+    <string name="open_settings">Otevřít nastavení aplikace</string>
+    <string name="mode_auto">Auto</string>
+    <string name="mode_manual">Manuál</string>
+    <string name="mode_chromatic">Chromatická</string>
+    <string name="chromatic_tuner">Chromatická ladička</string>
+    <string name="play_any_note">Zahraj libovolný tón</string>
+    <string name="add_favorite">Přidat do oblíbených</string>
+    <string name="remove_favorite">Odebrat z oblíbených</string>
+    <string name="frequency_value">%1$.2f Hz</string>
+    <string name="no_frequency">— Hz</string>
+    <string name="cents_value">%1$+.1f centu</string>
+    <string name="no_cents">— centů</string>
+    <string name="no_pitch_detected">Zahraj na strunu</string>
+    <string name="in_tune">Naladěno</string>
+    <plurals name="cents_flat">
+        <item quantity="one">O %1$d cent níž</item>
+        <item quantity="few">O %1$d centy níž</item>
+        <item quantity="many">O %1$d centů níž</item>
+        <item quantity="other">O %1$d centů níž</item>
+    </plurals>
+    <plurals name="cents_sharp">
+        <item quantity="one">O %1$d cent výš</item>
+        <item quantity="few">O %1$d centy výš</item>
+        <item quantity="many">O %1$d centů výš</item>
+        <item quantity="other">O %1$d centů výš</item>
+    </plurals>
+    <string name="reference_pitch_value">A4 = %1$.1f Hz</string>
+    <string name="tap_string_to_hear">Klepni na strunu a poslechni si referenční tón</string>
+    <string name="string_button_description">Struna %1$d %2$s</string>
+    <string name="settings">Nastavení</string>
+    <string name="microphone_permission_missing">Chybí oprávnění k mikrofonu.</string>
+    <string name="audio_initialization_failed">Zvuk není dostupný.</string>
+    <string name="audio_read_failed">Zvukový vstup se zastavil (kód %1$d).</string>
+    <string name="back">Zpět</string>
+    <string name="tuning_library">Ladění</string>
+    <string name="search_tunings">Hledat ladění</string>
+    <string name="all_instruments">Vše</string>
+    <string name="all_strings">Všechny počty</string>
+    <plurals name="string_count">
+        <item quantity="one">%1$d struna</item>
+        <item quantity="few">%1$d struny</item>
+        <item quantity="many">%1$d strun</item>
+        <item quantity="other">%1$d strun</item>
+    </plurals>
+    <string name="favorites">Oblíbené</string>
+    <string name="create_custom_tuning">+ Vlastní ladění</string>
+    <string name="no_tunings_found">Žádné odpovídající ladění.</string>
+    <string name="instrument_guitar">Kytara</string>
+    <string name="instrument_bass">Baskytara</string>
+    <string name="instrument_ukulele">Ukulele</string>
+    <plurals name="layout_inline">
+        <item quantity="one">%1$d v řadě</item>
+        <item quantity="few">%1$d v řadě</item>
+        <item quantity="many">%1$d v řadě</item>
+        <item quantity="other">%1$d v řadě</item>
+    </plurals>
+    <string name="custom_tuning">Vlastní ladění</string>
+    <string name="tuning_name">Název ladění</string>
+    <string name="duplicate_tuning_name">Tento název už existuje.</string>
+    <string name="instrument">Nástroj</string>
+    <string name="strings">Struny</string>
+    <string name="layout">Rozložení hlavy</string>
+    <string name="notes_with_octaves">Tóny s oktávami</string>
+    <string name="string_note">Struna %1$d</string>
+    <string name="note_example">Použij tón s oktávou, například F#1 nebo B♭2.</string>
+    <string name="custom_tuning_limit">Byl dosažen limit 100 vlastních ladění.</string>
+    <string name="save_and_tune">Uložit a začít ladit</string>
+    <string name="reference_pitch">Referenční frekvence</string>
+    <string name="reference_pitch_help">Výchozí: A4 = 440,0 Hz. Povolený rozsah: 410,0–480,0 Hz.</string>
+    <string name="reference_pitch_range_error">Zadej hodnotu od %1$.1f do %2$.1f Hz.</string>
+    <string name="reference_pitch_caution">Tato hodnota je daleko od běžného standardu 440 Hz. Před použitím ji zkontroluj.</string>
+    <string name="reset_440">Obnovit 440,0</string>
+    <string name="review_value">Zkontrolovat</string>
+    <string name="confirm_value">Potvrdit hodnotu</string>
+    <string name="apply">Použít</string>
+    <string name="microphone_sensitivity">Citlivost mikrofonu</string>
+    <string name="microphone_sensitivity_help">50 je doporučené výchozí nastavení. Zvyš ji pro tiché nástroje, sniž ji v hlučné místnosti.</string>
+    <string name="sensitivity_value">%1$d%%</string>
+    <string name="reset_sensitivity">Obnovit citlivost</string>
+    <string name="note_notation">Zápis tónů</string>
+    <string name="headstock_layout">Hlava nástroje</string>
+    <string name="about">O aplikaci</string>
+    <string name="version_value">Verze %1$s</string>
+    <string name="copyright_notice">Copyright © 2026 TuneItAll. Všechna práva vyhrazena.</string>
+    <string name="offline_privacy_summary">Offline. Bez reklam, účtu, analytiky, sledování a přístupu k síti.</string>
+    <string name="microphone_about">Vzorky z mikrofonu se zpracují dočasně v tomto zařízení. Nikdy se nenahrávají, neuchovávají, nesdílejí ani neodesílají.</string>
+    <string name="privacy_policy">Zásady ochrany soukromí</string>
+    <string name="privacy_policy_full">TuneItAll používá mikrofon jen během aktivního ladění. Zvukové vzorky zpracuje v paměti zařízení a ihned je zahodí. Aplikace neshromažďuje ani nesdílí osobní údaje a nežádá o přístup k internetu.</string>
+    <string name="license">Proprietární licence</string>
+    <string name="license_summary">TuneItAll je proprietární software. Kopírování, úpravy, distribuce, sublicencování nebo komerční použití vyžadují předchozí písemný souhlas. Součásti třetích stran si ponechávají vlastní licence.</string>
+</resources>

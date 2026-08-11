@@ -1,0 +1,1 @@
+První verze s ladičkou pro kytaru, baskytaru a ukulele, samostatnou chromatickou ladičkou, plynulými tóny po klepnutí na strunu, potvrzením vyřazeným z detekce, nastavením citlivosti, oblíbenými a vlastními laděními a nastavitelnou referencí A4.

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TuneItAll</string>
+    <string name="microphone_explanation">Microphone access is required to hear your instrument. Audio stays on this device.</string>
+    <string name="open_settings">Open app settings</string>
+    <string name="mode_auto">Auto</string>
+    <string name="mode_manual">Manual</string>
+    <string name="mode_chromatic">Chromatic</string>
+    <string name="chromatic_tuner">Chromatic tuner</string>
+    <string name="play_any_note">Play any note</string>
+    <string name="add_favorite">Add to favorites</string>
+    <string name="remove_favorite">Remove from favorites</string>
+    <string name="frequency_value">%1$.2f Hz</string>
+    <string name="no_frequency">— Hz</string>
+    <string name="cents_value">%1$+.1f cents</string>
+    <string name="no_cents">— cents</string>
+    <string name="no_pitch_detected">Play a string</string>
+    <string name="in_tune">In tune</string>
+    <plurals name="cents_flat">
+        <item quantity="one">%1$d cent flat</item>
+        <item quantity="other">%1$d cents flat</item>
+    </plurals>
+    <plurals name="cents_sharp">
+        <item quantity="one">%1$d cent sharp</item>
+        <item quantity="other">%1$d cents sharp</item>
+    </plurals>
+    <string name="reference_pitch_value">A4 = %1$.1f Hz</string>
+    <string name="tap_string_to_hear">Tap a string to hear its reference tone</string>
+    <string name="string_button_description">String %1$d %2$s</string>
+    <string name="settings">Settings</string>
+    <string name="microphone_permission_missing">Microphone permission is missing.</string>
+    <string name="audio_initialization_failed">Audio is unavailable.</string>
+    <string name="audio_read_failed">Audio input stopped (code %1$d).</string>
+    <string name="back">Back</string>
+    <string name="tuning_library">Tunings</string>
+    <string name="search_tunings">Search tunings</string>
+    <string name="all_instruments">All</string>
+    <string name="all_strings">Any strings</string>
+    <plurals name="string_count">
+        <item quantity="one">%1$d string</item>
+        <item quantity="other">%1$d strings</item>
+    </plurals>
+    <string name="favorites">Favorites</string>
+    <string name="create_custom_tuning">+ Custom tuning</string>
+    <string name="no_tunings_found">No matching tunings.</string>
+    <string name="instrument_guitar">Guitar</string>
+    <string name="instrument_bass">Bass</string>
+    <string name="instrument_ukulele">Ukulele</string>
+    <plurals name="layout_inline">
+        <item quantity="one">%1$d inline</item>
+        <item quantity="other">%1$d inline</item>
+    </plurals>
+    <string name="custom_tuning">Custom tuning</string>
+    <string name="tuning_name">Tuning name</string>
+    <string name="duplicate_tuning_name">This name already exists.</string>
+    <string name="instrument">Instrument</string>
+    <string name="strings">Strings</string>
+    <string name="layout">Headstock layout</string>
+    <string name="notes_with_octaves">Notes with octaves</string>
+    <string name="string_note">String %1$d</string>
+    <string name="note_example">Use a note with octave, for example F#1 or B♭2.</string>
+    <string name="custom_tuning_limit">The 100 custom tuning limit has been reached.</string>
+    <string name="save_and_tune">Save and start tuning</string>
+    <string name="reference_pitch">Reference pitch</string>
+    <string name="reference_pitch_help">Default: A4 = 440.0 Hz. Allowed range: 410.0–480.0 Hz.</string>
+    <string name="reference_pitch_range_error">Enter a value from %1$.1f to %2$.1f Hz.</string>
+    <string name="reference_pitch_caution">This value is far from the common 440 Hz standard. Review it before applying.</string>
+    <string name="reset_440">Reset 440.0</string>
+    <string name="review_value">Review value</string>
+    <string name="confirm_value">Confirm value</string>
+    <string name="apply">Apply</string>
+    <string name="microphone_sensitivity">Microphone sensitivity</string>
+    <string name="microphone_sensitivity_help">50 is the recommended default. Raise it for quiet instruments; lower it in noisy rooms.</string>
+    <string name="sensitivity_value">%1$d%%</string>
+    <string name="reset_sensitivity">Reset sensitivity</string>
+    <string name="note_notation">Note notation</string>
+    <string name="headstock_layout">Headstock</string>
+    <string name="about">About</string>
+    <string name="version_value">Version %1$s</string>
+    <string name="copyright_notice">Copyright © 2026 TuneItAll. All rights reserved.</string>
+    <string name="offline_privacy_summary">Offline. No ads, accounts, analytics, tracking, or network access.</string>
+    <string name="microphone_about">Microphone samples are analyzed transiently on this device. They are never recorded, retained, shared, or transmitted.</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="privacy_policy_full">TuneItAll uses microphone access only while its tuner is active. Audio samples are processed in memory on-device and discarded immediately. The app collects and shares no personal data and does not request internet access.</string>
+    <string name="license">Proprietary licence</string>
+    <string name="license_summary">TuneItAll is proprietary software. Copying, modification, redistribution, sublicensing, or commercial use requires prior written permission. Third-party components retain their own licences.</string>
+</resources>
