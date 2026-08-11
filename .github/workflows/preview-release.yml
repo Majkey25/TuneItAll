@@ -18,6 +18,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      TUNEITALL_PREVIEW_KEYSTORE_PATH: ${{ github.workspace }}/tuneitall-preview.jks
+      TUNEITALL_PREVIEW_CERT_SHA256: 768843c2e67e38838c8bd7751443a4cfa5b21dbfe6db077f93677100dbcccda6
 
     steps:
       - name: Check out source
@@ -39,14 +42,20 @@ jobs:
           TUNEITALL_PREVIEW_KEYSTORE_BASE64: ${{ secrets.TUNEITALL_PREVIEW_KEYSTORE_BASE64 }}
         run: |
           test -n "$TUNEITALL_PREVIEW_KEYSTORE_BASE64"
-          mkdir -p "$HOME/.android"
-          printf '%s' "$TUNEITALL_PREVIEW_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+          printf '%s' "$TUNEITALL_PREVIEW_KEYSTORE_BASE64" | base64 --decode > "$TUNEITALL_PREVIEW_KEYSTORE_PATH"
 
       - name: Build and verify testing APK
         shell: pwsh
         run: |
           chmod +x ./gradlew
           ./tools/build.ps1 -AllowUnsigned
+
+      - name: Verify preview signer
+        run: |
+          signer="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$signer"
+          "$signer" verify --print-certs app/build/outputs/apk/debug/app-debug.apk | \
+            grep -F "certificate SHA-256 digest: $TUNEITALL_PREVIEW_CERT_SHA256"
 
       - name: Prepare release assets
         run: |
@@ -69,4 +78,4 @@ jobs:
 
       - name: Remove preview signing key
         if: always()
-        run: rm -f "$HOME/.android/debug.keystore"
+        run: rm -f "$TUNEITALL_PREVIEW_KEYSTORE_PATH"

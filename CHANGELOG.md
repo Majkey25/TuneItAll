@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-alpha.2 — 2026-08-11
+
+- Use an explicit stable preview signing key and verify its certificate before
+  publishing the downloadable APK.
+
 ## 0.1.0-alpha.1 — 2026-08-11
 
 - Initial native Android tuner.

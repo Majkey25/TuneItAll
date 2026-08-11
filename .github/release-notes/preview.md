@@ -1,4 +1,4 @@
-First public TuneItAll testing build.
+Public TuneItAll testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because

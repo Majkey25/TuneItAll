@@ -8,6 +8,7 @@ val releaseStorePath = providers.environmentVariable("TUNEITALL_KEYSTORE_PATH").
 val releaseStorePassword = providers.environmentVariable("TUNEITALL_KEYSTORE_PASSWORD").orNull
 val releaseKeyAlias = providers.environmentVariable("TUNEITALL_KEY_ALIAS").orNull
 val releaseKeyPassword = providers.environmentVariable("TUNEITALL_KEY_PASSWORD").orNull
+val previewStorePath = providers.environmentVariable("TUNEITALL_PREVIEW_KEYSTORE_PATH").orNull
 val releaseSigningValues = listOf(
     releaseStorePath,
     releaseStorePassword,
@@ -28,11 +29,19 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "0.1.0-alpha.1"
+        versionName = "0.1.0-alpha.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
+        if (!previewStorePath.isNullOrBlank()) {
+            getByName("debug") {
+                storeFile = file(previewStorePath)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
         if (releaseSigningEnabled) {
             create("release") {
                 storeFile = file(requireNotNull(releaseStorePath))

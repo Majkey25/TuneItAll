@@ -13,17 +13,17 @@ TuneItAll is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing release `0.1.0-alpha.1`. TuneItAll is not published on
+Status: public testing release `0.1.0-alpha.2`. TuneItAll is not published on
 Google Play yet.
 
 ## Download
 
-[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.1.0-alpha.1/TuneItAll-v0.1.0-alpha.1-debug.apk)
+[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.1.0-alpha.2/TuneItAll-v0.1.0-alpha.2-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.1.0-alpha.1).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.1.0-alpha.2).
 
 ## Features
 
