@@ -1,12 +1,16 @@
 package com.tuneitall.tuner
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -18,12 +22,14 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.test.core.app.ApplicationProvider
 import com.tuneitall.tuner.audio.DetectionSensitivity
 import com.tuneitall.tuner.model.HeadstockLayout
+import com.tuneitall.tuner.model.MidiNote
 import com.tuneitall.tuner.model.ReferencePitch
 import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.storage.NoteNotation
 import com.tuneitall.tuner.storage.UserPreferences
 import com.tuneitall.tuner.tuner.TunerMode
+import com.tuneitall.tuner.tuner.TunerReading
 import com.tuneitall.tuner.ui.AboutScreen
 import com.tuneitall.tuner.ui.CustomTuningScreen
 import com.tuneitall.tuner.ui.SettingsScreen
@@ -154,8 +160,8 @@ class TuneItAllFlowTest {
         }
 
         composeRule.onNodeWithContentDescription("Microphone sensitivity")
-            .performSemanticsAction(SemanticsActions.SetProgress) { setProgress -> setProgress(100f) }
-        assertEquals(100, applied?.value)
+            .performSemanticsAction(SemanticsActions.SetProgress) { setProgress -> setProgress(37f) }
+        assertEquals(37, applied?.value)
         composeRule.onNodeWithText("Reset sensitivity").performScrollTo().performClick()
         assertEquals(DetectionSensitivity.DEFAULT, applied)
     }
@@ -281,6 +287,32 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithContentDescription("String 6 E2").assertDoesNotExist()
         composeRule.onNodeWithText("Tap a string to hear its reference tone").assertDoesNotExist()
         composeRule.onNodeWithText("Play reference tone").assertDoesNotExist()
+    }
+
+    @Test
+    fun chromaticNoteSlotDoesNotMoveWhenAccidentalAppears() {
+        var note by mutableStateOf(MidiNote(60))
+        composeRule.setContent {
+            val reading = TunerReading(note, note, 261.63, 0.0, inTune = true)
+            TuneItAllTheme {
+                TunerScreen(
+                    state = state().copy(mode = TunerMode.CHROMATIC, reading = reading),
+                    onModeSelected = {},
+                    onStringSelected = {},
+                    onToggleFavorite = {},
+                    onOpenLibrary = {},
+                    onOpenSettings = {},
+                    onOpenApplicationSettings = {},
+                )
+            }
+        }
+
+        val natural = composeRule.onNodeWithTag("detected_note").fetchSemanticsNode().boundsInRoot
+        composeRule.runOnIdle { note = MidiNote(61) }
+        val accidental = composeRule.onNodeWithTag("detected_note").fetchSemanticsNode().boundsInRoot
+
+        assertEquals(natural.left, accidental.left, 0.5f)
+        assertEquals(natural.width, accidental.width, 0.5f)
     }
 
     @Test

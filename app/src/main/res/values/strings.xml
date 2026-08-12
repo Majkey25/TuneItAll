@@ -70,7 +70,7 @@
     <string name="confirm_value">Confirm value</string>
     <string name="apply">Apply</string>
     <string name="microphone_sensitivity">Microphone sensitivity</string>
-    <string name="microphone_sensitivity_help">50 is the recommended default. Raise it for quiet instruments; lower it in noisy rooms.</string>
+    <string name="microphone_sensitivity_help">100 is the sensitive default for quiet instruments. Lower it only in a noisy room.</string>
     <string name="sensitivity_value">%1$d%%</string>
     <string name="reset_sensitivity">Reset sensitivity</string>
     <string name="note_notation">Note notation</string>

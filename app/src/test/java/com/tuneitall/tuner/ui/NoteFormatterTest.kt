@@ -13,4 +13,11 @@ class NoteFormatterTest {
         assertEquals("D♭4", formatNote(MidiNote(61), NoteNotation.FLATS))
         assertEquals("B0", formatNote(MidiNote(23), NoteNotation.FLATS))
     }
+
+    @Test
+    fun `splits accidentals into a stable display slot`() {
+        assertEquals(NoteParts("C", "", "4"), noteParts(MidiNote(60), NoteNotation.SHARPS))
+        assertEquals(NoteParts("C", "♯", "4"), noteParts(MidiNote(61), NoteNotation.SHARPS))
+        assertEquals(NoteParts("D", "♭", "4"), noteParts(MidiNote(61), NoteNotation.FLATS))
+    }
 }

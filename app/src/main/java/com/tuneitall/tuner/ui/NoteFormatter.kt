@@ -3,9 +3,24 @@ package com.tuneitall.tuner.ui
 import com.tuneitall.tuner.model.MidiNote
 import com.tuneitall.tuner.storage.NoteNotation
 
-fun formatNote(note: MidiNote, notation: NoteNotation): String {
+data class NoteParts(
+    val letter: String,
+    val accidental: String,
+    val octave: String,
+)
+
+fun noteParts(note: MidiNote, notation: NoteNotation): NoteParts {
     val names = if (notation == NoteNotation.SHARPS) SHARP_NAMES else FLAT_NAMES
-    return names[note.value % NOTES_PER_OCTAVE] + (note.value / NOTES_PER_OCTAVE - 1)
+    val name = names[note.value % NOTES_PER_OCTAVE]
+    return NoteParts(
+        letter = name.first().toString(),
+        accidental = name.drop(1),
+        octave = (note.value / NOTES_PER_OCTAVE - 1).toString(),
+    )
+}
+
+fun formatNote(note: MidiNote, notation: NoteNotation): String = noteParts(note, notation).run {
+    letter + accidental + octave
 }
 
 private const val NOTES_PER_OCTAVE = 12

@@ -1,12 +1,14 @@
 package com.tuneitall.tuner.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -20,7 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,15 +82,10 @@ fun TunerScreen(
 
         ModeSelector(selected = state.mode, onSelected = onModeSelected)
 
-        Text(
-            text = currentNote?.let { formatNote(it, state.notation) } ?: "—",
-            style = MaterialTheme.typography.displayLarge.copy(fontSize = 82.sp, lineHeight = 88.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = if (state.reading?.inTune == true) {
-                MaterialTheme.colorScheme.tertiary
-            } else {
-                MaterialTheme.colorScheme.onBackground
-            },
+        DetectedNote(
+            note = currentNote,
+            notation = state.notation,
+            inTune = state.reading?.inTune == true,
         )
 
         CentsRail(
@@ -142,6 +141,55 @@ fun TunerScreen(
                 onStringSelected = onStringSelected,
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+    }
+}
+
+@Composable
+private fun DetectedNote(note: com.tuneitall.tuner.model.MidiNote?, notation: NoteNotation, inTune: Boolean) {
+    val parts = note?.let { noteParts(it, notation) }
+    val color = if (inTune) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground
+    val description = note?.let { formatNote(it, notation) } ?: "—"
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .width(184.dp)
+            .testTag("detected_note")
+            .clearAndSetSemantics { contentDescription = description },
+    ) {
+        if (parts == null) {
+            Text(
+                text = "—",
+                style = MaterialTheme.typography.displayLarge.copy(fontSize = 82.sp, lineHeight = 88.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = color,
+            )
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                Text(
+                    text = parts.letter,
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 82.sp, lineHeight = 88.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = color,
+                    modifier = Modifier.width(72.dp),
+                )
+                Text(
+                    text = parts.accidental,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = color,
+                    modifier = Modifier.width(40.dp),
+                )
+                Text(
+                    text = parts.octave,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = color,
+                    modifier = Modifier.width(32.dp),
+                )
+            }
         }
     }
 }

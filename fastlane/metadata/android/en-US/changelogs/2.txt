@@ -1,0 +1,1 @@
+Quieter-note detection, a steadier tuner needle, harmonic-jump rejection, and a fixed chromatic note layout.

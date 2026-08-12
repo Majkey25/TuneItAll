@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-alpha.3 — 2026-08-12
+
+- Detect quieter instrument notes with a higher default microphone sensitivity.
+- Stabilize the tuner needle while preserving accurate cent measurements.
+- Reject short harmonic jumps before changing the detected note.
+- Keep the chromatic note display fixed when sharps or flats appear.
+- Retain the last reliable reading across brief signal gaps.
+
 ## 0.1.0-alpha.2 — 2026-08-11
 
 - Use an explicit stable preview signing key and verify its certificate before

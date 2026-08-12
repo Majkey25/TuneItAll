@@ -1,0 +1,1 @@
+Lepší detekce tichých tónů, stabilnější ručička, potlačení harmonických skoků a pevné rozložení chromatického tónu.

@@ -13,19 +13,18 @@ class DetectionSensitivityTest {
     }
 
     @Test
-    fun `default preserves accepted detector gates`() {
+    fun `default sensitivity is tuned for quiet instruments`() {
         val sensitivity = DetectionSensitivity.DEFAULT
 
-        assertEquals(50, sensitivity.value)
-        assertEquals(0.003, sensitivity.minimumRms, 0.0)
-        assertEquals(0.80, sensitivity.minimumConfidence, 0.0)
-        assertEquals(0.15, sensitivity.yinThreshold(0.15), 0.0)
+        assertEquals(100, sensitivity.value)
+        assertTrue(sensitivity.minimumRms <= 0.0002)
+        assertTrue(sensitivity.minimumConfidence >= 0.70)
     }
 
     @Test
     fun `higher sensitivity accepts quieter lower confidence signals`() {
         val low = DetectionSensitivity(0)
-        val normal = DetectionSensitivity.DEFAULT
+        val normal = DetectionSensitivity(50)
         val high = DetectionSensitivity(100)
 
         assertTrue(low.minimumRms > normal.minimumRms)
@@ -34,6 +33,5 @@ class DetectionSensitivityTest {
         assertTrue(normal.minimumConfidence > high.minimumConfidence)
         assertTrue(high.minimumRms > 0.0)
         assertTrue(high.minimumConfidence in 0.0..1.0)
-        assertTrue(high.yinThreshold(0.15) > normal.yinThreshold(0.15))
     }
 }

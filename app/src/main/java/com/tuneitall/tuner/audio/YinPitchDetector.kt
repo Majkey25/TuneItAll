@@ -50,7 +50,7 @@ class YinPitchDetector(
         calculateDifference(samples, tauMax)
         calculateCumulativeMean(tauMax)
 
-        var candidate = findThresholdMinimum(tauMin, tauMax, sensitivity.yinThreshold(threshold)) ?: return null
+        var candidate = findThresholdMinimum(tauMin, tauMax, threshold) ?: return null
         candidate = correctStrongHarmonic(candidate, tauMax)
         val confidence = (1.0 - cumulativeMean[candidate]).coerceIn(0.0, 1.0)
         if (confidence < sensitivity.minimumConfidence) return null

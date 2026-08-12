@@ -27,6 +27,8 @@ import com.tuneitall.tuner.tuner.MusicMath
 import com.tuneitall.tuner.tuner.TunerEngine
 import com.tuneitall.tuner.tuner.TunerMode
 import com.tuneitall.tuner.tuner.TunerReading
+import com.tuneitall.tuner.tuner.TunerReadingRetainer
+import com.tuneitall.tuner.tuner.pitchSearchRange
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,6 +64,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
     private val tonePlayer = ReferenceTonePlayer()
     private val confirmationPlayer = ConfirmationChimePlayer()
     private val confirmationTracker = InTuneConfirmationTracker()
+    private val readingRetainer = TunerReadingRetainer()
     private val feedbackInputGate = FeedbackInputGate()
     private var referenceToneStopJob: Job? = null
     @Volatile
@@ -113,6 +116,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         stopReferenceTone()
         confirmationPlayer.stop()
         confirmationTracker.reset()
+        readingRetainer.reset()
         feedbackInputGate.reset()
         mutableUiState.update {
             it.copy(listening = false, referenceTonePlaying = false, reading = null, tuningConfirmed = false)
@@ -132,6 +136,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             audioInput.stop()
             confirmationTracker.reset()
+            readingRetainer.reset()
             feedbackInputGate.reset()
             mutableUiState.update {
                 it.copy(listening = false, reading = null, tuningConfirmed = false)
@@ -142,6 +147,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
     fun selectMode(mode: TunerMode) {
         stopReferenceTone()
         confirmationTracker.reset()
+        readingRetainer.reset()
         preferences.mode = mode
         mutableUiState.update { it.copy(mode = mode, reading = null, tuningConfirmed = false) }
     }
@@ -152,6 +158,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         }
         preferences.mode = TunerMode.MANUAL
         confirmationTracker.reset()
+        readingRetainer.reset()
         mutableUiState.update {
             it.copy(mode = TunerMode.MANUAL, selectedString = index, reading = null, tuningConfirmed = false)
         }
@@ -161,6 +168,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
     fun selectTuning(tuning: TuningPreset) {
         stopReferenceTone()
         confirmationTracker.reset()
+        readingRetainer.reset()
         val layout = mutableUiState.value.headstockLayout.takeIf { it in tuning.layouts } ?: tuning.layouts.first()
         preferences.lastTuningId = tuning.id
         preferences.headstockLayout = layout
@@ -191,6 +199,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
     fun setReferencePitch(referencePitch: ReferencePitch) {
         stopReferenceTone()
         confirmationTracker.reset()
+        readingRetainer.reset()
         preferences.referencePitch = referencePitch
         mutableUiState.update {
             it.copy(referencePitch = referencePitch, reading = null, tuningConfirmed = false)
@@ -199,6 +208,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setSensitivity(sensitivity: DetectionSensitivity) {
         confirmationTracker.reset()
+        readingRetainer.reset()
         preferences.sensitivity = sensitivity
         mutableUiState.update {
             it.copy(sensitivity = sensitivity, reading = null, tuningConfirmed = false)
@@ -271,14 +281,20 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                 if (state.referenceTonePlaying || !feedbackInputGate.accepts(SystemClock.elapsedRealtime())) {
                     return@start
                 }
+                val range = pitchSearchRange(
+                    state.mode,
+                    state.tuning,
+                    state.selectedString,
+                    state.referencePitch,
+                )
                 val estimate = detector.detect(
                     samples,
                     sampleRate,
-                    MIN_FREQUENCY,
-                    MAX_FREQUENCY,
+                    range.minHertz,
+                    range.maxHertz,
                     state.sensitivity,
                 )
-                val reading = estimate?.let {
+                val rawReading = estimate?.let {
                     engine.update(
                         estimate = it,
                         mode = state.mode,
@@ -288,16 +304,18 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                         sensitivity = state.sensitivity,
                     )
                 }
+                val nowMillis = SystemClock.elapsedRealtime()
                 viewModelScope.launch {
                     if (!isCurrentDetectionContext(state)) return@launch
+                    val displayReading = readingRetainer.update(rawReading, nowMillis)
                     val playConfirmation = confirmationTracker.update(
-                        reading?.target,
-                        reading?.inTune == true,
-                        SystemClock.elapsedRealtime(),
+                        rawReading?.target,
+                        rawReading?.inTune == true,
+                        nowMillis,
                     )
                     mutableUiState.update { current ->
                         if (isCurrentDetectionContext(state)) {
-                            current.copy(reading = reading, tuningConfirmed = confirmationTracker.isConfirmed)
+                            current.copy(reading = displayReading, tuningConfirmed = confirmationTracker.isConfirmed)
                         } else {
                             current
                         }
@@ -320,6 +338,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
             },
             onError = { error ->
                 confirmationTracker.reset()
+                readingRetainer.reset()
                 mutableUiState.update {
                     it.copy(listening = false, reading = null, tuningConfirmed = false, error = error)
                 }
@@ -356,8 +375,6 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
     private companion object {
         const val DEFAULT_TUNING_ID = "guitar-6-standard"
         const val ANALYSIS_WINDOW_SIZE = 4_096
-        const val MIN_FREQUENCY = 27.0
-        const val MAX_FREQUENCY = 4_300.0
         const val REFERENCE_PREVIEW_MILLIS = 1_050L
         const val CONFIRMATION_INPUT_SUPPRESSION_MILLIS = CONFIRMATION_CHIME_DURATION_MILLIS + 180L
     }

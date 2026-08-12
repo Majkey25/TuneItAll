@@ -6,6 +6,8 @@ import com.tuneitall.tuner.model.MidiNote
 import com.tuneitall.tuner.model.ReferencePitch
 import com.tuneitall.tuner.model.TuningPreset
 import kotlin.math.abs
+import kotlin.math.log2
+import kotlin.math.pow
 
 enum class TunerMode {
     AUTO,
@@ -22,7 +24,7 @@ data class TunerReading(
 )
 
 class TunerEngine {
-    private val medianFilter = MedianFilter()
+    private val pitchFilter = StablePitchFilter()
     private var context: EngineContext? = null
     private var currentTarget: MidiNote? = null
 
@@ -38,7 +40,7 @@ class TunerEngine {
         resetIfContextChanged(EngineContext(mode, tuning, selectedString, referencePitch, sensitivity))
         if (estimate.confidence < sensitivity.minimumConfidence || estimate.rms < sensitivity.minimumRms) return null
 
-        val hertz = medianFilter.add(estimate.hertz)
+        val hertz = pitchFilter.add(estimate.hertz)
         val detected = MusicMath.nearestMidi(hertz, referencePitch)
         val target = when (mode) {
             TunerMode.AUTO -> applyHysteresis(closestTuningNote(hertz, tuning, referencePitch), hertz, referencePitch)
@@ -99,7 +101,7 @@ class TunerEngine {
     private fun resetIfContextChanged(next: EngineContext) {
         if (context == next) return
         context = next
-        medianFilter.reset()
+        pitchFilter.reset()
         currentTarget = null
     }
 
@@ -111,31 +113,57 @@ class TunerEngine {
         val sensitivity: DetectionSensitivity,
     )
 
-    private class MedianFilter {
-        private val values = DoubleArray(3)
-        private var count = 0
-        private var nextIndex = 0
+    private class StablePitchFilter {
+        private var smoothedLogHertz: Double? = null
+        private var pendingLogHertz: Double? = null
+        private var pendingFrames = 0
 
         fun add(value: Double): Double {
-            values[nextIndex] = value
-            nextIndex = (nextIndex + 1) % values.size
-            if (count < values.size) count++
-            return when (count) {
-                1 -> values[0]
-                2 -> (values[0] + values[1]) / 2.0
-                else -> values[0] + values[1] + values[2] - minOf(values[0], values[1], values[2]) -
-                    maxOf(values[0], values[1], values[2])
+            val next = log2(value)
+            val current = smoothedLogHertz ?: return value.also { smoothedLogHertz = next }
+            if (centsBetween(next, current) > SWITCH_THRESHOLD_CENTS) {
+                val pending = pendingLogHertz
+                if (pending != null && centsBetween(next, pending) <= SWITCH_MATCH_CENTS) {
+                    pendingFrames++
+                } else {
+                    pendingLogHertz = next
+                    pendingFrames = 1
+                }
+                if (pendingFrames < SWITCH_FRAMES) return 2.0.pow(current)
+                smoothedLogHertz = next
+                clearPending()
+                return value
             }
+
+            clearPending()
+            val smoothed = current + (next - current) * SMOOTHING_FACTOR
+            smoothedLogHertz = smoothed
+            return 2.0.pow(smoothed)
         }
 
         fun reset() {
-            count = 0
-            nextIndex = 0
+            smoothedLogHertz = null
+            clearPending()
+        }
+
+        private fun clearPending() {
+            pendingLogHertz = null
+            pendingFrames = 0
+        }
+
+        private fun centsBetween(first: Double, second: Double): Double = abs(first - second) * CENTS_PER_OCTAVE
+
+        private companion object {
+            const val SMOOTHING_FACTOR = 0.30
+            const val SWITCH_THRESHOLD_CENTS = 80.0
+            const val SWITCH_MATCH_CENTS = 50.0
+            const val SWITCH_FRAMES = 3
+            const val CENTS_PER_OCTAVE = 1_200.0
         }
     }
 
     private companion object {
-        const val IN_TUNE_CENTS = 2.0
+        const val IN_TUNE_CENTS = 3.0
         const val TARGET_HYSTERESIS_CENTS = 8.0
     }
 }

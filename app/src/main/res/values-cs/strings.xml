@@ -78,7 +78,7 @@
     <string name="confirm_value">Potvrdit hodnotu</string>
     <string name="apply">Použít</string>
     <string name="microphone_sensitivity">Citlivost mikrofonu</string>
-    <string name="microphone_sensitivity_help">50 je doporučené výchozí nastavení. Zvyš ji pro tiché nástroje, sniž ji v hlučné místnosti.</string>
+    <string name="microphone_sensitivity_help">100 je citlivé výchozí nastavení pro tiché nástroje. Sniž ho jen v hlučné místnosti.</string>
     <string name="sensitivity_value">%1$d%%</string>
     <string name="reset_sensitivity">Obnovit citlivost</string>
     <string name="note_notation">Zápis tónů</string>
