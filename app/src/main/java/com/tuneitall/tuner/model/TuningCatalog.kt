@@ -139,7 +139,7 @@ private fun preset(
 
 private val NOTE_PATTERN = Regex("^([A-G])([#b]?)(-1|[0-9])$")
 private val NOTE_SEPARATOR = Regex("\\s+")
-private val GUITAR_6_LAYOUTS = setOf(HeadstockLayout.INLINE_6, HeadstockLayout.SPLIT_3_3)
+private val GUITAR_6_LAYOUTS = setOf(HeadstockLayout.SPLIT_3_3)
 private val GUITAR_7_LAYOUTS = setOf(HeadstockLayout.INLINE_7, HeadstockLayout.SPLIT_4_3)
 private val GUITAR_8_LAYOUTS = setOf(HeadstockLayout.INLINE_8, HeadstockLayout.SPLIT_4_4)
 private val GUITAR_9_LAYOUTS = setOf(HeadstockLayout.INLINE_9, HeadstockLayout.SPLIT_5_4)

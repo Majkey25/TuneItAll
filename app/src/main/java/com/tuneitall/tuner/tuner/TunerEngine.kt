@@ -1,7 +1,7 @@
 package com.tuneitall.tuner.tuner
 
-import com.tuneitall.tuner.audio.DetectionSensitivity
 import com.tuneitall.tuner.audio.PitchEstimate
+import com.tuneitall.tuner.audio.TunerAudioSettings
 import com.tuneitall.tuner.model.MidiNote
 import com.tuneitall.tuner.model.ReferencePitch
 import com.tuneitall.tuner.model.TuningPreset
@@ -24,9 +24,10 @@ data class TunerReading(
 )
 
 class TunerEngine {
-    private val pitchFilter = StablePitchFilter()
+    private val needleSmoother = NeedleSmoother()
     private var context: EngineContext? = null
     private var currentTarget: MidiNote? = null
+    private var smoothedDetected: MidiNote? = null
 
     fun update(
         estimate: PitchEstimate,
@@ -34,14 +35,17 @@ class TunerEngine {
         tuning: TuningPreset,
         selectedString: Int,
         referencePitch: ReferencePitch,
-        sensitivity: DetectionSensitivity = DetectionSensitivity.DEFAULT,
-    ): TunerReading? {
+        settings: TunerAudioSettings,
+    ): TunerReading {
         require(selectedString in tuning.notesLowToHigh.indices) { "Selected string is outside the tuning" }
-        resetIfContextChanged(EngineContext(mode, tuning, selectedString, referencePitch, sensitivity))
-        if (estimate.confidence < sensitivity.minimumConfidence || estimate.rms < sensitivity.minimumRms) return null
+        resetIfContextChanged(EngineContext(mode, tuning, selectedString, referencePitch, settings))
 
-        val hertz = pitchFilter.add(estimate.hertz)
-        val detected = MusicMath.nearestMidi(hertz, referencePitch)
+        val detected = MusicMath.nearestMidi(estimate.hertz, referencePitch)
+        if (detected != smoothedDetected) {
+            needleSmoother.reset()
+            smoothedDetected = detected
+        }
+        val hertz = needleSmoother.add(estimate.hertz, settings.needleStability)
         val target = when (mode) {
             TunerMode.AUTO -> applyHysteresis(closestTuningNote(hertz, tuning, referencePitch), hertz, referencePitch)
             TunerMode.MANUAL -> tuning.notesLowToHigh[selectedString].also { currentTarget = it }
@@ -53,8 +57,15 @@ class TunerEngine {
             target = target,
             hertz = hertz,
             cents = cents,
-            inTune = abs(cents) <= IN_TUNE_CENTS,
+            inTune = abs(cents) <= settings.inTuneCents,
         )
+    }
+
+    fun reset() {
+        context = null
+        currentTarget = null
+        smoothedDetected = null
+        needleSmoother.reset()
     }
 
     private fun closestTuningNote(
@@ -100,9 +111,8 @@ class TunerEngine {
 
     private fun resetIfContextChanged(next: EngineContext) {
         if (context == next) return
+        reset()
         context = next
-        pitchFilter.reset()
-        currentTarget = null
     }
 
     private data class EngineContext(
@@ -110,60 +120,27 @@ class TunerEngine {
         val tuning: TuningPreset,
         val selectedString: Int,
         val referencePitch: ReferencePitch,
-        val sensitivity: DetectionSensitivity,
+        val settings: TunerAudioSettings,
     )
 
-    private class StablePitchFilter {
+    private class NeedleSmoother {
         private var smoothedLogHertz: Double? = null
-        private var pendingLogHertz: Double? = null
-        private var pendingFrames = 0
 
-        fun add(value: Double): Double {
+        fun add(value: Double, needleStability: Int): Double {
             val next = log2(value)
             val current = smoothedLogHertz ?: return value.also { smoothedLogHertz = next }
-            if (centsBetween(next, current) > SWITCH_THRESHOLD_CENTS) {
-                val pending = pendingLogHertz
-                if (pending != null && centsBetween(next, pending) <= SWITCH_MATCH_CENTS) {
-                    pendingFrames++
-                } else {
-                    pendingLogHertz = next
-                    pendingFrames = 1
-                }
-                if (pendingFrames < SWITCH_FRAMES) return 2.0.pow(current)
-                smoothedLogHertz = next
-                clearPending()
-                return value
-            }
-
-            clearPending()
-            val smoothed = current + (next - current) * SMOOTHING_FACTOR
+            val factor = 0.15 + (100 - needleStability) * 0.0065
+            val smoothed = current + (next - current) * factor
             smoothedLogHertz = smoothed
             return 2.0.pow(smoothed)
         }
 
         fun reset() {
             smoothedLogHertz = null
-            clearPending()
-        }
-
-        private fun clearPending() {
-            pendingLogHertz = null
-            pendingFrames = 0
-        }
-
-        private fun centsBetween(first: Double, second: Double): Double = abs(first - second) * CENTS_PER_OCTAVE
-
-        private companion object {
-            const val SMOOTHING_FACTOR = 0.30
-            const val SWITCH_THRESHOLD_CENTS = 80.0
-            const val SWITCH_MATCH_CENTS = 50.0
-            const val SWITCH_FRAMES = 3
-            const val CENTS_PER_OCTAVE = 1_200.0
         }
     }
 
     private companion object {
-        const val IN_TUNE_CENTS = 3.0
         const val TARGET_HYSTERESIS_CENTS = 8.0
     }
 }

@@ -1,7 +1,7 @@
 package com.tuneitall.tuner.tuner
 
-import com.tuneitall.tuner.audio.DetectionSensitivity
 import com.tuneitall.tuner.audio.PitchEstimate
+import com.tuneitall.tuner.audio.TunerAudioSettings
 import com.tuneitall.tuner.model.MidiNote
 import com.tuneitall.tuner.model.ReferencePitch
 import com.tuneitall.tuner.model.TuningCatalog
@@ -12,7 +12,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class TunerEngineTest {
@@ -28,6 +27,7 @@ class TunerEngineTest {
                 tuning = standard,
                 selectedString = 0,
                 referencePitch = reference,
+                settings = settings,
             ),
         )
 
@@ -39,7 +39,7 @@ class TunerEngineTest {
     @Test
     fun `manual mode keeps the selected target`() {
         val reading = requireNotNull(
-            TunerEngine().update(estimate(110.0), TunerMode.MANUAL, standard, 0, reference),
+            TunerEngine().update(estimate(110.0), TunerMode.MANUAL, standard, 0, reference, settings),
         )
 
         assertEquals(MidiNote(40), reading.target)
@@ -49,7 +49,7 @@ class TunerEngineTest {
     @Test
     fun `chromatic mode uses the nearest equal temperament note`() {
         val reading = requireNotNull(
-            TunerEngine().update(estimate(443.0), TunerMode.CHROMATIC, standard, 0, reference),
+            TunerEngine().update(estimate(443.0), TunerMode.CHROMATIC, standard, 0, reference, settings),
         )
 
         assertEquals(MidiNote(69), reading.target)
@@ -58,104 +58,29 @@ class TunerEngineTest {
     }
 
     @Test
-    fun `three cents or less is in tune`() {
+    fun `one cent tolerance accepts one cent but rejects two`() {
         val oneCentSharp = 440.0 * 2.0.pow(1.0 / 1200.0)
-        val reading = requireNotNull(
-            TunerEngine().update(estimate(oneCentSharp), TunerMode.CHROMATIC, standard, 0, reference),
-        )
+        val twoCentsSharp = 440.0 * 2.0.pow(2.0 / 1200.0)
 
-        assertTrue(reading.inTune)
-        assertEquals(1.0, reading.cents, 1e-6)
-    }
-
-    @Test
-    fun `green range accepts three cents but rejects four`() {
-        val engine = TunerEngine()
-        val threeCentsSharp = 440.0 * 2.0.pow(3.0 / 1200.0)
-        val fourCentsSharp = 440.0 * 2.0.pow(4.0 / 1200.0)
-
-        repeat(8) { engine.update(estimate(threeCentsSharp), TunerMode.CHROMATIC, standard, 0, reference) }
-        assertTrue(requireNotNull(engine.update(estimate(threeCentsSharp), TunerMode.CHROMATIC, standard, 0, reference)).inTune)
-        repeat(12) { engine.update(estimate(fourCentsSharp), TunerMode.CHROMATIC, standard, 0, reference) }
-        assertFalse(requireNotNull(engine.update(estimate(fourCentsSharp), TunerMode.CHROMATIC, standard, 0, reference)).inTune)
-    }
-
-    @Test
-    fun `configured confidence and RMS gates are applied before smoothing`() {
-        val engine = TunerEngine()
-        val balanced = DetectionSensitivity(50)
-
-        assertNull(
-            engine.update(
-                estimate(440.0, confidence = 0.79),
-                TunerMode.CHROMATIC,
-                standard,
-                0,
-                reference,
-                balanced,
-            ),
-        )
-        assertNull(
-            engine.update(estimate(440.0, rms = 0.002), TunerMode.CHROMATIC, standard, 0, reference, balanced),
-        )
-        val reading = requireNotNull(
-            engine.update(estimate(441.0), TunerMode.CHROMATIC, standard, 0, reference, balanced),
-        )
-        assertEquals(441.0, reading.hertz, 1e-9)
-    }
-
-    @Test
-    fun `high sensitivity accepts a quiet estimate rejected by balanced sensitivity`() {
-        val quiet = estimate(440.0, confidence = 0.76, rms = 0.0015)
-
-        assertNull(
-            TunerEngine().update(
-                quiet,
-                TunerMode.CHROMATIC,
-                standard,
-                0,
-                reference,
-                DetectionSensitivity(50),
-            ),
-        )
         assertTrue(
-            TunerEngine().update(
-                quiet,
-                TunerMode.CHROMATIC,
-                standard,
-                0,
-                reference,
-                DetectionSensitivity(100),
-            ) != null,
+            requireNotNull(TunerEngine().update(estimate(oneCentSharp), TunerMode.CHROMATIC, standard, 0, reference, settings.copy(inTuneCents = 1))).inTune,
+        )
+        assertFalse(
+            requireNotNull(TunerEngine().update(estimate(twoCentsSharp), TunerMode.CHROMATIC, standard, 0, reference, settings.copy(inTuneCents = 1))).inTune,
         )
     }
 
     @Test
-    fun `three value median removes a single outlier`() {
-        val engine = TunerEngine()
+    fun `ten cent tolerance accepts ten cents but rejects eleven`() {
+        val tenCentsSharp = 440.0 * 2.0.pow(10.0 / 1200.0)
+        val elevenCentsSharp = 440.0 * 2.0.pow(11.0 / 1200.0)
 
-        engine.update(estimate(440.0), TunerMode.CHROMATIC, standard, 0, reference)
-        engine.update(estimate(880.0), TunerMode.CHROMATIC, standard, 0, reference)
-        val reading = requireNotNull(
-            engine.update(estimate(441.0), TunerMode.CHROMATIC, standard, 0, reference),
+        assertTrue(
+            requireNotNull(TunerEngine().update(estimate(tenCentsSharp), TunerMode.CHROMATIC, standard, 0, reference, settings.copy(inTuneCents = 10))).inTune,
         )
-
-        assertTrue(reading.hertz in 440.0..440.5)
-        assertEquals(MidiNote(69), reading.target)
-    }
-
-    @Test
-    fun `inconsistent harmonic glitches do not move a stable reading`() {
-        val engine = TunerEngine()
-        repeat(5) { engine.update(estimate(440.0), TunerMode.CHROMATIC, standard, 0, reference) }
-
-        engine.update(estimate(880.0), TunerMode.CHROMATIC, standard, 0, reference)
-        val reading = requireNotNull(
-            engine.update(estimate(660.0), TunerMode.CHROMATIC, standard, 0, reference),
+        assertFalse(
+            requireNotNull(TunerEngine().update(estimate(elevenCentsSharp), TunerMode.CHROMATIC, standard, 0, reference, settings.copy(inTuneCents = 10))).inTune,
         )
-
-        assertEquals(440.0, reading.hertz, 0.5)
-        assertEquals(MidiNote(69), reading.target)
     }
 
     @Test
@@ -163,24 +88,51 @@ class TunerEngineTest {
         val engine = TunerEngine()
         val outputs = listOf(0.0, 8.0, -8.0, 8.0, -8.0, 7.0, -7.0).map { cents ->
             val hertz = 440.0 * 2.0.pow(cents / 1200.0)
-            requireNotNull(engine.update(estimate(hertz), TunerMode.CHROMATIC, standard, 0, reference)).cents
+            requireNotNull(engine.update(estimate(hertz), TunerMode.CHROMATIC, standard, 0, reference, settings)).cents
         }
 
         assertTrue(outputs.drop(2).all { abs(it) <= 3.0 }, "Unstable cents: $outputs")
     }
 
     @Test
-    fun `new string needs three consistent frames before switching`() {
+    fun `default needle stability uses the documented coefficient`() {
         val engine = TunerEngine()
-        repeat(5) { engine.update(estimate(440.0), TunerMode.CHROMATIC, standard, 0, reference) }
+        val input = 440.0 * 2.0.pow(30.0 / 1200.0)
 
-        val first = requireNotNull(engine.update(estimate(329.63), TunerMode.CHROMATIC, standard, 0, reference))
-        val second = requireNotNull(engine.update(estimate(329.63), TunerMode.CHROMATIC, standard, 0, reference))
-        val third = requireNotNull(engine.update(estimate(329.63), TunerMode.CHROMATIC, standard, 0, reference))
+        engine.update(estimate(440.0), TunerMode.CHROMATIC, standard, 0, reference, settings)
+        val reading = engine.update(estimate(input), TunerMode.CHROMATIC, standard, 0, reference, settings)
 
-        assertEquals(MidiNote(69), first.target)
-        assertEquals(MidiNote(69), second.target)
-        assertEquals(MidiNote(64), third.target)
+        assertEquals(440.0 * 2.0.pow(30.0 * 0.3775 / 1200.0), reading.hertz, 1e-9)
+    }
+
+    @Test
+    fun `engine accepts a valid low confidence low RMS estimate`() {
+        val reading = TunerEngine().update(
+            estimate(440.0, confidence = 0.000001, rms = 0.000001),
+            TunerMode.CHROMATIC,
+            standard,
+            0,
+            reference,
+            settings,
+        )
+
+        assertEquals(440.0, reading.hertz, 1e-9)
+    }
+
+    @Test
+    fun `smoothing resets when detected note changes`() {
+        val engine = TunerEngine()
+        engine.update(estimate(440.0), TunerMode.CHROMATIC, standard, 0, reference, settings)
+        val withinNote = requireNotNull(
+            engine.update(estimate(440.0 * 2.0.pow(30.0 / 1200.0)), TunerMode.CHROMATIC, standard, 0, reference, settings),
+        )
+        val changedNote = requireNotNull(
+            engine.update(estimate(466.16), TunerMode.CHROMATIC, standard, 0, reference, settings),
+        )
+
+        assertTrue(withinNote.hertz > 440.0 && withinNote.hertz < 440.0 * 2.0.pow(30.0 / 1200.0))
+        assertEquals(466.16, changedNote.hertz, 1e-9)
+        assertEquals(MidiNote(70), changedNote.detected)
     }
 
     @Test
@@ -193,7 +145,7 @@ class TunerEngineTest {
         val barelyAbove = boundary * 2.0.pow(2.0 / 1200.0)
         val clearlyAbove = boundary * 2.0.pow(10.0 / 1200.0)
 
-        repeat(3) { engine.update(estimate(below), TunerMode.AUTO, standard, 0, reference) }
+        repeat(3) { engine.update(estimate(below), TunerMode.AUTO, standard, 0, reference, settings) }
         val jitter = repeatReading(engine, barelyAbove)
         assertEquals(MidiNote(40), jitter.target)
 
@@ -204,11 +156,11 @@ class TunerEngineTest {
     @Test
     fun `context change clears smoothing state`() {
         val engine = TunerEngine()
-        engine.update(estimate(82.41), TunerMode.MANUAL, standard, 0, reference)
-        engine.update(estimate(82.41), TunerMode.MANUAL, standard, 0, reference)
+        engine.update(estimate(82.41), TunerMode.MANUAL, standard, 0, reference, settings)
+        engine.update(estimate(82.41), TunerMode.MANUAL, standard, 0, reference, settings)
 
         val reading = requireNotNull(
-            engine.update(estimate(110.0), TunerMode.MANUAL, standard, 1, reference),
+            engine.update(estimate(110.0), TunerMode.MANUAL, standard, 1, reference, settings),
         )
         assertEquals(110.0, reading.hertz, 1e-9)
         assertEquals(MidiNote(45), reading.target)
@@ -219,7 +171,7 @@ class TunerEngineTest {
         val engine = TunerEngine()
 
         assertFailsWith<IllegalArgumentException> {
-            engine.update(estimate(440.0), TunerMode.MANUAL, standard, 6, reference)
+            engine.update(estimate(440.0), TunerMode.MANUAL, standard, 6, reference, settings)
         }
         assertFailsWith<IllegalArgumentException> { PitchEstimate(Double.NaN, 0.9, 0.1) }
         assertFailsWith<IllegalArgumentException> { PitchEstimate(440.0, 1.1, 0.1) }
@@ -229,7 +181,7 @@ class TunerEngineTest {
     private fun repeatReading(engine: TunerEngine, hertz: Double): TunerReading {
         var reading: TunerReading? = null
         repeat(3) {
-            reading = engine.update(estimate(hertz), TunerMode.AUTO, standard, 0, reference)
+            reading = engine.update(estimate(hertz), TunerMode.AUTO, standard, 0, reference, settings)
         }
         return requireNotNull(reading)
     }
@@ -239,4 +191,6 @@ class TunerEngineTest {
         confidence: Double = 0.95,
         rms: Double = 0.20,
     ): PitchEstimate = PitchEstimate(hertz, confidence, rms)
+
+    private val settings = TunerAudioSettings()
 }

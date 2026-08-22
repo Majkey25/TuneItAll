@@ -11,25 +11,30 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.model.HeadstockLayout
@@ -56,113 +61,252 @@ fun Headstock(
     val rows = max(sides.left, sides.right)
     val inline = sides.left == 0 || sides.right == 0
     val rowHeight = if (inline) INLINE_PEG_ROW_HEIGHT else PEG_ROW_HEIGHT
-    val pegSize = if (inline) INLINE_PEG_SIZE else PEG_SIZE
+    val pegWidth = if (inline) INLINE_PEG_WIDTH else PEG_WIDTH
+    val pegHeight = if (inline) INLINE_PEG_HEIGHT else PEG_HEIGHT
+    val centerWidth = if (layout == HeadstockLayout.SPLIT_3_3) {
+        SplitHeadstockGeometry.centerGap
+    } else {
+        HEADSTOCK_CENTER_WIDTH
+    }
     val totalHeight = HEADSTOCK_TOP_PADDING + HEADSTOCK_BOTTOM_PADDING + rowHeight * rows
     val bodyColor = MaterialTheme.colorScheme.surface
     val outlineColor = MaterialTheme.colorScheme.outline
     val stringColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val splitBodyColor = MaterialTheme.colorScheme.onSurface.copy(alpha = SplitHeadstockGeometry.fillAlpha)
 
-    Box(
-        modifier = modifier.height(totalHeight),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val centerX = size.width / 2f
-            val top = 4.dp.toPx()
-            val bottom = size.height - 4.dp.toPx()
-            val bodyHalfWidth = HEADSTOCK_BODY_HALF_WIDTH.toPx()
-            val narrowHalfWidth = HEADSTOCK_NARROW_HALF_WIDTH.toPx()
-            val body = Path().apply {
-                moveTo(centerX - narrowHalfWidth, bottom)
-                lineTo(centerX - bodyHalfWidth, top + 18.dp.toPx())
-                quadraticTo(centerX - bodyHalfWidth, top, centerX - 20.dp.toPx(), top)
-                quadraticTo(centerX, top + 12.dp.toPx(), centerX + 20.dp.toPx(), top)
-                quadraticTo(centerX + bodyHalfWidth, top, centerX + bodyHalfWidth, top + 18.dp.toPx())
-                lineTo(centerX + narrowHalfWidth, bottom)
-                close()
-            }
-            drawPath(body, bodyColor)
-            drawPath(body, outlineColor, style = Stroke(width = 1.dp.toPx()))
-
-            repeat(notes.size) { index ->
-                val fraction = if (notes.size == 1) 0.5f else index.toFloat() / (notes.size - 1)
-                val topX = centerX - 13.dp.toPx() + 26.dp.toPx() * fraction
-                val bottomX = centerX - 9.dp.toPx() + 18.dp.toPx() * fraction
-                drawLine(
-                    color = stringColor.copy(alpha = 0.65f),
-                    start = Offset(topX, top + 10.dp.toPx()),
-                    end = Offset(bottomX, bottom),
-                    strokeWidth = 1.dp.toPx(),
-                )
-            }
-            drawLine(
-                color = outlineColor,
-                start = Offset(centerX - narrowHalfWidth, bottom - 10.dp.toPx()),
-                end = Offset(centerX + narrowHalfWidth, bottom - 10.dp.toPx()),
-                strokeWidth = 2.dp.toPx(),
-            )
-
-            repeat(rows) { row ->
-                val y = HEADSTOCK_TOP_PADDING.toPx() + rowHeight.toPx() * (row + 0.5f)
-                if (row < sides.left) {
-                    drawLine(
-                        color = outlineColor,
-                        start = Offset(centerX - bodyHalfWidth, y),
-                        end = Offset(centerX - PEG_STEM_END_OFFSET.toPx(), y),
-                        strokeWidth = 2.dp.toPx(),
-                    )
-                }
-                if (row < sides.right) {
-                    drawLine(
-                        color = outlineColor,
-                        start = Offset(centerX + bodyHalfWidth, y),
-                        end = Offset(centerX + PEG_STEM_END_OFFSET.toPx(), y),
-                        strokeWidth = 2.dp.toPx(),
-                    )
-                }
-            }
-        }
-
-        Column(
-            verticalArrangement = Arrangement.Top,
-            modifier = Modifier.fillMaxSize(),
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Box(
+            modifier = modifier
+                .height(totalHeight)
+                .testTag("headstock"),
+            contentAlignment = Alignment.Center,
         ) {
-            Spacer(modifier = Modifier.height(HEADSTOCK_TOP_PADDING))
-            repeat(rows) { row ->
-                val leftIndex = (sides.left - 1 - row).takeIf { row < sides.left }
-                val rightIndex = when {
-                    row >= sides.right -> null
-                    sides.left == 0 -> notes.lastIndex - row
-                    else -> sides.left + row
+            Canvas(modifier = Modifier.fillMaxSize().testTag("headstock_drawing")) {
+                val centerX = size.width / 2f
+                val top = 4.dp.toPx()
+                val bottom = size.height - 4.dp.toPx()
+                val bodyHalfWidth = HEADSTOCK_BODY_HALF_WIDTH.toPx()
+                val narrowHalfWidth = HEADSTOCK_NARROW_HALF_WIDTH.toPx()
+                if (layout == HeadstockLayout.SPLIT_3_3) {
+                    val nutY = SplitHeadstockGeometry.bodyLength.toPx()
+                    val splitBodyHalfWidth = SplitHeadstockGeometry.bodyWidth.toPx() / 2f
+                    val nutHalfWidth = SplitHeadstockGeometry.nutWidth.toPx() / 2f
+                    val neckHalfWidth = SplitHeadstockGeometry.neckWidth.toPx() / 2f
+                    val body = Path().apply {
+                        moveTo(centerX - nutHalfWidth, nutY)
+                        lineTo(
+                            centerX - SplitHeadstockGeometry.shoulderEndHalfWidth.toPx(),
+                            SplitHeadstockGeometry.shoulderEndY.toPx(),
+                        )
+                        lineTo(
+                            centerX - SplitHeadstockGeometry.topPostHalfWidth.toPx(),
+                            SplitHeadstockGeometry.postCenters.first().toPx(),
+                        )
+                        cubicTo(
+                            centerX - 42.dp.toPx(), top + 44.dp.toPx(),
+                            centerX - splitBodyHalfWidth, top + 48.dp.toPx(),
+                            centerX - splitBodyHalfWidth, top + 38.dp.toPx(),
+                        )
+                        cubicTo(
+                            centerX - splitBodyHalfWidth, top + 28.dp.toPx(),
+                            centerX - 39.dp.toPx(), top + 20.dp.toPx(),
+                            centerX - 30.dp.toPx(), top + 16.dp.toPx(),
+                        )
+                        cubicTo(
+                            centerX - 18.dp.toPx(), top,
+                            centerX + 18.dp.toPx(), top,
+                            centerX + 30.dp.toPx(), top + 16.dp.toPx(),
+                        )
+                        cubicTo(
+                            centerX + 39.dp.toPx(), top + 20.dp.toPx(),
+                            centerX + splitBodyHalfWidth, top + 28.dp.toPx(),
+                            centerX + splitBodyHalfWidth, top + 38.dp.toPx(),
+                        )
+                        cubicTo(
+                            centerX + splitBodyHalfWidth, top + 48.dp.toPx(),
+                            centerX + 42.dp.toPx(), top + 44.dp.toPx(),
+                            centerX + SplitHeadstockGeometry.topPostHalfWidth.toPx(),
+                            SplitHeadstockGeometry.postCenters.first().toPx(),
+                        )
+                        lineTo(
+                            centerX + SplitHeadstockGeometry.shoulderEndHalfWidth.toPx(),
+                            SplitHeadstockGeometry.shoulderEndY.toPx(),
+                        )
+                        lineTo(centerX + nutHalfWidth, nutY)
+                        close()
+                    }
+                    drawPath(body, splitBodyColor)
+                    drawPath(body, outlineColor, style = Stroke(width = 1.5.dp.toPx()))
+                    drawRect(
+                        splitBodyColor,
+                        topLeft = Offset(centerX - neckHalfWidth, nutY),
+                        size = Size(SplitHeadstockGeometry.neckWidth.toPx(), bottom - nutY),
+                    )
+                    drawRect(
+                        outlineColor,
+                        topLeft = Offset(centerX - neckHalfWidth, nutY),
+                        size = Size(SplitHeadstockGeometry.neckWidth.toPx(), bottom - nutY),
+                        style = Stroke(width = 1.5.dp.toPx()),
+                    )
+                    repeat(notes.size) { index ->
+                        val nutX = centerX + SplitHeadstockGeometry.nutSlots[index].toPx()
+                        val row = if (index < 3) 2 - index else index - 3
+                        val postOffset = SplitHeadstockGeometry.postOffsets[row].toPx()
+                        val postX = centerX + if (index < 3) -postOffset else postOffset
+                        val postY = SplitHeadstockGeometry.postCenters[row].toPx()
+                        drawLine(
+                            stringColor.copy(alpha = 0.8f),
+                            Offset(nutX, bottom),
+                            Offset(nutX, nutY),
+                            1.dp.toPx(),
+                        )
+                        drawLine(
+                            stringColor.copy(alpha = 0.8f),
+                            Offset(nutX, nutY),
+                            Offset(postX, postY),
+                            1.dp.toPx(),
+                        )
+                    }
+                    drawRoundRect(
+                        bodyColor,
+                        topLeft = Offset(centerX - nutHalfWidth, nutY - 2.dp.toPx()),
+                        size = Size(SplitHeadstockGeometry.nutWidth.toPx(), 4.dp.toPx()),
+                        cornerRadius = CornerRadius(1.dp.toPx()),
+                    )
+                    drawRoundRect(
+                        outlineColor,
+                        topLeft = Offset(centerX - nutHalfWidth, nutY - 2.dp.toPx()),
+                        size = Size(SplitHeadstockGeometry.nutWidth.toPx(), 4.dp.toPx()),
+                        cornerRadius = CornerRadius(1.dp.toPx()),
+                        style = Stroke(width = 1.5.dp.toPx()),
+                    )
+                    repeat(3) { row ->
+                        val y = SplitHeadstockGeometry.postCenters[row].toPx()
+                        val postOffset = SplitHeadstockGeometry.postOffsets[row].toPx()
+                        val postRadius = SplitHeadstockGeometry.postRadius.toPx()
+                        val keyWidth = SplitHeadstockGeometry.keyWidth.toPx()
+                        val keyHeight = SplitHeadstockGeometry.keyHeight.toPx()
+                        listOf(-1f, 1f).forEach { side ->
+                            val postX = centerX + side * postOffset
+                            val keyLeft = postX + if (side < 0f) -6.dp.toPx() - keyWidth else 6.dp.toPx()
+                            val keyInnerX = postX + side * 6.dp.toPx()
+                            drawLine(
+                                outlineColor,
+                                Offset(postX + side * postRadius, y),
+                                Offset(keyInnerX, y),
+                                2.dp.toPx(),
+                            )
+                            drawRoundRect(
+                                bodyColor,
+                                topLeft = Offset(keyLeft, y - keyHeight / 2f),
+                                size = Size(keyWidth, keyHeight),
+                                cornerRadius = CornerRadius(3.dp.toPx()),
+                            )
+                            drawRoundRect(
+                                outlineColor,
+                                topLeft = Offset(keyLeft, y - keyHeight / 2f),
+                                size = Size(keyWidth, keyHeight),
+                                cornerRadius = CornerRadius(3.dp.toPx()),
+                                style = Stroke(width = 1.5.dp.toPx()),
+                            )
+                            drawCircle(bodyColor, radius = postRadius, center = Offset(postX, y))
+                            drawCircle(
+                                outlineColor,
+                                radius = postRadius,
+                                center = Offset(postX, y),
+                                style = Stroke(width = 1.5.dp.toPx()),
+                            )
+                        }
+                    }
+                } else {
+                    val body = Path().apply {
+                        moveTo(centerX - narrowHalfWidth, bottom)
+                        lineTo(centerX - bodyHalfWidth, top + 18.dp.toPx())
+                        quadraticTo(centerX - bodyHalfWidth, top, centerX - 20.dp.toPx(), top)
+                        quadraticTo(centerX, top + 12.dp.toPx(), centerX + 20.dp.toPx(), top)
+                        quadraticTo(centerX + bodyHalfWidth, top, centerX + bodyHalfWidth, top + 18.dp.toPx())
+                        lineTo(centerX + narrowHalfWidth, bottom)
+                        close()
+                    }
+                    drawPath(body, bodyColor)
+                    drawPath(body, outlineColor, style = Stroke(width = 1.dp.toPx()))
+                    repeat(notes.size) { index ->
+                        val fraction = if (notes.size == 1) 0.5f else index.toFloat() / (notes.size - 1)
+                        val topX = centerX - 13.dp.toPx() + 26.dp.toPx() * fraction
+                        val bottomX = centerX - 9.dp.toPx() + 18.dp.toPx() * fraction
+                        drawLine(
+                            stringColor.copy(alpha = 0.65f),
+                            Offset(topX, top + 10.dp.toPx()),
+                            Offset(bottomX, bottom),
+                            1.dp.toPx(),
+                        )
+                    }
+                    drawLine(
+                        outlineColor,
+                        Offset(centerX - narrowHalfWidth, bottom - 10.dp.toPx()),
+                        Offset(centerX + narrowHalfWidth, bottom - 10.dp.toPx()),
+                        2.dp.toPx(),
+                    )
+                    repeat(rows) { row ->
+                        val y = HEADSTOCK_TOP_PADDING.toPx() + rowHeight.toPx() * (row + 0.5f)
+                        if (row < sides.left) {
+                            drawLine(
+                                outlineColor,
+                                Offset(centerX - bodyHalfWidth, y),
+                                Offset(centerX - PEG_STEM_END_OFFSET.toPx(), y),
+                                2.dp.toPx(),
+                            )
+                        }
+                        if (row < sides.right) {
+                            drawLine(
+                                outlineColor,
+                                Offset(centerX + bodyHalfWidth, y),
+                                Offset(centerX + PEG_STEM_END_OFFSET.toPx(), y),
+                                2.dp.toPx(),
+                            )
+                        }
+                    }
                 }
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(rowHeight),
-                ) {
-                    Peg(
-                        index = leftIndex,
-                        notes = notes,
-                        selectedIndex = selectedIndex,
-                        confirmed = confirmed,
-                        notation = notation,
-                        onStringSelected = onStringSelected,
-                        pegSize = pegSize,
-                        compact = inline,
-                    )
-                    Spacer(modifier = Modifier.width(HEADSTOCK_CENTER_WIDTH))
-                    Peg(
-                        index = rightIndex,
-                        notes = notes,
-                        selectedIndex = selectedIndex,
-                        confirmed = confirmed,
-                        notation = notation,
-                        onStringSelected = onStringSelected,
-                        pegSize = pegSize,
-                        compact = inline,
-                    )
+            }
+
+            Column(
+                verticalArrangement = Arrangement.Top,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Spacer(modifier = Modifier.height(HEADSTOCK_TOP_PADDING))
+                repeat(rows) { row ->
+                    val (leftIndex, rightIndex) = layout.stringIndicesAtRow(row)
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(rowHeight),
+                    ) {
+                        Peg(
+                            index = leftIndex,
+                            notes = notes,
+                            selectedIndex = selectedIndex,
+                            confirmed = confirmed,
+                            notation = notation,
+                            onStringSelected = onStringSelected,
+                            pegWidth = pegWidth,
+                            pegHeight = pegHeight,
+                            compact = inline,
+                        )
+                        Spacer(modifier = Modifier.width(centerWidth))
+                        Peg(
+                            index = rightIndex,
+                            notes = notes,
+                            selectedIndex = selectedIndex,
+                            confirmed = confirmed,
+                            notation = notation,
+                            onStringSelected = onStringSelected,
+                            pegWidth = pegWidth,
+                            pegHeight = pegHeight,
+                            compact = inline,
+                        )
+                    }
                 }
             }
         }
@@ -177,39 +321,45 @@ private fun Peg(
     confirmed: Boolean,
     notation: NoteNotation,
     onStringSelected: (Int) -> Unit,
-    pegSize: Dp,
+    pegWidth: Dp,
+    pegHeight: Dp,
     compact: Boolean,
 ) {
     if (index == null) {
-        Spacer(modifier = Modifier.size(pegSize))
+        Spacer(modifier = Modifier.width(pegWidth).height(pegHeight))
         return
     }
     val selected = index == selectedIndex
     val note = formatNote(notes[index], notation)
     val stringNumber = instrumentStringNumber(index, notes.size)
     val description = stringResource(R.string.string_button_description, stringNumber, note)
-    val colors = if (selected && confirmed) {
+    val colors = if (selected) {
         ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.tertiary,
+            containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
         )
     } else {
         ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
     }
     val borderColor = when {
-        selected && confirmed -> MaterialTheme.colorScheme.tertiary
-        selected -> MaterialTheme.colorScheme.onSurface
+        selected -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.outlineVariant
+    }
+    val borderWidth = when {
+        selected && confirmed -> 3.dp
+        selected -> 2.dp
+        else -> 1.dp
     }
 
     OutlinedButton(
         onClick = { onStringSelected(index) },
-        shape = CircleShape,
+        shape = RoundedCornerShape(8.dp),
         colors = colors,
-        border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
+        border = BorderStroke(borderWidth, borderColor),
         contentPadding = PaddingValues(0.dp),
         modifier = Modifier
-            .size(pegSize)
+            .width(pegWidth)
+            .height(pegHeight)
             .semantics {
                 this.selected = selected
                 contentDescription = description
@@ -220,18 +370,73 @@ private fun Peg(
                 note,
                 fontWeight = FontWeight.SemiBold,
                 style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
+                modifier = Modifier.testTag("headstock_note_$stringNumber"),
             )
-            Text("$stringNumber", style = MaterialTheme.typography.labelSmall)
+            Text(
+                "$stringNumber",
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.testTag("headstock_number_$stringNumber"),
+            )
         }
     }
 }
 
 private data class HeadstockSides(val left: Int, val right: Int)
 
+internal object SplitHeadstockGeometry {
+    val bodyWidth = 88.dp
+    val nutWidth = 48.dp
+    val neckWidth = 44.dp
+    val centerGap = 120.dp
+    const val fillAlpha = 0.06f
+    val bodyLength = 210.dp
+    val shoulderEndY = 68.dp
+    val shoulderEndHalfWidth = 38.dp
+    val topPostHalfWidth = 40.dp
+    val postCenters = listOf(52.dp, 120.dp, 188.dp)
+    val postOffsets = listOf(36.dp, 29.dp, 22.dp)
+    val postRadius = 3.5.dp
+    val keyWidth = 8.dp
+    val keyHeight = 14.dp
+    val nutSlots = listOf(-18.dp, -10.8.dp, -3.6.dp, 3.6.dp, 10.8.dp, 18.dp)
+
+    fun bodyHalfWidthAt(y: Dp): Dp {
+        require(y in postCenters.first()..bodyLength) { "Y must fit the post-bearing body" }
+        val startY: Dp
+        val startWidth: Dp
+        val endY: Dp
+        val endWidth: Dp
+        if (y < shoulderEndY) {
+            startY = postCenters.first()
+            startWidth = topPostHalfWidth
+            endY = shoulderEndY
+            endWidth = shoulderEndHalfWidth
+        } else {
+            startY = shoulderEndY
+            startWidth = shoulderEndHalfWidth
+            endY = bodyLength
+            endWidth = nutWidth / 2f
+        }
+        val fraction = (y.value - startY.value) / (endY.value - startY.value)
+        return (startWidth.value + (endWidth.value - startWidth.value) * fraction).dp
+    }
+}
+
+internal fun HeadstockLayout.stringIndicesAtRow(row: Int): Pair<Int?, Int?> {
+    val sides = sides()
+    require(row in 0 until max(sides.left, sides.right)) { "Row must fit the headstock" }
+    val left = (sides.left - 1 - row).takeIf { row < sides.left }
+    val right = when {
+        row >= sides.right -> null
+        sides.left == 0 -> stringCount - 1 - row
+        else -> sides.left + row
+    }
+    return left to right
+}
+
 private fun HeadstockLayout.sides(): HeadstockSides = when (this) {
     HeadstockLayout.INLINE_4 -> HeadstockSides(4, 0)
     HeadstockLayout.SPLIT_2_2 -> HeadstockSides(2, 2)
-    HeadstockLayout.INLINE_6 -> HeadstockSides(6, 0)
     HeadstockLayout.SPLIT_3_3 -> HeadstockSides(3, 3)
     HeadstockLayout.INLINE_7 -> HeadstockSides(7, 0)
     HeadstockLayout.SPLIT_4_3 -> HeadstockSides(4, 3)
@@ -243,10 +448,12 @@ private fun HeadstockLayout.sides(): HeadstockSides = when (this) {
 
 private val HEADSTOCK_TOP_PADDING = 18.dp
 private val HEADSTOCK_BOTTOM_PADDING = 14.dp
-private val PEG_ROW_HEIGHT = 58.dp
-private val PEG_SIZE = 54.dp
-private val INLINE_PEG_ROW_HEIGHT = 44.dp
-private val INLINE_PEG_SIZE = 42.dp
+private val PEG_ROW_HEIGHT = 68.dp
+private val PEG_WIDTH = 74.dp
+private val PEG_HEIGHT = 56.dp
+private val INLINE_PEG_ROW_HEIGHT = 48.dp
+private val INLINE_PEG_WIDTH = 64.dp
+private val INLINE_PEG_HEIGHT = 48.dp
 private val HEADSTOCK_CENTER_WIDTH = 112.dp
 private val HEADSTOCK_BODY_HALF_WIDTH = 42.dp
 private val HEADSTOCK_NARROW_HALF_WIDTH = 29.dp

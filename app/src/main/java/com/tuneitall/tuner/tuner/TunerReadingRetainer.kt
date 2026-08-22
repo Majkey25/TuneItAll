@@ -5,15 +5,16 @@ class TunerReadingRetainer {
     private var lastReadingMillis: Long? = null
 
     @Synchronized
-    fun update(reading: TunerReading?, nowMillis: Long): TunerReading? {
+    fun update(reading: TunerReading?, nowMillis: Long, holdMillis: Long): TunerReading? {
         require(nowMillis >= 0L) { "Reading time must not be negative" }
+        require(holdMillis >= 0L) { "Reading hold duration must not be negative" }
         if (reading != null) {
             lastReading = reading
             lastReadingMillis = nowMillis
             return reading
         }
         val lastSeen = lastReadingMillis ?: return null
-        if (nowMillis - lastSeen <= HOLD_MILLIS) return lastReading
+        if (holdMillis > 0L && nowMillis - lastSeen <= holdMillis) return lastReading
         reset()
         return null
     }
@@ -22,9 +23,5 @@ class TunerReadingRetainer {
     fun reset() {
         lastReading = null
         lastReadingMillis = null
-    }
-
-    private companion object {
-        const val HOLD_MILLIS = 250L
     }
 }

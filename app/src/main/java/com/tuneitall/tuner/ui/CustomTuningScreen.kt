@@ -102,15 +102,18 @@ fun CustomTuningScreen(
                 }
             }
         }
-        Text(stringResource(R.string.layout), style = MaterialTheme.typography.titleMedium)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            layoutsFor(instrument, stringCount).forEach { option ->
-                FilterChip(
-                    selected = layout == option,
-                    onClick = { layout = option },
-                    label = { Text(layoutName(option)) },
-                    modifier = Modifier.weight(1f),
-                )
+        val layoutOptions = layoutsFor(instrument, stringCount)
+        if (layoutOptions.size > 1) {
+            Text(stringResource(R.string.layout), style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                layoutOptions.forEach { option ->
+                    FilterChip(
+                        selected = layout == option,
+                        onClick = { layout = option },
+                        label = { Text(layoutName(option)) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
         Text(stringResource(R.string.notes_with_octaves), style = MaterialTheme.typography.titleMedium)
@@ -164,7 +167,7 @@ private fun parseSingleNote(value: String): MidiNote? = try {
 
 private fun layoutsFor(instrument: Instrument, stringCount: Int): List<HeadstockLayout> = when (instrument) {
     Instrument.GUITAR -> when (stringCount) {
-        6 -> listOf(HeadstockLayout.INLINE_6, HeadstockLayout.SPLIT_3_3)
+        6 -> listOf(HeadstockLayout.SPLIT_3_3)
         7 -> listOf(HeadstockLayout.INLINE_7, HeadstockLayout.SPLIT_4_3)
         8 -> listOf(HeadstockLayout.INLINE_8, HeadstockLayout.SPLIT_4_4)
         9 -> listOf(HeadstockLayout.INLINE_9, HeadstockLayout.SPLIT_5_4)

@@ -37,7 +37,6 @@ enum class Instrument {
 enum class HeadstockLayout {
     INLINE_4,
     SPLIT_2_2,
-    INLINE_6,
     SPLIT_3_3,
     INLINE_7,
     SPLIT_4_3,
@@ -53,7 +52,6 @@ val HeadstockLayout.stringCount: Int
         HeadstockLayout.SPLIT_2_2,
         -> 4
 
-        HeadstockLayout.INLINE_6,
         HeadstockLayout.SPLIT_3_3,
         -> 6
 

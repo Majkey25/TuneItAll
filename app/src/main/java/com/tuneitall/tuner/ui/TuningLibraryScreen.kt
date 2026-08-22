@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -49,6 +50,7 @@ fun TuningLibraryScreen(
     var instrument by remember { mutableStateOf<Instrument?>(null) }
     var stringCount by remember { mutableStateOf<Int?>(null) }
     var favoritesOnly by remember { mutableStateOf(false) }
+    val textButtonColors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
     val filtered = presets.filter { preset ->
         val normalizedQuery = query.trim().lowercase(Locale.ROOT)
         (normalizedQuery.isEmpty() || preset.name.lowercase(Locale.ROOT).contains(normalizedQuery)) &&
@@ -111,7 +113,11 @@ fun TuningLibraryScreen(
                 )
             }
         }
-        TextButton(onClick = onCreateCustom, modifier = Modifier.align(Alignment.End)) {
+        TextButton(
+            onClick = onCreateCustom,
+            colors = textButtonColors,
+            modifier = Modifier.align(Alignment.End),
+        ) {
             Text(stringResource(R.string.create_custom_tuning))
         }
         if (filtered.isEmpty()) {
@@ -141,6 +147,7 @@ fun TuningLibraryScreen(
                             )
                             TextButton(
                                 onClick = { onToggleFavorite(preset.id) },
+                                colors = textButtonColors,
                                 modifier = Modifier.semantics {
                                     contentDescription = favoriteDescription
                                 },
@@ -158,8 +165,17 @@ fun TuningLibraryScreen(
 
 @Composable
 fun SecondaryHeader(title: String, onBack: () -> Unit) {
+    val contentColor = secondaryHeaderContentColor()
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        TextButton(onClick = onBack) { Text(stringResource(R.string.back)) }
+        TextButton(
+            onClick = onBack,
+            colors = ButtonDefaults.textButtonColors(contentColor = contentColor),
+        ) {
+            Text(stringResource(R.string.back))
+        }
         Text(text = title, style = MaterialTheme.typography.headlineSmall)
     }
 }
+
+@Composable
+internal fun secondaryHeaderContentColor() = MaterialTheme.colorScheme.onBackground

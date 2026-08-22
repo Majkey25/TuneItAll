@@ -74,7 +74,7 @@ class MusicMathTest {
                 name = "Bad",
                 instrument = Instrument.GUITAR,
                 notesLowToHigh = List(5) { MidiNote(40 + it) },
-                layouts = setOf(HeadstockLayout.INLINE_6),
+                layouts = setOf(HeadstockLayout.SPLIT_3_3),
             )
         }
         assertFailsWith<IllegalArgumentException> {
@@ -83,7 +83,7 @@ class MusicMathTest {
                 name = "Bad",
                 instrument = Instrument.BASS,
                 notesLowToHigh = List(4) { MidiNote(28 + it) },
-                layouts = setOf(HeadstockLayout.INLINE_6),
+                layouts = setOf(HeadstockLayout.SPLIT_3_3),
             )
         }
         assertFailsWith<IllegalArgumentException> {

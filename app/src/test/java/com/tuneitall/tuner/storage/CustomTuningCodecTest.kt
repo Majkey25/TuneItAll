@@ -21,8 +21,20 @@ class CustomTuningCodecTest {
         val item = root.getJSONObject(0)
 
         assertIs<JSONArray>(item.get("notes"))
-        assertEquals("INLINE_6", item.getString("layout"))
+        assertEquals("SPLIT_3_3", item.getString("layout"))
         assertEquals(listOf(preset), CustomTuningCodec.decode(encoded))
+    }
+
+    @Test
+    fun `legacy inline six layout migrates to split without losing the tuning`() {
+        val encoded = JSONArray(
+            listOf(objectJson("custom-legacy", "Legacy", 40).put("layout", "INLINE_6")),
+        ).toString()
+
+        val decoded = CustomTuningCodec.decode(encoded).single()
+
+        assertEquals(setOf(HeadstockLayout.SPLIT_3_3), decoded.layouts)
+        assertEquals("custom-legacy", decoded.id)
     }
 
     @Test
@@ -70,7 +82,7 @@ class CustomTuningCodecTest {
         name = name,
         instrument = Instrument.GUITAR,
         notesLowToHigh = listOf(firstMidi, 45, 50, 55, 59, 64).map(::MidiNote),
-        layouts = setOf(HeadstockLayout.INLINE_6),
+        layouts = setOf(HeadstockLayout.SPLIT_3_3),
     )
 
     private fun objectJson(id: String, name: String, firstMidi: Int): JSONObject = JSONObject()
@@ -78,5 +90,5 @@ class CustomTuningCodecTest {
         .put("name", name)
         .put("instrument", "GUITAR")
         .put("notes", JSONArray(listOf(firstMidi, 45, 50, 55, 59, 64)))
-        .put("layout", "INLINE_6")
+        .put("layout", "SPLIT_3_3")
 }

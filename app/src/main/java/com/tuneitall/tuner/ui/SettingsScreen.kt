@@ -24,16 +24,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.audio.AudioInputSource
 import com.tuneitall.tuner.audio.DetectionSensitivity
+import com.tuneitall.tuner.audio.ResponseMode
+import com.tuneitall.tuner.audio.TunerAudioSettings
+import com.tuneitall.tuner.audio.TunerProfile
 import com.tuneitall.tuner.model.HeadstockLayout
 import com.tuneitall.tuner.model.ReferencePitch
 import com.tuneitall.tuner.storage.NoteNotation
+import com.tuneitall.tuner.ui.theme.ThemeMode
 import java.util.Locale
 import kotlin.math.round
 import kotlin.math.roundToInt
@@ -41,10 +47,11 @@ import kotlin.math.roundToInt
 @Composable
 fun SettingsScreen(
     state: TunerUiState,
+    onThemeModeChanged: (ThemeMode) -> Unit,
     onReferencePitchChanged: (ReferencePitch) -> Unit,
     onNotationChanged: (NoteNotation) -> Unit,
     onLayoutChanged: (HeadstockLayout) -> Unit,
-    onSensitivityChanged: (DetectionSensitivity) -> Unit,
+    onAudioSettingsChanged: (TunerAudioSettings) -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -73,6 +80,17 @@ fun SettingsScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         SecondaryHeader(stringResource(R.string.settings), onBack)
+        Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            ThemeMode.entries.forEach { mode ->
+                FilterChip(
+                    selected = state.themeMode == mode,
+                    onClick = { onThemeModeChanged(mode) },
+                    label = { Text(themeModeName(mode)) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
         Text(stringResource(R.string.reference_pitch), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(R.string.reference_pitch_help), style = MaterialTheme.typography.bodyMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -150,23 +168,7 @@ fun SettingsScreen(
             }
         }
 
-        val sensitivityLabel = stringResource(R.string.microphone_sensitivity)
-        Text(sensitivityLabel, style = MaterialTheme.typography.titleLarge)
-        Text(stringResource(R.string.microphone_sensitivity_help), style = MaterialTheme.typography.bodyMedium)
-        Text(stringResource(R.string.sensitivity_value, state.sensitivity.value))
-        Slider(
-            value = state.sensitivity.value.toFloat(),
-            onValueChange = { onSensitivityChanged(DetectionSensitivity(it.roundToInt())) },
-            valueRange = DetectionSensitivity.MIN_VALUE.toFloat()..DetectionSensitivity.MAX_VALUE.toFloat(),
-            steps = SENSITIVITY_SLIDER_STEPS,
-            modifier = Modifier.semantics { contentDescription = sensitivityLabel },
-        )
-        OutlinedButton(
-            onClick = { onSensitivityChanged(DetectionSensitivity.DEFAULT) },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.reset_sensitivity))
-        }
+        AudioSettings(state, onAudioSettingsChanged)
 
         Text(stringResource(R.string.note_notation), style = MaterialTheme.typography.titleLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -180,15 +182,17 @@ fun SettingsScreen(
             }
         }
 
-        Text(stringResource(R.string.headstock_layout), style = MaterialTheme.typography.titleLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            state.tuning.layouts.forEach { layout ->
-                FilterChip(
-                    selected = state.headstockLayout == layout,
-                    onClick = { onLayoutChanged(layout) },
-                    label = { Text(layoutName(layout)) },
-                    modifier = Modifier.weight(1f),
-                )
+        if (state.tuning.layouts.size > 1) {
+            Text(stringResource(R.string.headstock_layout), style = MaterialTheme.typography.titleLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                state.tuning.layouts.forEach { layout ->
+                    FilterChip(
+                        selected = state.headstockLayout == layout,
+                        onClick = { onLayoutChanged(layout) },
+                        label = { Text(layoutName(layout)) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
         OutlinedButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
@@ -197,10 +201,249 @@ fun SettingsScreen(
     }
 }
 
+@Composable
+private fun AudioSettings(
+    state: TunerUiState,
+    onSettingsChanged: (TunerAudioSettings) -> Unit,
+) {
+    val settings = state.audioSettings
+    val selectedProfile = TunerProfile.entries.firstOrNull { it.settings == settings }
+    var advancedExpanded by remember { mutableStateOf(false) }
+
+    Text(stringResource(R.string.tuner_audio), style = MaterialTheme.typography.titleLarge)
+    Text(stringResource(R.string.tuner_profiles_help), style = MaterialTheme.typography.bodyMedium)
+    ProfileRow(
+        profiles = listOf(TunerProfile.BALANCED, TunerProfile.QUIET_ROOM),
+        selectedProfile = selectedProfile,
+        onSettingsChanged = onSettingsChanged,
+    )
+    ProfileRow(
+        profiles = listOf(TunerProfile.NOISY_ROOM, TunerProfile.FAST_RESPONSE),
+        selectedProfile = selectedProfile,
+        onSettingsChanged = onSettingsChanged,
+        showCustom = true,
+    )
+
+    SettingsSlider(
+        label = stringResource(R.string.microphone_sensitivity),
+        help = stringResource(R.string.microphone_sensitivity_help),
+        valueText = stringResource(R.string.sensitivity_value, settings.sensitivity.value),
+        value = settings.sensitivity.value,
+        range = DetectionSensitivity.MIN_VALUE..DetectionSensitivity.MAX_VALUE,
+        onValueChanged = { onSettingsChanged(settings.copy(sensitivity = DetectionSensitivity(it))) },
+    )
+
+    Text(stringResource(R.string.response), style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.response_help), style = MaterialTheme.typography.bodyMedium)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        ResponseMode.entries.forEach { response ->
+            FilterChip(
+                selected = settings.response == response,
+                onClick = { onSettingsChanged(settings.copy(response = response)) },
+                label = { Text(responseName(response)) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+
+    SettingsSlider(
+        label = stringResource(R.string.needle_stability),
+        help = stringResource(R.string.needle_stability_help),
+        valueText = stringResource(R.string.percent_value, settings.needleStability),
+        value = settings.needleStability,
+        range = 0..100,
+        onValueChanged = { onSettingsChanged(settings.copy(needleStability = it)) },
+    )
+
+    OutlinedButton(
+        onClick = { advancedExpanded = !advancedExpanded },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(stringResource(R.string.advanced_audio))
+    }
+    if (advancedExpanded) {
+        AdvancedAudioSettings(state, onSettingsChanged)
+    }
+    OutlinedButton(
+        onClick = { onSettingsChanged(TunerProfile.BALANCED.settings) },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(stringResource(R.string.reset_audio_settings))
+    }
+}
+
+@Composable
+private fun ProfileRow(
+    profiles: List<TunerProfile>,
+    selectedProfile: TunerProfile?,
+    onSettingsChanged: (TunerAudioSettings) -> Unit,
+    showCustom: Boolean = false,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        profiles.forEach { profile ->
+            FilterChip(
+                selected = selectedProfile == profile,
+                onClick = { onSettingsChanged(profile.settings) },
+                label = { Text(profileName(profile)) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+        if (showCustom) {
+            FilterChip(
+                selected = selectedProfile == null,
+                onClick = {},
+                enabled = false,
+                label = { Text(stringResource(R.string.profile_custom)) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AdvancedAudioSettings(
+    state: TunerUiState,
+    onSettingsChanged: (TunerAudioSettings) -> Unit,
+) {
+    val settings = state.audioSettings
+    SettingsSlider(
+        label = stringResource(R.string.noise_rejection),
+        help = stringResource(R.string.noise_rejection_help),
+        valueText = stringResource(R.string.noise_rejection_value, settings.noiseRejection),
+        value = settings.noiseRejection,
+        range = 0..100,
+        onValueChanged = { onSettingsChanged(settings.copy(noiseRejection = it)) },
+    )
+    SettingsSlider(
+        label = stringResource(R.string.harmonic_protection),
+        help = stringResource(R.string.harmonic_protection_help),
+        valueText = stringResource(R.string.harmonic_protection_value, settings.harmonicProtection),
+        value = settings.harmonicProtection,
+        range = 0..100,
+        onValueChanged = { onSettingsChanged(settings.copy(harmonicProtection = it)) },
+    )
+    SettingsSlider(
+        label = stringResource(R.string.in_tune_tolerance),
+        help = stringResource(R.string.in_tune_tolerance_help),
+        valueText = pluralStringResource(
+            R.plurals.in_tune_tolerance_value,
+            settings.inTuneCents,
+            settings.inTuneCents,
+        ),
+        value = settings.inTuneCents,
+        range = 1..10,
+        onValueChanged = { onSettingsChanged(settings.copy(inTuneCents = it)) },
+    )
+    SettingsSlider(
+        label = stringResource(R.string.confirmation_time),
+        help = stringResource(R.string.confirmation_time_help),
+        valueText = stringResource(R.string.confirmation_time_value, settings.confirmationMillis),
+        value = settings.confirmationMillis.toInt(),
+        range = 100..1_000,
+        step = 50,
+        onValueChanged = { onSettingsChanged(settings.copy(confirmationMillis = it.toLong())) },
+    )
+    SettingsSlider(
+        label = stringResource(R.string.reading_hold),
+        help = stringResource(R.string.reading_hold_help),
+        valueText = stringResource(R.string.reading_hold_value, settings.readingHoldMillis),
+        value = settings.readingHoldMillis.toInt(),
+        range = 0..1_000,
+        step = 50,
+        onValueChanged = { onSettingsChanged(settings.copy(readingHoldMillis = it.toLong())) },
+    )
+
+    Text(stringResource(R.string.audio_input), style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.audio_input_help), style = MaterialTheme.typography.bodyMedium)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        AudioInputSource.entries.forEach { source ->
+            FilterChip(
+                selected = settings.inputSource == source,
+                onClick = { onSettingsChanged(settings.copy(inputSource = source)) },
+                enabled = source != AudioInputSource.RAW || state.audioInputCapabilities.rawSupported,
+                label = { Text(inputSourceName(source)) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+    if (!state.audioInputCapabilities.rawSupported) {
+        Text(stringResource(R.string.raw_input_unavailable), style = MaterialTheme.typography.bodyMedium)
+    }
+    Text(
+        stringResource(
+            R.string.active_audio_input,
+            state.audioInputCapabilities.activeSource?.let { inputSourceName(it) }
+                ?: stringResource(R.string.audio_input_not_listening),
+        ),
+        style = MaterialTheme.typography.bodyMedium,
+    )
+}
+
+@Composable
+private fun SettingsSlider(
+    label: String,
+    help: String,
+    valueText: String,
+    value: Int,
+    range: IntRange,
+    step: Int = 1,
+    onValueChanged: (Int) -> Unit,
+) {
+    Text(label, style = MaterialTheme.typography.titleMedium)
+    Text(help, style = MaterialTheme.typography.bodyMedium)
+    Text(valueText)
+    Slider(
+        value = value.toFloat(),
+        onValueChange = { raw ->
+            val stepped = (((raw - range.first) / step).roundToInt() * step + range.first).coerceIn(range)
+            onValueChanged(stepped)
+        },
+        valueRange = range.first.toFloat()..range.last.toFloat(),
+        steps = (range.last - range.first) / step - 1,
+        modifier = Modifier.semantics { contentDescription = label },
+    )
+}
+
+@Composable
+private fun profileName(profile: TunerProfile): String = stringResource(
+    when (profile) {
+        TunerProfile.BALANCED -> R.string.profile_balanced
+        TunerProfile.QUIET_ROOM -> R.string.profile_quiet_room
+        TunerProfile.NOISY_ROOM -> R.string.profile_noisy_room
+        TunerProfile.FAST_RESPONSE -> R.string.profile_fast_response
+    },
+)
+
+@Composable
+private fun responseName(response: ResponseMode): String = stringResource(
+    when (response) {
+        ResponseMode.FAST -> R.string.response_fast
+        ResponseMode.BALANCED -> R.string.profile_balanced
+        ResponseMode.STABLE -> R.string.response_stable
+    },
+)
+
+@Composable
+private fun inputSourceName(source: AudioInputSource): String = stringResource(
+    when (source) {
+        AudioInputSource.AUTO -> R.string.audio_input_auto
+        AudioInputSource.RAW -> R.string.audio_input_raw
+        AudioInputSource.COMPATIBLE -> R.string.audio_input_compatible
+    },
+)
+
+@Composable
+private fun themeModeName(mode: ThemeMode): String = stringResource(
+    when (mode) {
+        ThemeMode.SYSTEM -> R.string.theme_system
+        ThemeMode.LIGHT -> R.string.theme_light
+        ThemeMode.DARK -> R.string.theme_dark
+    },
+)
+
 private fun formatPitch(hertz: Double): String = String.format(Locale.US, "%.1f", hertz)
 
 private const val NORMAL_REFERENCE_MIN = 430.0
 private const val NORMAL_REFERENCE_MAX = 450.0
 private const val REFERENCE_SLIDER_STEPS = 699
 private const val MAX_PITCH_INPUT_LENGTH = 6
-private const val SENSITIVITY_SLIDER_STEPS = 99

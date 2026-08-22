@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TuningCatalogTest {
@@ -46,6 +47,10 @@ class TuningCatalogTest {
 
         expected.forEach { (id, spec) ->
             assertEquals(notes(spec), assertNotNull(TuningCatalog.byId(id)).notesLowToHigh)
+        }
+        assertFalse(HeadstockLayout.entries.any { it.name == "INLINE_6" })
+        TuningCatalog.presets.filter { it.notesLowToHigh.size == 6 }.forEach { preset ->
+            assertEquals(setOf(HeadstockLayout.SPLIT_3_3), preset.layouts)
         }
     }
 

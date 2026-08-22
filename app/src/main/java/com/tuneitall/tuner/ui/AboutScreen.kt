@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import com.tuneitall.tuner.R
 fun AboutScreen(onBack: () -> Unit) {
     var showPrivacy by remember { mutableStateOf(false) }
     var showLicense by remember { mutableStateOf(false) }
+    val textButtonColors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
 
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -41,11 +43,19 @@ fun AboutScreen(onBack: () -> Unit) {
         Text(stringResource(R.string.copyright_notice))
         Text(stringResource(R.string.offline_privacy_summary), style = MaterialTheme.typography.bodyLarge)
         Text(stringResource(R.string.microphone_about), style = MaterialTheme.typography.bodyMedium)
-        TextButton(onClick = { showPrivacy = !showPrivacy }, modifier = Modifier.fillMaxWidth()) {
+        TextButton(
+            onClick = { showPrivacy = !showPrivacy },
+            colors = textButtonColors,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Text(stringResource(R.string.privacy_policy))
         }
         if (showPrivacy) Text(stringResource(R.string.privacy_policy_full))
-        TextButton(onClick = { showLicense = !showLicense }, modifier = Modifier.fillMaxWidth()) {
+        TextButton(
+            onClick = { showLicense = !showLicense },
+            colors = textButtonColors,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Text(stringResource(R.string.license))
         }
         if (showLicense) Text(stringResource(R.string.license_summary))

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
@@ -18,8 +19,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -29,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.audio.AudioInputError
@@ -82,10 +87,11 @@ fun TunerScreen(
 
         ModeSelector(selected = state.mode, onSelected = onModeSelected)
 
+        TunerStatusRow(state)
+
         DetectedNote(
             note = currentNote,
             notation = state.notation,
-            inTune = state.reading?.inTune == true,
         )
 
         CentsRail(
@@ -97,38 +103,12 @@ fun TunerScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                text = state.reading?.let { stringResource(R.string.frequency_value, it.hertz) }
-                    ?: stringResource(R.string.no_frequency),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = state.reading?.let { stringResource(R.string.cents_value, it.cents) }
-                    ?: stringResource(R.string.no_cents),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-        }
-
-        if (state.referencePitch.hertz != ReferencePitch.DEFAULT_HERTZ) {
-            Text(
-                text = stringResource(R.string.reference_pitch_value, state.referencePitch.hertz),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelLarge,
-            )
-        }
-
         MicrophoneStatus(state, onOpenApplicationSettings)
 
         if (state.mode != TunerMode.CHROMATIC) {
             Text(
                 text = stringResource(R.string.tap_string_to_hear),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodySmall,
             )
 
@@ -146,9 +126,60 @@ fun TunerScreen(
 }
 
 @Composable
-private fun DetectedNote(note: com.tuneitall.tuner.model.MidiNote?, notation: NoteNotation, inTune: Boolean) {
+private fun TunerStatusRow(state: TunerUiState) {
+    val modeText = stringResource(
+        when (state.mode) {
+            TunerMode.AUTO -> R.string.mode_auto
+            TunerMode.MANUAL -> R.string.mode_manual
+            TunerMode.CHROMATIC -> R.string.mode_chromatic
+        },
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("tuner_status"),
+    ) {
+        Text(
+            text = if (state.mode == TunerMode.CHROMATIC) {
+                stringResource(R.string.chromatic_tuner)
+            } else {
+                state.tuning.name
+            },
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier
+                .weight(1.2f)
+                .testTag("tuner_status_tuning"),
+        )
+        Text(
+            text = modeText,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier
+                .weight(0.8f)
+                .testTag("tuner_status_mode"),
+        )
+        Text(
+            text = stringResource(R.string.reference_pitch_value, state.referencePitch.hertz),
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            textAlign = TextAlign.End,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier
+                .weight(1.3f)
+                .testTag("tuner_status_reference"),
+        )
+    }
+}
+
+@Composable
+private fun DetectedNote(note: com.tuneitall.tuner.model.MidiNote?, notation: NoteNotation) {
     val parts = note?.let { noteParts(it, notation) }
-    val color = if (inTune) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground
+    val color = MaterialTheme.colorScheme.onBackground
     val description = note?.let { formatNote(it, notation) } ?: "—"
     Box(
         contentAlignment = Alignment.Center,
@@ -165,30 +196,38 @@ private fun DetectedNote(note: com.tuneitall.tuner.model.MidiNote?, notation: No
                 color = color,
             )
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                Text(
-                    text = parts.letter,
-                    textAlign = TextAlign.End,
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 82.sp, lineHeight = 88.sp),
-                    fontWeight = FontWeight.SemiBold,
-                    color = color,
-                    modifier = Modifier.width(72.dp),
-                )
-                Text(
-                    text = parts.accidental,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = color,
-                    modifier = Modifier.width(40.dp),
-                )
-                Text(
-                    text = parts.octave,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = color,
-                    modifier = Modifier.width(32.dp),
-                )
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                    Text(
+                        text = parts.letter,
+                        textAlign = TextAlign.End,
+                        style = MaterialTheme.typography.displayLarge.copy(fontSize = 82.sp, lineHeight = 88.sp),
+                        fontWeight = FontWeight.SemiBold,
+                        color = color,
+                        modifier = Modifier
+                            .width(72.dp)
+                            .testTag("detected_note_letter"),
+                    )
+                    Text(
+                        text = parts.accidental,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = color,
+                        modifier = Modifier
+                            .width(24.dp)
+                            .testTag("detected_note_accidental"),
+                    )
+                    Text(
+                        text = parts.octave,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = color,
+                        modifier = Modifier
+                            .width(32.dp)
+                            .testTag("detected_note_octave"),
+                    )
+                }
             }
         }
     }
@@ -209,12 +248,7 @@ private fun TunerTopBar(
         modifier = Modifier.fillMaxWidth(),
     ) {
         if (state.mode == TunerMode.CHROMATIC) {
-            Text(
-                text = stringResource(R.string.chromatic_tuner),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f),
-            )
+            Box(modifier = Modifier.weight(1f))
         } else {
             TextButton(
                 onClick = onOpenLibrary,
@@ -243,11 +277,25 @@ private fun TunerTopBar(
     }
 }
 
+internal data class ResolvedChipColors(
+    val container: Color,
+    val content: Color,
+)
+
+@Composable
+internal fun modeSelectorSelectedColors(): ResolvedChipColors = ResolvedChipColors(
+    container = MaterialTheme.colorScheme.primary,
+    content = MaterialTheme.colorScheme.onPrimary,
+)
+
 @Composable
 private fun ModeSelector(selected: TunerMode, onSelected: (TunerMode) -> Unit) {
+    val selectedColors = modeSelectorSelectedColors()
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("mode_selector"),
     ) {
         TunerMode.entries.forEach { mode ->
             FilterChip(
@@ -267,10 +315,12 @@ private fun ModeSelector(selected: TunerMode, onSelected: (TunerMode) -> Unit) {
                     )
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.onBackground,
-                    selectedLabelColor = MaterialTheme.colorScheme.background,
+                    selectedContainerColor = selectedColors.container,
+                    selectedLabelColor = selectedColors.content,
                 ),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp),
             )
         }
     }
@@ -281,7 +331,12 @@ private fun MicrophoneStatus(state: TunerUiState, onOpenApplicationSettings: () 
     when {
         state.microphonePermanentlyDenied -> {
             Text(stringResource(R.string.microphone_explanation), style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = onOpenApplicationSettings) { Text(stringResource(R.string.open_settings)) }
+            TextButton(
+                onClick = onOpenApplicationSettings,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+            ) {
+                Text(stringResource(R.string.open_settings))
+            }
         }
 
         !state.microphoneGranted -> Text(

@@ -1,5 +1,8 @@
 package com.tuneitall.tuner.audio
 
+import android.media.MediaRecorder
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.PI
@@ -7,11 +10,124 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class AudioPipelineTest {
+    @Test
+    fun `audio capabilities can report no active source`() {
+        assertEquals(
+            null,
+            AudioInputCapabilities(rawSupported = false, activeSource = null).activeSource,
+        )
+    }
+
+    @Test
+    fun `released worker joins and clears exact ownership`() {
+        val ownership = AudioWorkerOwnership()
+        val started = CountDownLatch(1)
+        val interrupted = CountDownLatch(1)
+        val worker = Thread {
+            try {
+                started.countDown()
+                try {
+                    CountDownLatch(1).await()
+                } catch (_: InterruptedException) {
+                    interrupted.countDown()
+                }
+            } finally {
+                ownership.release(Thread.currentThread())
+            }
+        }
+
+        assertTrue(ownership.start(worker))
+        assertTrue(started.await(1, TimeUnit.SECONDS))
+
+        assertTrue(ownership.stopAndJoin(1_000))
+        assertTrue(interrupted.await(1, TimeUnit.SECONDS))
+        assertFalse(worker.isAlive)
+        assertTrue(ownership.available)
+    }
+
+    @Test
+    fun `timed out live worker remains owned until it exits`() {
+        val ownership = AudioWorkerOwnership()
+        val started = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val worker = Thread {
+            try {
+                started.countDown()
+                while (true) {
+                    try {
+                        release.await()
+                        break
+                    } catch (_: InterruptedException) {
+                        // Stay alive until the test releases this worker.
+                    }
+                }
+            } finally {
+                ownership.release(Thread.currentThread())
+            }
+        }
+
+        assertTrue(ownership.start(worker))
+        assertTrue(started.await(1, TimeUnit.SECONDS))
+
+        var secondClaimed = false
+        try {
+            assertFalse(ownership.stopAndJoin(10))
+            assertFalse(ownership.available)
+            assertFalse(ownership.start(Thread {}) { secondClaimed = true })
+            assertFalse(secondClaimed)
+        } finally {
+            release.countDown()
+            worker.join(1_000)
+        }
+        assertFalse(worker.isAlive)
+        assertTrue(ownership.available)
+    }
+
+    @Test
+    fun `audio source resolution honors auto raw and compatible modes`() {
+        assertEquals(
+            MediaRecorder.AudioSource.UNPROCESSED,
+            resolveAudioSource(AudioInputSource.AUTO, rawSupported = true),
+        )
+        assertEquals(
+            MediaRecorder.AudioSource.VOICE_RECOGNITION,
+            resolveAudioSource(AudioInputSource.AUTO, rawSupported = false),
+        )
+        assertEquals(
+            MediaRecorder.AudioSource.UNPROCESSED,
+            resolveAudioSource(AudioInputSource.RAW, rawSupported = true),
+        )
+        assertEquals(
+            MediaRecorder.AudioSource.VOICE_RECOGNITION,
+            resolveAudioSource(AudioInputSource.COMPATIBLE, rawSupported = true),
+        )
+        assertFailsWith<IllegalArgumentException> {
+            resolveAudioSource(AudioInputSource.RAW, rawSupported = false)
+        }
+    }
+
+    @Test
+    fun `raw capture has one compatible fallback and compatible has none`() {
+        assertEquals(
+            listOf(MediaRecorder.AudioSource.UNPROCESSED, MediaRecorder.AudioSource.VOICE_RECOGNITION),
+            audioSourceAttempts(AudioInputSource.AUTO, rawSupported = true).toList(),
+        )
+        assertEquals(
+            listOf(MediaRecorder.AudioSource.VOICE_RECOGNITION),
+            audioSourceAttempts(AudioInputSource.RAW, rawSupported = false).toList(),
+        )
+        assertEquals(
+            listOf(MediaRecorder.AudioSource.VOICE_RECOGNITION),
+            audioSourceAttempts(AudioInputSource.COMPATIBLE, rawSupported = true).toList(),
+        )
+    }
+
     @Test
     fun `window assembler emits overlapping windows at a bounded hop`() {
         val snapshots = mutableListOf<List<Short>>()
