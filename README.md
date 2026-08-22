@@ -13,22 +13,26 @@ TuneItAll is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing release `0.1.0-alpha.2`. TuneItAll is not published on
-Google Play yet.
+Status: public testing prerelease `0.2.0-alpha.1`. TuneItAll is not published
+on Google Play.
 
 ## Download
 
-[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.1.0-alpha.2/TuneItAll-v0.1.0-alpha.2-debug.apk)
+[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.2.0-alpha.1/TuneItAll-v0.2.0-alpha.1-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.1.0-alpha.2).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.2.0-alpha.1).
 
 ## Features
 
 - Auto, Manual, and Chromatic modes.
+- A clean-room, pYIN-derived streaming tracker with multi-candidate YIN frames,
+  an adaptive noise floor, and bounded online temporal tracking.
 - Live frequency, signed cents, flat/sharp direction, and a −50…+50 cent rail.
+- A foreground-only mechanical metronome from 20 to 400 BPM with meter,
+  subdivision, accent, sound, volume, mute, and count-in controls.
 - Guitar: 6, 7, 8, and 9 strings with inline and split headstocks.
 - Four-string bass and ukulele.
 - 38 built-in tunings, including lowered standard, Drop D through Drop F,
@@ -36,8 +40,8 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.1.0-alp
 - Searchable library, favorites, last-used state, and up to 100 custom tunings.
 - Adjustable A4 reference from 410.0 to 480.0 Hz in 0.1 Hz steps; 440.0 Hz is
   the safe default.
-- Adjustable microphone sensitivity from 0 to 100; 50 exactly preserves the
-  tested default detector gates.
+- Adjustable microphone sensitivity from 0 to 100; 100 is the quiet-instrument
+  default, with balanced, quiet-room, noisy-room, and fast-response profiles.
 - Tap any string to switch to Manual mode and hear its generated reference tone.
 - One confirmation chime after the note stays in tune for 250 ms. It respects
   Silent/DND, is excluded from pitch detection, and never creates a notification
@@ -45,6 +49,8 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.1.0-alp
 - Sharps or flats notation and generated reference audio with no bundled samples.
 - Data-driven Compose headstocks. Peg count and note order come from the same
   typed tuning model used by the tuner engine.
+- A simple Light/Dark Compose interface with a physical 3+3 guitar headstock.
+  Chords and Trainer remain visibly disabled and are not part of Core.
 
 ## Screenshots
 
@@ -57,8 +63,11 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.1.0-alp
 One native Kotlin application module:
 
 - `AudioRecord` mono PCM16 input with unprocessed/voice-recognition selection.
-- Clean-room YIN pitch detection with confidence and RMS rejection.
-- Equal-temperament note math, median stabilization, and target hysteresis.
+- A clean-room, pYIN-derived streaming path: multi-candidate YIN analysis,
+  adaptive noise rejection, and a bounded online pitch tracker.
+- Equal-temperament note math, target hysteresis, and needle-only visual
+  smoothing.
+- One continuous mono PCM16 `AudioTrack` for foreground-only metronome playback.
 - Harmonic-rich one-shot reference tones with click-free switching.
 - Notification-sonification confirmation audio with a bounded microphone input gate.
 - Jetpack Compose UI with one immutable tuner state.
@@ -67,6 +76,13 @@ One native Kotlin application module:
 The manifest requests only `android.permission.RECORD_AUDIO`. Microphone samples
 are processed transiently in memory on-device and are never recorded, retained,
 shared, or transmitted.
+
+On the dedicated API 35 acceptance emulator, 500 pre-generated tuner frames had
+an 8.67 ms p95 processing time against the 42.7 ms hop budget, with no backlog.
+The real metronome player ran at 137 BPM for five minutes with zero reported
+`AudioTrack` underruns and no app crash. The target Samsung `SM-S938B` was not
+available for this acceptance run, so quiet/room-noise behavior and acoustic
+sound quality still require physical-device listening before a broader release.
 
 ## Build
 
@@ -110,7 +126,7 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-Pre-release tags such as `v0.1.0-alpha.1` build a verified, debug-signed APK and
+Pre-release tags such as `v0.2.0-alpha.1` build a verified, debug-signed APK and
 publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
 signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.
@@ -121,6 +137,8 @@ and [security policy](SECURITY.md).
 
 - Feature graphic: `fastlane/metadata/android/en-US/images/featureGraphic.png`
 - Play icon: `fastlane/metadata/android/en-US/images/icon.png`
+- Regenerate the Play icon with `java tools/RenderStoreIcon.java` from the
+  repository root.
 - English/Czech listings: `docs/store/`
 - Privacy policies: `docs/privacy/`
 - Data Safety record and release checklist: `docs/store/`

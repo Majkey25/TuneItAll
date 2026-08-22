@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0-alpha.1 — 2026-08-22
+
+- Tune quieter instruments with a pYIN-derived streaming tracker, adaptive
+  noise floor, steadier needle, and configurable response, stability, noise,
+  harmonic, tolerance, timing, and input-source controls.
+- Practice with a foreground-only mechanical metronome from 20 to 400 BPM,
+  including meter, subdivision, accent, sound, volume, mute, count-in, and tap
+  tempo.
+- Use the simplified Light/Dark interface with a recognizable mechanical
+  metronome and a physically mapped 3+3 six-string guitar headstock.
+- Keep tuning fully offline and ad-free. Chords and Trainer remain unavailable
+  in this Core prerelease.
+
 ## 0.1.0-alpha.3 — 2026-08-12
 
 - Detect quieter instrument notes with a higher default microphone sensitivity.

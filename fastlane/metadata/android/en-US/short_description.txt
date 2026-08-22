@@ -1,1 +1,1 @@
-Fast offline tuner for guitar, bass and ukulele. No ads or tracking.
+Offline tuner and mechanical metronome. No ads or tracking.

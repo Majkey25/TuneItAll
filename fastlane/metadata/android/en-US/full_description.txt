@@ -4,7 +4,7 @@ Tune guitar, bass, or ukulele automatically, select a string manually, or use th
 
 Features:
 • Guitar support for 6, 7, 8, and 9 strings
-• Inline, split, and extended-range headstock layouts
+• Physical 3+3 headstock for six-string guitar and extended-range layouts for 7 to 9 strings
 • Four-string bass and ukulele
 • Standard, lowered, drop, open, and DADGAD presets
 • Search, favorites, and custom tunings
@@ -12,6 +12,10 @@ Features:
 • Sharps or flats note naming
 • Click-free reference tone when a string is tapped
 • Stable in-tune confirmation sound
-• Adjustable microphone sensitivity with a safe tested default
+• Adjustable tuner profiles, microphone sensitivity, response, stability, noise rejection, harmonic protection, tolerance, timing, and audio input
+• Mechanical metronome from 20 to 400 BPM with meter, subdivision, accent, sound, volume, mute, and count-in controls
+• Simple Light and Dark interface
+
+Chords and Trainer are not available in this Core release.
 
 TuneItAll has no ads, account, analytics, tracking, or internet permission. Microphone audio is analyzed transiently on-device and never recorded, retained, shared, or transmitted.
