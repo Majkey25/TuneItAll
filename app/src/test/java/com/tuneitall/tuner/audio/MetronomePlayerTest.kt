@@ -276,6 +276,7 @@ class MetronomePlayerTest {
 
         output.allowWrite.countDown()
         assertTrue(output.released.await(1, TimeUnit.SECONDS))
+        assertTrue(waitUntil { !player.status.running })
         assertFalse(player.status.running)
         assertEquals(1, output.releaseCount.get())
     }
@@ -328,10 +329,12 @@ class MetronomePlayerTest {
 
     @Test
     fun `worker failure is reported and releases output once`() {
-        val output = FakeOutput(failWriteCall = 2)
+        val output = FakeOutput(blockWriteCall = 2, failWriteCall = 2)
         val player = testPlayer(output)
         player.start(MetronomeSettings())
 
+        assertTrue(output.writeBlocked.await(1, TimeUnit.SECONDS))
+        output.allowWrite.countDown()
         assertTrue(output.released.await(1, TimeUnit.SECONDS))
         assertNotNull(player.status.failure)
         assertEquals(MetronomeStopResult.FAILED, player.stop())
