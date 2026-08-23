@@ -14,8 +14,11 @@ Funkce:
 • Zvukové potvrzení stabilního naladění
 • Nastavitelné profily ladičky, citlivost mikrofonu, odezva, stabilita, potlačení hluku a harmonických skoků, tolerance, časování a vstup zvuku
 • Mechanický metronom od 20 do 400 BPM s nastavením taktu, dělení, přízvuku, zvuku, hlasitosti, ztlumení a odpočtu
+• Diagramy durových, mollových a dominantních septakordů podle ladění
+• Experimentální offline časová osa akordů z vybraného zvukového souboru, přehrávání a transpozice
+• Učení a kvíz akordů s generovaným zvukem a místním skóre
 • Jednoduché světlé a tmavé rozhraní
 
-Akordy a trénink nejsou v této verzi Core dostupné.
-
 TuneItAll neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává, neuchovává, nesdílí ani neodesílá.
+
+Vybranou písničku dekóduje pouze v zařízení a nikdy ji nekopíruje ani neodesílá.

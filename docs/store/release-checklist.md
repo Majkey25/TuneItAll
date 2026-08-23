@@ -16,6 +16,9 @@
 - [ ] Test microphone allow, deny, permanent deny, background, and resume flows.
 - [ ] Test clean signals, low extended-range notes, silence/noise, and A4 444.0 Hz.
 - [ ] Inspect 6/7/8/9-string, bass, and ukulele headstocks on a real device.
+- [ ] Test local MP3, AAC, FLAC, and WAV selection, decoding, chord timeline,
+      playback, seek, transposition, cancellation, and unsupported-file errors.
+- [ ] Confirm song analysis never adds storage or network permissions.
 - [ ] Supply the private upload key outside Git and build a signed release AAB.
 - [ ] Enrol/configure Play App Signing and retain the upload-key recovery plan.
 - [ ] Upload 512×512 icon, 1024×500 feature graphic, and real device screenshots.

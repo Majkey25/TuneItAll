@@ -21,7 +21,16 @@ class ReferenceTonePlayer : AutoCloseable {
     @Synchronized
     fun play(hertz: Double) {
         check(!closed) { "Reference tone player is closed" }
-        val samples = createToneBuffer(hertz)
+        prepareAndPlay(createToneBuffer(hertz))
+    }
+
+    @Synchronized
+    fun playChord(hertz: DoubleArray) {
+        check(!closed) { "Reference tone player is closed" }
+        prepareAndPlay(createChordToneBuffer(hertz))
+    }
+
+    private fun prepareAndPlay(samples: ShortArray) {
         val nextTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -166,6 +175,19 @@ internal fun createToneBuffer(
     }
 }
 
+internal fun createChordToneBuffer(hertz: DoubleArray): ShortArray {
+    require(hertz.size in 2..9) { "A chord tone needs between two and nine notes" }
+    require(hertz.distinct().size == hertz.size) { "Chord tone frequencies must be unique" }
+    val tones = hertz.map(::createToneBuffer)
+    val mixed = IntArray(tones.first().size)
+    tones.forEach { tone -> tone.indices.forEach { mixed[it] += tone[it].toInt() } }
+    val peak = mixed.maxOf { kotlin.math.abs(it) }
+    val scale = if (peak > CHORD_MAX_PEAK) CHORD_MAX_PEAK.toDouble() / peak else 1.0
+    return ShortArray(mixed.size) { index ->
+        (mixed[index] * scale).roundToInt().coerceIn(-CHORD_MAX_PEAK, CHORD_MAX_PEAK).toShort()
+    }
+}
+
 private const val TONE_SAMPLE_RATE = 48_000
 private const val TONE_DURATION_SECONDS = 1
 private const val TONE_ATTACK_MILLISECONDS = 5
@@ -177,6 +199,7 @@ private const val TONE_AMPLITUDE = 0.92
 private val HARMONIC_AMPLITUDES = doubleArrayOf(1.0, 0.55, 0.32, 0.20, 0.13, 0.08)
 private const val HARMONIC_NORMALIZATION = 1.70
 private const val MAX_ACTIVE_TRACKS = 4
+private const val CHORD_MAX_PEAK = 29_000
 private val TONE_SWITCH_FADE = ToneSwitchFade(
     durationMillis = 45L,
     times = listOf(0f, 1f),

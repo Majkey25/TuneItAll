@@ -13,17 +13,17 @@ TuneItAll is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing prerelease `0.2.0-alpha.1`. TuneItAll is not published
+Status: public testing prerelease `0.3.0-alpha.1`. TuneItAll is not published
 on Google Play.
 
 ## Download
 
-[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.2.0-alpha.1/TuneItAll-v0.2.0-alpha.1-debug.apk)
+[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.1/TuneItAll-v0.3.0-alpha.1-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.2.0-alpha.1).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.1).
 
 ## Features
 
@@ -33,6 +33,12 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.2.0-alp
 - Live frequency, signed cents, flat/sharp direction, and a −50…+50 cent rail.
 - A foreground-only mechanical metronome from 20 to 400 BPM with meter,
   subdivision, accent, sound, volume, mute, and count-in controls.
+- Tuning-aware major, minor, and dominant-seventh chord diagrams for built-in
+  and custom tunings.
+- Local audio-file chord analysis with synchronized playback, a smoothed chord
+  timeline, tuning selection, and ±12-semitone transposition. The detector is
+  experimental and can mislabel dense mixes, inversions, or extended chords.
+- Chord learning and quiz modes with generated chord audio and local scoring.
 - Guitar: 6, 7, 8, and 9 strings with inline and split headstocks.
 - Four-string bass and ukulele.
 - 38 built-in tunings, including lowered standard, Drop D through Drop F,
@@ -49,14 +55,18 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.2.0-alp
 - Sharps or flats notation and generated reference audio with no bundled samples.
 - Data-driven Compose headstocks. Peg count and note order come from the same
   typed tuning model used by the tuner engine.
-- A simple Light/Dark Compose interface with a physical 3+3 guitar headstock.
-  Chords and Trainer remain visibly disabled and are not part of Core.
+- A simple Light/Dark Compose interface with a physical 3+3 guitar headstock,
+  one global Settings destination, and a quick metronome rhythm panel.
 
 ## Screenshots
 
-| Preset tuner | Chromatic tuner |
-| --- | --- |
-| ![TuneItAll preset tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/1_tuner.png) | ![TuneItAll chromatic tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/4_chromatic.png) |
+| Preset tuner | Mechanical metronome | Chord library |
+| --- | --- | --- |
+| ![TuneItAll preset tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/1_tuner.png) | ![TuneItAll metronome](fastlane/metadata/android/en-US/images/phoneScreenshots/5_metronome.png) | ![TuneItAll chord library](fastlane/metadata/android/en-US/images/phoneScreenshots/6_chords.png) |
+
+| Chromatic tuner | Global settings | Chord trainer |
+| --- | --- | --- |
+| ![TuneItAll chromatic tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/4_chromatic.png) | ![TuneItAll settings](fastlane/metadata/android/en-US/images/phoneScreenshots/3_settings.png) | ![TuneItAll trainer](fastlane/metadata/android/en-US/images/phoneScreenshots/7_trainer.png) |
 
 ## Architecture
 
@@ -68,6 +78,9 @@ One native Kotlin application module:
 - Equal-temperament note math, target hysteresis, and needle-only visual
   smoothing.
 - One continuous mono PCM16 `AudioTrack` for foreground-only metronome playback.
+- Native `MediaExtractor`/`MediaCodec` decoding for user-selected local audio,
+  followed by bounded STFT chroma extraction, template matching, and temporal
+  smoothing. No audio file is copied, uploaded, or retained by TuneItAll.
 - Harmonic-rich one-shot reference tones with click-free switching.
 - Notification-sonification confirmation audio with a bounded microphone input gate.
 - Jetpack Compose UI with one immutable tuner state.
@@ -75,12 +88,16 @@ One native Kotlin application module:
 
 The manifest requests only `android.permission.RECORD_AUDIO`. Microphone samples
 are processed transiently in memory on-device and are never recorded, retained,
-shared, or transmitted.
+shared, or transmitted. Song files are opened through Android's system document
+picker, which grants access only to the file selected by the user.
 
 On the dedicated API 35 acceptance emulator, 500 pre-generated tuner frames had
 an 8.67 ms p95 processing time against the 42.7 ms hop budget, with no backlog.
 The real metronome player ran at 137 BPM for five minutes with zero reported
-`AudioTrack` underruns and no app crash. The target Samsung `SM-S938B` was not
+`AudioTrack` underruns. A separate 400 BPM run kept one output session with zero
+underruns before and after a confirmed 400 → 137 BPM edit. A generated four-second
+C-major WAV completed picker, decoding, recognition, timeline, playback, and
+position-sync checks on the API 35 emulator. The target Samsung `SM-S938B` was not
 available for this acceptance run, so quiet/room-noise behavior and acoustic
 sound quality still require physical-device listening before a broader release.
 
@@ -126,7 +143,7 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-Pre-release tags such as `v0.2.0-alpha.1` build a verified, debug-signed APK and
+Pre-release tags such as `v0.3.0-alpha.1` build a verified, debug-signed APK and
 publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
 signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.

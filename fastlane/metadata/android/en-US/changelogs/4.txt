@@ -1,0 +1,3 @@
+Added tuning-aware chord diagrams, an offline song chord timeline with playback
+and transposition, and a chord trainer. Improved metronome stability, animation,
+settings navigation, guitar headstock, and mechanical metronome graphics.

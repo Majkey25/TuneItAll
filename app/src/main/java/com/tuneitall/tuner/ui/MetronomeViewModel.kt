@@ -37,7 +37,6 @@ data class MetronomeUiState(
     val playing: Boolean = false,
     val stopping: Boolean = false,
     val muted: Boolean = false,
-    val phase: Double = 0.0,
     val error: MetronomeError? = null,
 )
 
@@ -60,7 +59,7 @@ class MetronomeViewModel internal constructor(
     private var playbackGeneration = 0L
     private var startInFlightGeneration: Long? = null
     private var startCancellation: AtomicBoolean? = null
-    private var phaseJob: Job? = null
+    private var playbackJob: Job? = null
     val uiState: StateFlow<MetronomeUiState> = mutableUiState.asStateFlow()
 
     fun startAsync() {
@@ -89,10 +88,10 @@ class MetronomeViewModel internal constructor(
             return@synchronized null
         }
         playbackGeneration++
-        phaseJob?.cancel()
-        phaseJob = null
+        playbackJob?.cancel()
+        playbackJob = null
         mutableUiState.update {
-            it.copy(starting = true, playing = false, stopping = false, phase = 0.0, error = null)
+            it.copy(starting = true, playing = false, stopping = false, error = null)
         }
         StartRequest(playbackGeneration, state.playbackSettings(), AtomicBoolean()).also {
             startInFlightGeneration = it.generation
@@ -116,7 +115,7 @@ class MetronomeViewModel internal constructor(
                 mutableUiState.update {
                     it.copy(starting = false, playing = true, stopping = false, error = null)
                 }
-                phaseJob = viewModelScope.launch { monitorPlayback(request.generation) }
+                playbackJob = viewModelScope.launch { monitorPlayback(request.generation) }
             } else {
                 val status = player.status
                 Log.e(TAG, "Metronome start failed; player=${status.failure}", error)
@@ -125,7 +124,6 @@ class MetronomeViewModel internal constructor(
                         starting = false,
                         playing = false,
                         stopping = status.stopping,
-                        phase = 0.0,
                         error = MetronomeError.OUTPUT_UNAVAILABLE,
                     )
                 }
@@ -150,10 +148,10 @@ class MetronomeViewModel internal constructor(
         }
         playbackGeneration++
         startCancellation?.set(true)
-        phaseJob?.cancel()
-        phaseJob = null
+        playbackJob?.cancel()
+        playbackJob = null
         mutableUiState.update {
-            it.copy(starting = false, playing = false, stopping = true, phase = 0.0, error = null)
+            it.copy(starting = false, playing = false, stopping = true, error = null)
         }
         playbackGeneration
     }
@@ -167,6 +165,8 @@ class MetronomeViewModel internal constructor(
     }
 
     fun onStop() = stopAsync()
+
+    fun phase(): Double = player.phase()
 
     fun setBpm(value: Int) = setSettings { it.copy(bpm = clampedBpm(value)) }
 
@@ -199,8 +199,8 @@ class MetronomeViewModel internal constructor(
         synchronized(lock) {
             playbackGeneration++
             startCancellation?.set(true)
-            phaseJob?.cancel()
-            phaseJob = null
+            playbackJob?.cancel()
+            playbackJob = null
         }
         player.requestStop()
         super.onCleared()
@@ -231,22 +231,20 @@ class MetronomeViewModel internal constructor(
                             starting = false,
                             playing = false,
                             stopping = false,
-                            phase = 0.0,
                             error = MetronomeError.PLAYBACK_STOPPED,
                         )
                     }
-                    phaseJob = null
+                    playbackJob = null
                     return
                 }
-                mutableUiState.update { it.copy(phase = player.phase()) }
             }
-            delay(PHASE_UPDATE_MILLIS)
+            delay(STATUS_POLL_MILLIS)
         }
     }
 
     private suspend fun monitorStop(generation: Long) {
         while (currentCoroutineContext().isActive) {
-            delay(PHASE_UPDATE_MILLIS)
+            delay(STATUS_POLL_MILLIS)
             if (synchronized(lock) { generation != playbackGeneration }) return
             if (!player.status.running) {
                 val result = player.stop()
@@ -265,9 +263,9 @@ class MetronomeViewModel internal constructor(
         when (result) {
             MetronomeStopResult.STOPPED -> {
                 mutableUiState.update {
-                    it.copy(starting = false, playing = false, stopping = false, phase = 0.0, error = null)
+                    it.copy(starting = false, playing = false, stopping = false, error = null)
                 }
-                phaseJob = null
+                playbackJob = null
             }
 
             MetronomeStopResult.FAILED -> {
@@ -277,11 +275,10 @@ class MetronomeViewModel internal constructor(
                         starting = false,
                         playing = false,
                         stopping = false,
-                        phase = 0.0,
                         error = MetronomeError.STOP_FAILED,
                     )
                 }
-                phaseJob = null
+                playbackJob = null
             }
 
             MetronomeStopResult.STOPPING -> {
@@ -290,7 +287,6 @@ class MetronomeViewModel internal constructor(
                         starting = false,
                         playing = false,
                         stopping = true,
-                        phase = 0.0,
                         error = null,
                     )
                 }
@@ -300,8 +296,8 @@ class MetronomeViewModel internal constructor(
     }
 
     private fun launchStopMonitorLocked(generation: Long) {
-        phaseJob?.cancel()
-        phaseJob = viewModelScope.launch { monitorStop(generation) }
+        playbackJob?.cancel()
+        playbackJob = viewModelScope.launch { monitorStop(generation) }
     }
 
     private fun MetronomeUiState.playbackSettings(): MetronomeSettings =
@@ -315,7 +311,7 @@ class MetronomeViewModel internal constructor(
 
     private companion object {
         const val TAG = "TuneItAll-Metronome"
-        const val PHASE_UPDATE_MILLIS = 16L
+        const val STATUS_POLL_MILLIS = 100L
     }
 }
 

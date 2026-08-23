@@ -1,6 +1,6 @@
 # Google Play Data Safety record
 
-Proposed answers for release `0.1.0`, based on the current manifest and runtime
+Proposed answers for release `0.3.0-alpha.1`, based on the current manifest and runtime
 dependency set:
 
 - Data collected: **No**
@@ -11,7 +11,9 @@ dependency set:
 
 Microphone samples remain on-device, are processed transiently in memory, and
 are discarded immediately. Local preferences and custom tunings do not leave
-the device.
+the device. A song selected through Android's system document picker is decoded
+transiently on-device; TuneItAll stores only in-memory chord events and does not
+copy, upload, or retain the source audio.
 
 Evidence gates before submission:
 

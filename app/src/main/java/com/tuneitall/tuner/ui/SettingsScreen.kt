@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -22,8 +24,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -38,22 +42,108 @@ import com.tuneitall.tuner.audio.TunerAudioSettings
 import com.tuneitall.tuner.audio.TunerProfile
 import com.tuneitall.tuner.model.HeadstockLayout
 import com.tuneitall.tuner.model.ReferencePitch
+import com.tuneitall.tuner.metronome.MetronomeSound
 import com.tuneitall.tuner.storage.NoteNotation
 import com.tuneitall.tuner.ui.theme.ThemeMode
 import java.util.Locale
 import kotlin.math.round
 import kotlin.math.roundToInt
 
+enum class SettingsSection {
+    GENERAL,
+    TUNER,
+    METRONOME,
+}
+
 @Composable
 fun SettingsScreen(
     state: TunerUiState,
+    metronomeState: MetronomeUiState = MetronomeUiState(),
+    initialSection: SettingsSection = SettingsSection.GENERAL,
     onThemeModeChanged: (ThemeMode) -> Unit,
     onReferencePitchChanged: (ReferencePitch) -> Unit,
     onNotationChanged: (NoteNotation) -> Unit,
     onLayoutChanged: (HeadstockLayout) -> Unit,
     onAudioSettingsChanged: (TunerAudioSettings) -> Unit,
+    onMetronomeNumeratorChanged: (Int) -> Unit = {},
+    onMetronomeDenominatorChanged: (Int) -> Unit = {},
+    onMetronomeSubdivisionChanged: (Int) -> Unit = {},
+    onMetronomeAccentChanged: (Int?) -> Unit = {},
+    onMetronomeSoundChanged: (MetronomeSound) -> Unit = {},
+    onMetronomeVolumeChanged: (Int) -> Unit = {},
+    onMetronomeMutedChanged: (Boolean) -> Unit = {},
+    onMetronomeCountInChanged: (Int) -> Unit = {},
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
+) {
+    var section by rememberSaveable(initialSection) { mutableStateOf(initialSection) }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .testTag("settings_screen"),
+    ) {
+        SecondaryHeader(stringResource(R.string.settings), onBack)
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            SettingsSection.entries.forEach { candidate ->
+                FilterChip(
+                    selected = section == candidate,
+                    onClick = { section = candidate },
+                    label = {
+                        Text(
+                            stringResource(
+                                when (candidate) {
+                                    SettingsSection.GENERAL -> R.string.settings_general
+                                    SettingsSection.TUNER -> R.string.settings_tuner
+                                    SettingsSection.METRONOME -> R.string.settings_metronome
+                                },
+                            ),
+                        )
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag("settings_section_${candidate.name.lowercase()}"),
+                )
+            }
+        }
+        when (section) {
+            SettingsSection.GENERAL -> GeneralSettings(
+                state = state,
+                onThemeModeChanged = onThemeModeChanged,
+                onReferencePitchChanged = onReferencePitchChanged,
+                onNotationChanged = onNotationChanged,
+                onLayoutChanged = onLayoutChanged,
+                onOpenAbout = onOpenAbout,
+            )
+
+            SettingsSection.TUNER -> AudioSettings(state, onAudioSettingsChanged)
+            SettingsSection.METRONOME -> MetronomeSettingsControls(
+                state = metronomeState,
+                onNumeratorChange = onMetronomeNumeratorChanged,
+                onDenominatorChange = onMetronomeDenominatorChanged,
+                onSubdivisionChange = onMetronomeSubdivisionChanged,
+                onAccentEveryChange = onMetronomeAccentChanged,
+                onSoundChange = onMetronomeSoundChanged,
+                onVolumeChange = onMetronomeVolumeChanged,
+                onMutedChange = onMetronomeMutedChanged,
+                onCountInChange = onMetronomeCountInChanged,
+            )
+        }
+    }
+}
+
+@Composable
+private fun GeneralSettings(
+    state: TunerUiState,
+    onThemeModeChanged: (ThemeMode) -> Unit,
+    onReferencePitchChanged: (ReferencePitch) -> Unit,
+    onNotationChanged: (NoteNotation) -> Unit,
+    onLayoutChanged: (HeadstockLayout) -> Unit,
+    onOpenAbout: () -> Unit,
 ) {
     var input by remember { mutableStateOf(formatPitch(state.referencePitch.hertz)) }
     var extremeConfirmed by remember { mutableStateOf(false) }
@@ -71,15 +161,7 @@ fun SettingsScreen(
         extremeConfirmed = false
     }
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier
-            .fillMaxSize()
-            .safeDrawingPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-    ) {
-        SecondaryHeader(stringResource(R.string.settings), onBack)
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             ThemeMode.entries.forEach { mode ->
@@ -167,9 +249,6 @@ fun SettingsScreen(
                 )
             }
         }
-
-        AudioSettings(state, onAudioSettingsChanged)
-
         Text(stringResource(R.string.note_notation), style = MaterialTheme.typography.titleLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             NoteNotation.entries.forEach { notation ->

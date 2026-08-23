@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -39,6 +38,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
@@ -81,6 +81,7 @@ import com.tuneitall.tuner.ui.PrimaryDestination
 import com.tuneitall.tuner.ui.ResolvedChipColors
 import com.tuneitall.tuner.ui.ResolvedNavigationColors
 import com.tuneitall.tuner.ui.SettingsScreen
+import com.tuneitall.tuner.ui.SettingsSection
 import com.tuneitall.tuner.ui.TunerScreen
 import com.tuneitall.tuner.ui.TunerUiState
 import com.tuneitall.tuner.ui.TunerViewModel
@@ -98,6 +99,7 @@ import java.util.Locale
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -210,6 +212,7 @@ class TuneItAllFlowTest {
             TuneItAllTheme {
                 MetronomeScreen(
                     state = state,
+                    phaseProvider = { 0.0 },
                     onBpmChange = { state = state.copy(settings = state.settings.copy(bpm = Bpm(it))) },
                     onNumeratorChange = { state = state.copy(settings = state.settings.copy(numerator = it)) },
                     onDenominatorChange = { state = state.copy(settings = state.settings.copy(denominator = it)) },
@@ -222,6 +225,7 @@ class TuneItAllFlowTest {
                     onVolumeChange = { state = state.copy(settings = state.settings.copy(volume = it)) },
                     onMutedChange = { state = state.copy(muted = it) },
                     onCountInChange = { state = state.copy(settings = state.settings.copy(countIn = it)) },
+                    onOpenSettings = {},
                 )
             }
         }
@@ -229,6 +233,7 @@ class TuneItAllFlowTest {
         val bpmInput = composeRule.onNodeWithTag("metronome_bpm_input")
         bpmInput.performTextClearance()
         bpmInput.performTextInput("137")
+        bpmInput.performImeAction()
         assertEquals(137, state.settings.bpm.value)
         composeRule.onNodeWithTag("metronome_bpm_decrease").performClick()
         composeRule.onNodeWithTag("metronome_bpm_increase").performClick()
@@ -296,7 +301,7 @@ class TuneItAllFlowTest {
             composeRule.onNodeWithTag("metronome_count_in_$countIn").performScrollTo().performClick()
             assertEquals(countIn, state.settings.countIn)
         }
-        composeRule.onNodeWithTag("metronome_settings_done").performClick()
+        composeRule.onNodeWithTag("metronome_settings_done").performScrollTo().performClick()
         composeRule.onNodeWithTag("metronome_rhythm_summary")
             .assertTextEquals("12/16 · 4× · Accent every 5")
     }
@@ -308,18 +313,12 @@ class TuneItAllFlowTest {
             TuneItAllTheme {
                 MetronomeScreen(
                     state = state,
+                    phaseProvider = { 0.0 },
                     onBpmChange = {},
-                    onNumeratorChange = {},
-                    onDenominatorChange = {},
-                    onSubdivisionChange = {},
-                    onAccentEveryChange = {},
                     onTap = {},
                     onStart = {},
                     onStop = {},
-                    onSoundChange = {},
-                    onVolumeChange = {},
-                    onMutedChange = {},
-                    onCountInChange = {},
+                    onOpenSettings = {},
                 )
             }
         }
@@ -360,36 +359,36 @@ class TuneItAllFlowTest {
     @Test
     fun metronomePendulumUsesAudioPhaseWithoutChangingBounds() {
         var phase by mutableStateOf(-1.0)
+        val phaseReads = AtomicInteger()
         composeRule.setContent {
             TuneItAllTheme {
                 Box(Modifier.requiredSize(width = 360.dp, height = 320.dp)) {
                     MetronomeScreen(
-                        state = MetronomeUiState(phase = phase),
+                        state = MetronomeUiState(playing = true),
+                        phaseProvider = {
+                            phaseReads.incrementAndGet()
+                            phase
+                        },
                         onBpmChange = {},
-                        onNumeratorChange = {},
-                        onDenominatorChange = {},
-                        onSubdivisionChange = {},
-                        onAccentEveryChange = {},
                         onTap = {},
                         onStart = {},
                         onStop = {},
-                        onSoundChange = {},
-                        onVolumeChange = {},
-                        onMutedChange = {},
-                        onCountInChange = {},
+                        onOpenSettings = {},
                     )
                 }
             }
         }
 
         fun pendulum() = composeRule.onNodeWithTag("metronome_pendulum").fetchSemanticsNode()
+        composeRule.waitUntil(2_000L) { phaseReads.get() >= 2 }
         val initial = pendulum()
-        assertEquals(-1f, initial.config[SemanticsProperties.ProgressBarRangeInfo].current, 0.001f)
+        val firstReadCount = phaseReads.get()
         composeRule.runOnIdle { phase = 0.0 }
-        assertEquals(0f, pendulum().config[SemanticsProperties.ProgressBarRangeInfo].current, 0.001f)
+        composeRule.waitUntil(2_000L) { phaseReads.get() > firstReadCount }
         assertEquals(initial.boundsInRoot, pendulum().boundsInRoot)
+        val secondReadCount = phaseReads.get()
         composeRule.runOnIdle { phase = 1.0 }
-        assertEquals(1f, pendulum().config[SemanticsProperties.ProgressBarRangeInfo].current, 0.001f)
+        composeRule.waitUntil(2_000L) { phaseReads.get() > secondReadCount }
         assertEquals(initial.boundsInRoot, pendulum().boundsInRoot)
     }
 
@@ -416,18 +415,12 @@ class TuneItAllFlowTest {
                     Box(Modifier.requiredSize(width = 360.dp, height = 720.dp)) {
                         MetronomeScreen(
                             state = screenState,
+                            phaseProvider = { 0.0 },
                             onBpmChange = {},
-                            onNumeratorChange = {},
-                            onDenominatorChange = {},
-                            onSubdivisionChange = {},
-                            onAccentEveryChange = {},
                             onTap = {},
                             onStart = {},
                             onStop = {},
-                            onSoundChange = {},
-                            onVolumeChange = {},
-                            onMutedChange = {},
-                            onCountInChange = {},
+                            onOpenSettings = {},
                         )
                     }
                 }
@@ -491,18 +484,12 @@ class TuneItAllFlowTest {
             TuneItAllTheme {
                 MetronomeScreen(
                     state = MetronomeUiState(),
+                    phaseProvider = { 0.0 },
                     onBpmChange = {},
-                    onNumeratorChange = {},
-                    onDenominatorChange = {},
-                    onSubdivisionChange = {},
-                    onAccentEveryChange = {},
                     onTap = {},
                     onStart = {},
                     onStop = {},
-                    onSoundChange = {},
-                    onVolumeChange = {},
-                    onMutedChange = {},
-                    onCountInChange = {},
+                    onOpenSettings = {},
                 )
             }
         }
@@ -591,7 +578,7 @@ class TuneItAllFlowTest {
     }
 
     @Test
-    fun appShellNavigatesBetweenTunerAndMetronomeAndDisablesPendingDestinations() {
+    fun appShellNavigatesAllDestinationsAndReturnsSettingsToItsSource() {
         val viewModel = TunerViewModel(ApplicationProvider.getApplicationContext())
         composeRule.setContent {
             TuneItAllTheme {
@@ -607,14 +594,24 @@ class TuneItAllFlowTest {
             composeRule.onNodeWithContentDescription(label, substring = true).assertIsDisplayed()
         }
         composeRule.onNodeWithContentDescription("Tuner").assertIsSelected()
-        composeRule.onNodeWithContentDescription("Chords. Not installed yet").assertIsNotEnabled()
-        composeRule.onNodeWithContentDescription("Trainer. Not installed yet").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Chords").assertIsEnabled().performClick()
+        composeRule.onNodeWithTag("chords_screen").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Trainer").assertIsEnabled().performClick()
+        composeRule.onNodeWithTag("trainer_screen").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("Metronome").performClick()
         composeRule.onNodeWithTag("metronome_screen").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Metronome").assertIsSelected()
+        composeRule.onNodeWithTag("metronome_settings").performClick()
+        composeRule.onNodeWithTag("settings_section_metronome").assertIsSelected()
+        composeRule.onNodeWithTag("back_button").performClick()
+        composeRule.onNodeWithTag("metronome_screen").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("Tuner").performClick()
+        composeRule.onNodeWithContentDescription("Tuner").assertIsSelected()
+        composeRule.onNodeWithTag("tuner_settings").performClick()
+        composeRule.onNodeWithTag("settings_section_tuner").assertIsSelected()
+        composeRule.onNodeWithTag("back_button").performClick()
         composeRule.onNodeWithContentDescription("Tuner").assertIsSelected()
     }
 
@@ -1096,6 +1093,7 @@ class TuneItAllFlowTest {
             TuneItAllTheme {
                 SettingsScreen(
                     state = currentState,
+                    initialSection = SettingsSection.TUNER,
                     onThemeModeChanged = {},
                     onReferencePitchChanged = {},
                     onNotationChanged = {},
@@ -1144,6 +1142,7 @@ class TuneItAllFlowTest {
             TuneItAllTheme {
                 SettingsScreen(
                     state = currentState,
+                    initialSection = SettingsSection.TUNER,
                     onThemeModeChanged = {},
                     onReferencePitchChanged = {},
                     onNotationChanged = {},
@@ -1234,7 +1233,7 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithText("Offline. No ads, accounts, analytics, tracking, or network access.")
             .assertIsDisplayed()
         composeRule.onNodeWithText("Privacy policy").performClick()
-        composeRule.onNodeWithText("Back").performClick()
+        composeRule.onNodeWithContentDescription("Back").performClick()
         assertTrue(back)
     }
 
@@ -1595,7 +1594,7 @@ class TuneItAllFlowTest {
             }
         }
 
-        val settings = composeRule.onNodeWithText("Settings").fetchSemanticsNode().boundsInRoot
+        val settings = composeRule.onNodeWithTag("tuner_settings").fetchSemanticsNode().boundsInRoot
         val modeSelector = composeRule.onNodeWithTag("mode_selector").fetchSemanticsNode().boundsInRoot
 
         assertTrue(settings.top < modeSelector.top)

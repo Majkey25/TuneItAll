@@ -72,7 +72,8 @@ fun Headstock(
     val bodyColor = MaterialTheme.colorScheme.surface
     val outlineColor = MaterialTheme.colorScheme.outline
     val stringColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val splitBodyColor = MaterialTheme.colorScheme.onSurface.copy(alpha = SplitHeadstockGeometry.fillAlpha)
+    val splitBodyColor = MaterialTheme.colorScheme.surfaceVariant
+    val machineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.24f)
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Box(
@@ -89,56 +90,56 @@ fun Headstock(
                 val narrowHalfWidth = HEADSTOCK_NARROW_HALF_WIDTH.toPx()
                 if (layout == HeadstockLayout.SPLIT_3_3) {
                     val nutY = SplitHeadstockGeometry.bodyLength.toPx()
-                    val splitBodyHalfWidth = SplitHeadstockGeometry.bodyWidth.toPx() / 2f
                     val nutHalfWidth = SplitHeadstockGeometry.nutWidth.toPx() / 2f
                     val neckHalfWidth = SplitHeadstockGeometry.neckWidth.toPx() / 2f
                     val body = Path().apply {
                         moveTo(centerX - nutHalfWidth, nutY)
-                        lineTo(
-                            centerX - SplitHeadstockGeometry.shoulderEndHalfWidth.toPx(),
-                            SplitHeadstockGeometry.shoulderEndY.toPx(),
-                        )
-                        lineTo(
-                            centerX - SplitHeadstockGeometry.topPostHalfWidth.toPx(),
-                            SplitHeadstockGeometry.postCenters.first().toPx(),
+                        cubicTo(
+                            centerX - 30.dp.toPx(), nutY - 38.dp.toPx(),
+                            centerX - 38.dp.toPx(), top + 112.dp.toPx(),
+                            centerX - 42.dp.toPx(), top + 82.dp.toPx(),
                         )
                         cubicTo(
-                            centerX - 42.dp.toPx(), top + 44.dp.toPx(),
-                            centerX - splitBodyHalfWidth, top + 48.dp.toPx(),
-                            centerX - splitBodyHalfWidth, top + 38.dp.toPx(),
+                            centerX - 45.dp.toPx(), top + 64.dp.toPx(),
+                            centerX - 49.dp.toPx(), top + 48.dp.toPx(),
+                            centerX - 44.dp.toPx(), top + 31.dp.toPx(),
                         )
                         cubicTo(
-                            centerX - splitBodyHalfWidth, top + 28.dp.toPx(),
-                            centerX - 39.dp.toPx(), top + 20.dp.toPx(),
-                            centerX - 30.dp.toPx(), top + 16.dp.toPx(),
+                            centerX - 36.dp.toPx(), top + 17.dp.toPx(),
+                            centerX - 25.dp.toPx(), top + 8.dp.toPx(),
+                            centerX - 15.dp.toPx(), top + 10.dp.toPx(),
                         )
                         cubicTo(
-                            centerX - 18.dp.toPx(), top,
-                            centerX + 18.dp.toPx(), top,
-                            centerX + 30.dp.toPx(), top + 16.dp.toPx(),
+                            centerX - 8.dp.toPx(), top + 10.dp.toPx(),
+                            centerX - 6.dp.toPx(), top + 12.dp.toPx(),
+                            centerX, top + 13.dp.toPx(),
                         )
                         cubicTo(
-                            centerX + 39.dp.toPx(), top + 20.dp.toPx(),
-                            centerX + splitBodyHalfWidth, top + 28.dp.toPx(),
-                            centerX + splitBodyHalfWidth, top + 38.dp.toPx(),
+                            centerX + 6.dp.toPx(), top + 12.dp.toPx(),
+                            centerX + 8.dp.toPx(), top + 10.dp.toPx(),
+                            centerX + 15.dp.toPx(), top + 10.dp.toPx(),
                         )
                         cubicTo(
-                            centerX + splitBodyHalfWidth, top + 48.dp.toPx(),
-                            centerX + 42.dp.toPx(), top + 44.dp.toPx(),
-                            centerX + SplitHeadstockGeometry.topPostHalfWidth.toPx(),
-                            SplitHeadstockGeometry.postCenters.first().toPx(),
+                            centerX + 25.dp.toPx(), top + 8.dp.toPx(),
+                            centerX + 36.dp.toPx(), top + 17.dp.toPx(),
+                            centerX + 44.dp.toPx(), top + 31.dp.toPx(),
                         )
-                        lineTo(
-                            centerX + SplitHeadstockGeometry.shoulderEndHalfWidth.toPx(),
-                            SplitHeadstockGeometry.shoulderEndY.toPx(),
+                        cubicTo(
+                            centerX + 49.dp.toPx(), top + 48.dp.toPx(),
+                            centerX + 45.dp.toPx(), top + 64.dp.toPx(),
+                            centerX + 42.dp.toPx(), top + 82.dp.toPx(),
                         )
-                        lineTo(centerX + nutHalfWidth, nutY)
+                        cubicTo(
+                            centerX + 38.dp.toPx(), top + 112.dp.toPx(),
+                            centerX + 30.dp.toPx(), nutY - 38.dp.toPx(),
+                            centerX + nutHalfWidth, nutY,
+                        )
                         close()
                     }
                     drawPath(body, splitBodyColor)
                     drawPath(body, outlineColor, style = Stroke(width = 1.5.dp.toPx()))
                     drawRect(
-                        splitBodyColor,
+                        machineColor,
                         topLeft = Offset(centerX - neckHalfWidth, nutY),
                         size = Size(SplitHeadstockGeometry.neckWidth.toPx(), bottom - nutY),
                     )
@@ -196,20 +197,24 @@ fun Headstock(
                                 Offset(keyInnerX, y),
                                 2.dp.toPx(),
                             )
-                            drawRoundRect(
-                                bodyColor,
+                            drawOval(
+                                machineColor,
                                 topLeft = Offset(keyLeft, y - keyHeight / 2f),
                                 size = Size(keyWidth, keyHeight),
-                                cornerRadius = CornerRadius(3.dp.toPx()),
                             )
-                            drawRoundRect(
+                            drawOval(
                                 outlineColor,
                                 topLeft = Offset(keyLeft, y - keyHeight / 2f),
                                 size = Size(keyWidth, keyHeight),
-                                cornerRadius = CornerRadius(3.dp.toPx()),
                                 style = Stroke(width = 1.5.dp.toPx()),
                             )
                             drawCircle(bodyColor, radius = postRadius, center = Offset(postX, y))
+                            drawCircle(
+                                machineColor,
+                                radius = postRadius + 3.dp.toPx(),
+                                center = Offset(postX, y),
+                                style = Stroke(width = 2.dp.toPx()),
+                            )
                             drawCircle(
                                 outlineColor,
                                 radius = postRadius,
@@ -384,21 +389,20 @@ private fun Peg(
 private data class HeadstockSides(val left: Int, val right: Int)
 
 internal object SplitHeadstockGeometry {
-    val bodyWidth = 88.dp
-    val nutWidth = 48.dp
-    val neckWidth = 44.dp
-    val centerGap = 120.dp
-    const val fillAlpha = 0.06f
+    val bodyWidth = 104.dp
+    val nutWidth = 52.dp
+    val neckWidth = 48.dp
+    val centerGap = 132.dp
     val bodyLength = 210.dp
-    val shoulderEndY = 68.dp
-    val shoulderEndHalfWidth = 38.dp
-    val topPostHalfWidth = 40.dp
+    val shoulderEndY = 74.dp
+    val shoulderEndHalfWidth = 47.dp
+    val topPostHalfWidth = 50.dp
     val postCenters = listOf(52.dp, 120.dp, 188.dp)
-    val postOffsets = listOf(36.dp, 29.dp, 22.dp)
-    val postRadius = 3.5.dp
-    val keyWidth = 8.dp
-    val keyHeight = 14.dp
-    val nutSlots = listOf(-18.dp, -10.8.dp, -3.6.dp, 3.6.dp, 10.8.dp, 18.dp)
+    val postOffsets = listOf(42.dp, 34.dp, 22.dp)
+    val postRadius = 4.5.dp
+    val keyWidth = 12.dp
+    val keyHeight = 9.dp
+    val nutSlots = listOf(-20.dp, -12.dp, -4.dp, 4.dp, 12.dp, 20.dp)
 
     fun bodyHalfWidthAt(y: Dp): Dp {
         require(y in postCenters.first()..bodyLength) { "Y must fit the post-bearing body" }

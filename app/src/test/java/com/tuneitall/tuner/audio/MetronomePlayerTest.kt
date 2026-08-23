@@ -359,6 +359,17 @@ class MetronomePlayerTest {
     }
 
     @Test
+    fun `stream phase reaches alternating endpoints on audible main beats`() {
+        val stream = MetronomeStream(MetronomeSettings(bpm = Bpm(400)))
+        val buffer = ShortArray(1_024)
+
+        repeat(8) { stream.render(buffer) }
+
+        assertEquals(-1.0, stream.phaseAt(0), 0.0)
+        assertEquals(1.0, stream.phaseAt(7_200), 0.0)
+    }
+
+    @Test
     fun `playback frame counter unwraps once under concurrent reads`() {
         val counter = PlaybackFrameCounter()
         assertEquals(0xffff_fffeL, counter.update(-2))

@@ -14,8 +14,11 @@ Features:
 • Stable in-tune confirmation sound
 • Adjustable tuner profiles, microphone sensitivity, response, stability, noise rejection, harmonic protection, tolerance, timing, and audio input
 • Mechanical metronome from 20 to 400 BPM with meter, subdivision, accent, sound, volume, mute, and count-in controls
+• Tuning-aware major, minor, and dominant-seventh chord diagrams
+• Experimental offline chord timeline for a user-selected local audio file, with playback and transposition
+• Learn and Quiz chord trainer with generated sound and local scoring
 • Simple Light and Dark interface
 
-Chords and Trainer are not available in this Core release.
-
 TuneItAll has no ads, account, analytics, tracking, or internet permission. Microphone audio is analyzed transiently on-device and never recorded, retained, shared, or transmitted.
+
+Selected song files are decoded only on-device and are never copied or uploaded.

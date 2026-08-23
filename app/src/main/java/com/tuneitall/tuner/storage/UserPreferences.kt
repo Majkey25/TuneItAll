@@ -27,6 +27,17 @@ enum class NoteNotation {
     FLATS,
 }
 
+data class TrainerStats(val correct: Int = 0, val attempts: Int = 0) {
+    init {
+        require(correct in 0..attempts)
+        require(attempts <= MAX_ATTEMPTS)
+    }
+
+    companion object {
+        const val MAX_ATTEMPTS = 1_000_000
+    }
+}
+
 class UserPreferences(context: Context) {
     private val preferences = context.applicationContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
@@ -166,6 +177,17 @@ class UserPreferences(context: Context) {
             preferences.edit { putString(CUSTOM_TUNINGS_KEY, encoded) }
         }
 
+    var trainerStats: TrainerStats
+        get() {
+            val attempts = preferences.intInRange(TRAINER_ATTEMPTS_KEY, 0, 0..TrainerStats.MAX_ATTEMPTS)
+            val correct = preferences.intInRange(TRAINER_CORRECT_KEY, 0, 0..attempts)
+            return TrainerStats(correct, attempts)
+        }
+        set(value) = preferences.edit {
+            putInt(TRAINER_CORRECT_KEY, value.correct)
+            putInt(TRAINER_ATTEMPTS_KEY, value.attempts)
+        }
+
     private inline fun <reified T : Enum<T>> SharedPreferences.enumValue(key: String, default: T): T {
         val stored = valueOrDefault<String?>(null) { getString(key, null) } ?: return default
         return enumValues<T>().firstOrNull { it.name == stored } ?: default
@@ -225,6 +247,8 @@ class UserPreferences(context: Context) {
         const val METRONOME_MUTED_KEY = "metronome_muted"
         const val FAVORITES_KEY = "favorite_ids"
         const val CUSTOM_TUNINGS_KEY = "custom_tunings"
+        const val TRAINER_CORRECT_KEY = "trainer_correct"
+        const val TRAINER_ATTEMPTS_KEY = "trainer_attempts"
         const val DEFAULT_TUNING_ID = "guitar-6-standard"
         const val MAX_FAVORITES = 200
     }

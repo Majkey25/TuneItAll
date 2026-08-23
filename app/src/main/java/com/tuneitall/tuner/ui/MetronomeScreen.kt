@@ -1,11 +1,11 @@
 package com.tuneitall.tuner.ui
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.ScrollState
+import android.view.Choreographer
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,30 +18,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.annotation.StringRes
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -55,18 +51,16 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -75,26 +69,27 @@ import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.metronome.MetronomeSound
 import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
 
 @Composable
 fun MetronomeScreen(
     state: MetronomeUiState,
+    phaseProvider: () -> Double,
     onBpmChange: (Int) -> Unit,
-    onNumeratorChange: (Int) -> Unit,
-    onDenominatorChange: (Int) -> Unit,
-    onSubdivisionChange: (Int) -> Unit,
-    onAccentEveryChange: (Int?) -> Unit,
+    onNumeratorChange: (Int) -> Unit = {},
+    onDenominatorChange: (Int) -> Unit = {},
+    onSubdivisionChange: (Int) -> Unit = {},
+    onAccentEveryChange: (Int?) -> Unit = {},
     onTap: () -> Unit,
     onStart: () -> Unit,
     onStop: () -> Unit,
-    onSoundChange: (MetronomeSound) -> Unit,
-    onVolumeChange: (Int) -> Unit,
-    onMutedChange: (Boolean) -> Unit,
-    onCountInChange: (Int) -> Unit,
+    onSoundChange: (MetronomeSound) -> Unit = {},
+    onVolumeChange: (Int) -> Unit = {},
+    onMutedChange: (Boolean) -> Unit = {},
+    onCountInChange: (Int) -> Unit = {},
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showQuickSettings by rememberSaveable { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
     Column(
@@ -106,18 +101,17 @@ fun MetronomeScreen(
             .testTag("metronome_screen"),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Header(onOpenSettings = { showSettings = true })
+        Header(onOpenSettings)
         BpmControl(state, onBpmChange)
-        PhysicalMetronome(phase = state.phase)
+        PhysicalMetronome(state.playing, phaseProvider)
         PlaybackControls(state, onTap, onStart, onStop)
-        RhythmSummary(state, onClick = { showSettings = true })
+        RhythmSummary(state, onClick = { showQuickSettings = true })
         Spacer(Modifier.height(4.dp))
     }
-
-    if (showSettings) {
-        MetronomeSettingsSheet(
+    if (showQuickSettings) {
+        MetronomeQuickSettings(
             state = state,
-            onDismiss = { showSettings = false },
+            onDismiss = { showQuickSettings = false },
             onNumeratorChange = onNumeratorChange,
             onDenominatorChange = onDenominatorChange,
             onSubdivisionChange = onSubdivisionChange,
@@ -150,21 +144,11 @@ private fun Header(onOpenSettings: () -> Unit) {
                 .semantics { contentDescription = settingsDescription }
                 .testTag("metronome_settings"),
         ) {
-            SettingsSlidersIcon()
-        }
-    }
-}
-
-@Composable
-private fun SettingsSlidersIcon() {
-    val color = MaterialTheme.colorScheme.onBackground
-    Canvas(Modifier.size(24.dp).testTag("metronome_settings_icon")) {
-        val stroke = 2.dp.toPx()
-        listOf(6f to 0.33f, 17f to 0.50f, 10f to 0.67f).forEach { (knobDp, yRatio) ->
-            val y = size.height * yRatio
-            val knob = knobDp.dp.toPx()
-            drawLine(color, Offset(2.dp.toPx(), y), Offset(size.width - 2.dp.toPx(), y), stroke, StrokeCap.Round)
-            drawCircle(color, radius = 3.dp.toPx(), center = Offset(knob, y))
+            Icon(
+                painter = painterResource(R.drawable.ic_settings),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp).testTag("metronome_settings_icon"),
+            )
         }
     }
 }
@@ -203,7 +187,6 @@ private fun BpmControl(state: MetronomeUiState, onBpmChange: (Int) -> Unit) {
                 onValueChange = { value ->
                     if (value.length <= 3 && value.all(Char::isDigit)) {
                         bpmText = value
-                        value.toIntOrNull()?.takeIf { it in 20..400 }?.let(onBpmChange)
                     }
                 },
                 suffix = { Text(stringResource(R.string.metronome_bpm)) },
@@ -283,95 +266,146 @@ private fun RepeatButton(
 }
 
 @Composable
-private fun PhysicalMetronome(phase: Double) {
+private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
     val body = MaterialTheme.colorScheme.surfaceVariant
     val ink = MaterialTheme.colorScheme.onSurface
     val background = MaterialTheme.colorScheme.background
     val accent = MaterialTheme.colorScheme.primary
-    val weightSlotColor = MaterialTheme.colorScheme.onPrimary
-    val safePhase = phase.coerceIn(-1.0, 1.0).toFloat()
     val description = stringResource(R.string.metronome_physical_description)
-    val phaseDescription = stringResource(R.string.metronome_phase_description, safePhase)
-    Canvas(
+    val currentPhaseProvider by rememberUpdatedState(phaseProvider)
+    val phase = remember { mutableFloatStateOf(0f) }
+
+    DisposableEffect(playing) {
+        val choreographer = Choreographer.getInstance()
+        val callback = if (playing) {
+            object : Choreographer.FrameCallback {
+                override fun doFrame(frameTimeNanos: Long) {
+                    val next = currentPhaseProvider().coerceIn(-1.0, 1.0).toFloat()
+                    if (phase.floatValue != next) phase.floatValue = next
+                    choreographer.postFrameCallback(this)
+                }
+            }.also(choreographer::postFrameCallback)
+        } else {
+            phase.floatValue = 0f
+            null
+        }
+        onDispose { callback?.let(choreographer::removeFrameCallback) }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(188.dp)
-            .semantics {
-                contentDescription = description
-                stateDescription = phaseDescription
-                progressBarRangeInfo = ProgressBarRangeInfo(safePhase, -1f..1f)
-            }
+            .semantics { contentDescription = description }
             .testTag("metronome_pendulum"),
     ) {
-        val geometry = mechanicalMetronomeGeometry(size, density, safePhase.toDouble())
-        fun polygon(points: List<Offset>) = Path().apply {
-            moveTo(points.first().x, points.first().y)
-            points.drop(1).forEach { lineTo(it.x, it.y) }
-            close()
-        }
-        geometry.layers.forEach { layer ->
-            when (layer) {
-                MechanicalLayer.BODY -> {
-                    val path = polygon(geometry.body)
-                    drawPath(path, body)
-                    drawPath(path, ink.copy(alpha = MECHANICAL_BODY_FILL_ALPHA))
-                    drawPath(path, ink, style = Stroke(2.dp.toPx()))
+        Box(
+            Modifier
+                .matchParentSize()
+                .drawWithCache {
+                val geometry = mechanicalMetronomeGeometry(size, density)
+                fun polygon(points: List<Offset>) = Path().apply {
+                    moveTo(points.first().x, points.first().y)
+                    points.drop(1).forEach { lineTo(it.x, it.y) }
+                    close()
                 }
-
-                MechanicalLayer.SIDE_PLANE -> drawPath(
-                    polygon(geometry.sidePlane),
-                    ink.copy(alpha = MECHANICAL_SIDE_PLANE_ALPHA),
-                )
-
-                MechanicalLayer.SCALE_PLATE -> {
-                    val path = polygon(geometry.scalePlate)
-                    drawPath(path, background)
-                    drawPath(path, ink, style = Stroke(1.dp.toPx()))
-                }
-
-                MechanicalLayer.SCALE_TICKS -> geometry.scaleTicks.forEach { tick ->
-                    drawLine(ink, tick.start, tick.end, 1.dp.toPx(), StrokeCap.Round)
-                }
-
-                MechanicalLayer.PLINTH -> drawRoundRect(
-                    color = ink,
-                    topLeft = geometry.plinth.topLeft,
-                    size = geometry.plinth.size,
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx()),
-                )
-
-                MechanicalLayer.ARM -> rotate(geometry.armDegrees, geometry.pivot) {
-                    drawLine(ink, geometry.pivot, geometry.armEnd, 3.dp.toPx(), StrokeCap.Round)
-                }
-
-                MechanicalLayer.WEIGHT -> rotate(geometry.armDegrees, geometry.pivot) {
-                    drawRoundRect(
-                        color = accent,
-                        topLeft = geometry.weight.topLeft,
-                        size = geometry.weight.size,
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx()),
+                val bodyPath = Path().apply {
+                    moveTo(geometry.body[0].x, geometry.body[0].y)
+                    lineTo(geometry.body[1].x, geometry.body[1].y)
+                    cubicTo(
+                        size.width * 0.60f,
+                        size.height * 0.30f,
+                        size.width * 0.64f,
+                        size.height * 0.56f,
+                        geometry.body[2].x,
+                        geometry.body[2].y,
                     )
-                    drawRoundRect(
-                        color = ink,
-                        topLeft = geometry.weight.topLeft,
-                        size = geometry.weight.size,
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx()),
-                        style = Stroke(1.dp.toPx()),
+                    lineTo(geometry.body[3].x, geometry.body[3].y)
+                    cubicTo(
+                        size.width * 0.36f,
+                        size.height * 0.56f,
+                        size.width * 0.40f,
+                        size.height * 0.30f,
+                        geometry.body[0].x,
+                        geometry.body[0].y,
                     )
-                    drawRoundRect(
-                        color = weightSlotColor,
-                        topLeft = geometry.weightSlot.topLeft,
-                        size = geometry.weightSlot.size,
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(1.dp.toPx()),
-                    )
+                    close()
                 }
+                val sidePath = polygon(geometry.sidePlane)
+                val platePath = polygon(geometry.scalePlate)
+                val basePath = polygon(geometry.baseFront)
+                val outline = 1.5.dp.toPx()
+                val round2 = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
 
-                MechanicalLayer.HUB -> {
-                    drawCircle(ink, 7.dp.toPx(), geometry.pivot)
-                    drawCircle(background, 2.dp.toPx(), geometry.pivot)
+                onDrawBehind {
+                    drawPath(bodyPath, body)
+                    drawPath(bodyPath, ink.copy(alpha = MECHANICAL_BODY_FILL_ALPHA))
+                    drawPath(bodyPath, ink, style = Stroke(outline))
+                    drawPath(sidePath, ink.copy(alpha = MECHANICAL_SIDE_PLANE_ALPHA))
+                    drawPath(platePath, background)
+                    drawPath(platePath, ink, style = Stroke(1.dp.toPx()))
+                    geometry.scaleTicks.forEach { tick ->
+                        drawLine(ink, tick.start, tick.end, 1.dp.toPx(), StrokeCap.Round)
+                    }
+                    drawOval(ink.copy(alpha = 0.18f), geometry.topCap.topLeft, geometry.topCap.size)
+                    drawOval(ink, geometry.topCap.topLeft, geometry.topCap.size, style = Stroke(outline))
+                    drawOval(ink, geometry.topBead.topLeft, geometry.topBead.size)
+                    drawPath(basePath, body)
+                    drawPath(basePath, ink.copy(alpha = 0.12f))
+                    drawPath(basePath, ink, style = Stroke(outline))
+                    drawRoundRect(ink, geometry.plinth.topLeft, geometry.plinth.size, round2)
+                    drawOval(ink, geometry.leftFoot.topLeft, geometry.leftFoot.size)
+                    drawOval(ink, geometry.rightFoot.topLeft, geometry.rightFoot.size)
+                    drawLine(
+                        ink,
+                        geometry.windingStem.start,
+                        geometry.windingStem.end,
+                        2.dp.toPx(),
+                        StrokeCap.Round,
+                    )
+                    drawCircle(ink, 3.dp.toPx(), geometry.windingHub)
+                    drawOval(
+                        ink.copy(alpha = 0.28f),
+                        geometry.windingKey.topLeft,
+                        geometry.windingKey.size,
+                    )
+                    drawOval(ink, geometry.windingKey.topLeft, geometry.windingKey.size, style = Stroke(outline))
                 }
-            }
-        }
+            },
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .graphicsLayer {
+                    rotationZ = metronomeArmDegrees(phase.floatValue.toDouble())
+                    transformOrigin = TransformOrigin(0.5f, 0.72f)
+                }
+                .drawWithCache {
+                    val geometry = mechanicalMetronomeGeometry(size, density)
+                    val round1 = androidx.compose.ui.geometry.CornerRadius(1.dp.toPx())
+                    val weightPath = Path().apply {
+                        moveTo(geometry.weight.left + 4.dp.toPx(), geometry.weight.top)
+                        lineTo(geometry.weight.right - 4.dp.toPx(), geometry.weight.top)
+                        lineTo(geometry.weight.right, geometry.weight.bottom)
+                        lineTo(geometry.weight.left, geometry.weight.bottom)
+                        close()
+                    }
+
+                    onDrawBehind {
+                        drawLine(ink, geometry.pivot, geometry.armEnd, 3.dp.toPx(), StrokeCap.Round)
+                        drawPath(weightPath, ink.copy(alpha = 0.26f))
+                        drawPath(weightPath, ink, style = Stroke(1.dp.toPx()))
+                        drawRoundRect(
+                            accent,
+                            geometry.weightSlot.topLeft,
+                            geometry.weightSlot.size,
+                            round1,
+                        )
+                        drawCircle(ink, 7.dp.toPx(), geometry.pivot)
+                        drawCircle(background, 2.dp.toPx(), geometry.pivot)
+                }
+            },
+        )
     }
 }
 
@@ -380,7 +414,11 @@ internal enum class MechanicalLayer {
     SIDE_PLANE,
     SCALE_PLATE,
     SCALE_TICKS,
+    TOP_CAP,
+    BASE_FRONT,
     PLINTH,
+    FEET,
+    WINDING_KEY,
     ARM,
     WEIGHT,
     HUB,
@@ -396,19 +434,25 @@ internal data class MechanicalMetronomeGeometry(
     val sidePlane: List<Offset>,
     val scalePlate: List<Offset>,
     val scaleTicks: List<MechanicalLine>,
+    val topCap: Rect,
+    val topBead: Rect,
+    val baseFront: List<Offset>,
     val plinth: Rect,
+    val leftFoot: Rect,
+    val rightFoot: Rect,
+    val windingStem: MechanicalLine,
+    val windingHub: Offset,
+    val windingKey: Rect,
     val pivot: Offset,
     val armEnd: Offset,
     val weight: Rect,
     val weightSlot: Rect,
-    val armDegrees: Float,
     val layers: List<MechanicalLayer>,
 )
 
 internal fun mechanicalMetronomeGeometry(
     size: Size,
     density: Float,
-    phase: Double,
 ): MechanicalMetronomeGeometry {
     require(size.width > 0f && size.height > 0f)
     require(density > 0f)
@@ -417,36 +461,77 @@ internal fun mechanicalMetronomeGeometry(
     val weightCenterY = size.height * 0.45f
     return MechanicalMetronomeGeometry(
         body = listOf(
-            Offset(size.width * 0.39f, size.height * 0.07f),
-            Offset(size.width * 0.61f, size.height * 0.07f),
-            Offset(size.width * 0.78f, size.height * 0.91f),
-            Offset(size.width * 0.22f, size.height * 0.91f),
+            Offset(size.width * 0.43f, size.height * 0.09f),
+            Offset(size.width * 0.57f, size.height * 0.09f),
+            Offset(size.width * 0.68f, size.height * 0.77f),
+            Offset(size.width * 0.32f, size.height * 0.77f),
         ),
         sidePlane = listOf(
-            Offset(size.width * 0.61f, size.height * 0.07f),
-            Offset(size.width * 0.78f, size.height * 0.91f),
-            Offset(size.width * 0.68f, size.height * 0.89f),
-            Offset(size.width * 0.56f, size.height * 0.13f),
+            Offset(size.width * 0.57f, size.height * 0.09f),
+            Offset(size.width * 0.68f, size.height * 0.77f),
+            Offset(size.width * 0.64f, size.height * 0.75f),
+            Offset(size.width * 0.55f, size.height * 0.14f),
         ),
         scalePlate = listOf(
-            Offset(size.width * 0.44f, size.height * 0.13f),
-            Offset(size.width * 0.56f, size.height * 0.13f),
-            Offset(size.width * 0.59f, size.height * 0.68f),
-            Offset(size.width * 0.41f, size.height * 0.68f),
+            Offset(size.width * 0.46f, size.height * 0.15f),
+            Offset(size.width * 0.54f, size.height * 0.15f),
+            Offset(size.width * 0.57f, size.height * 0.65f),
+            Offset(size.width * 0.43f, size.height * 0.65f),
         ),
         scaleTicks = tickRatios.mapIndexed { index, ratio ->
             val length = (if (index % 2 == 0) 12f else 8f) * density
             val y = size.height * ratio
             MechanicalLine(Offset(centerX - length / 2f, y), Offset(centerX + length / 2f, y))
         },
+        topCap = Rect(
+            left = size.width * 0.455f,
+            top = size.height * 0.045f,
+            right = size.width * 0.545f,
+            bottom = size.height * 0.105f,
+        ),
+        topBead = Rect(
+            left = size.width * 0.488f,
+            top = size.height * 0.018f,
+            right = size.width * 0.512f,
+            bottom = size.height * 0.052f,
+        ),
+        baseFront = listOf(
+            Offset(size.width * 0.31f, size.height * 0.76f),
+            Offset(size.width * 0.69f, size.height * 0.76f),
+            Offset(size.width * 0.78f, size.height * 0.91f),
+            Offset(size.width * 0.22f, size.height * 0.91f),
+        ),
         plinth = Rect(
             left = size.width * 0.19f,
             top = size.height * 0.89f,
             right = size.width * 0.81f,
-            bottom = size.height * 0.89f + 10f * density,
+            bottom = size.height * 0.89f + 8f * density,
         ),
-        pivot = Offset(centerX, size.height * 0.78f),
-        armEnd = Offset(centerX, size.height * 0.13f),
+        leftFoot = Rect(
+            left = size.width * 0.23f,
+            top = size.height * 0.925f,
+            right = size.width * 0.28f,
+            bottom = size.height * 0.97f,
+        ),
+        rightFoot = Rect(
+            left = size.width * 0.72f,
+            top = size.height * 0.925f,
+            right = size.width * 0.77f,
+            bottom = size.height * 0.97f,
+        ),
+        windingStem = MechanicalLine(
+            Offset(size.width * 0.66f, size.height * 0.56f),
+            Offset(size.width * 0.76f, size.height * 0.62f),
+        ),
+        windingHub = Offset(size.width * 0.66f, size.height * 0.56f),
+        windingKey = Rect(
+            left = size.width * 0.745f,
+            top = size.height * 0.585f,
+            right = size.width * 0.79f,
+            bottom = size.height * 0.655f,
+        ),
+        pivot = Offset(centerX, size.height * 0.72f),
+        armEnd = Offset(centerX, size.height * 0.12f),
         weight = Rect(
             left = centerX - 16f * density,
             top = weightCenterY - 8f * density,
@@ -459,10 +544,11 @@ internal fun mechanicalMetronomeGeometry(
             right = centerX + 1.5f * density,
             bottom = weightCenterY + 5f * density,
         ),
-        armDegrees = phase.coerceIn(-1.0, 1.0).toFloat() * 24f,
         layers = MechanicalLayer.entries,
     )
 }
+
+internal fun metronomeArmDegrees(phase: Double): Float = phase.coerceIn(-1.0, 1.0).toFloat() * 24f
 
 @Composable
 private fun RhythmSummary(state: MetronomeUiState, onClick: () -> Unit) {
@@ -483,89 +569,53 @@ private fun RhythmSummary(state: MetronomeUiState, onClick: () -> Unit) {
             .heightIn(min = 48.dp)
             .testTag("metronome_rhythm_summary"),
     ) {
-        Text(summary, maxLines = 1)
+        Text(text = summary, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
 @Composable
-private fun IntChoiceStrip(
-    title: String,
-    tagPrefix: String,
-    values: List<Int>,
-    selected: Int,
-    onSelect: (Int) -> Unit,
-    scrollState: ScrollState = rememberScrollState(),
+@OptIn(ExperimentalMaterial3Api::class)
+private fun MetronomeQuickSettings(
+    state: MetronomeUiState,
+    onDismiss: () -> Unit,
+    onNumeratorChange: (Int) -> Unit,
+    onDenominatorChange: (Int) -> Unit,
+    onSubdivisionChange: (Int) -> Unit,
+    onAccentEveryChange: (Int?) -> Unit,
+    onSoundChange: (MetronomeSound) -> Unit,
+    onVolumeChange: (Int) -> Unit,
+    onMutedChange: (Boolean) -> Unit,
+    onCountInChange: (Int) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(title, color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleSmall)
-        Row(
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(scrollState)
-                .testTag("${tagPrefix}_strip"),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            values.forEach { value ->
-                ChoiceChip(
-                    label = value.toString(),
-                    selected = value == selected,
-                    tag = "${tagPrefix}_$value",
-                    onClick = { onSelect(value) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AccentStrip(selected: Int?, onSelect: (Int?) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = stringResource(R.string.metronome_accent),
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .testTag("metronome_accent_strip"),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            ChoiceChip(
-                label = stringResource(R.string.metronome_off),
-                selected = selected == null,
-                tag = "metronome_accent_off",
-                onClick = { onSelect(null) },
+            Text(stringResource(R.string.metronome_settings_title), style = MaterialTheme.typography.titleLarge)
+            MetronomeSettingsControls(
+                state = state,
+                onNumeratorChange = onNumeratorChange,
+                onDenominatorChange = onDenominatorChange,
+                onSubdivisionChange = onSubdivisionChange,
+                onAccentEveryChange = onAccentEveryChange,
+                onSoundChange = onSoundChange,
+                onVolumeChange = onVolumeChange,
+                onMutedChange = onMutedChange,
+                onCountInChange = onCountInChange,
             )
-            (2..12).forEach { value ->
-                ChoiceChip(
-                    label = value.toString(),
-                    selected = selected == value,
-                    tag = "metronome_accent_$value",
-                    onClick = { onSelect(value) },
-                )
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("metronome_settings_done"),
+            ) {
+                Text(stringResource(R.string.metronome_done))
             }
+            Spacer(Modifier.height(12.dp))
         }
     }
-}
-
-@Composable
-private fun ChoiceChip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(label) },
-        colors = FilterChipDefaults.filterChipColors(
-            labelColor = MaterialTheme.colorScheme.onBackground,
-            selectedContainerColor = MaterialTheme.colorScheme.primary,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-        ),
-        modifier = Modifier
-            .height(52.dp)
-            .widthIn(min = 52.dp)
-            .testTag(tag),
-    )
 }
 
 @Composable
@@ -619,131 +669,6 @@ private fun PlaybackControls(state: MetronomeUiState, onTap: () -> Unit, onStart
         }
     }
 }
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun MetronomeSettingsSheet(
-    state: MetronomeUiState,
-    onDismiss: () -> Unit,
-    onNumeratorChange: (Int) -> Unit,
-    onDenominatorChange: (Int) -> Unit,
-    onSubdivisionChange: (Int) -> Unit,
-    onAccentEveryChange: (Int?) -> Unit,
-    onSoundChange: (MetronomeSound) -> Unit,
-    onVolumeChange: (Int) -> Unit,
-    onMutedChange: (Boolean) -> Unit,
-    onCountInChange: (Int) -> Unit,
-) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        val volumeDescription = stringResource(R.string.metronome_volume_description, state.settings.volume)
-        val muteDescription = stringResource(R.string.metronome_mute_description)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(stringResource(R.string.metronome_settings_title), style = MaterialTheme.typography.titleLarge)
-            Text(stringResource(R.string.metronome_rhythm), style = MaterialTheme.typography.titleSmall)
-            IntChoiceStrip(
-                title = stringResource(R.string.metronome_meter_numerator),
-                tagPrefix = "metronome_numerator",
-                values = (1..12).toList(),
-                selected = state.settings.numerator,
-                onSelect = onNumeratorChange,
-            )
-            IntChoiceStrip(
-                title = stringResource(R.string.metronome_meter_denominator),
-                tagPrefix = "metronome_denominator",
-                values = listOf(2, 4, 8, 16),
-                selected = state.settings.denominator,
-                onSelect = onDenominatorChange,
-            )
-            IntChoiceStrip(
-                title = stringResource(R.string.metronome_subdivision),
-                tagPrefix = "metronome_subdivision",
-                values = listOf(1, 2, 3, 4),
-                selected = state.settings.subdivision,
-                onSelect = onSubdivisionChange,
-            )
-            AccentStrip(state.settings.accentEvery, onAccentEveryChange)
-            HorizontalDivider()
-            Text(stringResource(R.string.metronome_sound), style = MaterialTheme.typography.titleSmall)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .testTag("metronome_sound_strip"),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                MetronomeSound.entries.forEach { sound ->
-                    ChoiceChip(
-                        label = soundLabel(sound),
-                        selected = sound == state.settings.sound,
-                        tag = "metronome_sound_${sound.name.lowercase()}",
-                        onClick = { onSoundChange(sound) },
-                    )
-                }
-            }
-            Text(
-                text = stringResource(R.string.metronome_volume_value, state.settings.volume),
-                style = MaterialTheme.typography.titleSmall,
-            )
-            Slider(
-                value = state.settings.volume.toFloat(),
-                onValueChange = { onVolumeChange(it.roundToInt()) },
-                valueRange = 0f..100f,
-                steps = 99,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .semantics { contentDescription = volumeDescription }
-                    .testTag("metronome_volume"),
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .toggleable(
-                        value = state.muted,
-                        role = Role.Switch,
-                        onValueChange = onMutedChange,
-                    )
-                    .semantics { contentDescription = muteDescription }
-                    .testTag("metronome_mute"),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(stringResource(R.string.metronome_mute))
-                Switch(checked = state.muted, onCheckedChange = null)
-            }
-            IntChoiceStrip(
-                title = stringResource(R.string.metronome_count_in),
-                tagPrefix = "metronome_count_in",
-                values = listOf(0, 1, 2, 4),
-                selected = state.settings.countIn,
-                onSelect = onCountInChange,
-            )
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("metronome_settings_done"),
-            ) {
-                Text(stringResource(R.string.metronome_done))
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-    }
-}
-
-@Composable
-private fun soundLabel(sound: MetronomeSound): String = stringResource(
-    when (sound) {
-        MetronomeSound.WOOD -> R.string.metronome_sound_wood
-        MetronomeSound.CLICK -> R.string.metronome_sound_click
-        MetronomeSound.RIM -> R.string.metronome_sound_rim
-    },
-)
 
 @StringRes
 internal fun metronomeErrorResource(error: MetronomeError): Int = when (error) {

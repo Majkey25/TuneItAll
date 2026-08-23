@@ -209,6 +209,20 @@ class AudioPipelineTest {
     }
 
     @Test
+    fun `chord tone mixes several notes with bounded faded PCM`() {
+        val samples = createChordToneBuffer(doubleArrayOf(261.63, 329.63, 392.0))
+
+        assertEquals(48_000, samples.size)
+        assertEquals(0, samples.first().toInt())
+        assertEquals(0, samples.last().toInt())
+        assertTrue(samples.any { it != 0.toShort() })
+        assertTrue(samples.maxOf { abs(it.toInt()) } <= 29_000)
+        assertTrue(amplitudeAt(samples, 261.63) > 100.0)
+        assertTrue(amplitudeAt(samples, 329.63) > 100.0)
+        assertTrue(amplitudeAt(samples, 392.0) > 100.0)
+    }
+
+    @Test
     fun `reference tone rejects unsafe frequencies`() {
         listOf(0.0, -1.0, Double.NaN, 24_000.0).forEach { hertz ->
             assertFailsWith<IllegalArgumentException> { createToneBuffer(hertz) }

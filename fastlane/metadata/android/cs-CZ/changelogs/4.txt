@@ -1,0 +1,3 @@
+Přidány diagramy akordů podle ladění, offline analýza akordů písničky s
+přehráváním a transpozicí a trénink akordů. Vylepšen metronom, navigace
+nastavení, hlava kytary a mechanická grafika metronomu.

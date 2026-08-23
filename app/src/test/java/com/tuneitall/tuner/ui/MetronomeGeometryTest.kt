@@ -16,25 +16,25 @@ class MetronomeGeometryTest {
 
     @Test
     fun `classic mechanical silhouette uses tapered body plate plinth and horizontal scale`() {
-        val geometry = mechanicalMetronomeGeometry(Size(1_000f, 1_000f), density = 1f, phase = 0.0)
+        val geometry = mechanicalMetronomeGeometry(Size(1_000f, 1_000f), density = 1f)
 
         assertEquals(
             listOf(
-                Offset(390f, 70f),
-                Offset(610f, 70f),
-                Offset(780f, 910f),
-                Offset(220f, 910f),
+                Offset(430f, 90f),
+                Offset(570f, 90f),
+                Offset(680f, 770f),
+                Offset(320f, 770f),
             ),
             geometry.body,
         )
-        assertEquals(Rect(190f, 890f, 810f, 900f), geometry.plinth)
+        assertEquals(Rect(190f, 890f, 810f, 898f), geometry.plinth)
         assertEquals(4, geometry.sidePlane.size)
         assertEquals(
             listOf(
-                Offset(440f, 130f),
-                Offset(560f, 130f),
-                Offset(590f, 680f),
-                Offset(410f, 680f),
+                Offset(460f, 150f),
+                Offset(540f, 150f),
+                Offset(570f, 650f),
+                Offset(430f, 650f),
             ),
             geometry.scalePlate,
         )
@@ -43,18 +43,24 @@ class MetronomeGeometryTest {
             assertEquals(tick.start.y, tick.end.y)
             assertEquals(if (index % 2 == 0) 12f else 8f, tick.end.x - tick.start.x)
         }
-        assertEquals(Offset(500f, 780f), geometry.pivot)
-        assertEquals(Offset(500f, 130f), geometry.armEnd)
+        assertEquals(Rect(455f, 45f, 545f, 105f), geometry.topCap)
+        assertEquals(Rect(488f, 18f, 512f, 52f), geometry.topBead)
+        assertEquals(4, geometry.baseFront.size)
+        assertEquals(Offset(500f, 720f), geometry.pivot)
+        assertEquals(Offset(500f, 120f), geometry.armEnd)
         assertEquals(Size(32f, 16f), geometry.weight.size)
         assertEquals(3f, geometry.weightSlot.width)
-        assertEquals(0f, geometry.armDegrees)
         assertEquals(
             listOf(
                 MechanicalLayer.BODY,
                 MechanicalLayer.SIDE_PLANE,
                 MechanicalLayer.SCALE_PLATE,
                 MechanicalLayer.SCALE_TICKS,
+                MechanicalLayer.TOP_CAP,
+                MechanicalLayer.BASE_FRONT,
                 MechanicalLayer.PLINTH,
+                MechanicalLayer.FEET,
+                MechanicalLayer.WINDING_KEY,
                 MechanicalLayer.ARM,
                 MechanicalLayer.WEIGHT,
                 MechanicalLayer.HUB,
@@ -65,16 +71,11 @@ class MetronomeGeometryTest {
 
     @Test
     fun `audio phase only rotates arm across exact endpoints`() {
-        val left = mechanicalMetronomeGeometry(Size(360f, 188f), density = 1f, phase = -1.0)
-        val center = mechanicalMetronomeGeometry(Size(360f, 188f), density = 1f, phase = 0.0)
-        val right = mechanicalMetronomeGeometry(Size(360f, 188f), density = 1f, phase = 1.0)
+        val geometry = mechanicalMetronomeGeometry(Size(360f, 188f), density = 1f)
 
-        assertEquals(-24f, left.armDegrees)
-        assertEquals(0f, center.armDegrees)
-        assertEquals(24f, right.armDegrees)
-        assertEquals(left.body, center.body)
-        assertEquals(center.body, right.body)
-        assertEquals(left.scalePlate, right.scalePlate)
-        assertTrue(left.scaleTicks.all { it.start.y == it.end.y })
+        assertEquals(-24f, metronomeArmDegrees(-1.0))
+        assertEquals(0f, metronomeArmDegrees(0.0))
+        assertEquals(24f, metronomeArmDegrees(1.0))
+        assertTrue(geometry.scaleTicks.all { it.start.y == it.end.y })
     }
 }

@@ -31,13 +31,12 @@ import java.util.Locale
 
 enum class PrimaryDestination(
     @param:StringRes val labelResource: Int,
-    val enabled: Boolean = true,
 ) {
     TUNER(R.string.destination_tuner),
     METRONOME(R.string.destination_metronome),
-    CHORDS(R.string.destination_chords, enabled = false),
+    CHORDS(R.string.destination_chords),
     LIBRARY(R.string.destination_library),
-    TRAINER(R.string.destination_trainer, enabled = false),
+    TRAINER(R.string.destination_trainer),
 }
 
 internal data class ResolvedNavigationColors(
@@ -59,7 +58,6 @@ fun AppBottomBar(
     onSelect: (PrimaryDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val notInstalled = stringResource(R.string.not_installed_yet)
     val selectedColors = bottomNavigationSelectedColors()
     val unselectedColor = MaterialTheme.colorScheme.onBackground
     BoxWithConstraints(modifier) {
@@ -90,7 +88,6 @@ fun AppBottomBar(
                             modifier = Modifier.testTag("bottom_label_$key"),
                         )
                     },
-                    enabled = destination.enabled,
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = selectedColors.icon,
                         selectedTextColor = selectedColors.text,
@@ -101,7 +98,7 @@ fun AppBottomBar(
                     modifier = Modifier
                         .testTag("bottom_item_$key")
                         .semantics {
-                            contentDescription = if (destination.enabled) label else "$label. $notInstalled"
+                            contentDescription = label
                         },
                 )
             }

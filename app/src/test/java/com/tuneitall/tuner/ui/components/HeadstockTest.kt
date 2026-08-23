@@ -9,17 +9,16 @@ import kotlin.test.assertTrue
 class HeadstockTest {
     @Test
     fun `split guitar geometry keeps generic headstock proportions`() {
-        assertEquals(88.dp, SplitHeadstockGeometry.bodyWidth)
-        assertEquals(48.dp, SplitHeadstockGeometry.nutWidth)
-        assertEquals(44.dp, SplitHeadstockGeometry.neckWidth)
-        assertEquals(120.dp, SplitHeadstockGeometry.centerGap)
-        assertEquals(0.06f, SplitHeadstockGeometry.fillAlpha)
-        assertTrue(SplitHeadstockGeometry.bodyLength.value / SplitHeadstockGeometry.bodyWidth.value in 2.35f..2.45f)
-        assertEquals(listOf(36.dp, 29.dp, 22.dp), SplitHeadstockGeometry.postOffsets)
-        assertEquals(3.5.dp, SplitHeadstockGeometry.postRadius)
-        assertEquals(8.dp, SplitHeadstockGeometry.keyWidth)
-        assertEquals(14.dp, SplitHeadstockGeometry.keyHeight)
-        assertEquals(listOf(-18.dp, -10.8.dp, -3.6.dp, 3.6.dp, 10.8.dp, 18.dp), SplitHeadstockGeometry.nutSlots)
+        assertEquals(104.dp, SplitHeadstockGeometry.bodyWidth)
+        assertEquals(52.dp, SplitHeadstockGeometry.nutWidth)
+        assertEquals(48.dp, SplitHeadstockGeometry.neckWidth)
+        assertEquals(132.dp, SplitHeadstockGeometry.centerGap)
+        assertTrue(SplitHeadstockGeometry.bodyLength.value / SplitHeadstockGeometry.bodyWidth.value in 2.0f..2.1f)
+        assertEquals(listOf(42.dp, 34.dp, 22.dp), SplitHeadstockGeometry.postOffsets)
+        assertEquals(4.5.dp, SplitHeadstockGeometry.postRadius)
+        assertEquals(12.dp, SplitHeadstockGeometry.keyWidth)
+        assertEquals(9.dp, SplitHeadstockGeometry.keyHeight)
+        assertEquals(listOf(-20.dp, -12.dp, -4.dp, 4.dp, 12.dp, 20.dp), SplitHeadstockGeometry.nutSlots)
     }
 
     @Test

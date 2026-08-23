@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0-alpha.1 — 2026-08-23
+
+- Browse major, minor, and dominant-seventh chord shapes generated for the
+  selected guitar, bass, ukulele, or custom tuning.
+- Import a local audio file, detect a smoothed offline chord timeline, play it
+  in sync, transpose the detected harmony, and view a playable voicing.
+- Learn chord shapes and sounds or run a local quiz with persistent scoring.
+- Keep metronome audio stable while typing tempo values. BPM updates now commit
+  only after confirmation, and 400 BPM playback keeps one output session.
+- Move the pendulum on a dedicated frame callback tied to the audio playback
+  head, without recomposing the full Compose screen.
+- Use one global Settings destination from every gear, plus the restored quick
+  rhythm panel and a standard back arrow.
+- Replace the tuner and metronome illustrations with restrained mechanical
+  vectors based on CC0 references.
+
 ## 0.2.0-alpha.1 — 2026-08-22
 
 - Tune quieter instruments with a pYIN-derived streaming tracker, adaptive
