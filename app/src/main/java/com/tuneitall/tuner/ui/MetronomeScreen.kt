@@ -68,6 +68,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.metronome.MetronomeSound
+import com.tuneitall.tuner.ui.components.SvgAsset
 import kotlinx.coroutines.delay
 
 @Composable
@@ -267,7 +268,6 @@ private fun RepeatButton(
 
 @Composable
 private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
-    val body = MaterialTheme.colorScheme.surfaceVariant
     val ink = MaterialTheme.colorScheme.onSurface
     val background = MaterialTheme.colorScheme.background
     val accent = MaterialTheme.colorScheme.primary
@@ -299,89 +299,19 @@ private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
             .semantics { contentDescription = description }
             .testTag("metronome_pendulum"),
     ) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .drawWithCache {
-                val geometry = mechanicalMetronomeGeometry(size, density)
-                fun polygon(points: List<Offset>) = Path().apply {
-                    moveTo(points.first().x, points.first().y)
-                    points.drop(1).forEach { lineTo(it.x, it.y) }
-                    close()
-                }
-                val bodyPath = Path().apply {
-                    moveTo(geometry.body[0].x, geometry.body[0].y)
-                    lineTo(geometry.body[1].x, geometry.body[1].y)
-                    cubicTo(
-                        size.width * 0.60f,
-                        size.height * 0.30f,
-                        size.width * 0.64f,
-                        size.height * 0.56f,
-                        geometry.body[2].x,
-                        geometry.body[2].y,
-                    )
-                    lineTo(geometry.body[3].x, geometry.body[3].y)
-                    cubicTo(
-                        size.width * 0.36f,
-                        size.height * 0.56f,
-                        size.width * 0.40f,
-                        size.height * 0.30f,
-                        geometry.body[0].x,
-                        geometry.body[0].y,
-                    )
-                    close()
-                }
-                val sidePath = polygon(geometry.sidePlane)
-                val platePath = polygon(geometry.scalePlate)
-                val basePath = polygon(geometry.baseFront)
-                val outline = 1.5.dp.toPx()
-                val round2 = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
-
-                onDrawBehind {
-                    drawPath(bodyPath, body)
-                    drawPath(bodyPath, ink.copy(alpha = MECHANICAL_BODY_FILL_ALPHA))
-                    drawPath(bodyPath, ink, style = Stroke(outline))
-                    drawPath(sidePath, ink.copy(alpha = MECHANICAL_SIDE_PLANE_ALPHA))
-                    drawPath(platePath, background)
-                    drawPath(platePath, ink, style = Stroke(1.dp.toPx()))
-                    geometry.scaleTicks.forEach { tick ->
-                        drawLine(ink, tick.start, tick.end, 1.dp.toPx(), StrokeCap.Round)
-                    }
-                    drawOval(ink.copy(alpha = 0.18f), geometry.topCap.topLeft, geometry.topCap.size)
-                    drawOval(ink, geometry.topCap.topLeft, geometry.topCap.size, style = Stroke(outline))
-                    drawOval(ink, geometry.topBead.topLeft, geometry.topBead.size)
-                    drawPath(basePath, body)
-                    drawPath(basePath, ink.copy(alpha = 0.12f))
-                    drawPath(basePath, ink, style = Stroke(outline))
-                    drawRoundRect(ink, geometry.plinth.topLeft, geometry.plinth.size, round2)
-                    drawOval(ink, geometry.leftFoot.topLeft, geometry.leftFoot.size)
-                    drawOval(ink, geometry.rightFoot.topLeft, geometry.rightFoot.size)
-                    drawLine(
-                        ink,
-                        geometry.windingStem.start,
-                        geometry.windingStem.end,
-                        2.dp.toPx(),
-                        StrokeCap.Round,
-                    )
-                    drawCircle(ink, 3.dp.toPx(), geometry.windingHub)
-                    drawOval(
-                        ink.copy(alpha = 0.28f),
-                        geometry.windingKey.topLeft,
-                        geometry.windingKey.size,
-                    )
-                    drawOval(ink, geometry.windingKey.topLeft, geometry.windingKey.size, style = Stroke(outline))
-                }
-            },
+        SvgAsset(
+            resourceId = R.raw.metronome_body_cc0,
+            modifier = Modifier.matchParentSize().testTag("metronome_body_vector"),
         )
         Box(
             Modifier
                 .matchParentSize()
                 .graphicsLayer {
                     rotationZ = metronomeArmDegrees(phase.floatValue.toDouble())
-                    transformOrigin = TransformOrigin(0.5f, 0.72f)
+                    transformOrigin = TransformOrigin(METRONOME_PIVOT_X_RATIO, METRONOME_PIVOT_Y_RATIO)
                 }
                 .drawWithCache {
-                    val geometry = mechanicalMetronomeGeometry(size, density)
+                    val geometry = metronomeArmGeometry(size, density)
                     val round1 = androidx.compose.ui.geometry.CornerRadius(1.dp.toPx())
                     val weightPath = Path().apply {
                         moveTo(geometry.weight.left + 4.dp.toPx(), geometry.weight.top)
@@ -409,133 +339,25 @@ private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
     }
 }
 
-internal enum class MechanicalLayer {
-    BODY,
-    SIDE_PLANE,
-    SCALE_PLATE,
-    SCALE_TICKS,
-    TOP_CAP,
-    BASE_FRONT,
-    PLINTH,
-    FEET,
-    WINDING_KEY,
-    ARM,
-    WEIGHT,
-    HUB,
-}
-
-internal const val MECHANICAL_BODY_FILL_ALPHA = 0.06f
-internal const val MECHANICAL_SIDE_PLANE_ALPHA = 0.10f
-
-internal data class MechanicalLine(val start: Offset, val end: Offset)
-
-internal data class MechanicalMetronomeGeometry(
-    val body: List<Offset>,
-    val sidePlane: List<Offset>,
-    val scalePlate: List<Offset>,
-    val scaleTicks: List<MechanicalLine>,
-    val topCap: Rect,
-    val topBead: Rect,
-    val baseFront: List<Offset>,
-    val plinth: Rect,
-    val leftFoot: Rect,
-    val rightFoot: Rect,
-    val windingStem: MechanicalLine,
-    val windingHub: Offset,
-    val windingKey: Rect,
+internal data class MetronomeArmGeometry(
     val pivot: Offset,
     val armEnd: Offset,
     val weight: Rect,
     val weightSlot: Rect,
-    val layers: List<MechanicalLayer>,
 )
 
-internal fun mechanicalMetronomeGeometry(
-    size: Size,
-    density: Float,
-): MechanicalMetronomeGeometry {
+internal fun metronomeArmGeometry(size: Size, density: Float): MetronomeArmGeometry {
     require(size.width > 0f && size.height > 0f)
     require(density > 0f)
-    val centerX = size.width * 0.5f
-    val tickRatios = listOf(0.22f, 0.285f, 0.35f, 0.415f, 0.48f, 0.545f, 0.61f)
-    val weightCenterY = size.height * 0.45f
-    return MechanicalMetronomeGeometry(
-        body = listOf(
-            Offset(size.width * 0.43f, size.height * 0.09f),
-            Offset(size.width * 0.57f, size.height * 0.09f),
-            Offset(size.width * 0.68f, size.height * 0.77f),
-            Offset(size.width * 0.32f, size.height * 0.77f),
-        ),
-        sidePlane = listOf(
-            Offset(size.width * 0.57f, size.height * 0.09f),
-            Offset(size.width * 0.68f, size.height * 0.77f),
-            Offset(size.width * 0.64f, size.height * 0.75f),
-            Offset(size.width * 0.55f, size.height * 0.14f),
-        ),
-        scalePlate = listOf(
-            Offset(size.width * 0.46f, size.height * 0.15f),
-            Offset(size.width * 0.54f, size.height * 0.15f),
-            Offset(size.width * 0.57f, size.height * 0.65f),
-            Offset(size.width * 0.43f, size.height * 0.65f),
-        ),
-        scaleTicks = tickRatios.mapIndexed { index, ratio ->
-            val length = (if (index % 2 == 0) 12f else 8f) * density
-            val y = size.height * ratio
-            MechanicalLine(Offset(centerX - length / 2f, y), Offset(centerX + length / 2f, y))
-        },
-        topCap = Rect(
-            left = size.width * 0.455f,
-            top = size.height * 0.045f,
-            right = size.width * 0.545f,
-            bottom = size.height * 0.105f,
-        ),
-        topBead = Rect(
-            left = size.width * 0.488f,
-            top = size.height * 0.018f,
-            right = size.width * 0.512f,
-            bottom = size.height * 0.052f,
-        ),
-        baseFront = listOf(
-            Offset(size.width * 0.31f, size.height * 0.76f),
-            Offset(size.width * 0.69f, size.height * 0.76f),
-            Offset(size.width * 0.78f, size.height * 0.91f),
-            Offset(size.width * 0.22f, size.height * 0.91f),
-        ),
-        plinth = Rect(
-            left = size.width * 0.19f,
-            top = size.height * 0.89f,
-            right = size.width * 0.81f,
-            bottom = size.height * 0.89f + 8f * density,
-        ),
-        leftFoot = Rect(
-            left = size.width * 0.23f,
-            top = size.height * 0.925f,
-            right = size.width * 0.28f,
-            bottom = size.height * 0.97f,
-        ),
-        rightFoot = Rect(
-            left = size.width * 0.72f,
-            top = size.height * 0.925f,
-            right = size.width * 0.77f,
-            bottom = size.height * 0.97f,
-        ),
-        windingStem = MechanicalLine(
-            Offset(size.width * 0.66f, size.height * 0.56f),
-            Offset(size.width * 0.76f, size.height * 0.62f),
-        ),
-        windingHub = Offset(size.width * 0.66f, size.height * 0.56f),
-        windingKey = Rect(
-            left = size.width * 0.745f,
-            top = size.height * 0.585f,
-            right = size.width * 0.79f,
-            bottom = size.height * 0.655f,
-        ),
-        pivot = Offset(centerX, size.height * 0.72f),
-        armEnd = Offset(centerX, size.height * 0.12f),
+    val centerX = size.width * METRONOME_PIVOT_X_RATIO
+    val weightCenterY = size.height * 0.39f
+    return MetronomeArmGeometry(
+        pivot = Offset(centerX, size.height * METRONOME_PIVOT_Y_RATIO),
+        armEnd = Offset(centerX, size.height * 0.10f),
         weight = Rect(
-            left = centerX - 16f * density,
+            left = centerX - 15f * density,
             top = weightCenterY - 8f * density,
-            right = centerX + 16f * density,
+            right = centerX + 15f * density,
             bottom = weightCenterY + 8f * density,
         ),
         weightSlot = Rect(
@@ -544,11 +366,13 @@ internal fun mechanicalMetronomeGeometry(
             right = centerX + 1.5f * density,
             bottom = weightCenterY + 5f * density,
         ),
-        layers = MechanicalLayer.entries,
     )
 }
 
 internal fun metronomeArmDegrees(phase: Double): Float = phase.coerceIn(-1.0, 1.0).toFloat() * 24f
+
+internal const val METRONOME_PIVOT_X_RATIO = 0.556f
+internal const val METRONOME_PIVOT_Y_RATIO = 0.62f
 
 @Composable
 private fun RhythmSummary(state: MetronomeUiState, onClick: () -> Unit) {

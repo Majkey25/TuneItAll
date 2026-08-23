@@ -1,4 +1,4 @@
-TuneItAll `v0.3.0-alpha.1` prerelease testing build.
+TuneItAll `v0.3.0-alpha.2` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -16,15 +16,17 @@ Highlights:
   Auto/Raw/Compatible input.
 - A foreground-only mechanical metronome from 20 to 400 BPM with meter,
   subdivision, accent, sound, volume, mute, and count-in controls.
-- Major, minor, and dominant-seventh chord diagrams generated for the selected
-  tuning, including custom and extended-range tunings.
+- Canonical major, minor, and dominant-seventh diagrams for Standard E guitar
+  and Standard C ukulele, with finger numbers, starting frets, and barres.
 - Experimental offline chord detection for a local audio file, with synchronized
-  playback, timeline navigation, tuning-aware voicings, and transposition.
-- Learn and Quiz trainer modes with generated chord audio and local scoring.
+  playback, timeline navigation, canonical standard-instrument diagrams, and
+  transposition.
+- Chord learning, hidden-answer chord quiz, and a 12-note ear trainer with
+  generated audio and local scoring.
 - Stable confirmed BPM editing, audio-synchronized mechanical animation, a
   shared global Settings destination, and a restored quick rhythm panel.
-- Revised 3+3 headstock and mechanical metronome vectors reviewed against CC0
-  references.
+- A licensed 3+3 headstock outline and a CC0 mechanical metronome body. The
+  metronome arm remains synchronized to the audio playback head.
 - No ads, accounts, analytics, tracking, or network permission.
 
 The app passed unit, Lint, API 35 Compose, audio-session, local-file decoding,

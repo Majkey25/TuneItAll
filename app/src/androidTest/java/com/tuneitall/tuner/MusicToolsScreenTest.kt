@@ -10,11 +10,14 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.test.platform.app.InstrumentationRegistry
 import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
+import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.music.trainerChoices
+import com.tuneitall.tuner.music.noteQuestion
 import com.tuneitall.tuner.storage.NoteNotation
 import com.tuneitall.tuner.storage.TrainerStats
 import com.tuneitall.tuner.ui.ChordTab
@@ -33,6 +36,9 @@ class MusicToolsScreenTest {
     val compose = createComposeRule()
 
     private val tuning = requireNotNull(TuningCatalog.byId("guitar-6-standard"))
+    private val catalog by lazy {
+        ChordShapeCatalog.fromResources(InstrumentationRegistry.getInstrumentation().targetContext.resources)
+    }
 
     @Test
     fun chordLibraryChangesRootAndQualityAndRendersVoicing() {
@@ -43,6 +49,7 @@ class MusicToolsScreenTest {
                     state = state,
                     tunings = listOf(tuning),
                     notation = NoteNotation.SHARPS,
+                    catalog = catalog,
                     onTabSelected = { state = state.copy(tab = it) },
                     onChordSelected = { state = state.copy(selectedChord = it) },
                     onTuningSelected = {},
@@ -82,6 +89,7 @@ class MusicToolsScreenTest {
                     state = state,
                     tunings = listOf(tuning),
                     notation = NoteNotation.SHARPS,
+                    catalog = catalog,
                     onTabSelected = { state = state.copy(tab = it) },
                     onChordSelected = {},
                     onTuningSelected = {},
@@ -112,6 +120,7 @@ class MusicToolsScreenTest {
                     stats = TrainerStats(),
                     tunings = listOf(tuning),
                     notation = NoteNotation.SHARPS,
+                    catalog = catalog,
                     onRecord = { recorded = it },
                     onReset = {},
                 )
@@ -119,13 +128,44 @@ class MusicToolsScreenTest {
         }
 
         compose.onNodeWithTag("trainer_mode_quiz").performClick()
+        compose.onNodeWithTag("chord_diagram").assertDoesNotExist()
         compose.onNodeWithTag("chord_diagram_label").assertDoesNotExist()
         compose.onNodeWithText(formatChord(firstChoice, NoteNotation.SHARPS)).performClick()
 
         compose.onNodeWithTag("trainer_feedback").assertIsDisplayed()
+        compose.onNodeWithTag("chord_diagram").assertIsDisplayed()
         compose.runOnIdle {
             assertTrue(recorded != null)
             assertEquals(firstChoice == answer, recorded)
+        }
+    }
+
+    @Test
+    fun noteTrainerRecordsOneAnswerWithoutRevealingItFirst() {
+        var recorded: Boolean? = null
+        val question = noteQuestion(seed = 1)
+        val firstChoice = question.choices.first()
+        compose.setContent {
+            TuneItAllTheme {
+                TrainerScreen(
+                    stats = TrainerStats(),
+                    tunings = listOf(tuning),
+                    notation = NoteNotation.SHARPS,
+                    catalog = catalog,
+                    onRecord = { recorded = it },
+                    onReset = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("trainer_exercise_notes").performClick()
+        compose.onNodeWithTag("trainer_note_feedback").assertDoesNotExist()
+        compose.onNodeWithTag("trainer_note_play").assertIsDisplayed()
+        compose.onNodeWithTag("trainer_note_answer_$firstChoice").performClick()
+
+        compose.onNodeWithTag("trainer_note_feedback").assertIsDisplayed()
+        compose.runOnIdle {
+            assertEquals(firstChoice == question.answerPitchClass, recorded)
         }
     }
 }

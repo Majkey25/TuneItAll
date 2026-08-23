@@ -4,7 +4,7 @@ Kytaru, baskytaru nebo ukulele naladíš automaticky, vybereš konkrétní strun
 
 Funkce:
 • Kytary se 6, 7, 8 a 9 strunami
-• Skutečné rozložení hlavy 3+3 pro šestistrunnou kytaru a rozložení pro 7 až 9 strun
+• Licencovaný obrys hlavy kytary 3+3 a rozložení pro 7 až 9 strun
 • Čtyřstrunná baskytara a ukulele
 • Standardní, snížená, drop, open a DADGAD ladění
 • Hledání, oblíbené položky a vlastní ladění
@@ -14,9 +14,9 @@ Funkce:
 • Zvukové potvrzení stabilního naladění
 • Nastavitelné profily ladičky, citlivost mikrofonu, odezva, stabilita, potlačení hluku a harmonických skoků, tolerance, časování a vstup zvuku
 • Mechanický metronom od 20 do 400 BPM s nastavením taktu, dělení, přízvuku, zvuku, hlasitosti, ztlumení a odpočtu
-• Diagramy durových, mollových a dominantních septakordů podle ladění
+• Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
 • Experimentální offline časová osa akordů z vybraného zvukového souboru, přehrávání a transpozice
-• Učení a kvíz akordů s generovaným zvukem a místním skóre
+• Učení akordů, kvíz akordů a rozpoznávání 12 tónů sluchem s místním skóre
 • Jednoduché světlé a tmavé rozhraní
 
 TuneItAll neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává, neuchovává, nesdílí ani neodesílá.

@@ -19,7 +19,7 @@ centová stupnice ukáže, jestli je tón níž, výš, nebo přesně naladěný
 Funkce:
 
 - Kytary se 6, 7, 8 a 9 strunami
-- Fyzické rozložení hlavy 3+3 a varianty pro více strun
+- Licencovaný obrys hlavy kytary 3+3 a varianty pro více strun
 - Čtyřstrunná baskytara a ukulele
 - Standardní, snížená, drop, open a DADGAD ladění
 - Hledání, oblíbené položky a vlastní ladění
@@ -29,9 +29,9 @@ Funkce:
 - Zvukové potvrzení stabilního naladění
 - Nastavitelná citlivost mikrofonu s bezpečným výchozím nastavením
 - Mechanický metronom s taktem, dělením, akcentem, zvukem a odpočtem
-- Diagramy durových, mollových a dominantních septakordů podle ladění
+- Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
 - Experimentální offline časová osa akordů z vybraného zvukového souboru
-- Učení a kvíz akordů s generovaným zvukem a místním skóre
+- Učení akordů, kvíz akordů a rozpoznávání jednotlivých tónů sluchem
 
 TuneItAll neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup
 k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává,

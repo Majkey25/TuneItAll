@@ -4,7 +4,7 @@
 
 **Goal:** Replace generated chord shapes and hand-built instrument silhouettes, then add single-note ear training.
 
-**Architecture:** A small immutable catalog reads a pinned `chords-db` subset from an Android raw resource. Chords and Trainer share that catalog. Downloaded CC0 SVG geometry supplies the static headstock and metronome body while existing Compose layers keep labels, hit targets, selection, and audio-phase animation.
+**Architecture:** A small immutable catalog reads pinned `chords-db` resources. Chords and Trainer share that catalog. Downloaded licensed SVG geometry supplies the static headstock and metronome body while existing Compose layers keep labels, hit targets, selection, and audio-phase animation.
 
 **Tech Stack:** Kotlin 2.2, Jetpack Compose, Android `org.json`, AndroidSVG 1.4, JUnit 4, Compose UI tests.
 
@@ -13,13 +13,14 @@
 ### Task 1: Replace generated shapes with canonical data
 
 **Files:**
-- Create: `app/src/main/res/raw/chords_db_core.json`
+- Create: `app/src/main/res/raw/chords_db_guitar.json`
+- Create: `app/src/main/res/raw/chords_db_ukulele.json`
 - Create: `app/src/main/java/com/tuneitall/tuner/music/ChordShapeCatalog.kt`
 - Modify: `app/src/main/java/com/tuneitall/tuner/music/ChordModels.kt`
 - Modify: `THIRD_PARTY_NOTICES.md`
 - Test: `app/src/test/java/com/tuneitall/tuner/music/ChordShapeCatalogTest.kt`
 
-- [ ] **Step 1: Write the failing canonical-shape test**
+- [x] **Step 1: Write the failing canonical-shape test**
 
 ```kotlin
 @Test
@@ -33,13 +34,13 @@ fun `standard guitar uses canonical open and barre shapes`() {
 }
 ```
 
-- [ ] **Step 2: Run the test and confirm the missing catalog failure**
+- [x] **Step 2: Run the test and confirm the missing catalog failure**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.tuneitall.tuner.music.ChordShapeCatalogTest"`
 
 Expected: FAIL because `ChordShapeCatalog` does not exist.
 
-- [ ] **Step 3: Vendor the pinned core data and implement the parser**
+- [x] **Step 3: Vendor the pinned core data and implement the parser**
 
 ```kotlin
 data class ChordVoicing(
@@ -56,13 +57,13 @@ class ChordShapeCatalog private constructor(
 }
 ```
 
-The parser converts source-relative frets with `absolute = baseFret + relative - 1`. It keeps `-1` muted and `0` open. Only `guitar-6-standard` and `ukulele-standard` are valid catalog IDs.
+The parser reads only Major, Minor, and Dominant 7 first positions from the two upstream files. It converts source-relative frets with `absolute = baseFret + relative - 1`. It keeps `-1` muted and `0` open. Only `guitar-6-standard` and `ukulele-standard` are valid catalog IDs.
 
-- [ ] **Step 4: Remove `findPlayableVoicing` and route audio through catalog frets**
+- [x] **Step 4: Remove `findPlayableVoicing` and route audio through catalog frets**
 
 Keep `voicingFrequencies(openNotes, voicing)`. Delete the backtracking search and its scoring constants.
 
-- [ ] **Step 5: Run catalog and music tests**
+- [x] **Step 5: Run catalog and music tests**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.tuneitall.tuner.music.*"`
 
@@ -80,7 +81,7 @@ Expected: PASS.
 - Test: `app/src/test/java/com/tuneitall/tuner/music/TrainerTest.kt`
 - Test: `app/src/androidTest/java/com/tuneitall/tuner/MusicToolsScreenTest.kt`
 
-- [ ] **Step 1: Write failing tests for barre, fingers, unsupported tunings, and note questions**
+- [x] **Step 1: Write failing tests for barre, fingers, unsupported tunings, and note questions**
 
 ```kotlin
 @Test
@@ -94,17 +95,17 @@ fun `note question has one answer and four unique choices`() {
 
 Compose tests must assert that the chord quiz has no `chord_diagram` before an answer and shows the canonical diagram after selection.
 
-- [ ] **Step 2: Run the focused tests and confirm behavior failures**
+- [x] **Step 2: Run the focused tests and confirm behavior failures**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.tuneitall.tuner.music.TrainerTest"`
 
 Expected: FAIL because `noteQuestion` does not exist.
 
-- [ ] **Step 3: Draw canonical details**
+- [x] **Step 3: Draw canonical details**
 
 `ChordDiagram` draws a horizontal barre between the first and last matching string, writes finger numbers inside fretted dots, uses `baseFret`, and announces the exact fret sequence. If `catalog.shape()` returns null, show `chord_shape_standard_only` and draw no diagram.
 
-- [ ] **Step 4: Add Chords and Notes exercise selectors**
+- [x] **Step 4: Add Chords and Notes exercise selectors**
 
 ```kotlin
 private enum class TrainerExercise { CHORDS, NOTES }
@@ -118,7 +119,7 @@ data class NoteQuestion(
 
 The Notes exercise plays `midiToHertz(question.midiNote)` through `ReferenceTonePlayer.play()`. It hides feedback until one of four choices is selected and keeps the same question for replay.
 
-- [ ] **Step 5: Run unit and connected Trainer tests**
+- [x] **Step 5: Run unit and connected Trainer tests**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.tuneitall.tuner.music.*"`
 
@@ -129,7 +130,7 @@ Expected: PASS.
 ### Task 3: Use downloaded vector art
 
 **Files:**
-- Create: `app/src/main/res/raw/guitar_head_cc0.svg`
+- Create: `app/src/main/res/raw/guitar_head_commons.svg`
 - Create: `app/src/main/res/raw/metronome_body_cc0.svg`
 - Create: `app/src/main/java/com/tuneitall/tuner/ui/components/SvgAsset.kt`
 - Modify: `app/build.gradle.kts`
@@ -138,29 +139,29 @@ Expected: PASS.
 - Modify: `THIRD_PARTY_NOTICES.md`
 - Test: `app/src/androidTest/java/com/tuneitall/tuner/VectorAssetTest.kt`
 
-- [ ] **Step 1: Write a failing Android resource parse test**
+- [x] **Step 1: Write a failing Android resource parse test**
 
 ```kotlin
 @Test
 fun bundledSvgAssetsParse() {
-    assertTrue(SVG.getFromResource(context, R.raw.guitar_head_cc0).documentWidth > 0f)
+    assertTrue(SVG.getFromResource(context, R.raw.guitar_head_commons).documentWidth > 0f)
     assertTrue(SVG.getFromResource(context, R.raw.metronome_body_cc0).documentHeight > 0f)
 }
 ```
 
-- [ ] **Step 2: Run the focused connected test and confirm missing resources**
+- [x] **Step 2: Run the focused connected test and confirm missing resources**
 
 Expected: FAIL because the raw SVG resources do not exist.
 
-- [ ] **Step 3: Add AndroidSVG and the pinned SVG files**
+- [x] **Step 3: Add AndroidSVG and the pinned SVG files**
 
 Add `implementation("com.caverock:androidsvg-aar:1.4")`. Keep the upstream metadata. Hide only the original metronome arm group `g3702` and its `path3717*` tick paths so TuneItAll can animate one arm.
 
-- [ ] **Step 4: Render the SVGs and preserve functional overlays**
+- [x] **Step 4: Render the SVGs and preserve functional overlays**
 
 `SvgAsset` parses once with `remember` and uses `drawIntoCanvas` to fit the `Picture`. Headstock keeps string lines, selected posts, and six labeled buttons. Metronome keeps the current `Choreographer` phase loop and rotates only the separate arm layer.
 
-- [ ] **Step 5: Run visual, bounds, and audio-phase tests**
+- [x] **Step 5: Run visual, bounds, and audio-phase tests**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.tuneitall.tuner.ui.*"`
 
@@ -177,15 +178,15 @@ Expected: PASS with stable component bounds and unchanged endpoint math.
 - Modify: `fastlane/metadata/android/cs-CZ/changelogs/5.txt`
 - Update: store screenshots
 
-- [ ] **Step 1: Set version `0.3.0-alpha.2` and version code `5`**
+- [x] **Step 1: Set version `0.3.0-alpha.2` and version code `5`**
 
-- [ ] **Step 2: Run the repository gate**
+- [x] **Step 2: Run the repository gate**
 
 Run: `./tools/build.ps1 -AllowUnsigned`
 
 Expected: unit tests, lint, APK, AAB, and package verification pass.
 
-- [ ] **Step 3: Run the full API 35 connected suite and manual audio flows**
+- [x] **Step 3: Run the full API 35 connected suite and manual audio flows**
 
 Verify canonical C, F, and B7 diagrams, chord replay, note replay, correct and incorrect note answers, metronome 40 and 400 BPM, settings navigation, and the tuner regression path. Check TuneItAll's active audio session for underruns.
 

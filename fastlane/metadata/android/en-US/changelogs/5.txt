@@ -1,0 +1,3 @@
+Replaced guessed chord shapes with canonical guitar and ukulele fingerings,
+including fingers and barres. Added single-note ear training and licensed
+headstock and metronome vector art.

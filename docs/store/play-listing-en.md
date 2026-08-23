@@ -19,7 +19,7 @@ whether the note is flat, sharp, or in tune.
 Features:
 
 - Guitar support for 6, 7, 8, and 9 strings
-- Physical 3+3 and extended-range headstock layouts
+- Licensed 3+3 guitar outline and extended-range headstock layouts
 - Four-string bass and ukulele
 - Standard, lowered, drop, open, and DADGAD presets
 - Search, favorites, and custom tunings
@@ -29,8 +29,9 @@ Features:
 - Stable in-tune confirmation sound
 - Adjustable microphone sensitivity with a safe tested default
 - Mechanical metronome with meter, subdivision, accent, sound, and count-in
-- Tuning-aware major, minor, and dominant-seventh chord diagrams
+- Canonical Standard E guitar and Standard C ukulele chord diagrams
 - Experimental offline chord timeline for a user-selected local audio file
+- Chord and single-note ear training with local scoring
 - Chord learning and quiz modes with generated audio and local scoring
 
 TuneItAll has no ads, account, analytics, tracking, or internet permission.

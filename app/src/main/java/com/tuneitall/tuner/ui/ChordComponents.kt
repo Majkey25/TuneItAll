@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -26,18 +25,19 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordQuality
-import com.tuneitall.tuner.music.ChordVoicing
-import com.tuneitall.tuner.music.findPlayableVoicing
+import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.storage.NoteNotation
 import java.util.Locale
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @Composable
 fun TuningSelector(
@@ -80,31 +80,24 @@ fun ChordDiagram(
     chord: Chord,
     tuning: TuningPreset,
     notation: NoteNotation,
+    catalog: ChordShapeCatalog,
     modifier: Modifier = Modifier,
     showLabel: Boolean = false,
 ) {
-    val result by produceState(VoicingResult(ready = false, voicing = null), chord, tuning) {
-        value = withContext(Dispatchers.Default) {
-            VoicingResult(ready = true, voicing = findPlayableVoicing(tuning.notesLowToHigh, chord))
-        }
-    }
-    if (!result.ready) {
-        Box(modifier.fillMaxWidth().height(220.dp))
-        return
-    }
-    val voicing = result.voicing
+    val voicing = catalog.shape(tuning.id, chord)
     if (voicing == null) {
-        Text(stringResource(R.string.no_chord_voicing), modifier = modifier)
+        Text(stringResource(R.string.chord_shape_standard_only), modifier = modifier.testTag("chord_shape_unavailable"))
         return
     }
-    val fretted = voicing.frets.filter { it > 0 }
-    val baseFret = if ((fretted.maxOrNull() ?: 0) <= DISPLAY_FRETS) 1 else requireNotNull(fretted.minOrNull())
+    val baseFret = voicing.baseFret
     val description = stringResource(
         R.string.chord_diagram_description,
         voicing.frets.joinToString { if (it < 0) "x" else it.toString() },
     )
     val lineColor = MaterialTheme.colorScheme.onSurface
     val accent = MaterialTheme.colorScheme.primary
+    val fingerTextMeasurer = rememberTextMeasurer()
+    val fingerStyle = TextStyle(color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
 
     Column(modifier) {
         if (baseFret > 1) {
@@ -140,6 +133,20 @@ fun ChordDiagram(
                     StrokeCap.Round,
                 )
             }
+            voicing.barres.forEach { barreFret ->
+                val matchingStrings = voicing.frets.indices.filter { voicing.frets[it] == barreFret }
+                if (matchingStrings.size >= 2) {
+                    val row = barreFret - baseFret
+                    val y = top + (row + 0.5f) * fretGap
+                    drawLine(
+                        accent,
+                        Offset(side + requireNotNull(matchingStrings.minOrNull()) * stringGap, y),
+                        Offset(side + requireNotNull(matchingStrings.maxOrNull()) * stringGap, y),
+                        14.dp.toPx(),
+                        StrokeCap.Round,
+                    )
+                }
+            }
             voicing.frets.forEachIndexed { string, fret ->
                 val x = side + string * stringGap
                 when {
@@ -162,6 +169,14 @@ fun ChordDiagram(
                         val y = top + (row + 0.5f) * fretGap
                         drawCircle(accent, radius = 8.dp.toPx(), center = Offset(x, y))
                         drawCircle(lineColor, radius = 8.dp.toPx(), center = Offset(x, y), style = Stroke(1.dp.toPx()))
+                        val finger = voicing.fingers[string]
+                        if (finger > 0) {
+                            val measured = fingerTextMeasurer.measure(finger.toString(), fingerStyle)
+                            drawText(
+                                measured,
+                                topLeft = Offset(x - measured.size.width / 2f, y - measured.size.height / 2f),
+                            )
+                        }
                     }
                 }
             }
@@ -187,13 +202,17 @@ fun chordQualityName(quality: ChordQuality): String = stringResource(
 )
 
 fun formatChord(chord: Chord, notation: NoteNotation): String {
-    val names = if (notation == NoteNotation.FLATS) FLAT_NAMES else SHARP_NAMES
     val suffix = when (chord.quality) {
         ChordQuality.MAJOR -> ""
         ChordQuality.MINOR -> "m"
         ChordQuality.DOMINANT_SEVENTH -> "7"
     }
-    return names[chord.rootPitchClass] + suffix
+    return formatPitchClass(chord.rootPitchClass, notation) + suffix
+}
+
+fun formatPitchClass(pitchClass: Int, notation: NoteNotation): String {
+    require(pitchClass in 0..11)
+    return (if (notation == NoteNotation.FLATS) FLAT_NAMES else SHARP_NAMES)[pitchClass]
 }
 
 fun formatSongTime(millis: Long): String {
@@ -204,5 +223,4 @@ fun formatSongTime(millis: Long): String {
 
 private val SHARP_NAMES = listOf("C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B")
 private val FLAT_NAMES = listOf("C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B")
-private data class VoicingResult(val ready: Boolean, val voicing: ChordVoicing?)
 private const val DISPLAY_FRETS = 5

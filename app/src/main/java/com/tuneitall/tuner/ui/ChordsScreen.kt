@@ -44,6 +44,7 @@ import com.tuneitall.tuner.R
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordQuality
+import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.music.chordEventAt
 import com.tuneitall.tuner.storage.NoteNotation
 import kotlin.math.roundToLong
@@ -53,6 +54,7 @@ fun ChordsScreen(
     state: ChordUiState,
     tunings: List<TuningPreset>,
     notation: NoteNotation,
+    catalog: ChordShapeCatalog,
     onTabSelected: (ChordTab) -> Unit,
     onChordSelected: (Chord) -> Unit,
     onTuningSelected: (String) -> Unit,
@@ -102,6 +104,7 @@ fun ChordsScreen(
                 chord = state.selectedChord,
                 tuning = selectedTuning,
                 notation = notation,
+                catalog = catalog,
                 onChordSelected = onChordSelected,
             )
 
@@ -109,6 +112,7 @@ fun ChordsScreen(
                 state = state,
                 tuning = selectedTuning,
                 notation = notation,
+                catalog = catalog,
                 onChooseAudio = { launcher.launch(arrayOf("audio/*")) },
                 onPlayPause = onPlayPause,
                 onSeek = onSeek,
@@ -125,6 +129,7 @@ private fun ChordLibrary(
     chord: Chord,
     tuning: TuningPreset,
     notation: NoteNotation,
+    catalog: ChordShapeCatalog,
     onChordSelected: (Chord) -> Unit,
 ) {
     Text(stringResource(R.string.chords_library), style = MaterialTheme.typography.titleLarge)
@@ -159,7 +164,7 @@ private fun ChordLibrary(
         textAlign = TextAlign.Center,
     )
     Text(stringResource(R.string.chord_voicing, tuning.name), style = MaterialTheme.typography.titleMedium)
-    ChordDiagram(chord, tuning, notation, Modifier.fillMaxWidth())
+    ChordDiagram(chord, tuning, notation, catalog, Modifier.fillMaxWidth())
 }
 
 @Composable
@@ -167,6 +172,7 @@ private fun SongChordPanel(
     state: ChordUiState,
     tuning: TuningPreset,
     notation: NoteNotation,
+    catalog: ChordShapeCatalog,
     onChooseAudio: () -> Unit,
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
@@ -242,7 +248,7 @@ private fun SongChordPanel(
         modifier = Modifier.fillMaxWidth().testTag("current_song_chord"),
         textAlign = TextAlign.Center,
     )
-    if (activeChord != null) ChordDiagram(activeChord, tuning, notation, Modifier.fillMaxWidth())
+    if (activeChord != null) ChordDiagram(activeChord, tuning, notation, catalog, Modifier.fillMaxWidth())
 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Button(

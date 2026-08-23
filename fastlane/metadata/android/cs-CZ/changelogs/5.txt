@@ -1,0 +1,3 @@
+Nahradili jsme odhadované hmaty ověřenými akordy pro kytaru a ukulele včetně
+prstokladu a barré. Přidali jsme rozpoznávání tónů sluchem a licencovanou
+grafiku hlavy kytary a metronomu.

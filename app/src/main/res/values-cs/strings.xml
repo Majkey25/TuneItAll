@@ -49,7 +49,7 @@
     <string name="chord_dominant_seventh">Dominantní 7</string>
     <string name="chord_voicing">Hmat pro %1$s</string>
     <string name="chord_diagram_description">Diagram akordu. Pražce od nejnižší struny: %1$s</string>
-    <string name="no_chord_voicing">Pro toto ladění nebyl nalezen kompaktní hmat.</string>
+    <string name="chord_shape_standard_only">Ověřené diagramy jsou dostupné pro kytaru Standard E a ukulele Standard C.</string>
     <string name="fret_number">Pražec %1$d</string>
     <string name="import_audio">Vybrat zvukový soubor</string>
     <string name="replace_audio">Vybrat jiný soubor</string>
@@ -70,12 +70,17 @@
     <string name="song_error_playback">Zvukový soubor se nepodařilo přehrát.</string>
     <string name="trainer_learn">Učení</string>
     <string name="trainer_quiz">Kvíz</string>
+    <string name="trainer_chords">Akordy</string>
+    <string name="trainer_notes">Tóny</string>
     <string name="trainer_play_chord">Poslechnout akord</string>
+    <string name="trainer_play_note">Poslechnout tón</string>
     <string name="trainer_previous">Předchozí</string>
     <string name="trainer_next">Další</string>
-    <string name="trainer_question">Který akord je na obrázku?</string>
+    <string name="trainer_question">Který akord slyšíš?</string>
     <string name="trainer_correct">Správně</string>
     <string name="trainer_incorrect">Špatně. Odpověď: %1$s</string>
+    <string name="trainer_note_question">Který tón slyšíš?</string>
+    <string name="trainer_note_incorrect">Špatně. Odpověď: %1$s</string>
     <string name="trainer_score">Skóre: %1$d / %2$d</string>
     <string name="trainer_reset_score">Vynulovat skóre</string>
     <string name="metronome_settings_title">Nastavení metronomu</string>

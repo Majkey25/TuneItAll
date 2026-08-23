@@ -13,17 +13,17 @@ TuneItAll is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing prerelease `0.3.0-alpha.1`. TuneItAll is not published
+Status: public testing prerelease `0.3.0-alpha.2`. TuneItAll is not published
 on Google Play.
 
 ## Download
 
-[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.1/TuneItAll-v0.3.0-alpha.1-debug.apk)
+[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.2/TuneItAll-v0.3.0-alpha.2-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.1).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.2).
 
 ## Features
 
@@ -33,12 +33,14 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
 - Live frequency, signed cents, flat/sharp direction, and a −50…+50 cent rail.
 - A foreground-only mechanical metronome from 20 to 400 BPM with meter,
   subdivision, accent, sound, volume, mute, and count-in controls.
-- Tuning-aware major, minor, and dominant-seventh chord diagrams for built-in
-  and custom tunings.
+- Canonical major, minor, and dominant-seventh chord diagrams from a pinned
+  offline catalog for Standard E guitar and Standard C ukulele. Other tunings
+  never receive a guessed fingering.
 - Local audio-file chord analysis with synchronized playback, a smoothed chord
   timeline, tuning selection, and ±12-semitone transposition. The detector is
   experimental and can mislabel dense mixes, inversions, or extended chords.
-- Chord learning and quiz modes with generated chord audio and local scoring.
+- Chord learning, hidden-answer chord quiz, and 12-note ear training with
+  generated audio and local scoring.
 - Guitar: 6, 7, 8, and 9 strings with inline and split headstocks.
 - Four-string bass and ukulele.
 - 38 built-in tunings, including lowered standard, Drop D through Drop F,
@@ -53,10 +55,10 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
   Silent/DND, is excluded from pitch detection, and never creates a notification
   or popup.
 - Sharps or flats notation and generated reference audio with no bundled samples.
-- Data-driven Compose headstocks. Peg count and note order come from the same
-  typed tuning model used by the tuner engine.
-- A simple Light/Dark Compose interface with a physical 3+3 guitar headstock,
-  one global Settings destination, and a quick metronome rhythm panel.
+- A licensed 3+3 guitar outline with functional string posts and typed note
+  order. Extended instruments retain their data-driven layouts.
+- A simple Light/Dark Compose interface, one global Settings destination, a
+  licensed mechanical metronome body, and a quick rhythm panel.
 
 ## Screenshots
 
@@ -64,7 +66,7 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
 | --- | --- | --- |
 | ![TuneItAll preset tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/1_tuner.png) | ![TuneItAll metronome](fastlane/metadata/android/en-US/images/phoneScreenshots/5_metronome.png) | ![TuneItAll chord library](fastlane/metadata/android/en-US/images/phoneScreenshots/6_chords.png) |
 
-| Chromatic tuner | Global settings | Chord trainer |
+| Chromatic tuner | Global settings | Ear trainer |
 | --- | --- | --- |
 | ![TuneItAll chromatic tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/4_chromatic.png) | ![TuneItAll settings](fastlane/metadata/android/en-US/images/phoneScreenshots/3_settings.png) | ![TuneItAll trainer](fastlane/metadata/android/en-US/images/phoneScreenshots/7_trainer.png) |
 
@@ -82,6 +84,8 @@ One native Kotlin application module:
   followed by bounded STFT chroma extraction, template matching, and temporal
   smoothing. No audio file is copied, uploaded, or retained by TuneItAll.
 - Harmonic-rich one-shot reference tones with click-free switching.
+- Pinned MIT `chords-db` data for canonical guitar and ukulele fingerings.
+- AndroidSVG rendering for the local headstock and metronome illustrations.
 - Notification-sonification confirmation audio with a bounded microphone input gate.
 - Jetpack Compose UI with one immutable tuner state.
 - Bounded `SharedPreferences` storage and one validated JSON custom-tuning array.
@@ -143,7 +147,7 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-Pre-release tags such as `v0.3.0-alpha.1` build a verified, debug-signed APK and
+Pre-release tags such as `v0.3.0-alpha.2` build a verified, debug-signed APK and
 publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
 signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.

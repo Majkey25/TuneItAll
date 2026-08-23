@@ -45,7 +45,7 @@
     <string name="chord_dominant_seventh">Dominant 7</string>
     <string name="chord_voicing">Voicing for %1$s</string>
     <string name="chord_diagram_description">Chord diagram. Frets from low to high: %1$s</string>
-    <string name="no_chord_voicing">No compact voicing was found for this tuning.</string>
+    <string name="chord_shape_standard_only">Canonical diagrams are available for Standard E guitar and Standard C ukulele.</string>
     <string name="fret_number">Fret %1$d</string>
     <string name="import_audio">Choose audio file</string>
     <string name="replace_audio">Choose another file</string>
@@ -66,12 +66,17 @@
     <string name="song_error_playback">The audio file could not be played.</string>
     <string name="trainer_learn">Learn</string>
     <string name="trainer_quiz">Quiz</string>
+    <string name="trainer_chords">Chords</string>
+    <string name="trainer_notes">Notes</string>
     <string name="trainer_play_chord">Hear chord</string>
+    <string name="trainer_play_note">Hear note</string>
     <string name="trainer_previous">Previous</string>
     <string name="trainer_next">Next</string>
     <string name="trainer_question">Which chord is this?</string>
     <string name="trainer_correct">Correct</string>
     <string name="trainer_incorrect">Incorrect. Answer: %1$s</string>
+    <string name="trainer_note_question">Which note do you hear?</string>
+    <string name="trainer_note_incorrect">Incorrect. Answer: %1$s</string>
     <string name="trainer_score">Score: %1$d / %2$d</string>
     <string name="trainer_reset_score">Reset score</string>
     <string name="metronome_settings_title">Metronome settings</string>

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0-alpha.2 — 2026-08-23
+
+- Replace generated chord fingerings with pinned canonical Standard E guitar
+  and Standard C ukulele shapes from the MIT-licensed `chords-db` catalog.
+- Show finger numbers, muted and open strings, starting frets, and full barre
+  positions. Unsupported tunings no longer receive a guessed diagram.
+- Hide the chord answer until the ear-training quiz is answered.
+- Add a single-note ear trainer for all 12 chromatic notes from C4 through B4.
+- Replace the six-string headstock and metronome body with downloaded licensed
+  SVG assets while keeping strings, controls, and the audio-synchronized arm.
+
 ## 0.3.0-alpha.1 — 2026-08-23
 
 - Browse major, minor, and dominant-seventh chord shapes generated for the

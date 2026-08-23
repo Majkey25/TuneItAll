@@ -14,10 +14,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
 import com.tuneitall.tuner.model.TuningCatalog
+import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.ui.AboutScreen
 import com.tuneitall.tuner.ui.AppBottomBar
 import com.tuneitall.tuner.ui.CustomTuningScreen
@@ -62,6 +64,10 @@ fun TuneItAllApp(
     chordViewModel: ChordViewModel? = null,
     trainerViewModel: TrainerViewModel? = null,
 ) {
+    val resources = LocalContext.current.resources
+    val chordCatalog = remember(resources) {
+        lazy(LazyThreadSafetyMode.NONE) { ChordShapeCatalog.fromResources(resources) }
+    }
     var screen: AppScreen by remember { mutableStateOf(AppScreen.Tuner) }
     var settingsReturnScreen: AppScreen by remember { mutableStateOf(AppScreen.Tuner) }
     var settingsInitialSection by remember { mutableStateOf(SettingsSection.TUNER) }
@@ -156,6 +162,7 @@ fun TuneItAllApp(
                         state = activeState,
                         tunings = TuningCatalog.presets + state.customTunings,
                         notation = state.notation,
+                        catalog = chordCatalog.value,
                         onTabSelected = activeViewModel::setTab,
                         onChordSelected = activeViewModel::setChord,
                         onTuningSelected = activeViewModel::setTuning,
@@ -196,6 +203,7 @@ fun TuneItAllApp(
                         stats = activeStats,
                         tunings = TuningCatalog.presets + state.customTunings,
                         notation = state.notation,
+                        catalog = chordCatalog.value,
                         onRecord = activeViewModel::record,
                         onReset = activeViewModel::reset,
                     )

@@ -44,9 +44,10 @@ Leaving Trainer stops active output.
 
 ## Graphics
 
-Use the CC0 `Guitar Head` SVG from SVG Repo as the six-string headstock shape.
-Keep TuneItAll's string labels, touch targets, string lines, and selected-string
-state above the downloaded path.
+Use the CC BY-SA `Gibson-headstock-LP.svg` outline by GreyCat from Wikimedia
+Commons as the six-string headstock shape. Keep TuneItAll's string labels,
+touch targets, string lines, and selected-string state above the downloaded
+path. Publish the derived SVG under CC BY-SA 3.0 in the third-party notice.
 
 Use the CC0 `Metronome.svg` by J Alves from Wikimedia Commons as the static
 mechanical body. Keep the existing audio-frame phase as the only animation

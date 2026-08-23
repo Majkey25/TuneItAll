@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -39,15 +38,23 @@ import com.tuneitall.tuner.audio.ReferenceTonePlayer
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordQuality
-import com.tuneitall.tuner.music.findPlayableVoicing
+import com.tuneitall.tuner.music.ChordShapeCatalog
+import com.tuneitall.tuner.music.NoteQuestion
+import com.tuneitall.tuner.music.midiToHertz
+import com.tuneitall.tuner.music.noteQuestion
 import com.tuneitall.tuner.music.trainerChoices
 import com.tuneitall.tuner.music.voicingFrequencies
 import com.tuneitall.tuner.storage.NoteNotation
 import com.tuneitall.tuner.storage.TrainerStats
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+private enum class TrainerExercise {
+    CHORDS,
+    NOTES,
+}
 
 private enum class TrainerMode {
     LEARN,
@@ -59,29 +66,45 @@ fun TrainerScreen(
     stats: TrainerStats,
     tunings: List<TuningPreset>,
     notation: NoteNotation,
+    catalog: ChordShapeCatalog,
     onRecord: (Boolean) -> Unit,
     onReset: () -> Unit,
 ) {
+    val supportedTunings = remember(tunings, catalog) { tunings.filter { catalog.supports(it.id) } }
+    require(supportedTunings.isNotEmpty())
+    var exercise by rememberSaveable { mutableStateOf(TrainerExercise.CHORDS) }
     var mode by rememberSaveable { mutableStateOf(TrainerMode.LEARN) }
     var selectedTuningId by rememberSaveable { mutableStateOf(DEFAULT_TRAINER_TUNING) }
     var chordIndex by rememberSaveable { mutableIntStateOf(0) }
     var questionSeed by rememberSaveable { mutableIntStateOf(1) }
-    var selectedAnswer by remember { mutableStateOf<Chord?>(null) }
+    var selectedChordAnswer by remember { mutableStateOf<Chord?>(null) }
+    var selectedNoteAnswer by remember { mutableStateOf<Int?>(null) }
     var audioFailed by remember { mutableStateOf(false) }
     val chords = remember { buildList { repeat(12) { root -> ChordQuality.entries.forEach { add(Chord(root, it)) } } } }
-    val tuning = tunings.firstOrNull { it.id == selectedTuningId } ?: tunings.first()
+    val tuning = supportedTunings.firstOrNull { it.id == selectedTuningId } ?: supportedTunings.first()
     val tonePlayer = remember { ReferenceTonePlayer() }
     val scope = rememberCoroutineScope()
     DisposableEffect(tonePlayer) { onDispose(tonePlayer::close) }
 
     fun playChord(chord: Chord) {
+        val voicing = catalog.shape(tuning.id, chord) ?: return
+        val frequencies = voicingFrequencies(tuning.notesLowToHigh, voicing)
         scope.launch {
             try {
-                val frequencies = withContext(Dispatchers.Default) {
-                    val voicing = findPlayableVoicing(tuning.notesLowToHigh, chord) ?: return@withContext null
-                    voicingFrequencies(tuning.notesLowToHigh, voicing)
-                } ?: return@launch
                 withContext(Dispatchers.IO) { tonePlayer.playChord(frequencies) }
+                audioFailed = false
+            } catch (_: CancellationException) {
+                Unit
+            } catch (_: RuntimeException) {
+                audioFailed = true
+            }
+        }
+    }
+
+    fun playNote(question: NoteQuestion) {
+        scope.launch {
+            try {
+                withContext(Dispatchers.IO) { tonePlayer.play(midiToHertz(question.midiNote)) }
                 audioFailed = false
             } catch (_: CancellationException) {
                 Unit
@@ -105,109 +128,84 @@ fun TrainerScreen(
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TrainerMode.entries.forEach { trainerMode ->
-                FilterChip(
-                    selected = mode == trainerMode,
-                    onClick = {
-                        mode = trainerMode
-                        selectedAnswer = null
-                    },
-                    label = {
-                        Text(stringResource(if (trainerMode == TrainerMode.LEARN) R.string.trainer_learn else R.string.trainer_quiz))
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_mode_${trainerMode.name.lowercase()}"),
-                )
-            }
-        }
-        TuningSelector(tunings, tuning.id, { selectedTuningId = it })
-        Text(
-            stringResource(R.string.trainer_score, stats.correct, stats.attempts),
-            modifier = Modifier.testTag("trainer_score"),
+        ChoiceRow(
+            choices = TrainerExercise.entries,
+            selected = exercise,
+            label = { stringResource(if (it == TrainerExercise.CHORDS) R.string.trainer_chords else R.string.trainer_notes) },
+            tag = { "trainer_exercise_${it.name.lowercase()}" },
+            onSelected = {
+                exercise = it
+                selectedChordAnswer = null
+                selectedNoteAnswer = null
+            },
         )
+        if (exercise == TrainerExercise.CHORDS) {
+            ChoiceRow(
+                choices = TrainerMode.entries,
+                selected = mode,
+                label = { stringResource(if (it == TrainerMode.LEARN) R.string.trainer_learn else R.string.trainer_quiz) },
+                tag = { "trainer_mode_${it.name.lowercase()}" },
+                onSelected = {
+                    mode = it
+                    selectedChordAnswer = null
+                },
+            )
+            TuningSelector(supportedTunings, tuning.id, { selectedTuningId = it })
+        }
+        Text(stringResource(R.string.trainer_score, stats.correct, stats.attempts), Modifier.testTag("trainer_score"))
         if (audioFailed) Text(stringResource(R.string.audio_initialization_failed), color = MaterialTheme.colorScheme.error)
 
-        when (mode) {
-            TrainerMode.LEARN -> {
-                val chord = chords[Math.floorMod(chordIndex, chords.size)]
-                Text(
-                    formatChord(chord, notation),
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth().testTag("trainer_chord_label"),
-                    textAlign = TextAlign.Center,
+        when (exercise) {
+            TrainerExercise.CHORDS -> when (mode) {
+                TrainerMode.LEARN -> ChordLesson(
+                    chord = chords[Math.floorMod(chordIndex, chords.size)],
+                    tuning = tuning,
+                    notation = notation,
+                    catalog = catalog,
+                    onPrevious = { chordIndex = Math.floorMod(chordIndex - 1, chords.size) },
+                    onPlay = ::playChord,
+                    onNext = { chordIndex = (chordIndex + 1) % chords.size },
                 )
-                ChordDiagram(chord, tuning, notation, Modifier.fillMaxWidth())
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = { chordIndex = Math.floorMod(chordIndex - 1, chords.size) },
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                    ) { Text(stringResource(R.string.trainer_previous)) }
-                    Button(
-                        onClick = { playChord(chord) },
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_play"),
-                    ) { Text(stringResource(R.string.trainer_play_chord)) }
-                    OutlinedButton(
-                        onClick = { chordIndex = (chordIndex + 1) % chords.size },
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                    ) { Text(stringResource(R.string.trainer_next)) }
-                }
+
+                TrainerMode.QUIZ -> ChordQuiz(
+                    answer = chords[Math.floorMod(questionSeed * CHORD_QUESTION_STEP, chords.size)],
+                    choices = trainerChoices(chords[Math.floorMod(questionSeed * CHORD_QUESTION_STEP, chords.size)], questionSeed),
+                    selectedAnswer = selectedChordAnswer,
+                    tuning = tuning,
+                    notation = notation,
+                    catalog = catalog,
+                    onPlay = ::playChord,
+                    onAnswer = { choice, answer ->
+                        if (selectedChordAnswer == null) {
+                            selectedChordAnswer = choice
+                            onRecord(choice == answer)
+                        }
+                    },
+                    onNext = {
+                        questionSeed++
+                        selectedChordAnswer = null
+                    },
+                )
             }
 
-            TrainerMode.QUIZ -> {
-                val answer = chords[Math.floorMod(questionSeed * QUESTION_STEP, chords.size)]
-                val choices = trainerChoices(answer, questionSeed)
-                Text(
-                    stringResource(R.string.trainer_question),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
-                ChordDiagram(answer, tuning, notation, Modifier.fillMaxWidth(), showLabel = false)
-                Button(
-                    onClick = { playChord(answer) },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("trainer_play"),
-                ) { Text(stringResource(R.string.trainer_play_chord)) }
-                choices.chunked(2).forEach { rowChoices ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        rowChoices.forEach { choice ->
-                            OutlinedButton(
-                                onClick = {
-                                    if (selectedAnswer == null) {
-                                        selectedAnswer = choice
-                                        onRecord(choice == answer)
-                                    }
-                                },
-                                enabled = selectedAnswer == null,
-                                modifier = Modifier.weight(1f).heightIn(min = 48.dp)
-                                    .testTag("trainer_answer_${formatChord(choice, notation)}"),
-                            ) { Text(formatChord(choice, notation)) }
+            TrainerExercise.NOTES -> {
+                val question = noteQuestion(questionSeed)
+                NoteQuiz(
+                    question = question,
+                    selectedAnswer = selectedNoteAnswer,
+                    notation = notation,
+                    onPlay = { playNote(question) },
+                    onAnswer = { choice ->
+                        if (selectedNoteAnswer == null) {
+                            selectedNoteAnswer = choice
+                            onRecord(choice == question.answerPitchClass)
                         }
-                    }
-                }
-                selectedAnswer?.let { selected ->
-                    Text(
-                        if (selected == answer) {
-                            stringResource(R.string.trainer_correct)
-                        } else {
-                            stringResource(R.string.trainer_incorrect, formatChord(answer, notation))
-                        },
-                        color = if (selected == answer) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                        modifier = Modifier.fillMaxWidth().testTag("trainer_feedback"),
-                        textAlign = TextAlign.Center,
-                    )
-                    Button(
-                        onClick = {
-                            questionSeed++
-                            selectedAnswer = null
-                        },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("trainer_next_question"),
-                    ) { Text(stringResource(R.string.trainer_next)) }
-                }
+                    },
+                    onNext = {
+                        questionSeed++
+                        selectedNoteAnswer = null
+                    },
+                )
             }
         }
         if (stats.attempts > 0) {
@@ -219,5 +217,171 @@ fun TrainerScreen(
     }
 }
 
+@Composable
+private fun <T> ChoiceRow(
+    choices: List<T>,
+    selected: T,
+    label: @Composable (T) -> String,
+    tag: (T) -> String,
+    onSelected: (T) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        choices.forEach { choice ->
+            FilterChip(
+                selected = selected == choice,
+                onClick = { onSelected(choice) },
+                label = { Text(label(choice)) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(tag(choice)),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChordLesson(
+    chord: Chord,
+    tuning: TuningPreset,
+    notation: NoteNotation,
+    catalog: ChordShapeCatalog,
+    onPrevious: () -> Unit,
+    onPlay: (Chord) -> Unit,
+    onNext: () -> Unit,
+) {
+    Text(
+        formatChord(chord, notation),
+        style = MaterialTheme.typography.displaySmall,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.fillMaxWidth().testTag("trainer_chord_label"),
+        textAlign = TextAlign.Center,
+    )
+    ChordDiagram(chord, tuning, notation, catalog, Modifier.fillMaxWidth())
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(onClick = onPrevious, Modifier.weight(1f).heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.trainer_previous))
+        }
+        Button(onClick = { onPlay(chord) }, Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_play")) {
+            Text(stringResource(R.string.trainer_play_chord))
+        }
+        OutlinedButton(onClick = onNext, Modifier.weight(1f).heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.trainer_next))
+        }
+    }
+}
+
+@Composable
+private fun ChordQuiz(
+    answer: Chord,
+    choices: List<Chord>,
+    selectedAnswer: Chord?,
+    tuning: TuningPreset,
+    notation: NoteNotation,
+    catalog: ChordShapeCatalog,
+    onPlay: (Chord) -> Unit,
+    onAnswer: (Chord, Chord) -> Unit,
+    onNext: () -> Unit,
+) {
+    Text(
+        stringResource(R.string.trainer_question),
+        modifier = Modifier.fillMaxWidth(),
+        style = MaterialTheme.typography.titleLarge,
+        textAlign = TextAlign.Center,
+    )
+    Button(
+        onClick = { onPlay(answer) },
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("trainer_play"),
+    ) { Text(stringResource(R.string.trainer_play_chord)) }
+    AnswerGrid(
+        choices = choices,
+        enabled = selectedAnswer == null,
+        label = { formatChord(it, notation) },
+        tag = { "trainer_answer_${formatChord(it, notation)}" },
+        onAnswer = { onAnswer(it, answer) },
+    )
+    selectedAnswer?.let { selected ->
+        Feedback(selected == answer, formatChord(answer, notation), R.string.trainer_incorrect, "trainer_feedback")
+        ChordDiagram(answer, tuning, notation, catalog, Modifier.fillMaxWidth())
+        NextButton(onNext, "trainer_next_question")
+    }
+}
+
+@Composable
+private fun NoteQuiz(
+    question: NoteQuestion,
+    selectedAnswer: Int?,
+    notation: NoteNotation,
+    onPlay: () -> Unit,
+    onAnswer: (Int) -> Unit,
+    onNext: () -> Unit,
+) {
+    Text(
+        stringResource(R.string.trainer_note_question),
+        modifier = Modifier.fillMaxWidth(),
+        style = MaterialTheme.typography.titleLarge,
+        textAlign = TextAlign.Center,
+    )
+    Button(
+        onClick = onPlay,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("trainer_note_play"),
+    ) { Text(stringResource(R.string.trainer_play_note)) }
+    AnswerGrid(
+        choices = question.choices,
+        enabled = selectedAnswer == null,
+        label = { formatPitchClass(it, notation) },
+        tag = { "trainer_note_answer_$it" },
+        onAnswer = onAnswer,
+    )
+    selectedAnswer?.let { selected ->
+        Feedback(
+            selected == question.answerPitchClass,
+            formatPitchClass(question.answerPitchClass, notation),
+            R.string.trainer_note_incorrect,
+            "trainer_note_feedback",
+        )
+        NextButton(onNext, "trainer_note_next")
+    }
+}
+
+@Composable
+private fun <T> AnswerGrid(
+    choices: List<T>,
+    enabled: Boolean,
+    label: (T) -> String,
+    tag: (T) -> String,
+    onAnswer: (T) -> Unit,
+) {
+    choices.chunked(2).forEach { rowChoices ->
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            rowChoices.forEach { choice ->
+                OutlinedButton(
+                    onClick = { onAnswer(choice) },
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(tag(choice)),
+                ) { Text(label(choice)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Feedback(correct: Boolean, answer: String, incorrectString: Int, tag: String) {
+    Text(
+        if (correct) stringResource(R.string.trainer_correct) else stringResource(incorrectString, answer),
+        color = if (correct) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+        modifier = Modifier.fillMaxWidth().testTag(tag),
+        textAlign = TextAlign.Center,
+    )
+}
+
+@Composable
+private fun NextButton(onNext: () -> Unit, tag: String) {
+    Button(onClick = onNext, Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(tag)) {
+        Text(stringResource(R.string.trainer_next))
+    }
+}
+
 private const val DEFAULT_TRAINER_TUNING = "guitar-6-standard"
-private const val QUESTION_STEP = 7
+private const val CHORD_QUESTION_STEP = 7

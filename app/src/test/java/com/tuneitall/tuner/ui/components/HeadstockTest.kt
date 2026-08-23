@@ -8,24 +8,20 @@ import kotlin.test.assertTrue
 
 class HeadstockTest {
     @Test
-    fun `split guitar geometry keeps generic headstock proportions`() {
-        assertEquals(104.dp, SplitHeadstockGeometry.bodyWidth)
+    fun `split guitar geometry fits the imported headstock vector`() {
+        assertEquals(120.dp, SplitHeadstockGeometry.bodyWidth)
         assertEquals(52.dp, SplitHeadstockGeometry.nutWidth)
-        assertEquals(48.dp, SplitHeadstockGeometry.neckWidth)
         assertEquals(132.dp, SplitHeadstockGeometry.centerGap)
-        assertTrue(SplitHeadstockGeometry.bodyLength.value / SplitHeadstockGeometry.bodyWidth.value in 2.0f..2.1f)
-        assertEquals(listOf(42.dp, 34.dp, 22.dp), SplitHeadstockGeometry.postOffsets)
-        assertEquals(4.5.dp, SplitHeadstockGeometry.postRadius)
-        assertEquals(12.dp, SplitHeadstockGeometry.keyWidth)
-        assertEquals(9.dp, SplitHeadstockGeometry.keyHeight)
+        assertEquals(228.dp, SplitHeadstockGeometry.vectorHeight)
+        assertEquals(4.dp, SplitHeadstockGeometry.vectorTop)
+        assertEquals(listOf(52.dp, 120.dp, 188.dp), SplitHeadstockGeometry.postCenters)
+        assertEquals(listOf(34.dp, 34.dp, 34.dp), SplitHeadstockGeometry.postOffsets)
         assertEquals(listOf(-20.dp, -12.dp, -4.dp, 4.dp, 12.dp, 20.dp), SplitHeadstockGeometry.nutSlots)
     }
 
     @Test
-    fun `split guitar posts stay inside the wood outline`() {
-        SplitHeadstockGeometry.postCenters.zip(SplitHeadstockGeometry.postOffsets).forEach { (y, offset) ->
-            assertTrue(offset + SplitHeadstockGeometry.postRadius <= SplitHeadstockGeometry.bodyHalfWidthAt(y))
-        }
+    fun `split guitar posts stay inside the imported vector bounds`() {
+        assertTrue(SplitHeadstockGeometry.postOffsets.all { it + SplitHeadstockGeometry.selectedPostRadius < 60.dp })
     }
 
     @Test

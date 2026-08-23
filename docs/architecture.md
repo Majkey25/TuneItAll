@@ -26,16 +26,20 @@ callback rotates one cached pendulum layer, while the body stays static. Main
 click frames map to alternating pendulum endpoints. Typed BPM input remains a
 local draft until the user confirms it, so partial values never reschedule audio.
 
-The Chords destination generates bounded fretboard voicings from the same typed
-tuning notes used by the tuner. Song analysis opens one user-selected URI through
+The Chords destination reads canonical Standard E guitar and Standard C ukulele
+shapes from a pinned offline `chords-db` snapshot. It does not generate arbitrary
+fingerings for other tunings. Song analysis opens one user-selected URI through
 the system document picker. `MediaExtractor` and `MediaCodec` stream decoded PCM
 into an 8,192-frame STFT, 12-bin chroma feature, major/minor/dominant-seventh
 template matcher, and bounded temporal smoother. Only chord events and playback
 position remain in memory. The source audio is not copied or uploaded. Trainer
-audio reuses the click-free generated-tone player and stores only bounded scores.
+audio reuses the click-free generated-tone player for chord and single-note ear
+exercises and stores only bounded scores.
 
-Compose renders the cents rail and all 4–9-string headstocks from typed tuning
-data. Physical string numbers descend from the lowest string to string 1. The
+Compose renders the cents rail and extended headstocks from typed tuning data.
+The six-string guitar uses a licensed 3+3 vector outline with functional strings
+and tuning posts. AndroidSVG renders that outline and the static CC0 metronome
+body. Physical string numbers descend from the lowest string to string 1. The
 Chromatic mode uses a dedicated all-instrument surface with no headstock.
 The shell uses simple Light/Dark tuner, metronome, Chords, Library, and Trainer
 destinations. Both gear buttons open one global Settings screen. The metronome
