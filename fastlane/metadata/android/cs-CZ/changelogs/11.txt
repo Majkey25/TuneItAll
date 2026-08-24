@@ -1,0 +1,1 @@
+Přidáno volitelné automatické posouvání akordů i jiných aplikací s plovoucím ovládáním Start, Stop, rychlosti, skrytí a zavření. Bez Shizuku a bez přístupu k obsahu obrazovky. Maximální citlivost nyní zachytí výrazně tišší tóny elektrické kytary. Přidáno osm profesionálních anglických obrázků pro Google Play z ověřeného emulátoru.

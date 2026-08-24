@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0-alpha.8 — 2026-08-24
+
+- Add classic ScrollIt-style hands-free scrolling through a user-enabled,
+  gesture-only Accessibility service and compact floating controls. No Shizuku
+  or screen-content retrieval is used.
+- Expose Auto-scroll from Chords with permission status, speed 1 through 30,
+  Start/Stop, Hide, Close, and a movable edge bubble.
+- Make microphone sensitivity affect both the absolute input floor and the
+  adaptive noise gate. Maximum sensitivity now retains near-silent electric
+  guitar tones just above amplifier hiss instead of requiring a hard attack.
+- Add exact privacy and Data Safety disclosures for overlay and Accessibility
+  use while retaining no ads, analytics, tracking, Internet, or advertising ID.
+- Replace every raw Play screenshot with eight deterministic English phone-frame
+  graphics captured from the verified emulator build.
+
 ## 0.3.0-alpha.7 — 2026-08-24
 
 - Add a complete in-app language selector with System default, English, Czech,

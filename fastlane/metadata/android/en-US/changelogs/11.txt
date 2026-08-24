@@ -1,0 +1,1 @@
+Added optional hands-free Auto-scroll for chords and other Android apps, with floating Start, Stop, speed, Hide, and Close controls. No Shizuku or screen-content access. Maximum sensitivity now detects much quieter electric guitar notes. Added eight professional English Play images from verified emulator captures.

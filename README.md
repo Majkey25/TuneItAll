@@ -13,17 +13,17 @@ TuneItAll is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing prerelease `0.3.0-alpha.7`. TuneItAll is not published
-on Google Play.
+Status: public testing prerelease `0.3.0-alpha.8`. TuneItAll is in Google Play
+closed-testing review and is not available in production.
 
 ## Download
 
-[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.7/TuneItAll-v0.3.0-alpha.7-debug.apk)
+[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.8/TuneItAll-v0.3.0-alpha.8-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.7).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.8).
 
 ## Features
 
@@ -169,7 +169,7 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-Pre-release tags such as `v0.3.0-alpha.7` build a verified, debug-signed APK and
+Pre-release tags such as `v0.3.0-alpha.8` build a verified, debug-signed APK and
 publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
 signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.

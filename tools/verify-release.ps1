@@ -45,11 +45,21 @@ if ($applicationId -ne "com.tuneitall.tuner") {
 if ([string]::IsNullOrWhiteSpace($versionName)) {
     throw "Version name is missing"
 }
-if ($permissions -notmatch 'android.permission.RECORD_AUDIO') {
-    throw "RECORD_AUDIO permission is missing"
+foreach ($requiredPermission in @(
+    "android.permission.RECORD_AUDIO",
+    "android.permission.FOREGROUND_SERVICE",
+    "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
+    "android.permission.SYSTEM_ALERT_WINDOW"
+)) {
+    if ($permissions -notmatch [regex]::Escape($requiredPermission)) {
+        throw "$requiredPermission is missing"
+    }
 }
 if ($permissions -match 'android.permission.INTERNET') {
     throw "INTERNET permission must not be present"
+}
+if ($permissions -match 'com.google.android.gms.permission.AD_ID') {
+    throw "AD_ID permission must not be present"
 }
 
 $archive = [IO.Compression.ZipFile]::OpenRead($aab)
