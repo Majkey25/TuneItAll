@@ -231,4 +231,21 @@
     <string name="support_unavailable">No hay ningún navegador web disponible.</string>
     <string name="auto_scroll_accessibility_label">Desplazamiento automático de TuneItAll</string>
     <string name="auto_scroll_accessibility_description">Permite iniciar y detener el desplazamiento sin manos con controles flotantes. TuneItAll no lee ni guarda el contenido de la pantalla.</string>
+    <string name="auto_scroll_notification_channel">Desplazamiento automático</string>
+    <string name="auto_scroll_notification_title">Desplazamiento automático de TuneItAll</string>
+    <string name="auto_scroll_notification_text">Los controles flotantes de desplazamiento están activos</string>
+    <string name="auto_scroll_move_controls">Mover los controles de desplazamiento</string>
+    <string name="auto_scroll_overlay_title">DESPLAZAMIENTO AUTO · ARRASTRA PARA MOVER</string>
+    <string name="auto_scroll_ready">Listo</string>
+    <string name="auto_scroll_running">Desplazando</string>
+    <string name="auto_scroll_start">Iniciar</string>
+    <string name="auto_scroll_stop">Detener</string>
+    <string name="auto_scroll_hide">Ocultar</string>
+    <string name="auto_scroll_close">Cerrar</string>
+    <string name="auto_scroll_decrease_speed">Reducir la velocidad de desplazamiento</string>
+    <string name="auto_scroll_increase_speed">Aumentar la velocidad de desplazamiento</string>
+    <string name="auto_scroll_open_controls">Abrir los controles de desplazamiento</string>
+    <string name="auto_scroll_overlay_missing">Primero permite que TuneItAll se muestre sobre otras aplicaciones.</string>
+    <string name="auto_scroll_accessibility_missing">Primero activa el desplazamiento automático de TuneItAll en Accesibilidad.</string>
+    <string name="auto_scroll_start_failed">No se pudo iniciar el desplazamiento automático.</string>
 </resources>

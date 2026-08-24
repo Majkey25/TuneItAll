@@ -226,4 +226,21 @@
     <string name="support_unavailable">Kein Webbrowser ist verfügbar.</string>
     <string name="auto_scroll_accessibility_label">TuneItAll Auto-Scroll</string>
     <string name="auto_scroll_accessibility_description">Ermöglicht freihändiges Scrollen mit schwebenden Bedienelementen. TuneItAll liest oder speichert keine Bildschirminhalte.</string>
+    <string name="auto_scroll_notification_channel">Auto-Scroll</string>
+    <string name="auto_scroll_notification_title">TuneItAll Auto-Scroll</string>
+    <string name="auto_scroll_notification_text">Schwebende Scroll-Steuerung ist aktiv</string>
+    <string name="auto_scroll_move_controls">Auto-Scroll-Steuerung verschieben</string>
+    <string name="auto_scroll_overlay_title">AUTO-SCROLL · ZIEHEN ZUM VERSCHIEBEN</string>
+    <string name="auto_scroll_ready">Bereit</string>
+    <string name="auto_scroll_running">Scrollt</string>
+    <string name="auto_scroll_start">Start</string>
+    <string name="auto_scroll_stop">Stopp</string>
+    <string name="auto_scroll_hide">Ausblenden</string>
+    <string name="auto_scroll_close">Schließen</string>
+    <string name="auto_scroll_decrease_speed">Scroll-Geschwindigkeit verringern</string>
+    <string name="auto_scroll_increase_speed">Scroll-Geschwindigkeit erhöhen</string>
+    <string name="auto_scroll_open_controls">Auto-Scroll-Steuerung öffnen</string>
+    <string name="auto_scroll_overlay_missing">Erlaube TuneItAll zuerst die Anzeige über anderen Apps.</string>
+    <string name="auto_scroll_accessibility_missing">Aktiviere TuneItAll Auto-Scroll zuerst in den Bedienungshilfen.</string>
+    <string name="auto_scroll_start_failed">Auto-Scroll konnte nicht gestartet werden.</string>
 </resources>

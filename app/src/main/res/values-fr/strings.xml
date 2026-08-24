@@ -231,4 +231,21 @@
     <string name="support_unavailable">Aucun navigateur web n’est disponible.</string>
     <string name="auto_scroll_accessibility_label">Défilement automatique TuneItAll</string>
     <string name="auto_scroll_accessibility_description">Permet de démarrer et d’arrêter le défilement mains libres avec des commandes flottantes. TuneItAll ne lit ni ne stocke le contenu de l’écran.</string>
+    <string name="auto_scroll_notification_channel">Défilement automatique</string>
+    <string name="auto_scroll_notification_title">Défilement automatique TuneItAll</string>
+    <string name="auto_scroll_notification_text">Les commandes flottantes de défilement sont actives</string>
+    <string name="auto_scroll_move_controls">Déplacer les commandes de défilement</string>
+    <string name="auto_scroll_overlay_title">DÉFILEMENT AUTO · FAIRE GLISSER</string>
+    <string name="auto_scroll_ready">Prêt</string>
+    <string name="auto_scroll_running">Défilement</string>
+    <string name="auto_scroll_start">Démarrer</string>
+    <string name="auto_scroll_stop">Arrêter</string>
+    <string name="auto_scroll_hide">Masquer</string>
+    <string name="auto_scroll_close">Fermer</string>
+    <string name="auto_scroll_decrease_speed">Réduire la vitesse de défilement</string>
+    <string name="auto_scroll_increase_speed">Augmenter la vitesse de défilement</string>
+    <string name="auto_scroll_open_controls">Ouvrir les commandes de défilement</string>
+    <string name="auto_scroll_overlay_missing">Autorisez d’abord TuneItAll à s’afficher sur les autres applications.</string>
+    <string name="auto_scroll_accessibility_missing">Activez d’abord le défilement automatique TuneItAll dans les paramètres d’accessibilité.</string>
+    <string name="auto_scroll_start_failed">Le défilement automatique n’a pas pu démarrer.</string>
 </resources>

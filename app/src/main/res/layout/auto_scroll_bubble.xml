@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:background="@drawable/bg_auto_scroll_bubble"
+    android:clickable="true"
+    android:contentDescription="@string/auto_scroll_open_controls"
+    android:elevation="8dp"
+    android:focusable="true">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="↕"
+        android:textColor="@color/auto_scroll_on_green"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+</FrameLayout>

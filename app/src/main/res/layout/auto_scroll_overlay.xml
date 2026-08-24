@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_auto_scroll_panel"
+    android:elevation="8dp"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/autoScrollDragHandle"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:contentDescription="@string/auto_scroll_move_controls"
+        android:gravity="center"
+        android:letterSpacing="0.08"
+        android:text="@string/auto_scroll_overlay_title"
+        android:textColor="@color/auto_scroll_secondary_text"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/autoScrollStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityLiveRegion="polite"
+        android:gravity="center"
+        android:text="@string/auto_scroll_ready"
+        android:textColor="@color/auto_scroll_green"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/autoScrollStartStop"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/auto_scroll_green"
+            android:minWidth="0dp"
+            android:text="@string/auto_scroll_start"
+            android:textAllCaps="false"
+            android:textColor="@color/auto_scroll_on_green" />
+
+        <Button
+            android:id="@+id/autoScrollMinus"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="6dp"
+            android:backgroundTint="@color/auto_scroll_surface"
+            android:contentDescription="@string/auto_scroll_decrease_speed"
+            android:minWidth="0dp"
+            android:padding="0dp"
+            android:text="−"
+            android:textColor="@color/auto_scroll_text" />
+
+        <TextView
+            android:id="@+id/autoScrollSpeed"
+            android:layout_width="40dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:text="15"
+            android:textColor="@color/auto_scroll_text"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/autoScrollPlus"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:backgroundTint="@color/auto_scroll_surface"
+            android:contentDescription="@string/auto_scroll_increase_speed"
+            android:minWidth="0dp"
+            android:padding="0dp"
+            android:text="+"
+            android:textColor="@color/auto_scroll_text" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/autoScrollHide"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/auto_scroll_surface"
+            android:text="@string/auto_scroll_hide"
+            android:textAllCaps="false"
+            android:textColor="@color/auto_scroll_text" />
+
+        <Button
+            android:id="@+id/autoScrollClose"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/auto_scroll_surface"
+            android:text="@string/auto_scroll_close"
+            android:textAllCaps="false"
+            android:textColor="@color/auto_scroll_text" />
+    </LinearLayout>
+</LinearLayout>

@@ -236,4 +236,21 @@
     <string name="support_unavailable">Není dostupný žádný webový prohlížeč.</string>
     <string name="auto_scroll_accessibility_label">Automatické posouvání TuneItAll</string>
     <string name="auto_scroll_accessibility_description">Umožňuje spustit a zastavit posouvání bez použití rukou pomocí plovoucích ovládacích prvků. TuneItAll nečte ani neukládá obsah obrazovky.</string>
+    <string name="auto_scroll_notification_channel">Automatické posouvání</string>
+    <string name="auto_scroll_notification_title">Automatické posouvání TuneItAll</string>
+    <string name="auto_scroll_notification_text">Plovoucí ovládací prvky posouvání jsou aktivní</string>
+    <string name="auto_scroll_move_controls">Přesunout ovládací prvky posouvání</string>
+    <string name="auto_scroll_overlay_title">AUTOMATICKÉ POSOUVÁNÍ · PŘESUN TAHEM</string>
+    <string name="auto_scroll_ready">Připraveno</string>
+    <string name="auto_scroll_running">Posouvání</string>
+    <string name="auto_scroll_start">Spustit</string>
+    <string name="auto_scroll_stop">Zastavit</string>
+    <string name="auto_scroll_hide">Skrýt</string>
+    <string name="auto_scroll_close">Zavřít</string>
+    <string name="auto_scroll_decrease_speed">Snížit rychlost posouvání</string>
+    <string name="auto_scroll_increase_speed">Zvýšit rychlost posouvání</string>
+    <string name="auto_scroll_open_controls">Otevřít ovládací prvky posouvání</string>
+    <string name="auto_scroll_overlay_missing">Nejprve povolte TuneItAll zobrazování nad ostatními aplikacemi.</string>
+    <string name="auto_scroll_accessibility_missing">Nejprve povolte automatické posouvání TuneItAll v nastavení usnadnění.</string>
+    <string name="auto_scroll_start_failed">Automatické posouvání se nepodařilo spustit.</string>
 </resources>

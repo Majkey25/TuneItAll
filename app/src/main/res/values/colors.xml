@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#101210</color>
+    <color name="auto_scroll_background">#101210</color>
+    <color name="auto_scroll_surface">#262A26</color>
+    <color name="auto_scroll_green">#63D17A</color>
+    <color name="auto_scroll_on_green">#101210</color>
+    <color name="auto_scroll_text">#F4F1EA</color>
+    <color name="auto_scroll_secondary_text">#B9BDB9</color>
 </resources>
