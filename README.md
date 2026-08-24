@@ -13,17 +13,17 @@ TuneItAll is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing prerelease `0.3.0-alpha.5`. TuneItAll is not published
+Status: public testing prerelease `0.3.0-alpha.6`. TuneItAll is not published
 on Google Play.
 
 ## Download
 
-[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.5/TuneItAll-v0.3.0-alpha.5-debug.apk)
+[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.6/TuneItAll-v0.3.0-alpha.6-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.5).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.6).
 
 ## Features
 
@@ -148,7 +148,7 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-Pre-release tags such as `v0.3.0-alpha.5` build a verified, debug-signed APK and
+Pre-release tags such as `v0.3.0-alpha.6` build a verified, debug-signed APK and
 publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
 signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.
@@ -163,6 +163,8 @@ and [security policy](SECURITY.md).
   repository root.
 - English/Czech listings: `docs/store/`
 - Privacy policies: `docs/privacy/`
+- Public website: `https://majkey25.github.io/TuneItAll/`
+- Public privacy policy: `https://majkey25.github.io/TuneItAll/privacy/`
 - Data Safety record and release checklist: `docs/store/`
 - Deterministic SVG sources: `assets/source/`
 

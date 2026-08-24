@@ -1,0 +1,2 @@
+Přesouvá názvy strun u rozložení 6 v řadě doleva. Přidává veřejné zásady
+soukromí, podporu a ověřený podepsaný balíček pro uzavřené testování Google Play.

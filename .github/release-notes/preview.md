@@ -1,4 +1,4 @@
-TuneItAll `v0.3.0-alpha.5` prerelease testing build.
+TuneItAll `v0.3.0-alpha.6` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -30,6 +30,8 @@ Highlights:
 - The supplied CC0 metronome SVG rebuilt as a static body with exactly one
   audio-synchronized moving arm.
 - Narrower, taller chord diagrams in both Chords and Trainer.
+- Six-inline string names and numbers now sit on the left side.
+- Public privacy and support pages for Play closed testing.
 - No ads, accounts, analytics, tracking, or network permission.
 
 The app passed unit, Lint, API 35 Compose, audio-session, local-file decoding,

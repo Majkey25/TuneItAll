@@ -1,0 +1,2 @@
+Moves the 6-inline string names to the left side. Adds the public privacy and
+support pages and prepares a verified signed bundle for Play closed testing.

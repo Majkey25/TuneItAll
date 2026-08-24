@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-alpha.6 — 2026-08-24
+
+- Move all 6-inline string names and physical numbers to the left of the
+  headstock while retaining E4 string 1 through E2 string 6 order.
+- Add the public TuneItAll website, privacy policy, and support page for Google
+  Play distribution.
+- Add a manual GitHub workflow that builds and verifies a signed Play bundle.
+
 ## 0.3.0-alpha.5 — 2026-08-24
 
 - Use the exact attributed Les Paul and Explorer headstock artwork requested
