@@ -299,47 +299,52 @@ private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
             .height(188.dp)
             .semantics { contentDescription = description }
             .testTag("metronome_pendulum"),
+        contentAlignment = Alignment.Center,
     ) {
-        Image(
-            painter = painterResource(R.drawable.metronome_body_cc0),
-            contentDescription = null,
-            modifier = Modifier.matchParentSize().testTag("metronome_body_vector"),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(ink),
-        )
         Box(
-            Modifier
-                .matchParentSize()
-                .graphicsLayer {
-                    rotationZ = metronomeArmDegrees(phase.floatValue.toDouble())
-                    transformOrigin = TransformOrigin(METRONOME_PIVOT_X_RATIO, METRONOME_PIVOT_Y_RATIO)
-                }
-                .drawWithCache {
-                    val geometry = metronomeArmGeometry(size, density)
-                    val round1 = androidx.compose.ui.geometry.CornerRadius(1.dp.toPx())
-                    val weightPath = Path().apply {
-                        moveTo(geometry.weight.left + 4.dp.toPx(), geometry.weight.top)
-                        lineTo(geometry.weight.right - 4.dp.toPx(), geometry.weight.top)
-                        lineTo(geometry.weight.right, geometry.weight.bottom)
-                        lineTo(geometry.weight.left, geometry.weight.bottom)
-                        close()
+            modifier = Modifier.size(METRONOME_ART_SIZE),
+        ) {
+            Image(
+                painter = painterResource(R.drawable.metronome_body_cc0_exact),
+                contentDescription = null,
+                modifier = Modifier.matchParentSize().testTag("metronome_body_exact"),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(ink),
+            )
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .graphicsLayer {
+                        rotationZ = metronomeArmDegrees(phase.floatValue.toDouble())
+                        transformOrigin = TransformOrigin(METRONOME_PIVOT_X_RATIO, METRONOME_PIVOT_Y_RATIO)
                     }
+                    .drawWithCache {
+                        val geometry = metronomeArmGeometry(size, density)
+                        val round1 = androidx.compose.ui.geometry.CornerRadius(1.dp.toPx())
+                        val weightPath = Path().apply {
+                            moveTo(geometry.weight.left + 4.dp.toPx(), geometry.weight.top)
+                            lineTo(geometry.weight.right - 4.dp.toPx(), geometry.weight.top)
+                            lineTo(geometry.weight.right, geometry.weight.bottom)
+                            lineTo(geometry.weight.left, geometry.weight.bottom)
+                            close()
+                        }
 
-                    onDrawBehind {
-                        drawLine(ink, geometry.pivot, geometry.armEnd, 3.dp.toPx(), StrokeCap.Round)
-                        drawPath(weightPath, background)
-                        drawPath(weightPath, ink, style = Stroke(1.dp.toPx()))
-                        drawRoundRect(
-                            ink,
-                            geometry.weightSlot.topLeft,
-                            geometry.weightSlot.size,
-                            round1,
-                        )
-                        drawCircle(ink, 7.dp.toPx(), geometry.pivot)
-                        drawCircle(background, 2.dp.toPx(), geometry.pivot)
-                }
-            },
-        )
+                        onDrawBehind {
+                            drawLine(ink, geometry.pivot, geometry.armEnd, 3.dp.toPx(), StrokeCap.Round)
+                            drawPath(weightPath, background)
+                            drawPath(weightPath, ink, style = Stroke(1.dp.toPx()))
+                            drawRoundRect(
+                                ink,
+                                geometry.weightSlot.topLeft,
+                                geometry.weightSlot.size,
+                                round1,
+                            )
+                            drawCircle(ink, 7.dp.toPx(), geometry.pivot)
+                            drawCircle(background, 2.dp.toPx(), geometry.pivot)
+                        }
+                    },
+            )
+        }
     }
 }
 
@@ -375,8 +380,9 @@ internal fun metronomeArmGeometry(size: Size, density: Float): MetronomeArmGeome
 
 internal fun metronomeArmDegrees(phase: Double): Float = phase.coerceIn(-1.0, 1.0).toFloat() * 24f
 
-internal const val METRONOME_PIVOT_X_RATIO = 0.5f
-internal const val METRONOME_PIVOT_Y_RATIO = 0.64f
+internal const val METRONOME_PIVOT_X_RATIO = 0.5544f
+internal const val METRONOME_PIVOT_Y_RATIO = 0.6356f
+private val METRONOME_ART_SIZE = 188.dp
 
 @Composable
 private fun RhythmSummary(state: MetronomeUiState, onClick: () -> Unit) {

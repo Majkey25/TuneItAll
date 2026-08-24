@@ -7,10 +7,9 @@ import kotlin.test.assertEquals
 
 class HeadstockTest {
     @Test
-    fun `split guitar vector fits between the string controls`() {
-        assertEquals(132.dp, SplitHeadstockGeometry.vectorWidth)
-        assertEquals(228.dp, SplitHeadstockGeometry.vectorHeight)
-        assertEquals(132.dp, SplitHeadstockGeometry.centerGap)
+    fun `split guitar image fills the space between the string controls`() {
+        assertEquals(196.dp, SplitHeadstockGeometry.imageSize)
+        assertEquals(196.dp, SplitHeadstockGeometry.centerGap)
     }
 
     @Test
@@ -22,8 +21,8 @@ class HeadstockTest {
 
     @Test
     fun `inline six puts string controls opposite the tuning machines`() {
-        assertEquals(104.dp, InlineSixGeometry.vectorWidth)
-        assertEquals(304.dp, InlineSixGeometry.vectorHeight)
+        assertEquals(244.dp, InlineSixGeometry.imageSize)
+        assertEquals(244.dp, InlineSixGeometry.centerGap)
         assertEquals(null to 5, HeadstockLayout.INLINE_6.stringIndicesAtRow(0))
         assertEquals(null to 0, HeadstockLayout.INLINE_6.stringIndicesAtRow(5))
     }

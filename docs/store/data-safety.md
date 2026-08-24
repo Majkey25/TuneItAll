@@ -1,6 +1,6 @@
 # Google Play Data Safety record
 
-Proposed answers for release `0.3.0-alpha.4`, based on the current manifest and runtime
+Proposed answers for release `0.3.0-alpha.5`, based on the current manifest and runtime
 dependency set:
 
 - Data collected: **No**

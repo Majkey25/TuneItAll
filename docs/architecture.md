@@ -37,10 +37,10 @@ audio reuses the click-free generated-tone player for chord and single-note ear
 exercises and stores only bounded scores.
 
 Compose renders the cents rail and extended headstocks from typed tuning data.
-The six-string guitar offers original 3+3 and pointed 6-inline line-art vectors
-with functional string controls. The metronome uses an animation-ready native derivative of a
-CC0 SVG while Compose rotates only the lightweight, audio-synchronized arm.
-Both vectors tint from the active Light/Dark theme. Physical string numbers
+The six-string guitar uses attributed Noun Project 3+3 and 6-inline PNG artwork
+with functional string controls. The metronome uses an animation-ready native
+derivative of the supplied CC0 SVG while Compose rotates only the lightweight,
+audio-synchronized arm. The artwork tints from the active Light/Dark theme. Physical string numbers
 descend from the lowest string to string 1. The
 Chromatic mode uses a dedicated all-instrument surface with no headstock.
 The shell uses simple Light/Dark tuner, metronome, Chords, Library, and Trainer

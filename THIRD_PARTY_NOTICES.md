@@ -45,12 +45,27 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## Vector assets
+## Visual assets
 
+- `Gibson Les Paul` and `gibson explorer` headstock icons by Alessandro
+  Curci, from Noun Project: CC BY 3.0. TuneItAll bundles the attributed PNG
+  downloads and applies only theme tinting and layout scaling.
+  <https://thenounproject.com/icon/gibson-les-paul-1506746/>
+  <https://thenounproject.com/icon/gibson-explorer-1506732/>
+  - Les Paul PNG SHA-256:
+    `2b1ffdaf3b7007641a8606cfc7005fa2e06353fa877fbe26581fb943a637379c`
+  - Explorer PNG SHA-256:
+    `beba0384eea08bbf4aa1d5cd35be883bc81e887ade3b14980267c2f4b0db871b`
 - `Metronome` by SVG Repo: CC0 1.0. TuneItAll keeps the original SVG in
   `assets/source/metronome-cc0.svg` and uses an animation-ready native vector
   derivative with a separate audio-synchronized arm.
-  <https://www.svgrepo.com/svg/42469/metronome>
+  <https://www.svgrepo.com/svg/132374/metronome>
+  - SVG SHA-256:
+    `7ea0f898aec83ca2237c0f714b63ecc99e333bec69c945ab464bdef9e7ac3356`
+
+Gibson, Les Paul, and Explorer names and marks belong to their respective
+owners. Their use identifies the referenced headstock designs and does not
+imply endorsement.
 
 ## Build and test components
 
@@ -67,3 +82,5 @@ Apache License 2.0: <https://www.apache.org/licenses/LICENSE-2.0>
 Eclipse Public License 1.0: <https://www.eclipse.org/legal/epl-v10.html>
 
 Creative Commons CC0 1.0: <https://creativecommons.org/publicdomain/zero/1.0/>
+
+Creative Commons BY 3.0: <https://creativecommons.org/licenses/by/3.0/>

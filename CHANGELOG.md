@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-alpha.5 — 2026-08-24
+
+- Use the exact attributed Les Paul and Explorer headstock artwork requested
+  for the selectable 3+3 and 6-inline layouts.
+- Enlarge both images while retaining 48 dp tone controls and correct physical
+  string numbering.
+- Rebuild the supplied CC0 metronome SVG as a static body with exactly one
+  audio-synchronized moving arm.
+
 ## 0.3.0-alpha.4 — 2026-08-24
 
 - Replace photographic instrument graphics with crisp theme-aware native

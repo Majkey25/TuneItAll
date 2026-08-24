@@ -218,6 +218,7 @@
     <string name="copyright_notice">Copyright © 2026 TuneItAll. Všechna práva vyhrazena.</string>
     <string name="offline_privacy_summary">Offline. Bez reklam, účtu, analytiky, sledování a přístupu k síti.</string>
     <string name="microphone_about">Vzorky z mikrofonu se zpracují dočasně v tomto zařízení. Nikdy se nenahrávají, neuchovávají, nesdílejí ani neodesílají.</string>
+    <string name="headstock_icon_attribution">Ikony Gibson Les Paul a gibson explorer: Alessandro Curci, thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Zásady ochrany soukromí</string>
     <string name="privacy_policy_full">TuneItAll používá mikrofon jen během aktivního ladění. Zvukové vzorky zpracuje v paměti zařízení a ihned je zahodí. Aplikace neshromažďuje ani nesdílí osobní údaje a nežádá o přístup k internetu.</string>
     <string name="license">Proprietární licence</string>

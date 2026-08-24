@@ -43,6 +43,7 @@ fun AboutScreen(onBack: () -> Unit) {
         Text(stringResource(R.string.copyright_notice))
         Text(stringResource(R.string.offline_privacy_summary), style = MaterialTheme.typography.bodyLarge)
         Text(stringResource(R.string.microphone_about), style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.headstock_icon_attribution), style = MaterialTheme.typography.bodySmall)
         TextButton(
             onClick = { showPrivacy = !showPrivacy },
             colors = textButtonColors,

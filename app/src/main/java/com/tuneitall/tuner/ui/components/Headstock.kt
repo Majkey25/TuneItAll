@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -65,12 +66,14 @@ fun Headstock(
     val rowHeight = if (inline) INLINE_PEG_ROW_HEIGHT else PEG_ROW_HEIGHT
     val pegWidth = if (inline) INLINE_PEG_WIDTH else PEG_WIDTH
     val pegHeight = if (inline) INLINE_PEG_HEIGHT else PEG_HEIGHT
+    val topPadding = if (layout == HeadstockLayout.INLINE_6) 0.dp else HEADSTOCK_TOP_PADDING
+    val bottomPadding = if (layout == HeadstockLayout.INLINE_6) 0.dp else HEADSTOCK_BOTTOM_PADDING
     val centerWidth = when (layout) {
         HeadstockLayout.SPLIT_3_3 -> SplitHeadstockGeometry.centerGap
-        HeadstockLayout.INLINE_6 -> InlineSixGeometry.vectorWidth
+        HeadstockLayout.INLINE_6 -> InlineSixGeometry.centerGap
         else -> HEADSTOCK_CENTER_WIDTH
     }
-    val totalHeight = HEADSTOCK_TOP_PADDING + HEADSTOCK_BOTTOM_PADDING + rowHeight * rows
+    val totalHeight = topPadding + bottomPadding + rowHeight * rows
     val bodyColor = MaterialTheme.colorScheme.surface
     val outlineColor = MaterialTheme.colorScheme.outline
     val stringColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -84,25 +87,23 @@ fun Headstock(
         ) {
             if (layout == HeadstockLayout.SPLIT_3_3) {
                 Image(
-                    painter = painterResource(R.drawable.headstock_3x3_vector),
+                    painter = painterResource(R.drawable.headstock_3x3_noun),
                     contentDescription = null,
                     modifier = Modifier
-                        .width(SplitHeadstockGeometry.vectorWidth)
-                        .height(SplitHeadstockGeometry.vectorHeight)
-                        .testTag("headstock_vector"),
-                    contentScale = ContentScale.FillBounds,
+                        .size(SplitHeadstockGeometry.imageSize)
+                        .testTag("headstock_3x3_image"),
+                    contentScale = ContentScale.Fit,
                     colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
                 )
             }
             if (layout == HeadstockLayout.INLINE_6) {
                 Image(
-                    painter = painterResource(R.drawable.headstock_6_inline_vector),
+                    painter = painterResource(R.drawable.headstock_6_inline_noun),
                     contentDescription = null,
                     modifier = Modifier
-                        .width(InlineSixGeometry.vectorWidth)
-                        .height(InlineSixGeometry.vectorHeight)
-                        .testTag("headstock_inline_6_vector"),
-                    contentScale = ContentScale.FillBounds,
+                        .size(InlineSixGeometry.imageSize)
+                        .testTag("headstock_6_inline_image"),
+                    contentScale = ContentScale.Fit,
                     colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
                 )
             }
@@ -167,7 +168,7 @@ fun Headstock(
                 verticalArrangement = Arrangement.Top,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                Spacer(modifier = Modifier.height(HEADSTOCK_TOP_PADDING))
+                Spacer(modifier = Modifier.height(topPadding))
                 repeat(rows) { row ->
                     val (leftIndex, rightIndex) = layout.stringIndicesAtRow(row)
                     Row(
@@ -278,14 +279,13 @@ private fun Peg(
 private data class HeadstockSides(val left: Int, val right: Int)
 
 internal object SplitHeadstockGeometry {
-    val vectorWidth = 132.dp
-    val vectorHeight = 228.dp
-    val centerGap = 132.dp
+    val imageSize = 196.dp
+    val centerGap = 196.dp
 }
 
 internal object InlineSixGeometry {
-    val vectorWidth = 104.dp
-    val vectorHeight = 304.dp
+    val imageSize = 244.dp
+    val centerGap = 244.dp
 }
 
 internal fun HeadstockLayout.stringIndicesAtRow(row: Int): Pair<Int?, Int?> {

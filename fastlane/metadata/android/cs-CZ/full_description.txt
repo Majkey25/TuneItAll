@@ -4,7 +4,7 @@ Kytaru, baskytaru nebo ukulele naladíš automaticky, vybereš konkrétní strun
 
 Funkce:
 • Kytary se 6, 7, 8 a 9 strunami
-• Původní vektory hlavy kytary 3+3 a špičaté 6 v řadě, plus 7 až 9 strun
+• Licencovaná grafika hlavy kytary 3+3 a 6 v řadě, plus 7 až 9 strun
 • Čtyřstrunná baskytara a ukulele
 • Standardní, snížená, drop, open a DADGAD ladění
 • Hledání, oblíbené položky a vlastní ladění

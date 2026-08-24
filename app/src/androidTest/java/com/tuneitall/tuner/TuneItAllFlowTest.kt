@@ -1235,6 +1235,10 @@ class TuneItAllFlowTest {
 
         composeRule.onNodeWithText("Offline. No ads, accounts, analytics, tracking, or network access.")
             .assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Gibson Les Paul and gibson explorer icons by Alessandro Curci, from thenounproject.com, CC BY 3.0.",
+        )
+            .assertIsDisplayed()
         composeRule.onNodeWithText("Privacy policy").performClick()
         composeRule.onNodeWithContentDescription("Back").performClick()
         assertTrue(back)

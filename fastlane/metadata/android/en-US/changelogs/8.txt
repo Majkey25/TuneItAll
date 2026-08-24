@@ -1,0 +1,2 @@
+Uses the exact attributed 3+3 and 6-inline headstock artwork requested. The
+supplied CC0 metronome now has one clean audio-synchronized moving arm.

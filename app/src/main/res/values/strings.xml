@@ -208,6 +208,7 @@
     <string name="copyright_notice">Copyright © 2026 TuneItAll. All rights reserved.</string>
     <string name="offline_privacy_summary">Offline. No ads, accounts, analytics, tracking, or network access.</string>
     <string name="microphone_about">Microphone samples are analyzed transiently on this device. They are never recorded, retained, shared, or transmitted.</string>
+    <string name="headstock_icon_attribution">Gibson Les Paul and gibson explorer icons by Alessandro Curci, from thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="privacy_policy_full">TuneItAll uses microphone access only while its tuner is active. Audio samples are processed in memory on-device and discarded immediately. The app collects and shares no personal data and does not request internet access.</string>
     <string name="license">Proprietary licence</string>

@@ -4,7 +4,7 @@ Tune guitar, bass, or ukulele automatically, select a string manually, or use th
 
 Features:
 • Guitar support for 6, 7, 8, and 9 strings
-• Original 3+3 and pointed 6-inline guitar headstock vectors, plus 7 to 9 strings
+• Licensed 3+3 and 6-inline guitar headstock artwork, plus 7 to 9 strings
 • Four-string bass and ukulele
 • Standard, lowered, drop, open, and DADGAD presets
 • Search, favorites, and custom tunings
