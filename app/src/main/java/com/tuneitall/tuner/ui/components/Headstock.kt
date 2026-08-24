@@ -2,6 +2,7 @@ package com.tuneitall.tuner.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -22,12 +22,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -73,8 +74,6 @@ fun Headstock(
     val bodyColor = MaterialTheme.colorScheme.surface
     val outlineColor = MaterialTheme.colorScheme.outline
     val stringColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val selectionColor = MaterialTheme.colorScheme.primary
-    val machineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.28f)
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Box(
@@ -84,15 +83,15 @@ fun Headstock(
             contentAlignment = Alignment.Center,
         ) {
             if (layout == HeadstockLayout.SPLIT_3_3) {
-                SvgAsset(
-                    resourceId = R.raw.guitar_head_commons,
+                Image(
+                    painter = painterResource(R.drawable.headstock_photo_cc0),
+                    contentDescription = null,
                     modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .offset(y = SplitHeadstockGeometry.vectorTop)
-                        .width(SplitHeadstockGeometry.bodyWidth)
-                        .height(SplitHeadstockGeometry.vectorHeight)
-                        .testTag("headstock_vector"),
-                    stretchToBounds = true,
+                        .width(SplitHeadstockGeometry.imageWidth)
+                        .height(SplitHeadstockGeometry.imageHeight)
+                        .clip(RoundedCornerShape(8.dp))
+                        .testTag("headstock_photo"),
+                    contentScale = ContentScale.Crop,
                 )
             }
             Canvas(modifier = Modifier.fillMaxSize().testTag("headstock_drawing")) {
@@ -101,70 +100,7 @@ fun Headstock(
                 val bottom = size.height - 4.dp.toPx()
                 val bodyHalfWidth = HEADSTOCK_BODY_HALF_WIDTH.toPx()
                 val narrowHalfWidth = HEADSTOCK_NARROW_HALF_WIDTH.toPx()
-                if (layout == HeadstockLayout.SPLIT_3_3) {
-                    val nutY = bottom - 4.dp.toPx()
-                    val nutHalfWidth = SplitHeadstockGeometry.nutWidth.toPx() / 2f
-                    repeat(notes.size) { index ->
-                        val nutX = centerX + SplitHeadstockGeometry.nutSlots[index].toPx()
-                        val row = if (index < 3) 2 - index else index - 3
-                        val postOffset = SplitHeadstockGeometry.postOffsets[row].toPx()
-                        val side = if (index < 3) -1f else 1f
-                        val postX = centerX + side * postOffset
-                        val postY = SplitHeadstockGeometry.postCenters[row].toPx()
-                        drawLine(
-                            stringColor.copy(alpha = 0.8f),
-                            Offset(nutX, nutY),
-                            Offset(postX, postY),
-                            1.dp.toPx(),
-                        )
-                        val postRadius = SplitHeadstockGeometry.postRadius.toPx()
-                        val keyWidth = SplitHeadstockGeometry.keyWidth.toPx()
-                        val keyHeight = SplitHeadstockGeometry.keyHeight.toPx()
-                        val keyCenterX = centerX + side * SplitHeadstockGeometry.keyCenterOffset.toPx()
-                        drawLine(
-                            outlineColor,
-                            Offset(postX + side * postRadius, postY),
-                            Offset(keyCenterX - side * keyWidth / 2f, postY),
-                            2.dp.toPx(),
-                        )
-                        drawRoundRect(
-                            machineColor,
-                            topLeft = Offset(keyCenterX - keyWidth / 2f, postY - keyHeight / 2f),
-                            size = Size(keyWidth, keyHeight),
-                            cornerRadius = CornerRadius(4.dp.toPx()),
-                        )
-                        drawRoundRect(
-                            outlineColor,
-                            topLeft = Offset(keyCenterX - keyWidth / 2f, postY - keyHeight / 2f),
-                            size = Size(keyWidth, keyHeight),
-                            cornerRadius = CornerRadius(4.dp.toPx()),
-                            style = Stroke(width = 1.5.dp.toPx()),
-                        )
-                        drawCircle(bodyColor, radius = postRadius, center = Offset(postX, postY))
-                        drawCircle(outlineColor, radius = postRadius, center = Offset(postX, postY), style = Stroke(1.5.dp.toPx()))
-                        if (selectedIndex == index) {
-                            drawCircle(
-                                selectionColor,
-                                radius = SplitHeadstockGeometry.selectedPostRadius.toPx(),
-                                center = Offset(postX, postY),
-                                style = Stroke(width = 2.dp.toPx()),
-                            )
-                        }
-                    }
-                    drawRoundRect(
-                        bodyColor,
-                        topLeft = Offset(centerX - nutHalfWidth, nutY - 2.dp.toPx()),
-                        size = Size(SplitHeadstockGeometry.nutWidth.toPx(), 4.dp.toPx()),
-                        cornerRadius = CornerRadius(1.dp.toPx()),
-                    )
-                    drawRoundRect(
-                        outlineColor,
-                        topLeft = Offset(centerX - nutHalfWidth, nutY - 2.dp.toPx()),
-                        size = Size(SplitHeadstockGeometry.nutWidth.toPx(), 4.dp.toPx()),
-                        cornerRadius = CornerRadius(1.dp.toPx()),
-                        style = Stroke(width = 1.5.dp.toPx()),
-                    )
-                } else {
+                if (layout != HeadstockLayout.SPLIT_3_3) {
                     val body = Path().apply {
                         moveTo(centerX - narrowHalfWidth, bottom)
                         lineTo(centerX - bodyHalfWidth, top + 18.dp.toPx())
@@ -330,19 +266,9 @@ private fun Peg(
 private data class HeadstockSides(val left: Int, val right: Int)
 
 internal object SplitHeadstockGeometry {
-    val bodyWidth = 120.dp
-    val nutWidth = 52.dp
+    val imageWidth = 132.dp
+    val imageHeight = 228.dp
     val centerGap = 132.dp
-    val vectorHeight = 228.dp
-    val vectorTop = 4.dp
-    val postCenters = listOf(52.dp, 120.dp, 188.dp)
-    val postOffsets = listOf(34.dp, 34.dp, 34.dp)
-    val postRadius = 4.5.dp
-    val keyCenterOffset = 52.dp
-    val keyWidth = 14.dp
-    val keyHeight = 11.dp
-    val selectedPostRadius = 7.dp
-    val nutSlots = listOf(-20.dp, -12.dp, -4.dp, 4.dp, 12.dp, 20.dp)
 }
 
 internal fun HeadstockLayout.stringIndicesAtRow(row: Int): Pair<Int?, Int?> {

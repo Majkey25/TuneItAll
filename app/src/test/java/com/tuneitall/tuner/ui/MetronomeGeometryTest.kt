@@ -10,8 +10,8 @@ class MetronomeGeometryTest {
     fun `animated arm aligns with the imported mechanical body`() {
         val geometry = metronomeArmGeometry(Size(1_000f, 1_000f), density = 1f)
 
-        assertEquals(Offset(556f, 620f), geometry.pivot)
-        assertEquals(Offset(556f, 100f), geometry.armEnd)
+        assertEquals(Offset(500f, 640f), geometry.pivot)
+        assertEquals(Offset(500f, 100f), geometry.armEnd)
         assertEquals(Size(30f, 16f), geometry.weight.size)
         assertEquals(3f, geometry.weightSlot.width)
     }

@@ -1,6 +1,7 @@
 package com.tuneitall.tuner.ui
 
 import android.view.Choreographer
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -55,6 +56,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -68,7 +70,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.metronome.MetronomeSound
-import com.tuneitall.tuner.ui.components.SvgAsset
 import kotlinx.coroutines.delay
 
 @Composable
@@ -299,9 +300,11 @@ private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
             .semantics { contentDescription = description }
             .testTag("metronome_pendulum"),
     ) {
-        SvgAsset(
-            resourceId = R.raw.metronome_body_cc0,
-            modifier = Modifier.matchParentSize().testTag("metronome_body_vector"),
+        Image(
+            painter = painterResource(R.drawable.metronome_nikko_body),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize().testTag("metronome_body_photo"),
+            contentScale = ContentScale.Fit,
         )
         Box(
             Modifier
@@ -322,8 +325,8 @@ private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
                     }
 
                     onDrawBehind {
-                        drawLine(ink, geometry.pivot, geometry.armEnd, 3.dp.toPx(), StrokeCap.Round)
-                        drawPath(weightPath, ink.copy(alpha = 0.26f))
+                        drawLine(accent, geometry.pivot, geometry.armEnd, 3.dp.toPx(), StrokeCap.Round)
+                        drawPath(weightPath, accent)
                         drawPath(weightPath, ink, style = Stroke(1.dp.toPx()))
                         drawRoundRect(
                             accent,
@@ -331,7 +334,7 @@ private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
                             geometry.weightSlot.size,
                             round1,
                         )
-                        drawCircle(ink, 7.dp.toPx(), geometry.pivot)
+                        drawCircle(accent, 7.dp.toPx(), geometry.pivot)
                         drawCircle(background, 2.dp.toPx(), geometry.pivot)
                 }
             },
@@ -371,8 +374,8 @@ internal fun metronomeArmGeometry(size: Size, density: Float): MetronomeArmGeome
 
 internal fun metronomeArmDegrees(phase: Double): Float = phase.coerceIn(-1.0, 1.0).toFloat() * 24f
 
-internal const val METRONOME_PIVOT_X_RATIO = 0.556f
-internal const val METRONOME_PIVOT_Y_RATIO = 0.62f
+internal const val METRONOME_PIVOT_X_RATIO = 0.5f
+internal const val METRONOME_PIVOT_Y_RATIO = 0.64f
 
 @Composable
 private fun RhythmSummary(state: MetronomeUiState, onClick: () -> Unit) {

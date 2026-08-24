@@ -8,8 +8,6 @@ own licenses.
 - AndroidX Core, Activity, Lifecycle, Compose, and Material 3: Apache License 2.0
 - Material Design settings and back icons by Google: Apache License 2.0
 - Kotlin standard library and Kotlin coroutines: Apache License 2.0
-- AndroidSVG 1.4 by Paul LeBeau, Cave Rock Software Ltd.: Apache License 2.0
-  <https://github.com/BigBadaboom/androidsvg>
 
 ## Chord data
 
@@ -47,16 +45,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## Vector assets
+## Photo assets
 
-- `Metronome.svg` by J Alves, Open Clip Art Library: CC0 1.0.
-  TuneItAll removes the original arm and animates a separate audio-synchronized
-  arm.
-  <https://commons.wikimedia.org/wiki/File:Metronome.svg>
-- `Gibson-headstock-LP.svg` by GreyCat: CC BY-SA 3.0.
-  TuneItAll changes the fill color and overlays functional strings and tuning
-  machines. The bundled derived SVG remains available under CC BY-SA 3.0.
-  <https://commons.wikimedia.org/wiki/File:Gibson-headstock-LP.svg>
+- `Guitar of Week 42 headstock.webp` by guitarcolonel.com: CC0 1.0.
+  TuneItAll bundles the photograph as `headstock_photo_cc0.webp`.
+  <https://commons.wikimedia.org/wiki/File:Guitar_of_Week_42_headstock.webp>
+- `Metronome Nikko.jpg` by Vincent Quach (Invincible): CC BY-SA 3.0.
+  TuneItAll removed the background and static arm, converted the result to WebP,
+  and overlays a separate audio-synchronized arm. The bundled derivative
+  `metronome_nikko_body.webp` remains available under CC BY-SA 3.0.
+  <https://commons.wikimedia.org/wiki/File:Metronome_Nikko.jpg>
+
+Gibson and Nikko names and marks belong to their respective owners. Their
+appearance identifies the photographed products and does not imply endorsement.
 
 ## Build and test components
 

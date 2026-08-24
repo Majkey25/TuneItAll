@@ -1,0 +1,2 @@
+Replaced the six-string headstock and metronome body with real licensed photos.
+Chord diagrams are now narrower and taller in both Chords and Trainer.

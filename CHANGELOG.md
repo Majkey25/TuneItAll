@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-alpha.3 — 2026-08-24
+
+- Replace the six-string headstock and mechanical metronome body with real,
+  licensed photographs while retaining functional controls and the
+  audio-synchronized pendulum.
+- Make canonical chord diagrams narrower and taller in both Chords and Trainer.
+- Remove the AndroidSVG runtime dependency and obsolete vector assets.
+
 ## 0.3.0-alpha.2 — 2026-08-23
 
 - Replace generated chord fingerings with pinned canonical Standard E guitar

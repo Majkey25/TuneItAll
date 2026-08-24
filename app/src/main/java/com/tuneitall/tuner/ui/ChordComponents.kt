@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
@@ -104,13 +106,17 @@ fun ChordDiagram(
             Text(
                 stringResource(R.string.fret_number, baseFret),
                 style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(start = 8.dp),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .width(CHORD_DIAGRAM_WIDTH)
+                    .padding(start = 8.dp),
             )
         }
         Canvas(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp)
+                .align(Alignment.CenterHorizontally)
+                .width(CHORD_DIAGRAM_WIDTH)
+                .height(CHORD_DIAGRAM_HEIGHT)
                 .semantics { contentDescription = description }
                 .testTag("chord_diagram"),
         ) {
@@ -223,4 +229,6 @@ fun formatSongTime(millis: Long): String {
 
 private val SHARP_NAMES = listOf("C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B")
 private val FLAT_NAMES = listOf("C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B")
+internal val CHORD_DIAGRAM_WIDTH = 232.dp
+internal val CHORD_DIAGRAM_HEIGHT = 300.dp
 private const val DISPLAY_FRETS = 5
