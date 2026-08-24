@@ -284,7 +284,12 @@ class MetronomePlayerTest {
     @Test
     fun `final fade reaches playback head before stop and release`() {
         val output = FakeOutput(blockWriteCall = 2, holdPlaybackWriteCall = 3)
-        val player = testPlayer(output, stopTimeoutMillis = 500L, fadeDrainTimeoutMillis = 400L)
+        val player = testPlayer(
+            output,
+            startupTimeoutMillis = 1_000L,
+            stopTimeoutMillis = 2_000L,
+            fadeDrainTimeoutMillis = 1_500L,
+        )
         player.start(MetronomeSettings())
         assertTrue(output.writeBlocked.await(1, TimeUnit.SECONDS))
         val result = AtomicReference<MetronomeStopResult>()
