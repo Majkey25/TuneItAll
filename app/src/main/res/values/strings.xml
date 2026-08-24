@@ -224,4 +224,6 @@
     <string name="support_app">Support this app → Buy Me a Coffee</string>
     <string name="support_app_notice">Thank you for supporting this app. This opens Buy Me a Coffee.</string>
     <string name="support_unavailable">No web browser is available.</string>
+    <string name="auto_scroll_accessibility_label">TuneItAll auto-scroll</string>
+    <string name="auto_scroll_accessibility_description">Lets you start and stop hands-free scrolling with floating controls. TuneItAll does not read or store screen content.</string>
 </resources>

@@ -229,4 +229,6 @@
     <string name="support_app">Soutenir cette application → Buy Me a Coffee</string>
     <string name="support_app_notice">Merci de soutenir cette application. Buy Me a Coffee va s’ouvrir.</string>
     <string name="support_unavailable">Aucun navigateur web n’est disponible.</string>
+    <string name="auto_scroll_accessibility_label">Défilement automatique TuneItAll</string>
+    <string name="auto_scroll_accessibility_description">Permet de démarrer et d’arrêter le défilement mains libres avec des commandes flottantes. TuneItAll ne lit ni ne stocke le contenu de l’écran.</string>
 </resources>

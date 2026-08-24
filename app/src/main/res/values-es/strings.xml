@@ -229,4 +229,6 @@
     <string name="support_app">Apoya esta aplicación → Buy Me a Coffee</string>
     <string name="support_app_notice">Gracias por apoyar esta aplicación. Se abrirá Buy Me a Coffee.</string>
     <string name="support_unavailable">No hay ningún navegador web disponible.</string>
+    <string name="auto_scroll_accessibility_label">Desplazamiento automático de TuneItAll</string>
+    <string name="auto_scroll_accessibility_description">Permite iniciar y detener el desplazamiento sin manos con controles flotantes. TuneItAll no lee ni guarda el contenido de la pantalla.</string>
 </resources>

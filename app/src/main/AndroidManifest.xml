@@ -5,6 +5,9 @@
     <uses-feature
         android:name="android.hardware.microphone"
         android:required="false" />
+    <uses-feature
+        android:name="android.software.accessibility"
+        android:required="false" />
 
     <application
         android:allowBackup="false"
@@ -25,5 +28,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".autoscroll.AutoScrollAccessibilityService"
+            android:enabled="true"
+            android:exported="false"
+            android:label="@string/auto_scroll_accessibility_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/auto_scroll_accessibility_service" />
+        </service>
     </application>
 </manifest>

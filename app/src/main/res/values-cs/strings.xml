@@ -234,4 +234,6 @@
     <string name="support_app">Podpořit tuto aplikaci → Buy Me a Coffee</string>
     <string name="support_app_notice">Děkujeme za podporu této aplikace. Otevírá se Buy Me a Coffee.</string>
     <string name="support_unavailable">Není dostupný žádný webový prohlížeč.</string>
+    <string name="auto_scroll_accessibility_label">Automatické posouvání TuneItAll</string>
+    <string name="auto_scroll_accessibility_description">Umožňuje spustit a zastavit posouvání bez použití rukou pomocí plovoucích ovládacích prvků. TuneItAll nečte ani neukládá obsah obrazovky.</string>
 </resources>
