@@ -1,6 +1,6 @@
 # TuneItAll Privacy Policy
 
-Effective date: 9 August 2026
+Effective date: 24 August 2026
 
 TuneItAll is an offline instrument tuner. It does not collect, retain, sell,
 share, or transmit personal data.
@@ -16,12 +16,15 @@ shared. Capture stops when the active tuner leaves the foreground.
 
 The app does not request Android internet permission. It contains no account,
 advertising, analytics, tracking, crash-reporting, or cloud service integration.
+The optional support button asks Android to open Buy Me a Coffee in an external
+browser. TuneItAll does not send user data with this request and unlocks no app
+features. The browser and the linked website apply their own privacy terms.
 
 ## Stored preferences
 
-Mode, selected tuning, A4 reference, notation, headstock layout, favorites, and
-custom tunings are stored locally on the device. Uninstalling the app removes
-this data, subject to the device's Android backup settings.
+Mode, selected tuning, A4 reference, notation, language, headstock layout,
+favorites, custom tunings, metronome settings, and trainer scores are stored
+locally. Clearing app data or uninstalling TuneItAll removes these preferences.
 
 ## Children and changes
 

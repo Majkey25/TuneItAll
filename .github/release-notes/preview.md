@@ -1,4 +1,4 @@
-TuneItAll `v0.3.0-alpha.6` prerelease testing build.
+TuneItAll `v0.3.0-alpha.7` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -32,6 +32,10 @@ Highlights:
 - Narrower, taller chord diagrams in both Chords and Trainer.
 - Six-inline string names and numbers now sit on the left side.
 - Public privacy and support pages for Play closed testing.
+- Complete System-default, English, Czech, German, French, and Spanish
+  interfaces, including Android 8 through Android 12 fallback handling.
+- An optional Buy Me a Coffee button in App details. It opens an external
+  browser and does not unlock any feature.
 - No ads, accounts, analytics, tracking, or network permission.
 
 The app passed unit, Lint, API 35 Compose, audio-session, local-file decoding,

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-alpha.7 — 2026-08-24
+
+- Add a complete in-app language selector with System default, English, Czech,
+  German, French, and Spanish. All languages ship in the offline bundle.
+- Use Android per-app languages on Android 13 and newer, with a local
+  configuration fallback for Android 8 through Android 12.
+- Add the ScanIt-style optional Buy Me a Coffee button to App details. It opens
+  the published support page in the external browser and unlocks no features.
+
 ## 0.3.0-alpha.6 — 2026-08-24
 
 - Move all 6-inline string names and physical numbers to the left of the

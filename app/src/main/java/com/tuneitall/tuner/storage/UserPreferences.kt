@@ -3,6 +3,7 @@ package com.tuneitall.tuner.storage
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.tuneitall.tuner.AppLanguage
 import com.tuneitall.tuner.audio.AudioInputSource
 import com.tuneitall.tuner.audio.DetectionSensitivity
 import com.tuneitall.tuner.audio.ResponseMode
@@ -75,6 +76,10 @@ class UserPreferences(context: Context) {
     var themeMode: ThemeMode
         get() = preferences.enumValue(THEME_MODE_KEY, ThemeMode.SYSTEM)
         set(value) = preferences.edit { putString(THEME_MODE_KEY, value.name) }
+
+    var appLanguage: AppLanguage
+        get() = preferences.enumValue(APP_LANGUAGE_KEY, AppLanguage.SYSTEM)
+        set(value) = preferences.edit { putString(APP_LANGUAGE_KEY, value.name) }
 
     var sensitivity: DetectionSensitivity
         get() = preferences.detectionSensitivity(SENSITIVITY_KEY, DetectionSensitivity.DEFAULT)
@@ -227,6 +232,7 @@ class UserPreferences(context: Context) {
         const val REFERENCE_PITCH_KEY = "a4_hertz"
         const val NOTATION_KEY = "notation"
         const val THEME_MODE_KEY = "theme_mode"
+        const val APP_LANGUAGE_KEY = "app_language"
         const val SENSITIVITY_KEY = "detection_sensitivity"
         const val RESPONSE_MODE_KEY = "tuner_response_mode"
         const val NEEDLE_STABILITY_KEY = "tuner_needle_stability"

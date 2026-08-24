@@ -13,17 +13,17 @@ TuneItAll is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing prerelease `0.3.0-alpha.6`. TuneItAll is not published
+Status: public testing prerelease `0.3.0-alpha.7`. TuneItAll is not published
 on Google Play.
 
 ## Download
 
-[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.6/TuneItAll-v0.3.0-alpha.6-debug.apk)
+[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.7/TuneItAll-v0.3.0-alpha.7-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.6).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.7).
 
 ## Features
 
@@ -55,11 +55,15 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
   Silent/DND, is excluded from pitch detection, and never creates a notification
   or popup.
 - Sharps or flats notation and generated reference audio with no bundled samples.
+- System-default, English, Czech, German, French, and Spanish interfaces. The
+  complete translations ship offline on Android 8.0 and newer.
 - Attributed 3+3 and 6-inline guitar headstock artwork with functional string
   controls and typed note order. Extended instruments retain their
   data-driven layouts.
-- A simple Light/Dark Compose interface, one global Settings destination, a
+- A simple Light/Dark Compose interface, one global Settings destination, an
   exact CC0-based animated metronome, and a quick rhythm panel.
+- An optional ScanIt-style Buy Me a Coffee button in App details. It opens an
+  external browser and does not unlock features or change support priority.
 
 ## Screenshots
 
@@ -148,7 +152,7 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-Pre-release tags such as `v0.3.0-alpha.6` build a verified, debug-signed APK and
+Pre-release tags such as `v0.3.0-alpha.7` build a verified, debug-signed APK and
 publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
 signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.

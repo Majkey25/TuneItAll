@@ -32,6 +32,7 @@ Funkce:
 - Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
 - Experimentální offline časová osa akordů z vybraného zvukového souboru
 - Učení akordů, kvíz akordů a rozpoznávání jednotlivých tónů sluchem
+- Rozhraní podle systému, anglicky, česky, německy, francouzsky a španělsky
 
 TuneItAll neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup
 k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává,
@@ -39,3 +40,6 @@ neuchovává, nesdílí ani neodesílá.
 
 Vybranou písničku dekóduje jen v zařízení. Zdrojový zvuk nekopíruje, neuchovává
 ani neodesílá.
+
+Volitelná podpora v podrobnostech o aplikaci otevře Buy Me a Coffee v externím
+prohlížeči. Neodemkne žádnou funkci.

@@ -10,13 +10,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,13 +30,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.tuneitall.tuner.AppLanguage
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.audio.AudioInputSource
 import com.tuneitall.tuner.audio.DetectionSensitivity
@@ -60,6 +66,8 @@ fun SettingsScreen(
     state: TunerUiState,
     metronomeState: MetronomeUiState = MetronomeUiState(),
     initialSection: SettingsSection = SettingsSection.GENERAL,
+    appLanguage: AppLanguage = AppLanguage.SYSTEM,
+    onAppLanguageChanged: (AppLanguage) -> Unit = {},
     onThemeModeChanged: (ThemeMode) -> Unit,
     onReferencePitchChanged: (ReferencePitch) -> Unit,
     onNotationChanged: (NoteNotation) -> Unit,
@@ -113,6 +121,8 @@ fun SettingsScreen(
         when (section) {
             SettingsSection.GENERAL -> GeneralSettings(
                 state = state,
+                appLanguage = appLanguage,
+                onAppLanguageChanged = onAppLanguageChanged,
                 onThemeModeChanged = onThemeModeChanged,
                 onReferencePitchChanged = onReferencePitchChanged,
                 onNotationChanged = onNotationChanged,
@@ -139,12 +149,15 @@ fun SettingsScreen(
 @Composable
 private fun GeneralSettings(
     state: TunerUiState,
+    appLanguage: AppLanguage,
+    onAppLanguageChanged: (AppLanguage) -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
     onReferencePitchChanged: (ReferencePitch) -> Unit,
     onNotationChanged: (NoteNotation) -> Unit,
     onLayoutChanged: (HeadstockLayout) -> Unit,
     onOpenAbout: () -> Unit,
 ) {
+    var languageDialogOpen by rememberSaveable { mutableStateOf(false) }
     var input by remember { mutableStateOf(formatPitch(state.referencePitch.hertz)) }
     var extremeConfirmed by remember { mutableStateOf(false) }
     val parsed = input.replace(',', '.').toDoubleOrNull()
@@ -162,6 +175,43 @@ private fun GeneralSettings(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.app_language), style = MaterialTheme.typography.titleLarge)
+        OutlinedButton(
+            onClick = { languageDialogOpen = true },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+        ) {
+            Text(appLanguageName(appLanguage))
+        }
+        if (languageDialogOpen) {
+            AlertDialog(
+                onDismissRequest = { languageDialogOpen = false },
+                title = { Text(stringResource(R.string.choose_language)) },
+                text = {
+                    Column {
+                        AppLanguage.entries.forEach { language ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .selectable(
+                                        selected = language == appLanguage,
+                                        role = Role.RadioButton,
+                                        onClick = {
+                                            languageDialogOpen = false
+                                            if (language != appLanguage) onAppLanguageChanged(language)
+                                        },
+                                    ),
+                            ) {
+                                RadioButton(selected = language == appLanguage, onClick = null)
+                                Text(appLanguageName(language))
+                            }
+                        }
+                    }
+                },
+                confirmButton = {},
+            )
+        }
         Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             ThemeMode.entries.forEach { mode ->
@@ -275,7 +325,7 @@ private fun GeneralSettings(
             }
         }
         OutlinedButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.about))
+            Text(stringResource(R.string.app_details))
         }
     }
 }
@@ -517,6 +567,18 @@ private fun themeModeName(mode: ThemeMode): String = stringResource(
         ThemeMode.SYSTEM -> R.string.theme_system
         ThemeMode.LIGHT -> R.string.theme_light
         ThemeMode.DARK -> R.string.theme_dark
+    },
+)
+
+@Composable
+private fun appLanguageName(language: AppLanguage): String = stringResource(
+    when (language) {
+        AppLanguage.SYSTEM -> R.string.language_system
+        AppLanguage.ENGLISH -> R.string.language_english
+        AppLanguage.CZECH -> R.string.language_czech
+        AppLanguage.GERMAN -> R.string.language_german
+        AppLanguage.FRENCH -> R.string.language_french
+        AppLanguage.SPANISH -> R.string.language_spanish
     },
 )
 

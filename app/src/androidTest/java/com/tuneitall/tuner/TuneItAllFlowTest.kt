@@ -138,6 +138,20 @@ class TuneItAllFlowTest {
     }
 
     @Test
+    fun appLanguagePreferenceDefaultsRoundTripsAndRejectsCorruptValues() {
+        val preferences = UserPreferences(context)
+        assertEquals(AppLanguage.SYSTEM, preferences.appLanguage)
+
+        preferences.appLanguage = AppLanguage.FRENCH
+        assertEquals(AppLanguage.FRENCH, UserPreferences(context).appLanguage)
+
+        context.getSharedPreferences("tuneitall_preferences", Context.MODE_PRIVATE).edit()
+            .putString("app_language", "KLINGON")
+            .commit()
+        assertEquals(AppLanguage.SYSTEM, UserPreferences(context).appLanguage)
+    }
+
+    @Test
     fun metronomePreferencesRoundTripAndRejectCorruptValues() {
         val expected = MetronomeSettings(
             bpm = Bpm(137),
@@ -531,6 +545,9 @@ class TuneItAllFlowTest {
                     state = state(),
                     viewModel = tunerViewModel,
                     openApplicationSettings = {},
+                    openSupportPage = {},
+                    appLanguage = AppLanguage.SYSTEM,
+                    onAppLanguageChanged = {},
                     metronomeViewModel = metronomeViewModel,
                 )
             }
@@ -586,6 +603,9 @@ class TuneItAllFlowTest {
                     state = state(),
                     viewModel = viewModel,
                     openApplicationSettings = {},
+                    openSupportPage = {},
+                    appLanguage = AppLanguage.SYSTEM,
+                    onAppLanguageChanged = {},
                 )
             }
         }
@@ -1227,10 +1247,39 @@ class TuneItAllFlowTest {
     }
 
     @Test
+    fun settingsSelectsAppLanguageFromCompleteDialog() {
+        var selected: AppLanguage? = null
+        composeRule.setContent {
+            TuneItAllTheme {
+                SettingsScreen(
+                    state = state(),
+                    appLanguage = AppLanguage.SYSTEM,
+                    onAppLanguageChanged = { selected = it },
+                    onThemeModeChanged = {},
+                    onReferencePitchChanged = {},
+                    onNotationChanged = {},
+                    onLayoutChanged = {},
+                    onAudioSettingsChanged = {},
+                    onOpenAbout = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("App language").assertIsDisplayed()
+        composeRule.onNodeWithText("System default").performClick()
+        listOf("English", "Čeština", "Deutsch", "Français", "Español").forEach {
+            composeRule.onNodeWithText(it).assertIsDisplayed()
+        }
+        composeRule.onNodeWithText("Español").performClick()
+        composeRule.runOnIdle { assertEquals(AppLanguage.SPANISH, selected) }
+    }
+
+    @Test
     fun aboutAndBackAreAvailableWithoutNetwork() {
         var back = false
         composeRule.setContent {
-            TuneItAllTheme { AboutScreen(onBack = { back = true }) }
+            TuneItAllTheme { AboutScreen(onBack = { back = true }, onSupport = {}) }
         }
 
         composeRule.onNodeWithText("Offline. No ads, accounts, analytics, tracking, or network access.")
@@ -1242,6 +1291,24 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithText("Privacy policy").performClick()
         composeRule.onNodeWithContentDescription("Back").performClick()
         assertTrue(back)
+    }
+
+    @Test
+    fun appDetailsSupportButtonMatchesScanItAndInvokesSupportAction() {
+        var supportOpened = false
+        composeRule.setContent {
+            TuneItAllTheme {
+                AboutScreen(
+                    onBack = {},
+                    onSupport = { supportOpened = true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Support this app → Buy Me a Coffee")
+            .performScrollTo()
+            .performClick()
+        composeRule.runOnIdle { assertTrue(supportOpened) }
     }
 
     @Test
@@ -1429,6 +1496,9 @@ class TuneItAllFlowTest {
                             ),
                             viewModel = viewModel,
                             openApplicationSettings = {},
+                            openSupportPage = {},
+                            appLanguage = AppLanguage.SYSTEM,
+                            onAppLanguageChanged = {},
                         )
                     }
                 }

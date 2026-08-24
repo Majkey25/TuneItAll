@@ -1,0 +1,1 @@
+Choose System default, English, Czech, German, French, or Spanish in Settings. Added optional Buy Me a Coffee support in App details. All languages remain offline, with Android 8.0+ support.

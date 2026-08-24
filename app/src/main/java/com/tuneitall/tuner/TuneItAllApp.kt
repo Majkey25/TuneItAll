@@ -14,7 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
@@ -60,11 +60,14 @@ fun TuneItAllApp(
     state: TunerUiState,
     viewModel: TunerViewModel,
     openApplicationSettings: () -> Unit,
+    openSupportPage: () -> Unit,
+    appLanguage: AppLanguage,
+    onAppLanguageChanged: (AppLanguage) -> Unit,
     metronomeViewModel: MetronomeViewModel = composeViewModel(),
     chordViewModel: ChordViewModel? = null,
     trainerViewModel: TrainerViewModel? = null,
 ) {
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     val chordCatalog = remember(resources) {
         lazy(LazyThreadSafetyMode.NONE) { ChordShapeCatalog.fromResources(resources) }
     }
@@ -213,6 +216,8 @@ fun TuneItAllApp(
                     state = state,
                     metronomeState = metronomeState,
                     initialSection = settingsInitialSection,
+                    appLanguage = appLanguage,
+                    onAppLanguageChanged = onAppLanguageChanged,
                     onThemeModeChanged = viewModel::setThemeMode,
                     onReferencePitchChanged = viewModel::setReferencePitch,
                     onNotationChanged = viewModel::setNotation,
@@ -230,7 +235,10 @@ fun TuneItAllApp(
                     onBack = { screen = settingsReturnScreen },
                 )
 
-                AppScreen.About -> AboutScreen(onBack = { screen = AppScreen.Settings })
+                AppScreen.About -> AboutScreen(
+                    onBack = { screen = AppScreen.Settings },
+                    onSupport = openSupportPage,
+                )
             }
         }
     }

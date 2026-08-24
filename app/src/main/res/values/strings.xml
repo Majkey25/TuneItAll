@@ -28,6 +28,14 @@
     <string name="settings_general">General</string>
     <string name="settings_tuner">Tuner</string>
     <string name="settings_metronome">Metronome</string>
+    <string name="app_language">App language</string>
+    <string name="choose_language">Choose language</string>
+    <string name="language_system">System default</string>
+    <string name="language_english">English</string>
+    <string name="language_czech">Čeština</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_french">Français</string>
+    <string name="language_spanish">Español</string>
     <string name="theme">Theme</string>
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
@@ -203,7 +211,7 @@
     <string name="reset_audio_settings">Reset audio settings</string>
     <string name="note_notation">Note notation</string>
     <string name="headstock_layout">Headstock</string>
-    <string name="about">About</string>
+    <string name="app_details">App details</string>
     <string name="version_value">Version %1$s</string>
     <string name="copyright_notice">Copyright © 2026 TuneItAll. All rights reserved.</string>
     <string name="offline_privacy_summary">Offline. No ads, accounts, analytics, tracking, or network access.</string>
@@ -213,4 +221,7 @@
     <string name="privacy_policy_full">TuneItAll uses microphone access only while its tuner is active. Audio samples are processed in memory on-device and discarded immediately. The app collects and shares no personal data and does not request internet access.</string>
     <string name="license">Proprietary licence</string>
     <string name="license_summary">TuneItAll is proprietary software. Copying, modification, redistribution, sublicensing, or commercial use requires prior written permission. Third-party components retain their own licences.</string>
+    <string name="support_app">Support this app → Buy Me a Coffee</string>
+    <string name="support_app_notice">Thank you for supporting this app. This opens Buy Me a Coffee.</string>
+    <string name="support_unavailable">No web browser is available.</string>
 </resources>
