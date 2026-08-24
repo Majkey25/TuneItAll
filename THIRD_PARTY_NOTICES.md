@@ -45,19 +45,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## Photo assets
+## Vector assets
 
-- `Guitar of Week 42 headstock.webp` by guitarcolonel.com: CC0 1.0.
-  TuneItAll bundles the photograph as `headstock_photo_cc0.webp`.
-  <https://commons.wikimedia.org/wiki/File:Guitar_of_Week_42_headstock.webp>
-- `Metronome Nikko.jpg` by Vincent Quach (Invincible): CC BY-SA 3.0.
-  TuneItAll removed the background and static arm, converted the result to WebP,
-  and overlays a separate audio-synchronized arm. The bundled derivative
-  `metronome_nikko_body.webp` remains available under CC BY-SA 3.0.
-  <https://commons.wikimedia.org/wiki/File:Metronome_Nikko.jpg>
-
-Gibson and Nikko names and marks belong to their respective owners. Their
-appearance identifies the photographed products and does not imply endorsement.
+- `Metronome` by SVG Repo: CC0 1.0. TuneItAll keeps the original SVG in
+  `assets/source/metronome-cc0.svg` and uses an animation-ready native vector
+  derivative with a separate audio-synchronized arm.
+  <https://www.svgrepo.com/svg/42469/metronome>
 
 ## Build and test components
 
@@ -74,6 +67,3 @@ Apache License 2.0: <https://www.apache.org/licenses/LICENSE-2.0>
 Eclipse Public License 1.0: <https://www.eclipse.org/legal/epl-v10.html>
 
 Creative Commons CC0 1.0: <https://creativecommons.org/publicdomain/zero/1.0/>
-
-Creative Commons BY-SA 3.0:
-<https://creativecommons.org/licenses/by-sa/3.0/>

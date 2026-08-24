@@ -22,6 +22,7 @@ fun layoutName(layout: HeadstockLayout): String = when (layout) {
     HeadstockLayout.INLINE_4 -> pluralStringResource(R.plurals.layout_inline, 4, 4)
     HeadstockLayout.SPLIT_2_2 -> "2 + 2"
     HeadstockLayout.SPLIT_3_3 -> "3 + 3"
+    HeadstockLayout.INLINE_6 -> pluralStringResource(R.plurals.layout_inline, 6, 6)
     HeadstockLayout.INLINE_7 -> pluralStringResource(R.plurals.layout_inline, 7, 7)
     HeadstockLayout.SPLIT_4_3 -> "4 + 3"
     HeadstockLayout.INLINE_8 -> pluralStringResource(R.plurals.layout_inline, 8, 8)

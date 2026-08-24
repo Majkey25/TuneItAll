@@ -1,4 +1,4 @@
-TuneItAll `v0.3.0-alpha.3` prerelease testing build.
+TuneItAll `v0.3.0-alpha.4` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -25,9 +25,11 @@ Highlights:
   generated audio and local scoring.
 - Stable confirmed BPM editing, audio-synchronized mechanical animation, a
   shared global Settings destination, and a restored quick rhythm panel.
-- Real licensed photographs for the 3+3 guitar headstock and mechanical
-  metronome body. The metronome arm remains synchronized to the audio playback
-  head.
+- Crisp Light/Dark native vectors for the 3+3 guitar headstock and mechanical
+  metronome. The separate metronome arm remains synchronized to the audio
+  playback head.
+- A restored selectable pointed 6-inline headstock with correct E4 string 1
+  through E2 string 6 ordering.
 - Narrower, taller chord diagrams in both Chords and Trainer.
 - No ads, accounts, analytics, tracking, or network permission.
 

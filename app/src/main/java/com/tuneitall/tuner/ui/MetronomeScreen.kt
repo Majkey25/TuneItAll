@@ -50,6 +50,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -271,7 +272,6 @@ private fun RepeatButton(
 private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
     val ink = MaterialTheme.colorScheme.onSurface
     val background = MaterialTheme.colorScheme.background
-    val accent = MaterialTheme.colorScheme.primary
     val description = stringResource(R.string.metronome_physical_description)
     val currentPhaseProvider by rememberUpdatedState(phaseProvider)
     val phase = remember { mutableFloatStateOf(0f) }
@@ -301,10 +301,11 @@ private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
             .testTag("metronome_pendulum"),
     ) {
         Image(
-            painter = painterResource(R.drawable.metronome_nikko_body),
+            painter = painterResource(R.drawable.metronome_body_cc0),
             contentDescription = null,
-            modifier = Modifier.matchParentSize().testTag("metronome_body_photo"),
+            modifier = Modifier.matchParentSize().testTag("metronome_body_vector"),
             contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(ink),
         )
         Box(
             Modifier
@@ -325,16 +326,16 @@ private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
                     }
 
                     onDrawBehind {
-                        drawLine(accent, geometry.pivot, geometry.armEnd, 3.dp.toPx(), StrokeCap.Round)
-                        drawPath(weightPath, accent)
+                        drawLine(ink, geometry.pivot, geometry.armEnd, 3.dp.toPx(), StrokeCap.Round)
+                        drawPath(weightPath, background)
                         drawPath(weightPath, ink, style = Stroke(1.dp.toPx()))
                         drawRoundRect(
-                            accent,
+                            ink,
                             geometry.weightSlot.topLeft,
                             geometry.weightSlot.size,
                             round1,
                         )
-                        drawCircle(accent, 7.dp.toPx(), geometry.pivot)
+                        drawCircle(ink, 7.dp.toPx(), geometry.pivot)
                         drawCircle(background, 2.dp.toPx(), geometry.pivot)
                 }
             },

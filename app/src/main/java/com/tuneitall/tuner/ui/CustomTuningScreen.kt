@@ -167,7 +167,7 @@ private fun parseSingleNote(value: String): MidiNote? = try {
 
 private fun layoutsFor(instrument: Instrument, stringCount: Int): List<HeadstockLayout> = when (instrument) {
     Instrument.GUITAR -> when (stringCount) {
-        6 -> listOf(HeadstockLayout.SPLIT_3_3)
+        6 -> listOf(HeadstockLayout.SPLIT_3_3, HeadstockLayout.INLINE_6)
         7 -> listOf(HeadstockLayout.INLINE_7, HeadstockLayout.SPLIT_4_3)
         8 -> listOf(HeadstockLayout.INLINE_8, HeadstockLayout.SPLIT_4_4)
         9 -> listOf(HeadstockLayout.INLINE_9, HeadstockLayout.SPLIT_5_4)

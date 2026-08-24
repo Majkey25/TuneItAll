@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-alpha.4 — 2026-08-24
+
+- Replace photographic instrument graphics with crisp theme-aware native
+  vectors in Light and Dark mode.
+- Draw a recognizable 3+3 headstock with six posts, strings, nut, and neck.
+- Restore a selectable, pointed 6-inline headstock with string controls on the
+  opposite side and correct physical numbering.
+- Animate the separate CC0-derived metronome arm from the audio playback phase.
+
 ## 0.3.0-alpha.3 — 2026-08-24
 
 - Replace the six-string headstock and mechanical metronome body with real,

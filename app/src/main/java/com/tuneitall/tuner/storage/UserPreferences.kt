@@ -311,25 +311,16 @@ object CustomTuningCodec {
             }
             notes += MidiNote(value.toInt())
         }
-        val storedLayout = item.getString("layout")
         TuningPreset(
             id = item.getString("id"),
             name = item.getString("name"),
             instrument = Instrument.valueOf(item.getString("instrument")),
             notesLowToHigh = notes,
-            layouts = setOf(
-                if (storedLayout == LEGACY_INLINE_6) {
-                    HeadstockLayout.SPLIT_3_3
-                } else {
-                    HeadstockLayout.valueOf(storedLayout)
-                },
-            ),
+            layouts = setOf(HeadstockLayout.valueOf(item.getString("layout"))),
         )
     } catch (_: JSONException) {
         null
     } catch (_: IllegalArgumentException) {
         null
     }
-
-    private const val LEGACY_INLINE_6 = "INLINE_6"
 }

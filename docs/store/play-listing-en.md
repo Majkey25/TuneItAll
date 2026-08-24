@@ -19,7 +19,7 @@ whether the note is flat, sharp, or in tune.
 Features:
 
 - Guitar support for 6, 7, 8, and 9 strings
-- Real 3+3 guitar headstock photo and extended-range headstock layouts
+- Original 3+3 and pointed 6-inline guitar headstock vectors
 - Four-string bass and ukulele
 - Standard, lowered, drop, open, and DADGAD presets
 - Search, favorites, and custom tunings

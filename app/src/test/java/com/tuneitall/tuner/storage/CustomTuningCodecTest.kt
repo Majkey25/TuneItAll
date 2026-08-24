@@ -26,14 +26,14 @@ class CustomTuningCodecTest {
     }
 
     @Test
-    fun `legacy inline six layout migrates to split without losing the tuning`() {
+    fun `inline six layout decodes without losing the tuning`() {
         val encoded = JSONArray(
             listOf(objectJson("custom-legacy", "Legacy", 40).put("layout", "INLINE_6")),
         ).toString()
 
         val decoded = CustomTuningCodec.decode(encoded).single()
 
-        assertEquals(setOf(HeadstockLayout.SPLIT_3_3), decoded.layouts)
+        assertEquals(setOf(HeadstockLayout.INLINE_6), decoded.layouts)
         assertEquals("custom-legacy", decoded.id)
     }
 

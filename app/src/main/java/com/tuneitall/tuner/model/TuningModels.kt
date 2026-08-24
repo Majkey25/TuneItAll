@@ -38,6 +38,7 @@ enum class HeadstockLayout {
     INLINE_4,
     SPLIT_2_2,
     SPLIT_3_3,
+    INLINE_6,
     INLINE_7,
     SPLIT_4_3,
     INLINE_8,
@@ -53,6 +54,7 @@ val HeadstockLayout.stringCount: Int
         -> 4
 
         HeadstockLayout.SPLIT_3_3,
+        HeadstockLayout.INLINE_6,
         -> 6
 
         HeadstockLayout.INLINE_7,

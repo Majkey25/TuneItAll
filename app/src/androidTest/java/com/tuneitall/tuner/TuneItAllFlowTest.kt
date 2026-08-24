@@ -981,12 +981,12 @@ class TuneItAllFlowTest {
     }
 
     @Test
-    fun legacyInlineSixPreferenceMigratesToSplit() {
+    fun inlineSixPreferenceRoundTrips() {
         context.getSharedPreferences("tuneitall_preferences", Context.MODE_PRIVATE).edit()
             .putString("headstock_layout", "INLINE_6")
             .commit()
 
-        assertEquals(HeadstockLayout.SPLIT_3_3, UserPreferences(context).headstockLayout)
+        assertEquals(HeadstockLayout.INLINE_6, UserPreferences(context).headstockLayout)
     }
 
     @Test
@@ -1188,7 +1188,7 @@ class TuneItAllFlowTest {
     }
 
     @Test
-    fun sixStringCustomTuningHidesRedundantLayoutAndSavesSplit() {
+    fun sixStringCustomTuningOffersBothLayoutsAndSavesInline() {
         var saved: TuningPreset? = null
         composeRule.setContent {
             TuneItAllTheme {
@@ -1196,15 +1196,16 @@ class TuneItAllFlowTest {
             }
         }
 
-        composeRule.onNodeWithText("Headstock layout").assertDoesNotExist()
-        composeRule.onNode(hasText("Tuning name") and hasSetTextAction()).performTextInput("Six Split")
+        composeRule.onNodeWithText("Headstock layout").assertIsDisplayed()
+        composeRule.onNodeWithText("6 inline").performClick()
+        composeRule.onNode(hasText("Tuning name") and hasSetTextAction()).performTextInput("Six Inline")
         composeRule.onNodeWithText("Save and start tuning").performScrollTo().performClick()
 
-        assertEquals(setOf(HeadstockLayout.SPLIT_3_3), saved?.layouts)
+        assertEquals(setOf(HeadstockLayout.INLINE_6), saved?.layouts)
     }
 
     @Test
-    fun settingsHidesRedundantSixStringLayoutSelector() {
+    fun settingsOffersSplitAndInlineSixLayouts() {
         composeRule.setContent {
             TuneItAllTheme {
                 SettingsScreen(
@@ -1220,7 +1221,9 @@ class TuneItAllFlowTest {
             }
         }
 
-        composeRule.onNodeWithText("Headstock").assertDoesNotExist()
+        composeRule.onNodeWithText("Headstock").assertIsDisplayed()
+        composeRule.onNodeWithText("3 + 3").assertIsDisplayed()
+        composeRule.onNodeWithText("6 inline").assertIsDisplayed()
     }
 
     @Test

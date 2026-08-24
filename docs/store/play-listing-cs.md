@@ -19,7 +19,7 @@ centová stupnice ukáže, jestli je tón níž, výš, nebo přesně naladěný
 Funkce:
 
 - Kytary se 6, 7, 8 a 9 strunami
-- Reálná fotografie hlavy kytary 3+3 a varianty pro více strun
+- Původní vektory hlavy kytary 3+3 a špičaté 6 v řadě
 - Čtyřstrunná baskytara a ukulele
 - Standardní, snížená, drop, open a DADGAD ladění
 - Hledání, oblíbené položky a vlastní ladění
