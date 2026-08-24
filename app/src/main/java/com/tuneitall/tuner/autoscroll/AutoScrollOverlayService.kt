@@ -46,6 +46,8 @@ class AutoScrollOverlayService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        speed = preferences.speed
+        AutoScrollAccessibilityService.instance?.setSpeed(speed)
         when (intent?.action) {
             ACTION_EXIT -> {
                 shutdown()
