@@ -70,13 +70,21 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
 
 ## Screenshots
 
-| Preset tuner | Mechanical metronome | Chord library |
-| --- | --- | --- |
-| ![TuneItAll preset tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/1_tuner.png) | ![TuneItAll metronome](fastlane/metadata/android/en-US/images/phoneScreenshots/5_metronome.png) | ![TuneItAll chord library](fastlane/metadata/android/en-US/images/phoneScreenshots/6_chords.png) |
+| Precise tuner | Chromatic mode |
+| --- | --- |
+| ![TuneItAll preset tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/1_tuner.png) | ![TuneItAll chromatic tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/2_chromatic.png) |
 
-| Chromatic tuner | Global settings | Ear trainer |
-| --- | --- | --- |
-| ![TuneItAll chromatic tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/4_chromatic.png) | ![TuneItAll settings](fastlane/metadata/android/en-US/images/phoneScreenshots/3_settings.png) | ![TuneItAll trainer](fastlane/metadata/android/en-US/images/phoneScreenshots/7_trainer.png) |
+| Tuning library | Mechanical metronome |
+| --- | --- |
+| ![TuneItAll tuning library](fastlane/metadata/android/en-US/images/phoneScreenshots/3_tunings.png) | ![TuneItAll metronome](fastlane/metadata/android/en-US/images/phoneScreenshots/4_metronome.png) |
+
+| Chord library | Song chords |
+| --- | --- |
+| ![TuneItAll chord library](fastlane/metadata/android/en-US/images/phoneScreenshots/5_chords.png) | ![TuneItAll song chord timeline](fastlane/metadata/android/en-US/images/phoneScreenshots/6_song_chords.png) |
+
+| Ear trainer | Auto-scroll anywhere |
+| --- | --- |
+| ![TuneItAll ear trainer](fastlane/metadata/android/en-US/images/phoneScreenshots/7_trainer.png) | ![TuneItAll floating auto-scroll controls](fastlane/metadata/android/en-US/images/phoneScreenshots/8_auto_scroll.png) |
 
 ## Architecture
 
@@ -174,6 +182,8 @@ and [security policy](SECURITY.md).
 - Play icon: `fastlane/metadata/android/en-US/images/icon.png`
 - Regenerate the Play icon with `java tools/RenderStoreIcon.java` from the
   repository root.
+- Capture the eight verified emulator screens, then regenerate framed Play
+  artwork with `java tools/RenderStoreScreenshots.java`.
 - English/Czech listings: `docs/store/`
 - Privacy policies: `docs/privacy/`
 - Public website: `https://majkey25.github.io/TuneItAll/`
