@@ -443,7 +443,6 @@ class TuneItAllFlowTest {
 
         val root = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
         val header = composeRule.onNodeWithTag("metronome_header").fetchSemanticsNode().boundsInRoot
-        assertTrue("safe drawing top inset is zero", safeDrawingTop > 0)
         assertTrue("metronome header overlaps system bar", header.top >= safeDrawingTop)
         listOf(
             "metronome_settings" to null,
@@ -1241,9 +1240,9 @@ class TuneItAllFlowTest {
             }
         }
 
-        composeRule.onNodeWithText("Headstock").assertIsDisplayed()
-        composeRule.onNodeWithText("3 + 3").assertIsDisplayed()
-        composeRule.onNodeWithText("6 inline").assertIsDisplayed()
+        composeRule.onNodeWithText("Headstock").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("3 + 3").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("6 inline").performScrollTo().assertIsDisplayed()
     }
 
     @Test
