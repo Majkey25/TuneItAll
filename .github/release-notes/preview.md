@@ -1,4 +1,4 @@
-TuneItAll `v0.3.0-alpha.2` prerelease testing build.
+TuneItAll `v0.3.0-alpha.3` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -25,8 +25,10 @@ Highlights:
   generated audio and local scoring.
 - Stable confirmed BPM editing, audio-synchronized mechanical animation, a
   shared global Settings destination, and a restored quick rhythm panel.
-- A licensed 3+3 headstock outline and a CC0 mechanical metronome body. The
-  metronome arm remains synchronized to the audio playback head.
+- Real licensed photographs for the 3+3 guitar headstock and mechanical
+  metronome body. The metronome arm remains synchronized to the audio playback
+  head.
+- Narrower, taller chord diagrams in both Chords and Trainer.
 - No ads, accounts, analytics, tracking, or network permission.
 
 The app passed unit, Lint, API 35 Compose, audio-session, local-file decoding,
