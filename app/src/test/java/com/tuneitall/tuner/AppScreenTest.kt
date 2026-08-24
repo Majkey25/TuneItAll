@@ -12,6 +12,7 @@ class AppScreenTest {
         assertEquals(AppScreen.Tuner, parentScreen(AppScreen.Chords))
         assertEquals(AppScreen.Tuner, parentScreen(AppScreen.Library))
         assertEquals(AppScreen.Tuner, parentScreen(AppScreen.Trainer))
+        assertEquals(AppScreen.Chords, parentScreen(AppScreen.AutoScroll))
         assertEquals(AppScreen.Library, parentScreen(AppScreen.CustomTuning))
         assertEquals(AppScreen.Tuner, parentScreen(AppScreen.Settings))
         assertEquals(AppScreen.Settings, parentScreen(AppScreen.About))

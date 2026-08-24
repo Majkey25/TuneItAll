@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
 import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.ui.AboutScreen
+import com.tuneitall.tuner.ui.AutoScrollRoute
 import com.tuneitall.tuner.ui.AppBottomBar
 import com.tuneitall.tuner.ui.CustomTuningScreen
 import com.tuneitall.tuner.ui.ChordViewModel
@@ -46,6 +47,7 @@ sealed interface AppScreen {
     data object CustomTuning : AppScreen
     data object Settings : AppScreen
     data object About : AppScreen
+    data object AutoScroll : AppScreen
 }
 
 internal fun parentScreen(screen: AppScreen): AppScreen? = when (screen) {
@@ -53,6 +55,7 @@ internal fun parentScreen(screen: AppScreen): AppScreen? = when (screen) {
     AppScreen.Metronome, AppScreen.Chords, AppScreen.Library, AppScreen.Trainer, AppScreen.Settings -> AppScreen.Tuner
     AppScreen.CustomTuning -> AppScreen.Library
     AppScreen.About -> AppScreen.Settings
+    AppScreen.AutoScroll -> AppScreen.Chords
 }
 
 @Composable
@@ -94,7 +97,7 @@ fun TuneItAllApp(
         AppScreen.Chords -> PrimaryDestination.CHORDS
         AppScreen.Library -> PrimaryDestination.LIBRARY
         AppScreen.Trainer -> PrimaryDestination.TRAINER
-        AppScreen.CustomTuning, AppScreen.Settings, AppScreen.About -> null
+        AppScreen.CustomTuning, AppScreen.Settings, AppScreen.About, AppScreen.AutoScroll -> null
     }
 
     Scaffold(
@@ -174,6 +177,7 @@ fun TuneItAllApp(
                         onPlayPause = activeViewModel::playPause,
                         onSeek = activeViewModel::seekTo,
                         onClearSong = activeViewModel::clearSong,
+                        onOpenAutoScroll = { screen = AppScreen.AutoScroll },
                     )
                 }
 
@@ -239,6 +243,8 @@ fun TuneItAllApp(
                     onBack = { screen = AppScreen.Settings },
                     onSupport = openSupportPage,
                 )
+
+                AppScreen.AutoScroll -> AutoScrollRoute(onBack = { screen = AppScreen.Chords })
             }
         }
     }

@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -23,6 +24,7 @@ import com.tuneitall.tuner.storage.TrainerStats
 import com.tuneitall.tuner.ui.ChordTab
 import com.tuneitall.tuner.ui.ChordUiState
 import com.tuneitall.tuner.ui.ChordsScreen
+import com.tuneitall.tuner.ui.AutoScrollScreen
 import com.tuneitall.tuner.ui.TrainerScreen
 import com.tuneitall.tuner.ui.formatChord
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
@@ -58,6 +60,7 @@ class MusicToolsScreenTest {
                     onPlayPause = {},
                     onSeek = {},
                     onClearSong = {},
+                    onOpenAutoScroll = {},
                 )
             }
         }
@@ -68,6 +71,57 @@ class MusicToolsScreenTest {
         compose.onNodeWithTag("selected_chord_label").assertTextEquals("Am")
         compose.onNodeWithTag("chord_diagram").assertIsDisplayed()
         compose.runOnIdle { assertEquals(Chord(9, ChordQuality.MINOR), state.selectedChord) }
+    }
+
+    @Test
+    fun chordsOpensAutoScrollSetup() {
+        var opened = false
+        compose.setContent {
+            TuneItAllTheme {
+                ChordsScreen(
+                    state = ChordUiState(),
+                    tunings = listOf(tuning),
+                    notation = NoteNotation.SHARPS,
+                    catalog = catalog,
+                    onTabSelected = {},
+                    onChordSelected = {},
+                    onTuningSelected = {},
+                    onTransposeChanged = {},
+                    onLoadSong = {},
+                    onPlayPause = {},
+                    onSeek = {},
+                    onClearSong = {},
+                    onOpenAutoScroll = { opened = true },
+                )
+            }
+        }
+
+        compose.onNodeWithTag("open_auto_scroll").performClick()
+        compose.runOnIdle { assertTrue(opened) }
+    }
+
+    @Test
+    fun autoScrollSetupExplainsMissingPermissions() {
+        compose.setContent {
+            TuneItAllTheme {
+                AutoScrollScreen(
+                    overlayAllowed = false,
+                    accessibilityEnabled = false,
+                    speed = 15,
+                    onSpeedChanged = {},
+                    onOpenOverlaySettings = {},
+                    onOpenAccessibilitySettings = {},
+                    onShowControls = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("auto_scroll_screen").assertIsDisplayed()
+        compose.onNodeWithTag("auto_scroll_speed").assertTextEquals("15")
+        compose.onNodeWithTag("auto_scroll_overlay_permission").assertIsDisplayed()
+        compose.onNodeWithTag("auto_scroll_accessibility_permission").assertIsDisplayed()
+        compose.onNodeWithTag("auto_scroll_show_controls").assertIsNotEnabled()
     }
 
     @Test
@@ -98,6 +152,7 @@ class MusicToolsScreenTest {
                     onPlayPause = {},
                     onSeek = {},
                     onClearSong = {},
+                    onOpenAutoScroll = {},
                 )
             }
         }

@@ -248,4 +248,16 @@
     <string name="auto_scroll_overlay_missing">Primero permite que TuneItAll se muestre sobre otras aplicaciones.</string>
     <string name="auto_scroll_accessibility_missing">Primero activa el desplazamiento automático de TuneItAll en Accesibilidad.</string>
     <string name="auto_scroll_start_failed">No se pudo iniciar el desplazamiento automático.</string>
+    <string name="auto_scroll_title">Desplazamiento automático</string>
+    <string name="auto_scroll_action">Desplazar</string>
+    <string name="auto_scroll_description">Mantén ambas manos en tu instrumento. Los controles flotantes desplazan acordes o cualquier otra aplicación Android.</string>
+    <string name="auto_scroll_overlay_permission">Mostrar sobre otras aplicaciones</string>
+    <string name="auto_scroll_accessibility_permission">Gestos de accesibilidad</string>
+    <string name="auto_scroll_allow_overlay">Permitir</string>
+    <string name="auto_scroll_enable_accessibility">Activar</string>
+    <string name="auto_scroll_permission_ready">Listo</string>
+    <string name="auto_scroll_permission_required">Obligatorio</string>
+    <string name="auto_scroll_speed">Velocidad de desplazamiento</string>
+    <string name="auto_scroll_show_controls">Mostrar controles flotantes</string>
+    <string name="auto_scroll_privacy_note">TuneItAll solo realiza gestos de deslizamiento. No lee, guarda ni envía el contenido de la pantalla.</string>
 </resources>

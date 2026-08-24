@@ -243,4 +243,16 @@
     <string name="auto_scroll_overlay_missing">Allow TuneItAll to display over other apps first.</string>
     <string name="auto_scroll_accessibility_missing">Enable TuneItAll auto-scroll in Accessibility settings first.</string>
     <string name="auto_scroll_start_failed">Auto-scroll could not start.</string>
+    <string name="auto_scroll_title">Auto-scroll</string>
+    <string name="auto_scroll_action">Auto-scroll</string>
+    <string name="auto_scroll_description">Keep both hands on your instrument. Floating controls can scroll chords or any other Android app.</string>
+    <string name="auto_scroll_overlay_permission">Display over other apps</string>
+    <string name="auto_scroll_accessibility_permission">Accessibility gestures</string>
+    <string name="auto_scroll_allow_overlay">Allow</string>
+    <string name="auto_scroll_enable_accessibility">Enable</string>
+    <string name="auto_scroll_permission_ready">Ready</string>
+    <string name="auto_scroll_permission_required">Required</string>
+    <string name="auto_scroll_speed">Scroll speed</string>
+    <string name="auto_scroll_show_controls">Show floating controls</string>
+    <string name="auto_scroll_privacy_note">TuneItAll only performs swipe gestures. It does not read, store, or send screen content.</string>
 </resources>

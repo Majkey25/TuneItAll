@@ -253,4 +253,16 @@
     <string name="auto_scroll_overlay_missing">Nejprve povolte TuneItAll zobrazování nad ostatními aplikacemi.</string>
     <string name="auto_scroll_accessibility_missing">Nejprve povolte automatické posouvání TuneItAll v nastavení usnadnění.</string>
     <string name="auto_scroll_start_failed">Automatické posouvání se nepodařilo spustit.</string>
+    <string name="auto_scroll_title">Automatické posouvání</string>
+    <string name="auto_scroll_action">Posouvat</string>
+    <string name="auto_scroll_description">Nechte obě ruce na nástroji. Plovoucí ovládací prvky mohou posouvat akordy i jakoukoli jinou aplikaci Android.</string>
+    <string name="auto_scroll_overlay_permission">Zobrazení nad ostatními aplikacemi</string>
+    <string name="auto_scroll_accessibility_permission">Gesta usnadnění</string>
+    <string name="auto_scroll_allow_overlay">Povolit</string>
+    <string name="auto_scroll_enable_accessibility">Zapnout</string>
+    <string name="auto_scroll_permission_ready">Připraveno</string>
+    <string name="auto_scroll_permission_required">Vyžadováno</string>
+    <string name="auto_scroll_speed">Rychlost posouvání</string>
+    <string name="auto_scroll_show_controls">Zobrazit plovoucí ovládání</string>
+    <string name="auto_scroll_privacy_note">TuneItAll pouze provádí gesta přejetí. Obsah obrazovky nečte, neukládá ani neodesílá.</string>
 </resources>

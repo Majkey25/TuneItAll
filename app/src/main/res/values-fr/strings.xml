@@ -248,4 +248,16 @@
     <string name="auto_scroll_overlay_missing">Autorisez d’abord TuneItAll à s’afficher sur les autres applications.</string>
     <string name="auto_scroll_accessibility_missing">Activez d’abord le défilement automatique TuneItAll dans les paramètres d’accessibilité.</string>
     <string name="auto_scroll_start_failed">Le défilement automatique n’a pas pu démarrer.</string>
+    <string name="auto_scroll_title">Défilement automatique</string>
+    <string name="auto_scroll_action">Défiler</string>
+    <string name="auto_scroll_description">Gardez les deux mains sur votre instrument. Les commandes flottantes font défiler les accords ou toute autre application Android.</string>
+    <string name="auto_scroll_overlay_permission">Afficher sur les autres applications</string>
+    <string name="auto_scroll_accessibility_permission">Gestes d’accessibilité</string>
+    <string name="auto_scroll_allow_overlay">Autoriser</string>
+    <string name="auto_scroll_enable_accessibility">Activer</string>
+    <string name="auto_scroll_permission_ready">Prêt</string>
+    <string name="auto_scroll_permission_required">Requis</string>
+    <string name="auto_scroll_speed">Vitesse de défilement</string>
+    <string name="auto_scroll_show_controls">Afficher les commandes flottantes</string>
+    <string name="auto_scroll_privacy_note">TuneItAll effectue uniquement des gestes de balayage. Le contenu de l’écran n’est ni lu, ni stocké, ni envoyé.</string>
 </resources>

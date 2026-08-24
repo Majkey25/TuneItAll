@@ -243,4 +243,16 @@
     <string name="auto_scroll_overlay_missing">Erlaube TuneItAll zuerst die Anzeige über anderen Apps.</string>
     <string name="auto_scroll_accessibility_missing">Aktiviere TuneItAll Auto-Scroll zuerst in den Bedienungshilfen.</string>
     <string name="auto_scroll_start_failed">Auto-Scroll konnte nicht gestartet werden.</string>
+    <string name="auto_scroll_title">Auto-Scroll</string>
+    <string name="auto_scroll_action">Scrollen</string>
+    <string name="auto_scroll_description">Behalte beide Hände am Instrument. Schwebende Bedienelemente scrollen Akkorde oder jede andere Android-App.</string>
+    <string name="auto_scroll_overlay_permission">Über anderen Apps anzeigen</string>
+    <string name="auto_scroll_accessibility_permission">Bedienungshilfe-Gesten</string>
+    <string name="auto_scroll_allow_overlay">Erlauben</string>
+    <string name="auto_scroll_enable_accessibility">Aktivieren</string>
+    <string name="auto_scroll_permission_ready">Bereit</string>
+    <string name="auto_scroll_permission_required">Erforderlich</string>
+    <string name="auto_scroll_speed">Scroll-Geschwindigkeit</string>
+    <string name="auto_scroll_show_controls">Schwebende Steuerung anzeigen</string>
+    <string name="auto_scroll_privacy_note">TuneItAll führt nur Wischgesten aus. Bildschirminhalte werden weder gelesen, gespeichert noch gesendet.</string>
 </resources>
