@@ -106,6 +106,23 @@ class YinPitchDetectorTest {
     }
 
     @Test
+    fun `analysis retains a near silent low electric guitar tone`() {
+        val expected = 82.41
+        val samples = signal(
+            frequency = expected,
+            sampleCount = 4096,
+            harmonics = listOf(1 to 0.00016, 2 to 0.00006, 3 to 0.00003),
+        )
+        val frame = detector.analyze(samples, SAMPLE_RATE, 70.0, 420.0)
+        val candidate = assertNotNull(
+            frame.candidates.minByOrNull { abs(MusicMath.cents(it.hertz, expected)) },
+        )
+
+        assertTrue(abs(MusicMath.cents(candidate.hertz, expected)) <= 3.0)
+        assertTrue(frame.rms < 0.0002)
+    }
+
+    @Test
     fun `invalid detector arguments are rejected`() {
         val samples = sine(110.0, 4096)
 

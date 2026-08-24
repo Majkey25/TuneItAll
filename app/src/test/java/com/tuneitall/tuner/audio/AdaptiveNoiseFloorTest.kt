@@ -10,7 +10,13 @@ class AdaptiveNoiseFloorTest {
     fun `quiet voiced frame remains above the initial adaptive threshold`() {
         val floor = AdaptiveNoiseFloor()
 
-        assertTrue(floor.accepts(rms = 0.0002, absoluteFloor = 0.00005, noiseRejection = 30))
+        assertTrue(
+            floor.accepts(
+                rms = 0.0002,
+                sensitivity = DetectionSensitivity(100),
+                noiseRejection = 30,
+            ),
+        )
     }
 
     @Test
@@ -31,7 +37,27 @@ class AdaptiveNoiseFloorTest {
 
         assertTrue(raised > 0.00005)
         assertTrue(floor.value < raised)
-        assertFalse(floor.accepts(rms = 0.004, absoluteFloor = 0.00005, noiseRejection = 30))
+        assertFalse(
+            floor.accepts(
+                rms = 0.004,
+                sensitivity = DetectionSensitivity(0),
+                noiseRejection = 30,
+            ),
+        )
+    }
+
+    @Test
+    fun `maximum sensitivity accepts a quiet guitar just above amplifier hiss`() {
+        val floor = AdaptiveNoiseFloor()
+        repeat(200) { floor.observe(rms = 0.001, voiced = false) }
+
+        assertTrue(
+            floor.accepts(
+                rms = 0.0008,
+                sensitivity = DetectionSensitivity(100),
+                noiseRejection = 30,
+            ),
+        )
     }
 
     @Test

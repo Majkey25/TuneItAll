@@ -17,8 +17,9 @@ class DetectionSensitivityTest {
         val sensitivity = DetectionSensitivity.DEFAULT
 
         assertEquals(100, sensitivity.value)
-        assertTrue(sensitivity.minimumRms <= 0.0002)
+        assertTrue(sensitivity.minimumRms <= 0.00008)
         assertTrue(sensitivity.minimumConfidence >= 0.70)
+        assertTrue(sensitivity.adaptiveNoiseScale <= 0.10)
     }
 
     @Test
@@ -31,6 +32,8 @@ class DetectionSensitivityTest {
         assertTrue(normal.minimumRms > high.minimumRms)
         assertTrue(low.minimumConfidence > normal.minimumConfidence)
         assertTrue(normal.minimumConfidence > high.minimumConfidence)
+        assertTrue(low.adaptiveNoiseScale > normal.adaptiveNoiseScale)
+        assertTrue(normal.adaptiveNoiseScale > high.adaptiveNoiseScale)
         assertTrue(high.minimumRms > 0.0)
         assertTrue(high.minimumConfidence in 0.0..1.0)
     }

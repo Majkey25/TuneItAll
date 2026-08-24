@@ -380,7 +380,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                     val tracked = if (
                         noiseFloor.accepts(
                             frame.rms,
-                            settings.sensitivity.minimumRms,
+                            settings.sensitivity,
                             settings.noiseRejection,
                         )
                     ) {
