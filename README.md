@@ -64,6 +64,9 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
   exact CC0-based animated metronome, and a quick rhythm panel.
 - An optional ScanIt-style Buy Me a Coffee button in App details. It opens an
   external browser and does not unlock features or change support priority.
+- Optional hands-free Auto-scroll with compact floating Start/Stop and speed
+  controls. It works in Chords and other Android apps through a gesture-only
+  Accessibility service, with no Shizuku and no screen-content access.
 
 ## Screenshots
 
@@ -94,11 +97,17 @@ One native Kotlin application module:
 - Notification-sonification confirmation audio with a bounded microphone input gate.
 - Jetpack Compose UI with one immutable tuner state.
 - Bounded `SharedPreferences` storage and one validated JSON custom-tuning array.
+- A user-started `specialUse` foreground overlay and gesture-only
+  Accessibility service for Auto-scroll. Accessibility window-content
+  retrieval is explicitly disabled.
 
-The manifest requests only `android.permission.RECORD_AUDIO`. Microphone samples
-are processed transiently in memory on-device and are never recorded, retained,
-shared, or transmitted. Song files are opened through Android's system document
-picker, which grants access only to the file selected by the user.
+The manifest requests `RECORD_AUDIO` plus the Android overlay and foreground
+service permissions required by optional Auto-scroll. It requests no `INTERNET`
+or `AD_ID` permission. Microphone samples are processed transiently in memory
+on-device and are never recorded, retained, shared, or transmitted. Song files
+are opened through Android's system document picker, which grants access only
+to the file selected by the user. Auto-scroll performs swipe gestures only and
+does not read, store, or transmit screen content.
 
 On the dedicated API 35 acceptance emulator, 500 pre-generated tuner frames had
 an 8.67 ms p95 processing time against the 42.7 ms hop budget, with no backlog.

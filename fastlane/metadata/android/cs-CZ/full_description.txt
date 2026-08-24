@@ -19,9 +19,12 @@ Funkce:
 • Učení akordů, kvíz akordů a rozpoznávání 12 tónů sluchem s místním skóre
 • Jednoduché světlé a tmavé rozhraní
 • Rozhraní podle systému, anglicky, česky, německy, francouzsky a španělsky
+• Volitelné automatické posouvání akordů i jiných aplikací s plovoucím ovládáním Start, Stop a rychlosti
 
 TuneItAll neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává, neuchovává, nesdílí ani neodesílá.
 
 Vybranou písničku dekóduje pouze v zařízení a nikdy ji nekopíruje ani neodesílá.
+
+Automatické posouvání používá Usnadnění Androidu pouze k provedení gest přejetí vyžádaných uživatelem. Nemůže načítat obsah obrazovky a nic z obrazovky nečte, neukládá, nenahrává ani neodesílá. Shizuku není potřeba.
 
 Volitelná podpora v podrobnostech o aplikaci otevře Buy Me a Coffee v externím prohlížeči. Neodemkne žádnou funkci.
