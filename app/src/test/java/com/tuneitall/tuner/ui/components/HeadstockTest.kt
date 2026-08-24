@@ -20,10 +20,10 @@ class HeadstockTest {
     }
 
     @Test
-    fun `inline six puts string controls opposite the tuning machines`() {
+    fun `inline six puts string controls on the left`() {
         assertEquals(244.dp, InlineSixGeometry.imageSize)
         assertEquals(244.dp, InlineSixGeometry.centerGap)
-        assertEquals(null to 5, HeadstockLayout.INLINE_6.stringIndicesAtRow(0))
-        assertEquals(null to 0, HeadstockLayout.INLINE_6.stringIndicesAtRow(5))
+        assertEquals(5 to null, HeadstockLayout.INLINE_6.stringIndicesAtRow(0))
+        assertEquals(0 to null, HeadstockLayout.INLINE_6.stringIndicesAtRow(5))
     }
 }

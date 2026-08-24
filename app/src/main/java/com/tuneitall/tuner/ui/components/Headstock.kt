@@ -304,7 +304,7 @@ private fun HeadstockLayout.sides(): HeadstockSides = when (this) {
     HeadstockLayout.INLINE_4 -> HeadstockSides(4, 0)
     HeadstockLayout.SPLIT_2_2 -> HeadstockSides(2, 2)
     HeadstockLayout.SPLIT_3_3 -> HeadstockSides(3, 3)
-    HeadstockLayout.INLINE_6 -> HeadstockSides(0, 6)
+    HeadstockLayout.INLINE_6 -> HeadstockSides(6, 0)
     HeadstockLayout.INLINE_7 -> HeadstockSides(7, 0)
     HeadstockLayout.SPLIT_4_3 -> HeadstockSides(4, 3)
     HeadstockLayout.INLINE_8 -> HeadstockSides(8, 0)
