@@ -10,7 +10,7 @@ App — Music & Audio
 
 ## Short description
 
-Offline tuner, metronome, chords, trainer and auto-scroll. No ads.
+Offline tuner, metronome, chords, trainer and automatic scrolling.
 
 ## Full description
 

@@ -10,7 +10,7 @@ Aplikace — Hudba a zvuk
 
 ## Krátký popis
 
-Offline ladička, metronom, akordy, trénink a posouvání. Bez reklam.
+Offline ladička, metronom, akordy, trénink a automatické posouvání.
 
 ## Úplný popis
 
