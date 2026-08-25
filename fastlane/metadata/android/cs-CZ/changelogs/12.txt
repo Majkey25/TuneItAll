@@ -1,0 +1,1 @@
+Aplikace se nově jmenuje Intoniva. Vylepšeno snímání tiché elektrické kytary bez zesilovače pomocí zpracovaného automatického mikrofonního vstupu, skutečného maxima citlivosti a stabilního profilu Elektrická bez zesilovače. Auto-scroll nahradil Knihovnu ve spodní liště a Skrýt už aplikaci neshodí. Aktualizována ikona a screenshoty.

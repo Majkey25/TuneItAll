@@ -40,7 +40,7 @@ import com.tuneitall.tuner.autoscroll.AutoScrollSpeed
 import kotlin.math.roundToInt
 
 @Composable
-fun AutoScrollRoute(onBack: () -> Unit) {
+fun AutoScrollRoute() {
     val context = LocalContext.current
     val preferences = remember(context) { AutoScrollPreferences(context) }
     var overlayAllowed by remember { mutableStateOf(AutoScrollPermissionState.canDrawOverlays(context)) }
@@ -84,7 +84,6 @@ fun AutoScrollRoute(onBack: () -> Unit) {
                 Toast.makeText(context, R.string.auto_scroll_start_failed, Toast.LENGTH_LONG).show()
             }
         },
-        onBack = onBack,
     )
 }
 
@@ -97,7 +96,6 @@ fun AutoScrollScreen(
     onOpenOverlaySettings: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
     onShowControls: () -> Unit,
-    onBack: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -107,7 +105,11 @@ fun AutoScrollScreen(
             .testTag("auto_scroll_screen"),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        SecondaryHeader(stringResource(R.string.auto_scroll_title), onBack)
+        Text(
+            stringResource(R.string.auto_scroll_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+        )
         Text(stringResource(R.string.auto_scroll_description), style = MaterialTheme.typography.bodyLarge)
         PermissionRow(
             title = stringResource(R.string.auto_scroll_overlay_permission),

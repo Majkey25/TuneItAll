@@ -26,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -64,7 +63,6 @@ fun ChordsScreen(
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
     onClearSong: () -> Unit,
-    onOpenAutoScroll: () -> Unit,
 ) {
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(onLoadSong)
@@ -79,23 +77,11 @@ fun ChordsScreen(
             .testTag("chords_screen"),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                stringResource(R.string.destination_chords),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-            )
-            TextButton(
-                onClick = onOpenAutoScroll,
-                modifier = Modifier.heightIn(min = 48.dp).testTag("open_auto_scroll"),
-            ) {
-                Text(stringResource(R.string.auto_scroll_action))
-            }
-        }
+        Text(
+            stringResource(R.string.destination_chords),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+        )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ChordTab.entries.forEach { tab ->
                 FilterChip(

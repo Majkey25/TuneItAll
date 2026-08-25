@@ -1,16 +1,20 @@
-# TuneItAll — český popis pro Google Play
+# Intoniva — český popis pro Google Play
 
 ## Název aplikace
 
-TuneItAll
+Intoniva: Tuner & Tools
+
+## Kategorie Google Play
+
+Aplikace — Hudba a zvuk
 
 ## Krátký popis
 
-Rychlá offline ladička pro kytaru, baskytaru a ukulele. Bez reklam.
+Offline ladička, metronom, akordy, trénink a posouvání. Bez reklam.
 
 ## Úplný popis
 
-TuneItAll se otevře rovnou do přesné ladičky bez zbytečného rušení.
+Intoniva se otevře rovnou do přesné ladičky bez zbytečného rušení.
 
 Kytaru, baskytaru nebo ukulele naladíš automaticky, vybereš konkrétní strunu
 ručně, nebo použiješ chromatickou ladičku pro libovolný tónový nástroj. Přehledná
@@ -27,14 +31,15 @@ Funkce:
 - Zápis tónů pomocí křížků nebo béček
 - Plynulý referenční tón po klepnutí na strunu
 - Zvukové potvrzení stabilního naladění
-- Nastavitelná citlivost mikrofonu s bezpečným výchozím nastavením
+- Univerzální profil a profil Elektrická bez zesilovače s oddělenou citlivostí mikrofonu a stabilitou ukazatele
 - Mechanický metronom s taktem, dělením, akcentem, zvukem a odpočtem
 - Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
 - Experimentální offline časová osa akordů z vybraného zvukového souboru
 - Učení akordů, kvíz akordů a rozpoznávání jednotlivých tónů sluchem
+- Automatické posouvání s plovoucím Start, Stop, Skrýt a nastavením rychlosti
 - Rozhraní podle systému, anglicky, česky, německy, francouzsky a španělsky
 
-TuneItAll neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup
+Intoniva neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup
 k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává,
 neuchovává, nesdílí ani neodesílá.
 

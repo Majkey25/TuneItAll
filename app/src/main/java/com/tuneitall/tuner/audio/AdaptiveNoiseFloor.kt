@@ -15,7 +15,9 @@ class AdaptiveNoiseFloor {
     fun accepts(rms: Double, sensitivity: DetectionSensitivity, noiseRejection: Int): Boolean {
         require(rms.isFinite() && rms >= 0.0) { "RMS must be finite and non-negative" }
         require(noiseRejection in 0..100) { "Noise rejection must be between 0 and 100" }
-        val adaptiveFloor = value * (1.0 + noiseRejection * NOISE_RATIO_STEP * sensitivity.adaptiveNoiseScale)
+        val learnedFloor = value * (1.0 + noiseRejection * NOISE_RATIO_STEP)
+        val adaptiveFloor = sensitivity.minimumRms +
+            (learnedFloor - sensitivity.minimumRms).coerceAtLeast(0.0) * sensitivity.adaptiveNoiseScale
         return rms >= maxOf(sensitivity.minimumRms, adaptiveFloor)
     }
 

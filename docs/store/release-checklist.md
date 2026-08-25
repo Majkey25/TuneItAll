@@ -1,8 +1,8 @@
-# TuneItAll release checklist
+# Intoniva release checklist
 
 ## Product and legal
 
-- [ ] Complete trademark/store-name clearance for `TuneItAll` in target markets.
+- [ ] Complete formal trademark clearance for `Intoniva` in target markets.
 - [ ] Replace placeholder publisher contact details and host the privacy policy
       at a stable public HTTPS URL.
 - [ ] Confirm proprietary copyright owner wording.
@@ -10,6 +10,7 @@
 
 ## Android and Play
 
+- [ ] Set the Play Console type to `App` and category to `Music & Audio`.
 - [ ] Increment `versionCode` and confirm `versionName`.
 - [ ] Build with JDK 17 and run unit tests, Lint, debug assembly, and device tests.
 - [ ] Verify the merged release manifest has no `INTERNET` permission.

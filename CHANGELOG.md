@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0-alpha.9 — 2026-08-24
+
+- Rename the user-facing product to Intoniva while retaining the stable
+  `com.tuneitall.tuner` application ID and repository history.
+- Make Auto microphone input use Android's processed `MIC` path instead of
+  choosing low-level unprocessed capture on supported devices.
+- Let maximum sensitivity use the safe absolute floor instead of remaining
+  blocked by a learned room-noise floor.
+- Add a stable Unplugged electric profile and make Universal the clearer,
+  high-sensitivity default with independent needle smoothing.
+- Replace the duplicate Library bottom destination with Auto-scroll while
+  keeping tunings available from the more prominent current-tuning control.
+- Fix the Auto-scroll Hide crash by collapsing the actual overlay panel rather
+  than passing the clicked button to `WindowManager.removeView`.
+- Refresh the adaptive icon, feature graphic, website, Play copy, and all eight
+  professional store screenshots for Intoniva and the expanded music toolkit.
+
 ## 0.3.0-alpha.8 — 2026-08-24
 
 - Add classic ScrollIt-style hands-free scrolling through a user-enabled,

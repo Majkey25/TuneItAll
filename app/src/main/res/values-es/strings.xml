@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">TuneItAll</string>
+    <string name="app_name">Intoniva</string>
     <string name="microphone_explanation">Se necesita acceso al micrófono para escuchar tu instrumento. El audio permanece en este dispositivo.</string>
     <string name="open_settings">Abrir ajustes de la aplicación</string>
     <string name="mode_auto">Auto</string>
@@ -45,11 +45,12 @@
     <string name="destination_tuner">Afinador</string>
     <string name="destination_metronome">Metrónomo</string>
     <string name="destination_chords">Acordes</string>
-    <string name="destination_library">Biblioteca</string>
+    <string name="destination_auto_scroll">Desplazar</string>
     <string name="destination_trainer">Entrenador</string>
     <string name="chords_library">Biblioteca de acordes</string>
     <string name="song_chords">Acordes de canción</string>
     <string name="choose_tuning">Elegir afinación</string>
+    <string name="choose_tuning_current">Elegir afinación. Actual: %1$s</string>
     <string name="chord_major">Mayor</string>
     <string name="chord_minor">Menor</string>
     <string name="chord_dominant_seventh">Séptima dominante</string>
@@ -170,7 +171,8 @@
     <string name="apply">Aplicar</string>
     <string name="tuner_audio">Audio del afinador</string>
     <string name="tuner_profiles_help">Elige un perfil seguro o ajusta los controles siguientes.</string>
-    <string name="profile_balanced">Equilibrado</string>
+    <string name="profile_balanced">Universal</string>
+    <string name="profile_unplugged_electric">Guitarra eléctrica sin amplificar</string>
     <string name="profile_quiet_room">Habitación silenciosa</string>
     <string name="profile_noisy_room">Habitación ruidosa</string>
     <string name="profile_fast_response">Respuesta rápida</string>
@@ -181,6 +183,7 @@
     <string name="response">Respuesta</string>
     <string name="response_help">Controla la rapidez con la que el afinador acepta una nota nueva.</string>
     <string name="response_fast">Rápida</string>
+    <string name="response_balanced">Equilibrada</string>
     <string name="response_stable">Estable</string>
     <string name="needle_stability">Estabilidad de la aguja</string>
     <string name="needle_stability_help">Los valores altos reducen el movimiento visual del tono.</string>
@@ -206,7 +209,7 @@
     <string name="reading_hold_help">Define cuánto tiempo permanece visible la última lectura fiable.</string>
     <string name="reading_hold_value">Retención de lectura: %1$d ms</string>
     <string name="audio_input">Entrada de audio</string>
-    <string name="audio_input_help">Auto prefiere la entrada sin procesar. Compatible evita una captura sin procesar no admitida.</string>
+    <string name="audio_input_help">Auto usa el micrófono procesado del teléfono para instrumentos suaves. RAW evita el procesamiento. Compatible es el modo alternativo.</string>
     <string name="audio_input_auto">Auto</string>
     <string name="audio_input_raw">Sin procesar</string>
     <string name="audio_input_compatible">Compatible</string>
@@ -216,23 +219,23 @@
     <string name="reset_audio_settings">Restablecer ajustes de audio</string>
     <string name="note_notation">Notación de notas</string>
     <string name="headstock_layout">Clavijero</string>
-    <string name="app_details">Detalles de la aplicación</string>
+    <string name="app_details">Acerca de Intoniva</string>
     <string name="version_value">Versión %1$s</string>
-    <string name="copyright_notice">Copyright © 2026 TuneItAll. Todos los derechos reservados.</string>
+    <string name="copyright_notice">Copyright © 2026 Intoniva. Todos los derechos reservados.</string>
     <string name="offline_privacy_summary">Sin conexión. Sin anuncios, cuentas, análisis, seguimiento ni acceso a la red.</string>
     <string name="microphone_about">Las muestras del micrófono se analizan temporalmente en este dispositivo. Nunca se graban, conservan, comparten ni transmiten.</string>
     <string name="headstock_icon_attribution">Iconos Gibson Les Paul y gibson explorer de Alessandro Curci, thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Política de privacidad</string>
-    <string name="privacy_policy_full">TuneItAll usa el micrófono solo mientras el afinador está activo. Las muestras de audio se procesan en la memoria del dispositivo y se descartan de inmediato. La aplicación no recopila ni comparte datos personales y no solicita acceso a Internet.</string>
+    <string name="privacy_policy_full">Intoniva usa el micrófono solo mientras el afinador está activo. Las muestras de audio se procesan en la memoria del dispositivo y se descartan de inmediato. La aplicación no recopila ni comparte datos personales y no solicita acceso a Internet.</string>
     <string name="license">Licencia propietaria</string>
-    <string name="license_summary">TuneItAll es software propietario. La copia, modificación, redistribución, sublicencia o uso comercial requieren autorización previa por escrito. Los componentes de terceros conservan sus propias licencias.</string>
+    <string name="license_summary">Intoniva es software propietario. La copia, modificación, redistribución, sublicencia o uso comercial requieren autorización previa por escrito. Los componentes de terceros conservan sus propias licencias.</string>
     <string name="support_app">Apoya esta aplicación → Buy Me a Coffee</string>
     <string name="support_app_notice">Gracias por apoyar esta aplicación. Se abrirá Buy Me a Coffee.</string>
     <string name="support_unavailable">No hay ningún navegador web disponible.</string>
-    <string name="auto_scroll_accessibility_label">Desplazamiento automático de TuneItAll</string>
-    <string name="auto_scroll_accessibility_description">Permite iniciar y detener el desplazamiento sin manos con controles flotantes. TuneItAll no lee ni guarda el contenido de la pantalla.</string>
+    <string name="auto_scroll_accessibility_label">Desplazamiento automático de Intoniva</string>
+    <string name="auto_scroll_accessibility_description">Permite iniciar y detener el desplazamiento sin manos con controles flotantes. Intoniva no lee ni guarda el contenido de la pantalla.</string>
     <string name="auto_scroll_notification_channel">Desplazamiento automático</string>
-    <string name="auto_scroll_notification_title">Desplazamiento automático de TuneItAll</string>
+    <string name="auto_scroll_notification_title">Desplazamiento automático de Intoniva</string>
     <string name="auto_scroll_notification_text">Los controles flotantes de desplazamiento están activos</string>
     <string name="auto_scroll_move_controls">Mover los controles de desplazamiento</string>
     <string name="auto_scroll_overlay_title">DESPLAZAMIENTO AUTO · ARRASTRA PARA MOVER</string>
@@ -245,11 +248,10 @@
     <string name="auto_scroll_decrease_speed">Reducir la velocidad de desplazamiento</string>
     <string name="auto_scroll_increase_speed">Aumentar la velocidad de desplazamiento</string>
     <string name="auto_scroll_open_controls">Abrir los controles de desplazamiento</string>
-    <string name="auto_scroll_overlay_missing">Primero permite que TuneItAll se muestre sobre otras aplicaciones.</string>
-    <string name="auto_scroll_accessibility_missing">Primero activa el desplazamiento automático de TuneItAll en Accesibilidad.</string>
+    <string name="auto_scroll_overlay_missing">Primero permite que Intoniva se muestre sobre otras aplicaciones.</string>
+    <string name="auto_scroll_accessibility_missing">Primero activa el desplazamiento automático de Intoniva en Accesibilidad.</string>
     <string name="auto_scroll_start_failed">No se pudo iniciar el desplazamiento automático.</string>
     <string name="auto_scroll_title">Desplazamiento automático</string>
-    <string name="auto_scroll_action">Desplazar</string>
     <string name="auto_scroll_description">Mantén ambas manos en tu instrumento. Los controles flotantes desplazan acordes o cualquier otra aplicación Android.</string>
     <string name="auto_scroll_overlay_permission">Mostrar sobre otras aplicaciones</string>
     <string name="auto_scroll_accessibility_permission">Gestos de accesibilidad</string>
@@ -259,5 +261,5 @@
     <string name="auto_scroll_permission_required">Obligatorio</string>
     <string name="auto_scroll_speed">Velocidad de desplazamiento</string>
     <string name="auto_scroll_show_controls">Mostrar controles flotantes</string>
-    <string name="auto_scroll_privacy_note">TuneItAll solo realiza gestos de deslizamiento. No lee, guarda ni envía el contenido de la pantalla.</string>
+    <string name="auto_scroll_privacy_note">Intoniva solo realiza gestos de deslizamiento. No lee, guarda ni envía el contenido de la pantalla.</string>
 </resources>

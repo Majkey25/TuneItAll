@@ -60,7 +60,6 @@ class MusicToolsScreenTest {
                     onPlayPause = {},
                     onSeek = {},
                     onClearSong = {},
-                    onOpenAutoScroll = {},
                 )
             }
         }
@@ -71,33 +70,6 @@ class MusicToolsScreenTest {
         compose.onNodeWithTag("selected_chord_label").assertTextEquals("Am")
         compose.onNodeWithTag("chord_diagram").assertIsDisplayed()
         compose.runOnIdle { assertEquals(Chord(9, ChordQuality.MINOR), state.selectedChord) }
-    }
-
-    @Test
-    fun chordsOpensAutoScrollSetup() {
-        var opened = false
-        compose.setContent {
-            TuneItAllTheme {
-                ChordsScreen(
-                    state = ChordUiState(),
-                    tunings = listOf(tuning),
-                    notation = NoteNotation.SHARPS,
-                    catalog = catalog,
-                    onTabSelected = {},
-                    onChordSelected = {},
-                    onTuningSelected = {},
-                    onTransposeChanged = {},
-                    onLoadSong = {},
-                    onPlayPause = {},
-                    onSeek = {},
-                    onClearSong = {},
-                    onOpenAutoScroll = { opened = true },
-                )
-            }
-        }
-
-        compose.onNodeWithTag("open_auto_scroll").performClick()
-        compose.runOnIdle { assertTrue(opened) }
     }
 
     @Test
@@ -112,7 +84,6 @@ class MusicToolsScreenTest {
                     onOpenOverlaySettings = {},
                     onOpenAccessibilitySettings = {},
                     onShowControls = {},
-                    onBack = {},
                 )
             }
         }
@@ -152,7 +123,6 @@ class MusicToolsScreenTest {
                     onPlayPause = {},
                     onSeek = {},
                     onClearSong = {},
-                    onOpenAutoScroll = {},
                 )
             }
         }

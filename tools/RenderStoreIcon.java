@@ -56,6 +56,16 @@ public final class RenderStoreIcon {
             graphics.fillRect(62, 77, 3, 14);
             graphics.fillRect(71, 79, 3, 10);
             graphics.fillRect(77, 77, 3, 14);
+
+            graphics.setColor(new Color(0x63, 0xD1, 0x7A));
+            graphics.setStroke(new BasicStroke(4, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            Path2D scroll = new Path2D.Double();
+            scroll.moveTo(88, 76);
+            scroll.lineTo(88, 90);
+            scroll.moveTo(83, 85);
+            scroll.lineTo(88, 90);
+            scroll.lineTo(93, 85);
+            graphics.draw(scroll);
         } finally {
             graphics.dispose();
         }

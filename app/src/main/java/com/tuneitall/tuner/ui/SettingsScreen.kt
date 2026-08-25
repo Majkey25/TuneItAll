@@ -342,12 +342,17 @@ private fun AudioSettings(
     Text(stringResource(R.string.tuner_audio), style = MaterialTheme.typography.titleLarge)
     Text(stringResource(R.string.tuner_profiles_help), style = MaterialTheme.typography.bodyMedium)
     ProfileRow(
-        profiles = listOf(TunerProfile.BALANCED, TunerProfile.QUIET_ROOM),
+        profiles = listOf(TunerProfile.BALANCED, TunerProfile.UNPLUGGED_ELECTRIC),
         selectedProfile = selectedProfile,
         onSettingsChanged = onSettingsChanged,
     )
     ProfileRow(
-        profiles = listOf(TunerProfile.NOISY_ROOM, TunerProfile.FAST_RESPONSE),
+        profiles = listOf(TunerProfile.QUIET_ROOM, TunerProfile.NOISY_ROOM),
+        selectedProfile = selectedProfile,
+        onSettingsChanged = onSettingsChanged,
+    )
+    ProfileRow(
+        profiles = listOf(TunerProfile.FAST_RESPONSE),
         selectedProfile = selectedProfile,
         onSettingsChanged = onSettingsChanged,
         showCustom = true,
@@ -538,6 +543,7 @@ private fun profileName(profile: TunerProfile): String = stringResource(
     when (profile) {
         TunerProfile.BALANCED -> R.string.profile_balanced
         TunerProfile.QUIET_ROOM -> R.string.profile_quiet_room
+        TunerProfile.UNPLUGGED_ELECTRIC -> R.string.profile_unplugged_electric
         TunerProfile.NOISY_ROOM -> R.string.profile_noisy_room
         TunerProfile.FAST_RESPONSE -> R.string.profile_fast_response
     },
@@ -547,7 +553,7 @@ private fun profileName(profile: TunerProfile): String = stringResource(
 private fun responseName(response: ResponseMode): String = stringResource(
     when (response) {
         ResponseMode.FAST -> R.string.response_fast
-        ResponseMode.BALANCED -> R.string.profile_balanced
+        ResponseMode.BALANCED -> R.string.response_balanced
         ResponseMode.STABLE -> R.string.response_stable
     },
 )

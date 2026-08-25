@@ -1,4 +1,4 @@
-TuneItAll se otevře rovnou do přesné ladičky bez zbytečného rušení.
+Intoniva se otevře rovnou do přesné ladičky bez zbytečného rušení.
 
 Kytaru, baskytaru nebo ukulele naladíš automaticky, vybereš konkrétní strunu ručně, nebo použiješ chromatickou ladičku pro libovolný tónový nástroj. Přehledná centová stupnice ukáže, jestli je tón níž, výš, nebo přesně naladěný.
 
@@ -12,7 +12,8 @@ Funkce:
 • Zápis tónů pomocí křížků nebo béček
 • Plynulý referenční tón po klepnutí na strunu
 • Zvukové potvrzení stabilního naladění
-• Nastavitelné profily ladičky, citlivost mikrofonu, odezva, stabilita, potlačení hluku a harmonických skoků, tolerance, časování a vstup zvuku
+• Profily Univerzální, Elektrická bez zesilovače, Tichá místnost, Hlučná místnost a Rychlá odezva
+• Nezávislé nastavení citlivosti mikrofonu a stability ukazatele
 • Mechanický metronom od 20 do 400 BPM s nastavením taktu, dělení, přízvuku, zvuku, hlasitosti, ztlumení a odpočtu
 • Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
 • Experimentální offline časová osa akordů z vybraného zvukového souboru, přehrávání a transpozice
@@ -21,7 +22,7 @@ Funkce:
 • Rozhraní podle systému, anglicky, česky, německy, francouzsky a španělsky
 • Volitelné automatické posouvání akordů i jiných aplikací s plovoucím ovládáním Start, Stop a rychlosti
 
-TuneItAll neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává, neuchovává, nesdílí ani neodesílá.
+Intoniva neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává, neuchovává, nesdílí ani neodesílá.
 
 Vybranou písničku dekóduje pouze v zařízení a nikdy ji nekopíruje ani neodesílá.
 

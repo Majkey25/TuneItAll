@@ -35,7 +35,7 @@ enum class PrimaryDestination(
     TUNER(R.string.destination_tuner),
     METRONOME(R.string.destination_metronome),
     CHORDS(R.string.destination_chords),
-    LIBRARY(R.string.destination_library),
+    AUTO_SCROLL(R.string.destination_auto_scroll),
     TRAINER(R.string.destination_trainer),
 }
 
@@ -176,17 +176,17 @@ private fun DestinationIcon(destination: PrimaryDestination, key: String) {
                 drawCircle(color, radius = 1.5f * unit, center = point(15.5f, 14.2f))
             }
 
-            PrimaryDestination.LIBRARY -> {
+            PrimaryDestination.AUTO_SCROLL -> {
+                listOf(5f, 9f, 13f).forEach { y ->
+                    drawLine(color, point(5f, y), point(19f, y), stroke.width, StrokeCap.Round)
+                }
                 drawPath(
                     path {
-                        moveTo(12f * unit, 7f * unit)
-                        cubicTo(9f * unit, 4.5f * unit, 6f * unit, 4f * unit, 3f * unit, 5f * unit)
-                        lineTo(3f * unit, 19f * unit)
-                        cubicTo(6f * unit, 18f * unit, 9f * unit, 18.5f * unit, 12f * unit, 21f * unit)
-                        cubicTo(15f * unit, 18.5f * unit, 18f * unit, 18f * unit, 21f * unit, 19f * unit)
-                        lineTo(21f * unit, 5f * unit)
-                        cubicTo(18f * unit, 4f * unit, 15f * unit, 4.5f * unit, 12f * unit, 7f * unit)
-                        lineTo(12f * unit, 21f * unit)
+                        moveTo(12f * unit, 3f * unit)
+                        lineTo(12f * unit, 20f * unit)
+                        moveTo(8f * unit, 16f * unit)
+                        lineTo(12f * unit, 20f * unit)
+                        lineTo(16f * unit, 16f * unit)
                     },
                     color,
                     style = stroke,

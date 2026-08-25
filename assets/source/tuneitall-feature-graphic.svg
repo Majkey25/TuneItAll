@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
   <rect width="1024" height="500" fill="#090a09"/>
-  <text x="62" y="170" fill="#f7f7f4" font-family="Arial, sans-serif" font-size="80" font-weight="700">TuneItAll</text>
-  <text x="66" y="220" fill="#b8bcb8" font-family="Arial, sans-serif" font-size="24">Fast. Offline. In tune.</text>
+  <text x="62" y="170" fill="#f7f7f4" font-family="Arial, sans-serif" font-size="80" font-weight="700">Intoniva</text>
+  <text x="66" y="220" fill="#b8bcb8" font-family="Arial, sans-serif" font-size="24">Tune. Time. Learn.</text>
   <g fill="none" stroke="#f7f7f4" stroke-width="2">
     <rect x="66" y="286" width="116" height="42" rx="21"/>
     <rect x="196" y="286" width="164" height="42" rx="21"/>
@@ -25,6 +25,7 @@
     <circle cx="244" cy="252" r="52" fill="#090a09" stroke="#52d273" stroke-width="7"/>
     <circle cx="244" cy="252" r="12" fill="#52d273"/>
     <circle cx="244" cy="252" r="4" fill="#f7f7f4"/>
-    <text x="244" y="350" fill="#52d273" font-family="Arial, sans-serif" font-size="21" font-weight="700" text-anchor="middle">IN TUNE</text>
+    <rect x="154" y="325" width="180" height="36" fill="#090a09"/>
+    <text x="244" y="350" fill="#52d273" font-family="Arial, sans-serif" font-size="21" font-weight="700" text-anchor="middle">TUNER + TOOLS</text>
   </g>
 </svg>

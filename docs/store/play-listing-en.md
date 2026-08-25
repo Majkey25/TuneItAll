@@ -1,16 +1,20 @@
-# TuneItAll — English Play listing
+# Intoniva — English Play listing
 
 ## App name
 
-TuneItAll
+Intoniva: Tuner & Tools
+
+## Play category
+
+App — Music & Audio
 
 ## Short description
 
-Fast offline tuner for guitar, bass and ukulele. No ads or tracking.
+Offline tuner, metronome, chords, trainer and auto-scroll. No ads.
 
 ## Full description
 
-TuneItAll opens straight into accurate, distraction-free tuning.
+Intoniva opens straight into accurate, distraction-free tuning.
 
 Tune guitar, bass, or ukulele automatically, select a string manually, or use
 the chromatic tuner for any pitched instrument. The clear cents rail shows
@@ -27,19 +31,20 @@ Features:
 - Sharps or flats note naming
 - Click-free reference tone when a string is tapped
 - Stable in-tune confirmation sound
-- Adjustable microphone sensitivity with a safe tested default
+- Universal and unplugged-electric profiles with independent microphone sensitivity and needle stability
 - Mechanical metronome with meter, subdivision, accent, sound, and count-in
 - Canonical Standard E guitar and Standard C ukulele chord diagrams
 - Experimental offline chord timeline for a user-selected local audio file
 - Chord and single-note ear training with local scoring
 - Chord learning and quiz modes with generated audio and local scoring
+- Hands-free Auto-scroll with floating Start, Stop, Hide, and speed controls
 - System-default, English, Czech, German, French, and Spanish interfaces
 
-TuneItAll has no ads, account, analytics, tracking, or internet permission.
+Intoniva has no ads, account, analytics, tracking, or internet permission.
 Microphone audio is analyzed transiently on-device and never recorded, retained,
 shared, or transmitted.
 
-Selected song files are decoded only on-device. TuneItAll does not copy, retain,
+Selected song files are decoded only on-device. Intoniva does not copy, retain,
 or upload the source audio.
 
 Optional support in App details opens Buy Me a Coffee in an external browser.

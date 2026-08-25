@@ -35,7 +35,7 @@ public final class RenderStoreScreenshots {
 
     private static final Slide[] SLIDES = {
         new Slide("01-tuner.png", "1_tuner.png", "Tune with confidence",
-            "Fast, stable pitch tracking for guitar, bass and ukulele."),
+            "Universal and unplugged-electric profiles keep quiet notes stable."),
         new Slide("02-chromatic.png", "2_chromatic.png", "Every note. Every instrument.",
             "Chromatic mode and adjustable A4 reference keep any setup precise."),
         new Slide("03-tunings.png", "3_tunings.png", "Your tunings, ready",
@@ -116,7 +116,7 @@ public final class RenderStoreScreenshots {
     private static void drawCopy(Graphics2D graphics, Slide slide) {
         graphics.setFont(new Font("Segoe UI", Font.BOLD, 20));
         graphics.setColor(GREEN);
-        graphics.drawString("TUNEITALL", 142, 68);
+        graphics.drawString("INTONIVA", 142, 68);
 
         graphics.setFont(new Font("Segoe UI", Font.BOLD, 56));
         graphics.setColor(TEXT);

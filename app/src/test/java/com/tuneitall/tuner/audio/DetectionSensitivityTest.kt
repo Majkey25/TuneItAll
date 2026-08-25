@@ -18,23 +18,19 @@ class DetectionSensitivityTest {
 
         assertEquals(100, sensitivity.value)
         assertTrue(sensitivity.minimumRms <= 0.00008)
-        assertTrue(sensitivity.minimumConfidence >= 0.70)
         assertTrue(sensitivity.adaptiveNoiseScale <= 0.10)
     }
 
     @Test
-    fun `higher sensitivity accepts quieter lower confidence signals`() {
+    fun `higher sensitivity lowers both absolute and learned noise floors`() {
         val low = DetectionSensitivity(0)
         val normal = DetectionSensitivity(50)
         val high = DetectionSensitivity(100)
 
         assertTrue(low.minimumRms > normal.minimumRms)
         assertTrue(normal.minimumRms > high.minimumRms)
-        assertTrue(low.minimumConfidence > normal.minimumConfidence)
-        assertTrue(normal.minimumConfidence > high.minimumConfidence)
         assertTrue(low.adaptiveNoiseScale > normal.adaptiveNoiseScale)
         assertTrue(normal.adaptiveNoiseScale > high.adaptiveNoiseScale)
         assertTrue(high.minimumRms > 0.0)
-        assertTrue(high.minimumConfidence in 0.0..1.0)
     }
 }

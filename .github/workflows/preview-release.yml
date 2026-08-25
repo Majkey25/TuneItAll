@@ -59,7 +59,7 @@ jobs:
 
       - name: Prepare release assets
         run: |
-          asset="TuneItAll-${GITHUB_REF_NAME}-debug.apk"
+          asset="Intoniva-${GITHUB_REF_NAME}-debug.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$asset"
           sha256sum "$asset" > "$asset.sha256"
 
@@ -67,13 +67,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          asset="TuneItAll-${GITHUB_REF_NAME}-debug.apk"
+          asset="Intoniva-${GITHUB_REF_NAME}-debug.apk"
           gh release create "$GITHUB_REF_NAME" \
-            "$asset#TuneItAll $GITHUB_REF_NAME testing APK" \
+            "$asset#Intoniva $GITHUB_REF_NAME testing APK" \
             "$asset.sha256#SHA-256 checksum" \
             --prerelease \
             --verify-tag \
-            --title "TuneItAll $GITHUB_REF_NAME" \
+            --title "Intoniva $GITHUB_REF_NAME" \
             --notes-file .github/release-notes/preview.md
 
       - name: Remove preview signing key

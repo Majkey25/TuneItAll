@@ -1,13 +1,13 @@
-# Zásady ochrany soukromí TuneItAll
+# Zásady ochrany soukromí Intoniva
 
 Platnost od: 24. srpna 2026
 
-TuneItAll je offline ladička hudebních nástrojů. Neshromažďuje, neuchovává,
+Intoniva je offline ladička hudebních nástrojů. Neshromažďuje, neuchovává,
 neprodává, nesdílí ani neodesílá osobní údaje.
 
 ## Mikrofon
 
-TuneItAll žádá o oprávnění k mikrofonu, aby rozpoznala výšku tónu nástroje.
+Intoniva žádá o oprávnění k mikrofonu, aby rozpoznala výšku tónu nástroje.
 Zvukové vzorky se dočasně zpracují v paměti zařízení pouze během aktivního
 ladění. Nenahrávají se, nezapisují do úložiště, neuchovávají, neodesílají ani
 nesdílejí. Snímání se zastaví, když aktivní ladička opustí popředí.
@@ -17,7 +17,7 @@ nesdílejí. Snímání se zastaví, když aktivní ladička opustí popředí.
 Aplikace nežádá o oprávnění Androidu k internetu. Neobsahuje účet, reklamu,
 analytiku, sledování, vzdálené hlášení pádů ani cloudovou službu. Volitelné
 tlačítko podpory požádá Android o otevření Buy Me a Coffee v externím
-prohlížeči. TuneItAll s požadavkem neposílá údaje uživatele a neodemkne žádnou
+prohlížeči. Intoniva s požadavkem neposílá údaje uživatele a neodemkne žádnou
 funkci. Prohlížeč a cílový web používají vlastní podmínky ochrany soukromí.
 
 ## Uložené předvolby
@@ -28,7 +28,7 @@ jen lokálně. Vymazání dat aplikace nebo odinstalace tyto předvolby odstran�
 
 ## Děti a změny
 
-TuneItAll vědomě neshromažďuje údaje od nikoho, včetně dětí. Tyto zásady je
+Intoniva vědomě neshromažďuje údaje od nikoho, včetně dětí. Tyto zásady je
 nutné aktualizovat před vydáním, které změní práci s daty nebo přidá knihovnu
 schopnou síťové komunikace.
 

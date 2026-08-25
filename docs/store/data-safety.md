@@ -12,12 +12,12 @@ dependency set:
 Microphone samples remain on-device, are processed transiently in memory, and
 are discarded immediately. Local preferences and custom tunings do not leave
 the device. A song selected through Android's system document picker is decoded
-transiently on-device; TuneItAll stores only in-memory chord events and does not
+transiently on-device; Intoniva stores only in-memory chord events and does not
 copy, upload, or retain the source audio.
 
 The optional Accessibility service performs only user-requested swipe gestures.
 Its metadata explicitly disables window-content retrieval. Floating controls
-use Android's overlay and foreground-service APIs. TuneItAll does not read,
+use Android's overlay and foreground-service APIs. Intoniva does not read,
 store, record, or transmit screen content.
 
 Evidence gates before submission:

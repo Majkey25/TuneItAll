@@ -52,10 +52,10 @@ sealed interface AppScreen {
 
 internal fun parentScreen(screen: AppScreen): AppScreen? = when (screen) {
     AppScreen.Tuner -> null
-    AppScreen.Metronome, AppScreen.Chords, AppScreen.Library, AppScreen.Trainer, AppScreen.Settings -> AppScreen.Tuner
+    AppScreen.Metronome, AppScreen.Chords, AppScreen.Library, AppScreen.Trainer,
+    AppScreen.Settings, AppScreen.AutoScroll -> AppScreen.Tuner
     AppScreen.CustomTuning -> AppScreen.Library
     AppScreen.About -> AppScreen.Settings
-    AppScreen.AutoScroll -> AppScreen.Chords
 }
 
 @Composable
@@ -95,9 +95,9 @@ fun TuneItAllApp(
         AppScreen.Tuner -> PrimaryDestination.TUNER
         AppScreen.Metronome -> PrimaryDestination.METRONOME
         AppScreen.Chords -> PrimaryDestination.CHORDS
-        AppScreen.Library -> PrimaryDestination.LIBRARY
+        AppScreen.AutoScroll -> PrimaryDestination.AUTO_SCROLL
         AppScreen.Trainer -> PrimaryDestination.TRAINER
-        AppScreen.CustomTuning, AppScreen.Settings, AppScreen.About, AppScreen.AutoScroll -> null
+        AppScreen.Library, AppScreen.CustomTuning, AppScreen.Settings, AppScreen.About -> null
     }
 
     Scaffold(
@@ -111,7 +111,7 @@ fun TuneItAllApp(
                             PrimaryDestination.TUNER -> AppScreen.Tuner
                             PrimaryDestination.METRONOME -> AppScreen.Metronome
                             PrimaryDestination.CHORDS -> AppScreen.Chords
-                            PrimaryDestination.LIBRARY -> AppScreen.Library
+                            PrimaryDestination.AUTO_SCROLL -> AppScreen.AutoScroll
                             PrimaryDestination.TRAINER -> AppScreen.Trainer
                         }
                     },
@@ -177,7 +177,6 @@ fun TuneItAllApp(
                         onPlayPause = activeViewModel::playPause,
                         onSeek = activeViewModel::seekTo,
                         onClearSong = activeViewModel::clearSong,
-                        onOpenAutoScroll = { screen = AppScreen.AutoScroll },
                     )
                 }
 
@@ -244,7 +243,7 @@ fun TuneItAllApp(
                     onSupport = openSupportPage,
                 )
 
-                AppScreen.AutoScroll -> AutoScrollRoute(onBack = { screen = AppScreen.Chords })
+                AppScreen.AutoScroll -> AutoScrollRoute()
             }
         }
     }

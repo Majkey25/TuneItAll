@@ -61,6 +61,27 @@ class AdaptiveNoiseFloorTest {
     }
 
     @Test
+    fun `maximum sensitivity does not let a learned room floor hide a periodic guitar`() {
+        val floor = AdaptiveNoiseFloor()
+        repeat(2_000) { floor.observe(rms = 0.002, voiced = false) }
+
+        assertTrue(
+            floor.accepts(
+                rms = 0.0001,
+                sensitivity = DetectionSensitivity(100),
+                noiseRejection = 100,
+            ),
+        )
+        assertFalse(
+            floor.accepts(
+                rms = 0.0001,
+                sensitivity = DetectionSensitivity(50),
+                noiseRejection = 100,
+            ),
+        )
+    }
+
+    @Test
     fun `reset restores the initial noise floor`() {
         val floor = AdaptiveNoiseFloor()
         repeat(100) { floor.observe(rms = 0.01, voiced = false) }

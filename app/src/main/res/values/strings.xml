@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">TuneItAll</string>
+    <string name="app_name">Intoniva</string>
     <string name="microphone_explanation">Microphone access is required to hear your instrument. Audio stays on this device.</string>
     <string name="open_settings">Open app settings</string>
     <string name="mode_auto">Auto</string>
@@ -43,11 +43,12 @@
     <string name="destination_tuner">Tuner</string>
     <string name="destination_metronome">Metronome</string>
     <string name="destination_chords">Chords</string>
-    <string name="destination_library">Library</string>
+    <string name="destination_auto_scroll">Auto-scroll</string>
     <string name="destination_trainer">Trainer</string>
     <string name="chords_library">Chord library</string>
     <string name="song_chords">Song chords</string>
     <string name="choose_tuning">Choose tuning</string>
+    <string name="choose_tuning_current">Choose tuning. Current: %1$s</string>
     <string name="chord_major">Major</string>
     <string name="chord_minor">Minor</string>
     <string name="chord_dominant_seventh">Dominant 7</string>
@@ -166,7 +167,8 @@
     <string name="apply">Apply</string>
     <string name="tuner_audio">Tuner audio</string>
     <string name="tuner_profiles_help">Choose a safe profile or adjust the controls below.</string>
-    <string name="profile_balanced">Balanced</string>
+    <string name="profile_balanced">Universal</string>
+    <string name="profile_unplugged_electric">Unplugged electric</string>
     <string name="profile_quiet_room">Quiet room</string>
     <string name="profile_noisy_room">Noisy room</string>
     <string name="profile_fast_response">Fast response</string>
@@ -177,6 +179,7 @@
     <string name="response">Response</string>
     <string name="response_help">Controls how quickly the tuner accepts a new note.</string>
     <string name="response_fast">Fast</string>
+    <string name="response_balanced">Balanced</string>
     <string name="response_stable">Stable</string>
     <string name="needle_stability">Needle stability</string>
     <string name="needle_stability_help">Higher values reduce visual pitch movement.</string>
@@ -201,7 +204,7 @@
     <string name="reading_hold_help">Sets how long the last reliable reading stays visible.</string>
     <string name="reading_hold_value">Reading hold: %1$d ms</string>
     <string name="audio_input">Audio input</string>
-    <string name="audio_input_help">Auto prefers raw input. Compatible avoids unsupported raw capture.</string>
+    <string name="audio_input_help">Auto uses the phone’s processed microphone path for quiet instruments. Raw bypasses processing. Compatible is the fallback.</string>
     <string name="audio_input_auto">Auto</string>
     <string name="audio_input_raw">Raw</string>
     <string name="audio_input_compatible">Compatible</string>
@@ -211,23 +214,23 @@
     <string name="reset_audio_settings">Reset audio settings</string>
     <string name="note_notation">Note notation</string>
     <string name="headstock_layout">Headstock</string>
-    <string name="app_details">App details</string>
+    <string name="app_details">About Intoniva</string>
     <string name="version_value">Version %1$s</string>
-    <string name="copyright_notice">Copyright © 2026 TuneItAll. All rights reserved.</string>
+    <string name="copyright_notice">Copyright © 2026 Intoniva. All rights reserved.</string>
     <string name="offline_privacy_summary">Offline. No ads, accounts, analytics, tracking, or network access.</string>
     <string name="microphone_about">Microphone samples are analyzed transiently on this device. They are never recorded, retained, shared, or transmitted.</string>
     <string name="headstock_icon_attribution">Gibson Les Paul and gibson explorer icons by Alessandro Curci, from thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Privacy policy</string>
-    <string name="privacy_policy_full">TuneItAll uses microphone access only while its tuner is active. Audio samples are processed in memory on-device and discarded immediately. The app collects and shares no personal data and does not request internet access.</string>
+    <string name="privacy_policy_full">Intoniva uses microphone access only while its tuner is active. Audio samples are processed in memory on-device and discarded immediately. The app collects and shares no personal data and does not request internet access.</string>
     <string name="license">Proprietary licence</string>
-    <string name="license_summary">TuneItAll is proprietary software. Copying, modification, redistribution, sublicensing, or commercial use requires prior written permission. Third-party components retain their own licences.</string>
+    <string name="license_summary">Intoniva is proprietary software. Copying, modification, redistribution, sublicensing, or commercial use requires prior written permission. Third-party components retain their own licences.</string>
     <string name="support_app">Support this app → Buy Me a Coffee</string>
     <string name="support_app_notice">Thank you for supporting this app. This opens Buy Me a Coffee.</string>
     <string name="support_unavailable">No web browser is available.</string>
-    <string name="auto_scroll_accessibility_label">TuneItAll auto-scroll</string>
-    <string name="auto_scroll_accessibility_description">Lets you start and stop hands-free scrolling with floating controls. TuneItAll does not read or store screen content.</string>
+    <string name="auto_scroll_accessibility_label">Intoniva auto-scroll</string>
+    <string name="auto_scroll_accessibility_description">Lets you start and stop hands-free scrolling with floating controls. Intoniva does not read or store screen content.</string>
     <string name="auto_scroll_notification_channel">Auto-scroll</string>
-    <string name="auto_scroll_notification_title">TuneItAll auto-scroll</string>
+    <string name="auto_scroll_notification_title">Intoniva auto-scroll</string>
     <string name="auto_scroll_notification_text">Floating scrolling controls are active</string>
     <string name="auto_scroll_move_controls">Move auto-scroll controls</string>
     <string name="auto_scroll_overlay_title">AUTO-SCROLL · DRAG TO MOVE</string>
@@ -240,11 +243,10 @@
     <string name="auto_scroll_decrease_speed">Decrease scroll speed</string>
     <string name="auto_scroll_increase_speed">Increase scroll speed</string>
     <string name="auto_scroll_open_controls">Open auto-scroll controls</string>
-    <string name="auto_scroll_overlay_missing">Allow TuneItAll to display over other apps first.</string>
-    <string name="auto_scroll_accessibility_missing">Enable TuneItAll auto-scroll in Accessibility settings first.</string>
+    <string name="auto_scroll_overlay_missing">Allow Intoniva to display over other apps first.</string>
+    <string name="auto_scroll_accessibility_missing">Enable Intoniva auto-scroll in Accessibility settings first.</string>
     <string name="auto_scroll_start_failed">Auto-scroll could not start.</string>
     <string name="auto_scroll_title">Auto-scroll</string>
-    <string name="auto_scroll_action">Auto-scroll</string>
     <string name="auto_scroll_description">Keep both hands on your instrument. Floating controls can scroll chords or any other Android app.</string>
     <string name="auto_scroll_overlay_permission">Display over other apps</string>
     <string name="auto_scroll_accessibility_permission">Accessibility gestures</string>
@@ -254,5 +256,5 @@
     <string name="auto_scroll_permission_required">Required</string>
     <string name="auto_scroll_speed">Scroll speed</string>
     <string name="auto_scroll_show_controls">Show floating controls</string>
-    <string name="auto_scroll_privacy_note">TuneItAll only performs swipe gestures. It does not read, store, or send screen content.</string>
+    <string name="auto_scroll_privacy_note">Intoniva only performs swipe gestures. It does not read, store, or send screen content.</string>
 </resources>

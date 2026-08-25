@@ -1,0 +1,1 @@
+Renamed the app to Intoniva. Improved quiet unplugged electric guitar capture with a processed Auto microphone path, a true maximum-sensitivity floor, and a stable Unplugged electric profile. Auto-scroll now replaces Library in the bottom bar, and Hide no longer crashes. Refreshed the icon and store screenshots.

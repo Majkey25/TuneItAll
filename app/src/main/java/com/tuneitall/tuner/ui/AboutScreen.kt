@@ -54,7 +54,7 @@ fun AboutScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         SecondaryHeader(stringResource(R.string.app_details), onBack)
-        Text("TuneItAll", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
         Text(stringResource(R.string.version_value, BuildConfig.VERSION_NAME))
         Text(stringResource(R.string.copyright_notice))
         Text(stringResource(R.string.offline_privacy_summary), style = MaterialTheme.typography.bodyLarge)

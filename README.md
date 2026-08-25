@@ -1,6 +1,6 @@
-![TuneItAll banner](assets/tuneitall-banner.png)
+![Intoniva banner](assets/tuneitall-banner.png)
 
-# TuneItAll
+# Intoniva
 
 [![Android CI](https://github.com/Majkey25/TuneItAll/actions/workflows/android.yml/badge.svg)](https://github.com/Majkey25/TuneItAll/actions/workflows/android.yml)
 [![Release](https://img.shields.io/github/v/release/Majkey25/TuneItAll?include_prereleases&sort=semver)](https://github.com/Majkey25/TuneItAll/releases)
@@ -9,21 +9,21 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-native-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![License](https://img.shields.io/badge/license-proprietary-lightgrey)](LICENSE)
 
-TuneItAll is a fast, offline Android tuner for guitar, bass, ukulele, and
+Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing prerelease `0.3.0-alpha.8`. TuneItAll is in Google Play
+Status: public testing prerelease `0.3.0-alpha.9`. Intoniva is in Google Play
 closed-testing review and is not available in production.
 
 ## Download
 
-[![Download TuneItAll APK](https://img.shields.io/badge/Download-TuneItAll_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.8/TuneItAll-v0.3.0-alpha.8-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.9/Intoniva-v0.3.0-alpha.9-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.8).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.9).
 
 ## Features
 
@@ -72,25 +72,26 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
 
 | Precise tuner | Chromatic mode |
 | --- | --- |
-| ![TuneItAll preset tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/1_tuner.png) | ![TuneItAll chromatic tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/2_chromatic.png) |
+| ![Intoniva preset tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/1_tuner.png) | ![Intoniva chromatic tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/2_chromatic.png) |
 
 | Tuning library | Mechanical metronome |
 | --- | --- |
-| ![TuneItAll tuning library](fastlane/metadata/android/en-US/images/phoneScreenshots/3_tunings.png) | ![TuneItAll metronome](fastlane/metadata/android/en-US/images/phoneScreenshots/4_metronome.png) |
+| ![Intoniva tuning library](fastlane/metadata/android/en-US/images/phoneScreenshots/3_tunings.png) | ![Intoniva metronome](fastlane/metadata/android/en-US/images/phoneScreenshots/4_metronome.png) |
 
 | Chord library | Song chords |
 | --- | --- |
-| ![TuneItAll chord library](fastlane/metadata/android/en-US/images/phoneScreenshots/5_chords.png) | ![TuneItAll song chord timeline](fastlane/metadata/android/en-US/images/phoneScreenshots/6_song_chords.png) |
+| ![Intoniva chord library](fastlane/metadata/android/en-US/images/phoneScreenshots/5_chords.png) | ![Intoniva song chord timeline](fastlane/metadata/android/en-US/images/phoneScreenshots/6_song_chords.png) |
 
 | Ear trainer | Auto-scroll anywhere |
 | --- | --- |
-| ![TuneItAll ear trainer](fastlane/metadata/android/en-US/images/phoneScreenshots/7_trainer.png) | ![TuneItAll floating auto-scroll controls](fastlane/metadata/android/en-US/images/phoneScreenshots/8_auto_scroll.png) |
+| ![Intoniva ear trainer](fastlane/metadata/android/en-US/images/phoneScreenshots/7_trainer.png) | ![Intoniva floating auto-scroll controls](fastlane/metadata/android/en-US/images/phoneScreenshots/8_auto_scroll.png) |
 
 ## Architecture
 
 One native Kotlin application module:
 
-- `AudioRecord` mono PCM16 input with unprocessed/voice-recognition selection.
+- `AudioRecord` mono PCM16 input with processed, unprocessed, and compatible
+  voice-recognition modes.
 - A clean-room, pYIN-derived streaming path: multi-candidate YIN analysis,
   adaptive noise rejection, and a bounded online pitch tracker.
 - Equal-temperament note math, target hysteresis, and needle-only visual
@@ -98,7 +99,7 @@ One native Kotlin application module:
 - One continuous mono PCM16 `AudioTrack` for foreground-only metronome playback.
 - Native `MediaExtractor`/`MediaCodec` decoding for user-selected local audio,
   followed by bounded STFT chroma extraction, template matching, and temporal
-  smoothing. No audio file is copied, uploaded, or retained by TuneItAll.
+  smoothing. No audio file is copied, uploaded, or retained by Intoniva.
 - Harmonic-rich one-shot reference tones with click-free switching.
 - Pinned MIT `chords-db` data for canonical guitar and ukulele fingerings.
 - Theme-aware attributed headstock images and a native metronome body.
@@ -169,7 +170,7 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-Pre-release tags such as `v0.3.0-alpha.8` build a verified, debug-signed APK and
+Pre-release tags such as `v0.3.0-alpha.9` build a verified, debug-signed APK and
 publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
 signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.
@@ -193,6 +194,6 @@ and [security policy](SECURITY.md).
 
 ## Licence
 
-Copyright © 2026 TuneItAll. All rights reserved. This repository is proprietary;
+Copyright © 2026 Intoniva. All rights reserved. This repository is proprietary;
 see [LICENSE](LICENSE). Third-party components retain their own licences; see
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

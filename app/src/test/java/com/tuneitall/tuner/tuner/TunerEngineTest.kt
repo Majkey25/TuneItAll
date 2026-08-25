@@ -95,14 +95,15 @@ class TunerEngineTest {
     }
 
     @Test
-    fun `default needle stability uses the documented coefficient`() {
+    fun `eighty percent needle stability damps a thirty cent jump`() {
         val engine = TunerEngine()
         val input = 440.0 * 2.0.pow(30.0 / 1200.0)
+        val stableSettings = settings.copy(needleStability = 80)
 
-        engine.update(estimate(440.0), TunerMode.CHROMATIC, standard, 0, reference, settings)
-        val reading = engine.update(estimate(input), TunerMode.CHROMATIC, standard, 0, reference, settings)
+        engine.update(estimate(440.0), TunerMode.CHROMATIC, standard, 0, reference, stableSettings)
+        val reading = engine.update(estimate(input), TunerMode.CHROMATIC, standard, 0, reference, stableSettings)
 
-        assertEquals(440.0 * 2.0.pow(30.0 * 0.3775 / 1200.0), reading.hertz, 1e-9)
+        assertEquals(440.0 * 2.0.pow(30.0 * 0.28 / 1200.0), reading.hertz, 1e-9)
     }
 
     @Test

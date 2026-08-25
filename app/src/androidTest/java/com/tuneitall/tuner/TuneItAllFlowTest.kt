@@ -609,12 +609,14 @@ class TuneItAllFlowTest {
             }
         }
 
-        listOf("Tuner", "Metronome", "Chords", "Library", "Trainer").forEach { label ->
+        listOf("Tuner", "Metronome", "Chords", "Auto-scroll", "Trainer").forEach { label ->
             composeRule.onNodeWithContentDescription(label, substring = true).assertIsDisplayed()
         }
         composeRule.onNodeWithContentDescription("Tuner").assertIsSelected()
         composeRule.onNodeWithContentDescription("Chords").assertIsEnabled().performClick()
         composeRule.onNodeWithTag("chords_screen").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Auto-scroll").assertIsEnabled().performClick()
+        composeRule.onNodeWithTag("auto_scroll_screen").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Trainer").assertIsEnabled().performClick()
         composeRule.onNodeWithTag("trainer_screen").assertIsDisplayed()
 
@@ -642,7 +644,7 @@ class TuneItAllFlowTest {
             }
         }
 
-        listOf("tuner", "metronome", "chords", "library", "trainer").forEach { destination ->
+        listOf("tuner", "metronome", "chords", "auto_scroll", "trainer").forEach { destination ->
             val item = composeRule.onNodeWithTag("bottom_item_$destination", useUnmergedTree = true)
                 .fetchSemanticsNode().boundsInRoot
             val icon = composeRule.onNodeWithTag("bottom_icon_$destination", useUnmergedTree = true)
@@ -677,7 +679,7 @@ class TuneItAllFlowTest {
             }
         }
 
-        val destinations = listOf("tuner", "metronome", "chords", "library", "trainer")
+        val destinations = listOf("tuner", "metronome", "chords", "auto_scroll", "trainer")
         val labelBounds = destinations.map { destination ->
             val item = composeRule.onNodeWithTag("bottom_item_$destination", useUnmergedTree = true)
                 .fetchSemanticsNode().boundsInRoot
@@ -968,6 +970,28 @@ class TuneItAllFlowTest {
     }
 
     @Test
+    fun currentTuningControlClearlyOpensTheTuningLibrary() {
+        var opened = false
+        composeRule.setContent {
+            TuneItAllTheme {
+                TunerScreen(
+                    state = state(),
+                    onModeSelected = {},
+                    onStringSelected = {},
+                    onToggleFavorite = {},
+                    onOpenLibrary = { opened = true },
+                    onOpenSettings = {},
+                    onOpenApplicationSettings = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("tuning_picker").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Choose tuning").assertIsDisplayed()
+        composeRule.runOnIdle { assertTrue(opened) }
+    }
+
+    @Test
     fun corruptAudioSettingsFallBackWithoutClearingSavedTunings() {
         val tuning = standardTuning()
         UserPreferences(context).favoriteIds = setOf(tuning.id)
@@ -1077,11 +1101,12 @@ class TuneItAllFlowTest {
                 )
             }
         }
+        composeRule.waitForIdle()
 
         val input = composeRule.onNode(hasSetTextAction())
         input.performTextClearance()
         input.performTextInput("444.0")
-        composeRule.onNodeWithText("Apply").performClick()
+        composeRule.onNodeWithText("Apply").performScrollTo().assertIsEnabled().performClick()
         assertEquals(444.0, applied?.hertz ?: 0.0, 0.0)
 
         input.performTextClearance()
@@ -1091,9 +1116,9 @@ class TuneItAllFlowTest {
         input.performTextClearance()
         input.performTextInput("420.0")
         applied = null
-        composeRule.onNodeWithText("Review value").performClick()
+        composeRule.onNodeWithText("Review value").performScrollTo().performClick()
         assertTrue(applied == null)
-        composeRule.onNodeWithText("Confirm value").performClick()
+        composeRule.onNodeWithText("Confirm value").performScrollTo().performClick()
         assertEquals(420.0, applied?.hertz ?: 0.0, 0.0)
     }
 
@@ -1124,7 +1149,8 @@ class TuneItAllFlowTest {
             }
         }
 
-        composeRule.onAllNodesWithText("Balanced")[0].assertIsSelected()
+        composeRule.onAllNodesWithText("Universal")[0].assertIsSelected()
+        composeRule.onNodeWithText("Unplugged electric").assertIsDisplayed()
         composeRule.onNodeWithText("Quiet room").assertIsDisplayed()
         composeRule.onNodeWithText("Noisy room").assertIsDisplayed()
         composeRule.onNodeWithText("Fast response").assertIsDisplayed()
@@ -1133,11 +1159,11 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithText("Custom").assertIsSelected()
 
         composeRule.onNodeWithText("Advanced audio").performScrollTo().performClick()
-        composeRule.onNodeWithText("Noise rejection: 30%").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Harmonic protection: 80%").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Noise rejection: 20%").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Harmonic protection: 90%").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("In-tune tolerance: 3 cents").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Confirmation time: 250 ms").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Reading hold: 250 ms").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Reading hold: 450 ms").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Raw").assertIsNotEnabled()
         composeRule.onNodeWithText("Raw input is unavailable on this device.").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Active input: Not listening").performScrollTo().assertIsDisplayed()

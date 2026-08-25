@@ -9,12 +9,12 @@ enum class ResponseMode {
 data class TunerAudioSettings(
     val sensitivity: DetectionSensitivity = DetectionSensitivity.DEFAULT,
     val response: ResponseMode = ResponseMode.BALANCED,
-    val needleStability: Int = 65,
-    val noiseRejection: Int = 30,
-    val harmonicProtection: Int = 80,
+    val needleStability: Int = 80,
+    val noiseRejection: Int = 20,
+    val harmonicProtection: Int = 90,
     val inTuneCents: Int = 3,
     val confirmationMillis: Long = 250,
-    val readingHoldMillis: Long = 250,
+    val readingHoldMillis: Long = 450,
     val inputSource: AudioInputSource = AudioInputSource.AUTO,
 ) {
     init {
@@ -30,6 +30,15 @@ data class TunerAudioSettings(
 enum class TunerProfile(val settings: TunerAudioSettings) {
     BALANCED(TunerAudioSettings()),
     QUIET_ROOM(TunerAudioSettings(noiseRejection = 15, harmonicProtection = 75)),
+    UNPLUGGED_ELECTRIC(
+        TunerAudioSettings(
+            response = ResponseMode.STABLE,
+            needleStability = 85,
+            noiseRejection = 0,
+            harmonicProtection = 95,
+            readingHoldMillis = 600,
+        ),
+    ),
     NOISY_ROOM(TunerAudioSettings(sensitivity = DetectionSensitivity(70), noiseRejection = 70, harmonicProtection = 95)),
     FAST_RESPONSE(TunerAudioSettings(response = ResponseMode.FAST, needleStability = 35, harmonicProtection = 60)),
 }

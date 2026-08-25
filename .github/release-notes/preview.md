@@ -1,16 +1,26 @@
-TuneItAll `v0.3.0-alpha.8` prerelease testing build.
+Intoniva `v0.3.0-alpha.9` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
 this build is distributed outside Google Play.
 
 This APK is debug-signed for testing. It is not the Google Play App Bundle.
-TuneItAll remains fully offline. The tuner uses microphone permission;
+Intoniva remains fully offline. The tuner uses microphone permission;
 optional Auto-scroll uses Android overlay, foreground-service, and
 Accessibility gesture permissions. The app has no Internet or advertising ID
 permission.
 
 Highlights:
+
+- New user-facing name: Intoniva. The Android application ID remains
+  `com.tuneitall.tuner`, so this installs as an update rather than a new app.
+- Auto capture now uses Android's processed microphone path, and maximum
+  sensitivity no longer remains pinned behind the learned room-noise floor.
+- Universal and Unplugged electric profiles keep microphone sensitivity high
+  while smoothing the visible needle independently.
+- Auto-scroll replaces the duplicate Library bottom destination; tunings remain
+  one tap away through the outlined current-tuning control.
+- Hide now collapses the floating panel without crashing the application.
 
 - A clean-room, pYIN-derived streaming tuner for quieter notes and steadier
   pitch tracking.
@@ -42,17 +52,16 @@ Highlights:
 - Classic hands-free Auto-scroll with a gesture-only Accessibility service,
   speed 1 through 30, movable floating controls, and no Shizuku or access to
   screen content.
-- Maximum microphone sensitivity now follows the adaptive noise floor closely,
-  so very quiet electric guitar notes can start the tuner without a hard pick.
+- Maximum microphone sensitivity now uses the safe absolute floor instead of
+  remaining blocked by a learned room-noise floor.
 - Eight professional English Play images built from exact emulator captures in
   a deterministic phone-frame renderer.
 - No ads, accounts, analytics, tracking, or network permission.
 
 The app passed unit, Lint, API 35 Compose, audio-session, local-file decoding,
 timeline, playback, and runtime UI gates.
-Auto-scroll passed Chords and cross-app Android Settings movement checks on the
-dedicated Android 10 emulator. Quiet and room-noise behavior and acoustic
-metronome quality still require physical-device listening before a broader
-release.
+Auto-scroll Hide and reopen passed on a clean Android 15 emulator without a
+process restart or runtime exception. Quiet and room-noise behavior and acoustic
+metronome quality still require physical-device listening before a broader release.
 
 The attached `.sha256` file verifies the downloaded APK.

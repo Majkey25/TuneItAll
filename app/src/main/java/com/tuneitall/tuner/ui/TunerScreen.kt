@@ -1,5 +1,6 @@
 package com.tuneitall.tuner.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -247,6 +249,7 @@ private fun TunerTopBar(
 ) {
     val textButtonColors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
     val favoriteDescription = stringResource(if (favorite) R.string.remove_favorite else R.string.add_favorite)
+    val chooseTuningDescription = stringResource(R.string.choose_tuning_current, state.tuning.name)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth(),
@@ -254,18 +257,30 @@ private fun TunerTopBar(
         if (state.mode == TunerMode.CHROMATIC) {
             Box(modifier = Modifier.weight(1f))
         } else {
-            TextButton(
+            OutlinedButton(
                 onClick = onOpenLibrary,
-                colors = textButtonColors,
-                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 56.dp)
+                    .testTag("tuning_picker")
+                    .semantics {
+                        contentDescription = chooseTuningDescription
+                    },
             ) {
-                Text(
-                    text = "${state.tuning.name}  ›",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Column(Modifier.fillMaxWidth()) {
+                    Text(
+                        text = state.tuning.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(R.string.choose_tuning),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
             TextButton(
                 onClick = onToggleFavorite,

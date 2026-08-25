@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">TuneItAll</string>
+    <string name="app_name">Intoniva</string>
     <string name="microphone_explanation">Přístup k mikrofonu je potřeba pro poslech nástroje. Zvuk zůstává v tomto zařízení.</string>
     <string name="open_settings">Otevřít nastavení aplikace</string>
     <string name="mode_auto">Auto</string>
@@ -47,11 +47,12 @@
     <string name="destination_tuner">Ladička</string>
     <string name="destination_metronome">Metronom</string>
     <string name="destination_chords">Akordy</string>
-    <string name="destination_library">Knihovna</string>
+    <string name="destination_auto_scroll">Posouvání</string>
     <string name="destination_trainer">Trénink</string>
     <string name="chords_library">Knihovna akordů</string>
     <string name="song_chords">Akordy písničky</string>
     <string name="choose_tuning">Vybrat ladění</string>
+    <string name="choose_tuning_current">Vybrat ladění. Aktuální: %1$s</string>
     <string name="chord_major">Dur</string>
     <string name="chord_minor">Moll</string>
     <string name="chord_dominant_seventh">Dominantní 7</string>
@@ -174,7 +175,8 @@
     <string name="apply">Použít</string>
     <string name="tuner_audio">Zvuk ladičky</string>
     <string name="tuner_profiles_help">Vyber bezpečný profil nebo uprav ovládací prvky níže.</string>
-    <string name="profile_balanced">Vyvážený</string>
+    <string name="profile_balanced">Univerzální</string>
+    <string name="profile_unplugged_electric">Elektrická bez zesilovače</string>
     <string name="profile_quiet_room">Tichá místnost</string>
     <string name="profile_noisy_room">Hlučná místnost</string>
     <string name="profile_fast_response">Rychlá odezva</string>
@@ -185,6 +187,7 @@
     <string name="response">Odezva</string>
     <string name="response_help">Určuje, jak rychle ladička přijme nový tón.</string>
     <string name="response_fast">Rychlá</string>
+    <string name="response_balanced">Vyvážená</string>
     <string name="response_stable">Stabilní</string>
     <string name="needle_stability">Stabilita ručičky</string>
     <string name="needle_stability_help">Vyšší hodnota omezuje vizuální pohyb výšky tónu.</string>
@@ -211,7 +214,7 @@
     <string name="reading_hold_help">Nastavuje, jak dlouho zůstane poslední spolehlivá hodnota viditelná.</string>
     <string name="reading_hold_value">Podržení hodnoty: %1$d ms</string>
     <string name="audio_input">Zvukový vstup</string>
-    <string name="audio_input_help">Auto upřednostní nezpracovaný vstup. Kompatibilní režim obejde nepodporovaný nezpracovaný záznam.</string>
+    <string name="audio_input_help">Auto používá zpracovaný mikrofon telefonu pro tiché nástroje. RAW zpracování obchází. Kompatibilní režim je záložní.</string>
     <string name="audio_input_auto">Auto</string>
     <string name="audio_input_raw">Nezpracovaný</string>
     <string name="audio_input_compatible">Kompatibilní</string>
@@ -221,23 +224,23 @@
     <string name="reset_audio_settings">Obnovit nastavení zvuku</string>
     <string name="note_notation">Zápis tónů</string>
     <string name="headstock_layout">Hlava nástroje</string>
-    <string name="app_details">Podrobnosti o aplikaci</string>
+    <string name="app_details">O aplikaci Intoniva</string>
     <string name="version_value">Verze %1$s</string>
-    <string name="copyright_notice">Copyright © 2026 TuneItAll. Všechna práva vyhrazena.</string>
+    <string name="copyright_notice">Copyright © 2026 Intoniva. Všechna práva vyhrazena.</string>
     <string name="offline_privacy_summary">Offline. Bez reklam, účtu, analytiky, sledování a přístupu k síti.</string>
     <string name="microphone_about">Vzorky z mikrofonu se zpracují dočasně v tomto zařízení. Nikdy se nenahrávají, neuchovávají, nesdílejí ani neodesílají.</string>
     <string name="headstock_icon_attribution">Ikony Gibson Les Paul a gibson explorer: Alessandro Curci, thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Zásady ochrany soukromí</string>
-    <string name="privacy_policy_full">TuneItAll používá mikrofon jen během aktivního ladění. Zvukové vzorky zpracuje v paměti zařízení a ihned je zahodí. Aplikace neshromažďuje ani nesdílí osobní údaje a nežádá o přístup k internetu.</string>
+    <string name="privacy_policy_full">Intoniva používá mikrofon jen během aktivního ladění. Zvukové vzorky zpracuje v paměti zařízení a ihned je zahodí. Aplikace neshromažďuje ani nesdílí osobní údaje a nežádá o přístup k internetu.</string>
     <string name="license">Proprietární licence</string>
-    <string name="license_summary">TuneItAll je proprietární software. Kopírování, úpravy, distribuce, sublicencování nebo komerční použití vyžadují předchozí písemný souhlas. Součásti třetích stran si ponechávají vlastní licence.</string>
+    <string name="license_summary">Intoniva je proprietární software. Kopírování, úpravy, distribuce, sublicencování nebo komerční použití vyžadují předchozí písemný souhlas. Součásti třetích stran si ponechávají vlastní licence.</string>
     <string name="support_app">Podpořit tuto aplikaci → Buy Me a Coffee</string>
     <string name="support_app_notice">Děkujeme za podporu této aplikace. Otevírá se Buy Me a Coffee.</string>
     <string name="support_unavailable">Není dostupný žádný webový prohlížeč.</string>
-    <string name="auto_scroll_accessibility_label">Automatické posouvání TuneItAll</string>
-    <string name="auto_scroll_accessibility_description">Umožňuje spustit a zastavit posouvání bez použití rukou pomocí plovoucích ovládacích prvků. TuneItAll nečte ani neukládá obsah obrazovky.</string>
+    <string name="auto_scroll_accessibility_label">Automatické posouvání Intoniva</string>
+    <string name="auto_scroll_accessibility_description">Umožňuje spustit a zastavit posouvání bez použití rukou pomocí plovoucích ovládacích prvků. Intoniva nečte ani neukládá obsah obrazovky.</string>
     <string name="auto_scroll_notification_channel">Automatické posouvání</string>
-    <string name="auto_scroll_notification_title">Automatické posouvání TuneItAll</string>
+    <string name="auto_scroll_notification_title">Automatické posouvání Intoniva</string>
     <string name="auto_scroll_notification_text">Plovoucí ovládací prvky posouvání jsou aktivní</string>
     <string name="auto_scroll_move_controls">Přesunout ovládací prvky posouvání</string>
     <string name="auto_scroll_overlay_title">AUTOMATICKÉ POSOUVÁNÍ · PŘESUN TAHEM</string>
@@ -250,11 +253,10 @@
     <string name="auto_scroll_decrease_speed">Snížit rychlost posouvání</string>
     <string name="auto_scroll_increase_speed">Zvýšit rychlost posouvání</string>
     <string name="auto_scroll_open_controls">Otevřít ovládací prvky posouvání</string>
-    <string name="auto_scroll_overlay_missing">Nejprve povolte TuneItAll zobrazování nad ostatními aplikacemi.</string>
-    <string name="auto_scroll_accessibility_missing">Nejprve povolte automatické posouvání TuneItAll v nastavení usnadnění.</string>
+    <string name="auto_scroll_overlay_missing">Nejprve povolte aplikaci Intoniva zobrazování nad ostatními aplikacemi.</string>
+    <string name="auto_scroll_accessibility_missing">Nejprve povolte automatické posouvání Intoniva v nastavení usnadnění.</string>
     <string name="auto_scroll_start_failed">Automatické posouvání se nepodařilo spustit.</string>
     <string name="auto_scroll_title">Automatické posouvání</string>
-    <string name="auto_scroll_action">Posouvat</string>
     <string name="auto_scroll_description">Nechte obě ruce na nástroji. Plovoucí ovládací prvky mohou posouvat akordy i jakoukoli jinou aplikaci Android.</string>
     <string name="auto_scroll_overlay_permission">Zobrazení nad ostatními aplikacemi</string>
     <string name="auto_scroll_accessibility_permission">Gesta usnadnění</string>
@@ -264,5 +266,5 @@
     <string name="auto_scroll_permission_required">Vyžadováno</string>
     <string name="auto_scroll_speed">Rychlost posouvání</string>
     <string name="auto_scroll_show_controls">Zobrazit plovoucí ovládání</string>
-    <string name="auto_scroll_privacy_note">TuneItAll pouze provádí gesta přejetí. Obsah obrazovky nečte, neukládá ani neodesílá.</string>
+    <string name="auto_scroll_privacy_note">Intoniva pouze provádí gesta přejetí. Obsah obrazovky nečte, neukládá ani neodesílá.</string>
 </resources>

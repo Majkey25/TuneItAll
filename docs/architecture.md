@@ -1,6 +1,6 @@
 # Architecture
 
-TuneItAll is one native Android application module.
+Intoniva is one native Android application module.
 
 Audio flows through `AudioRecord` -> 4,096-sample overlapping PCM windows ->
 multi-candidate YIN analysis -> adaptive noise floor -> bounded online pitch

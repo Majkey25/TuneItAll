@@ -114,7 +114,7 @@ class AutoScrollOverlayService : Service() {
             if (AutoScrollAccessibilityService.instance?.isRunning() == true) stopScrolling() else startScrolling()
             render()
         }
-        view.findViewById<Button>(R.id.autoScrollHide).setOnClickListener(::collapseToBubble)
+        view.findViewById<Button>(R.id.autoScrollHide).setOnClickListener { collapseToBubble() }
         view.findViewById<Button>(R.id.autoScrollClose).setOnClickListener { shutdown() }
     }
 
@@ -158,8 +158,9 @@ class AutoScrollOverlayService : Service() {
         }
     }
 
-    private fun collapseToBubble(view: View) {
+    private fun collapseToBubble() {
         val params = panelParams ?: return
+        val view = panel ?: return
         lastPanelX = params.x
         lastPanelY = params.y
         remove(view)

@@ -14,11 +14,7 @@ data class AudioInputCapabilities(
 )
 
 internal fun resolveAudioSource(source: AudioInputSource, rawSupported: Boolean): Int = when (source) {
-    AudioInputSource.AUTO -> if (rawSupported) {
-        MediaRecorder.AudioSource.UNPROCESSED
-    } else {
-        MediaRecorder.AudioSource.VOICE_RECOGNITION
-    }
+    AudioInputSource.AUTO -> MediaRecorder.AudioSource.MIC
 
     AudioInputSource.RAW -> {
         require(rawSupported) { "Raw microphone input is unavailable" }
@@ -34,7 +30,7 @@ internal fun audioSourceAttempts(source: AudioInputSource, rawSupported: Boolean
     } else {
         resolveAudioSource(source, rawSupported)
     }
-    return if (resolved == MediaRecorder.AudioSource.UNPROCESSED) {
+    return if (resolved == MediaRecorder.AudioSource.UNPROCESSED || resolved == MediaRecorder.AudioSource.MIC) {
         intArrayOf(resolved, MediaRecorder.AudioSource.VOICE_RECOGNITION)
     } else {
         intArrayOf(resolved)
@@ -42,6 +38,7 @@ internal fun audioSourceAttempts(source: AudioInputSource, rawSupported: Boolean
 }
 
 internal fun audioInputSource(audioSource: Int): AudioInputSource = when (audioSource) {
+    MediaRecorder.AudioSource.MIC -> AudioInputSource.AUTO
     MediaRecorder.AudioSource.UNPROCESSED -> AudioInputSource.RAW
     MediaRecorder.AudioSource.VOICE_RECOGNITION -> AudioInputSource.COMPATIBLE
     else -> error("Unexpected microphone input source: $audioSource")

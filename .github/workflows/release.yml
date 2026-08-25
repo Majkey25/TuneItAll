@@ -58,8 +58,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh release create "$GITHUB_REF_NAME"
-          "app/build/outputs/bundle/release/app-release.aab#TuneItAll $GITHUB_REF_NAME signed Android App Bundle"
-          --draft --verify-tag --generate-notes --title "TuneItAll $GITHUB_REF_NAME"
+          "app/build/outputs/bundle/release/app-release.aab#Intoniva $GITHUB_REF_NAME signed Android App Bundle"
+          --draft --verify-tag --generate-notes --title "Intoniva $GITHUB_REF_NAME"
 
       - name: Remove upload keystore
         if: always()
