@@ -1,0 +1,1 @@
+Universal now detects quieter instruments using device gain, periodicity, temporal tracking, and multi-resolution analysis. Confirmation requires 900 ms in tune, and its short chime no longer causes a long pause. Favorites appear first; Auto-scroll has a clearer icon.

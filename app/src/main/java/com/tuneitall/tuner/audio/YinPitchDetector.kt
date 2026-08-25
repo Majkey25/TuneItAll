@@ -12,6 +12,18 @@ private val THRESHOLD_WEIGHTS = doubleArrayOf(0.02, 0.06, 0.12, 0.18, 0.20, 0.17
 private const val MAX_CANDIDATES = 8
 private const val MERGE_CENTS = 15.0
 
+internal fun decimate(samples: ShortArray, output: ShortArray) {
+    require(output.isNotEmpty() && samples.size % output.size == 0) { "Decimation sizes must divide evenly" }
+    val factor = samples.size / output.size
+    require(factor == 2 || factor == 4) { "Decimation factor must be two or four" }
+    for (index in output.indices) {
+        val input = index * factor
+        var sum = 0
+        for (offset in 0 until factor) sum += samples[input + offset]
+        output[index] = (sum / factor).toShort()
+    }
+}
+
 data class PitchCandidate(
     val hertz: Double,
     val probability: Double,
@@ -64,6 +76,8 @@ data class PitchEstimate(
 class YinPitchDetector {
     private var difference = DoubleArray(0)
     private var cumulativeMean = DoubleArray(0)
+    private var decimated = ShortArray(0)
+    private var recentWindow = ShortArray(0)
 
     fun analyze(
         samples: ShortArray,
@@ -72,24 +86,56 @@ class YinPitchDetector {
         maxFrequency: Double,
     ): PitchFrame {
         validateArguments(samples, sampleRate, minFrequency, maxFrequency)
+        var analysisSamples = samples
+        var analysisSampleRate = sampleRate
+        if (samples.size >= LONG_WINDOW_SIZE && samples.size % 4 == 0 && maxFrequency <= LOW_RANGE_MAX_HERTZ) {
+            val outputSize = samples.size / 4
+            if (decimated.size != outputSize) decimated = ShortArray(outputSize)
+            decimate(samples, decimated)
+            analysisSamples = decimated
+            analysisSampleRate = sampleRate / 4
+        } else if (
+            samples.size >= LONG_WINDOW_SIZE &&
+            samples.size % 2 == 0 &&
+            (minFrequency >= HIGH_RANGE_MIN_HERTZ || maxFrequency > WIDE_RANGE_MAX_HERTZ) &&
+            maxFrequency <= sampleRate / 4.0
+        ) {
+            val outputSize = samples.size / 2
+            if (decimated.size != outputSize) decimated = ShortArray(outputSize)
+            decimate(samples, decimated)
+            analysisSamples = decimated
+            analysisSampleRate = sampleRate / 2
+        } else if (samples.size >= LONG_WINDOW_SIZE) {
+            if (recentWindow.size != SHORT_WINDOW_SIZE) recentWindow = ShortArray(SHORT_WINDOW_SIZE)
+            samples.copyInto(recentWindow, startIndex = samples.size - SHORT_WINDOW_SIZE)
+            analysisSamples = recentWindow
+        }
 
-        val tauMin = floor(sampleRate / maxFrequency).toInt().coerceAtLeast(MIN_TAU)
-        val tauMax = ceil(sampleRate / minFrequency).toInt()
-        require(samples.size > tauMax * 2) { "Sample frame is too short for the minimum frequency" }
+        val tauMin = floor(analysisSampleRate / maxFrequency).toInt().coerceAtLeast(MIN_TAU)
+        val tauMax = ceil(analysisSampleRate / minFrequency).toInt()
+        require(analysisSamples.size > tauMax * 2) { "Sample frame is too short for the minimum frequency" }
 
-        val rms = calculateRms(samples)
-        val peak = calculatePeak(samples)
+        val rms = calculateRms(analysisSamples)
+        val peak = calculatePeak(analysisSamples)
         ensureCapacity(tauMax + 1)
-        calculateDifference(samples, tauMax)
+        calculateDifference(analysisSamples, tauMax)
         calculateCumulativeMean(tauMax)
 
         val candidates = mutableListOf<PitchCandidate>()
         THRESHOLDS.indices.forEach { index ->
             val tau = findThresholdMinimum(tauMin, tauMax, THRESHOLDS[index]) ?: return@forEach
             val refinedTau = parabolicInterpolation(tau, tauMax)
-            val hertz = sampleRate / refinedTau
+            val hertz = analysisSampleRate / refinedTau
             if (isWithinRange(hertz, minFrequency, maxFrequency)) {
                 mergeCandidate(candidates, hertz, 1.0 - cumulativeMean[tau], THRESHOLD_WEIGHTS[index])
+            }
+        }
+        if (candidates.isEmpty()) {
+            val tau = findNoTroughMinimum(tauMin, tauMax)
+            val periodicity = (1.0 - cumulativeMean[tau]).coerceIn(0.0, 1.0)
+            val hertz = analysisSampleRate / parabolicInterpolation(tau, tauMax)
+            if (periodicity >= NO_TROUGH_MIN_PERIODICITY && isWithinRange(hertz, minFrequency, maxFrequency)) {
+                mergeCandidate(candidates, hertz, periodicity, periodicity)
             }
         }
         val boundedCandidates = candidates.sortedByDescending { it.probability }.take(MAX_CANDIDATES)
@@ -161,6 +207,22 @@ class YinPitchDetector {
         return null
     }
 
+    private fun findNoTroughMinimum(tauMin: Int, tauMax: Int): Int {
+        val global = (tauMin..tauMax).minBy(cumulativeMean::get)
+        if (tauMax.toDouble() / tauMin <= NARROW_RANGE_RATIO) return global
+        val acceptedValue = cumulativeMean[global] + NO_TROUGH_MARGIN
+        for (tau in (tauMin + 1) until tauMax) {
+            if (
+                cumulativeMean[tau] <= acceptedValue &&
+                cumulativeMean[tau] <= cumulativeMean[tau - 1] &&
+                cumulativeMean[tau] < cumulativeMean[tau + 1]
+            ) {
+                return tau
+            }
+        }
+        return global
+    }
+
     private fun parabolicInterpolation(tau: Int, tauMax: Int): Double {
         if (tau <= 1 || tau >= tauMax) return tau.toDouble()
         val previous = difference[tau - 1]
@@ -214,8 +276,16 @@ class YinPitchDetector {
 
     private companion object {
         const val MIN_SAMPLE_COUNT = 4
+        const val LONG_WINDOW_SIZE = 8192
+        const val SHORT_WINDOW_SIZE = 4096
+        const val LOW_RANGE_MAX_HERTZ = 150.0
+        const val HIGH_RANGE_MIN_HERTZ = 150.0
+        const val WIDE_RANGE_MAX_HERTZ = 1_000.0
         const val MIN_TAU = 2
         const val PCM_SCALE = 32768.0
+        const val NO_TROUGH_MIN_PERIODICITY = 0.25
+        const val NO_TROUGH_MARGIN = 0.05
+        const val NARROW_RANGE_RATIO = 8.0
         const val INTERPOLATION_EPSILON = 1e-12
         const val MAX_BOUNDARY_ERROR_CENTS = 1.0
         const val CENTS_PER_OCTAVE = 1200.0

@@ -7,6 +7,10 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.audiofx.AcousticEchoCanceler
+import android.media.audiofx.AudioEffect
+import android.media.audiofx.AutomaticGainControl
+import android.media.audiofx.NoiseSuppressor
 import android.os.Process
 import androidx.annotation.RequiresPermission
 import kotlin.math.max
@@ -18,6 +22,8 @@ sealed interface AudioInputError {
 
     data class ReadFailed(val errorCode: Int) : AudioInputError
 }
+
+internal fun usesInstrumentCaptureEffects(audioSource: Int): Boolean = audioSource == MediaRecorder.AudioSource.MIC
 
 class AudioInput(context: Context) : AutoCloseable {
     private val applicationContext = context.applicationContext
@@ -137,7 +143,7 @@ class AudioInput(context: Context) : AutoCloseable {
                         if (audioSource == MediaRecorder.AudioSource.UNPROCESSED) rawFailed = true
                         continue
                     }
-                    RecorderSession(recorder)
+                    RecorderSession(recorder, createInstrumentCaptureEffects(recorder, audioSource))
                 } catch (_: SecurityException) {
                     if (running) onError(AudioInputError.PermissionMissing)
                     return
@@ -193,6 +199,23 @@ class AudioInput(context: Context) : AutoCloseable {
         ?.getProperty(AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED)
         ?.equals("true", ignoreCase = true) == true
 
+    private fun createInstrumentCaptureEffects(recorder: AudioRecord, audioSource: Int): List<AudioEffect> {
+        if (!usesInstrumentCaptureEffects(audioSource)) return emptyList()
+        val sessionId = recorder.audioSessionId
+        return listOfNotNull(
+            createEffect(AutomaticGainControl.isAvailable(), true) { AutomaticGainControl.create(sessionId) },
+            createEffect(NoiseSuppressor.isAvailable(), false) { NoiseSuppressor.create(sessionId) },
+            createEffect(AcousticEchoCanceler.isAvailable(), false) { AcousticEchoCanceler.create(sessionId) },
+        )
+    }
+
+    private fun createEffect(available: Boolean, enabled: Boolean, create: () -> AudioEffect?): AudioEffect? {
+        if (!available) return null
+        val effect = runCatching(create).getOrNull() ?: return null
+        runCatching { effect.enabled = enabled }
+        return effect
+    }
+
     private fun activateSession(nextSession: RecorderSession): Boolean = synchronized(lock) {
         if (!running || session != null) return@synchronized false
         session = nextSession
@@ -215,7 +238,7 @@ class AudioInput(context: Context) : AutoCloseable {
     ) {
         val recorder = activeSession.recorder
         val readBuffer = ShortArray(max(windowSize / 2, MIN_READ_SIZE))
-        val assembler = AudioWindowAssembler(windowSize, max(1, windowSize / 2)) { window ->
+        val assembler = AudioWindowAssembler(windowSize, minOf(DEFAULT_HOP_SIZE, max(1, windowSize / 2))) { window ->
             onWindow(window, recorder.sampleRate)
         }
         try {
@@ -237,7 +260,7 @@ class AudioInput(context: Context) : AutoCloseable {
         }
     }
 
-    private class RecorderSession(val recorder: AudioRecord) {
+    private class RecorderSession(val recorder: AudioRecord, private val effects: List<AudioEffect>) {
         private val lock = Any()
         private var started = false
         private var stopRequested = false
@@ -263,6 +286,7 @@ class AudioInput(context: Context) : AutoCloseable {
                 if (released) return
                 stopRequested = true
                 stopRecorder()
+                effects.forEach { effect -> runCatching(effect::release) }
                 recorder.release()
                 released = true
             }
@@ -280,6 +304,7 @@ class AudioInput(context: Context) : AutoCloseable {
         const val MIN_WINDOW_SIZE = 256
         const val MAX_WINDOW_SIZE = 32_768
         const val MIN_READ_SIZE = 256
+        const val DEFAULT_HOP_SIZE = 2_048
         const val STOP_JOIN_TIMEOUT_MS = 1_000L
         const val THREAD_NAME = "TuneItAll-Audio"
     }

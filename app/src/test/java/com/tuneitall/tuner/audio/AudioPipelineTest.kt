@@ -13,6 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
+import kotlin.test.assertContentEquals
 import kotlin.test.assertTrue
 
 class AudioPipelineTest {
@@ -127,6 +128,37 @@ class AudioPipelineTest {
             listOf(MediaRecorder.AudioSource.VOICE_RECOGNITION),
             audioSourceAttempts(AudioInputSource.COMPATIBLE, rawSupported = true).toList(),
         )
+    }
+
+    @Test
+    fun `only automatic microphone capture controls instrument preprocessing`() {
+        assertTrue(usesInstrumentCaptureEffects(MediaRecorder.AudioSource.MIC))
+        assertFalse(usesInstrumentCaptureEffects(MediaRecorder.AudioSource.UNPROCESSED))
+        assertFalse(usesInstrumentCaptureEffects(MediaRecorder.AudioSource.VOICE_RECOGNITION))
+    }
+
+    @Test
+    fun `two sample decimation averages without PCM overflow`() {
+        val output = ShortArray(3)
+
+        decimate(
+            shortArrayOf(Short.MAX_VALUE, Short.MAX_VALUE, 1, 3, -5, -1),
+            output,
+        )
+
+        assertContentEquals(shortArrayOf(Short.MAX_VALUE, 2, -3), output)
+    }
+
+    @Test
+    fun `four sample decimation averages without PCM overflow`() {
+        val output = ShortArray(2)
+
+        decimate(
+            shortArrayOf(Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, -8, -4, 4, 8),
+            output,
+        )
+
+        assertContentEquals(shortArrayOf(Short.MAX_VALUE, 0), output)
     }
 
     @Test

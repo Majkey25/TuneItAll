@@ -27,7 +27,7 @@ value class DetectionSensitivity(val value: Int) {
         private const val BALANCED_VALUE = 50
         private const val LOW_SENSITIVITY_RMS = 0.012
         private const val BALANCED_RMS = 0.003
-        private const val HIGH_SENSITIVITY_RMS = 0.00006
+        private const val HIGH_SENSITIVITY_RMS = 0.0
         private const val MAX_NOISE_REDUCTION = 1.0
     }
 }

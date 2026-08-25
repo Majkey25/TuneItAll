@@ -13,7 +13,7 @@ data class TunerAudioSettings(
     val noiseRejection: Int = 20,
     val harmonicProtection: Int = 90,
     val inTuneCents: Int = 3,
-    val confirmationMillis: Long = 250,
+    val confirmationMillis: Long = 900,
     val readingHoldMillis: Long = 450,
     val inputSource: AudioInputSource = AudioInputSource.AUTO,
 ) {

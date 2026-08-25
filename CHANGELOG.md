@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.0-alpha.10 — 2026-08-25
+
+- Make Universal detect quiet instruments without requiring the unplugged
+  electric profile by removing the maximum-sensitivity amplitude gate.
+- Correct the temporal voiced/unvoiced model so a weak stable pitch can build
+  confidence while changing broadband noise remains unvoiced.
+- Preserve low-clarity string buzz through a bounded pYIN no-trough candidate
+  instead of discarding the entire frame at the fixed threshold.
+- Use multi-resolution 8192-sample analysis for bass, guitar, ukulele, and
+  chromatic ranges while keeping a 2048-sample update hop.
+- Enable capture AGC when available for Auto input and disable speech-oriented
+  noise suppression and echo cancellation without changing Raw or Compatible.
+- Require 900 ms of continuous in-tune input before confirmation, then play a
+  short 90 ms chime without pausing instrument-mode analysis. Chromatic mode
+  discards only the 300 ms overlapping acoustic tail.
+- Put Favorites first in the tuning picker and replace both Auto-scroll arrow
+  glyphs with one clear bidirectional-scroll icon.
+
 ## 0.3.0-alpha.9 — 2026-08-24
 
 - Rename the user-facing product to Intoniva while retaining the stable

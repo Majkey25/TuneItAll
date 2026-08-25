@@ -110,7 +110,7 @@ internal fun createConfirmationChime(
 }
 
 private const val CHIME_SAMPLE_RATE = 48_000
-internal const val CONFIRMATION_CHIME_DURATION_MILLIS = 420
+internal const val CONFIRMATION_CHIME_DURATION_MILLIS = 90
 private const val CHIME_ATTACK_MILLIS = 6
 private const val CHIME_HERTZ = 880.0
 private const val CHIME_DECAY = 5.5

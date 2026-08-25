@@ -22,11 +22,12 @@ class PitchTracker {
 
         missingFrames = 0
         val onset = previousRms > 0.0 && frame.rms >= previousRms * ONSET_RATIO
+        val strongestPeriodicity = frame.candidates.maxOf(PitchCandidate::periodicity)
         val candidates = frame.candidates.map { candidate ->
             VoicedState(
                 hertz = candidate.hertz,
-                confidence = candidate.probability,
-                score = ln(candidate.probability.coerceAtLeast(MIN_PROBABILITY)) + bestPreviousScore(
+                confidence = maxOf(candidate.probability, candidate.periodicity),
+                score = ln(maxOf(candidate.probability, candidate.periodicity, MIN_PROBABILITY)) + bestPreviousScore(
                     candidate.hertz,
                     settings,
                     onset,
@@ -35,8 +36,11 @@ class PitchTracker {
         }
         val retained = states.filter { state -> candidates.none { samePitch(state.hertz, it.hertz) } }
             .map { it.copy(score = it.score - STALE_STATE_COST) }
-        val previousBest = maxOf(unvoicedScore, states.maxOfOrNull { it.score } ?: Double.NEGATIVE_INFINITY)
-        unvoicedScore = ln(frame.unvoicedProbability.coerceAtLeast(MIN_PROBABILITY)) + previousBest
+        val unvoicedProbability = minOf(frame.unvoicedProbability, 1.0 - strongestPeriodicity)
+        val previousUnvoiced = unvoicedScore
+        val previousVoiced = states.maxOfOrNull(VoicedState::score) ?: Double.NEGATIVE_INFINITY
+        unvoicedScore = ln(unvoicedProbability.coerceAtLeast(MIN_PROBABILITY)) +
+            maxOf(previousUnvoiced, previousVoiced - UNVOICED_SWITCH_COST)
 
         states.clear()
         states += (candidates + retained).sortedByDescending { it.score }.take(MAX_STATES)
@@ -55,11 +59,16 @@ class PitchTracker {
     }
 
     private fun bestPreviousScore(hertz: Double, settings: TunerAudioSettings, onset: Boolean): Double = maxOf(
-        unvoicedScore,
+        unvoicedScore - VOICED_SWITCH_COST,
         states.maxOfOrNull { state ->
-            state.score - transitionCost(state.hertz, hertz, settings, onset)
+            state.score - transitionCost(state.hertz, hertz, settings, onset) +
+                if (samePitch(state.hertz, hertz)) voicedPersistenceBonus(settings) else 0.0
         } ?: Double.NEGATIVE_INFINITY,
     )
+
+    private fun voicedPersistenceBonus(settings: TunerAudioSettings): Double =
+        MIN_VOICED_PERSISTENCE_BONUS +
+            (MAX_VOICED_PERSISTENCE_BONUS - MIN_VOICED_PERSISTENCE_BONUS) * settings.sensitivity.value / 100.0
 
     private fun transitionCost(
         previousHertz: Double,
@@ -109,6 +118,10 @@ class PitchTracker {
         const val OCTAVE_TOLERANCE_CENTS = 100.0
         const val OCTAVE_PENALTY = 3.0
         const val STALE_STATE_COST = 0.4
+        const val VOICED_SWITCH_COST = 0.8
+        const val UNVOICED_SWITCH_COST = 0.8
+        const val MIN_VOICED_PERSISTENCE_BONUS = 0.4
+        const val MAX_VOICED_PERSISTENCE_BONUS = 1.2
         const val ONSET_RATIO = 1.8
         const val ONSET_COST_SCALE = 0.25
         const val SAME_PITCH_CENTS = 15.0

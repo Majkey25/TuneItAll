@@ -177,16 +177,18 @@ private fun DestinationIcon(destination: PrimaryDestination, key: String) {
             }
 
             PrimaryDestination.AUTO_SCROLL -> {
-                listOf(5f, 9f, 13f).forEach { y ->
-                    drawLine(color, point(5f, y), point(19f, y), stroke.width, StrokeCap.Round)
-                }
                 drawPath(
                     path {
-                        moveTo(12f * unit, 3f * unit)
-                        lineTo(12f * unit, 20f * unit)
-                        moveTo(8f * unit, 16f * unit)
-                        lineTo(12f * unit, 20f * unit)
-                        lineTo(16f * unit, 16f * unit)
+                        moveTo(9f * unit, 19f * unit)
+                        lineTo(9f * unit, 5f * unit)
+                        moveTo(5f * unit, 9f * unit)
+                        lineTo(9f * unit, 5f * unit)
+                        lineTo(13f * unit, 9f * unit)
+                        moveTo(15f * unit, 5f * unit)
+                        lineTo(15f * unit, 19f * unit)
+                        moveTo(11f * unit, 15f * unit)
+                        lineTo(15f * unit, 19f * unit)
+                        lineTo(19f * unit, 15f * unit)
                     },
                     color,
                     style = stroke,

@@ -12,6 +12,7 @@ Features:
 • Sharps or flats note naming
 • Click-free reference tone when a string is tapped
 • Stable in-tune confirmation sound
+• Universal quiet-input engine with temporal buzz and broadband-noise separation
 • Universal, unplugged-electric, quiet-room, noisy-room, and fast-response tuner profiles
 • Independent microphone sensitivity and needle stability controls
 • Mechanical metronome from 20 to 400 BPM with meter, subdivision, accent, sound, volume, mute, and count-in controls

@@ -8,12 +8,10 @@
     android:elevation="8dp"
     android:focusable="true">
 
-    <TextView
+    <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="↕"
-        android:textColor="@color/auto_scroll_on_green"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:contentDescription="@null"
+        android:padding="12dp"
+        android:src="@drawable/ic_auto_scroll" />
 </FrameLayout>

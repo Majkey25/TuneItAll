@@ -16,7 +16,7 @@ class TunerAudioSettingsTest {
                 noiseRejection = 20,
                 harmonicProtection = 90,
                 inTuneCents = 3,
-                confirmationMillis = 250,
+                confirmationMillis = 900,
                 readingHoldMillis = 450,
                 inputSource = AudioInputSource.AUTO,
             ),

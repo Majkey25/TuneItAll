@@ -1,0 +1,1 @@
+Univerzální režim nyní lépe zachytí tiché nástroje díky zesílení, periodicitě, časovému sledování a víceúrovňové analýze. Potvrzení vyžaduje 900 ms přesného tónu a krátké cinknutí už nezpůsobí dlouhou pauzu. Oblíbená ladění jsou první; Auto-scroll má jasnější ikonu.

@@ -64,7 +64,7 @@ fun TuningLibraryScreen(
             (instrument == null || preset.instrument == instrument) &&
             (stringCount == null || preset.notesLowToHigh.size == stringCount) &&
             (!favoritesOnly || preset.id in favoriteIds)
-    }
+    }.sortedByDescending { preset -> preset.id in favoriteIds }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -100,6 +100,13 @@ fun TuningLibraryScreen(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
                 FilterChip(
+                    selected = favoritesOnly,
+                    onClick = { favoritesOnly = !favoritesOnly },
+                    label = { Text(stringResource(R.string.favorites)) },
+                )
+            }
+            item {
+                FilterChip(
                     selected = stringCount == null,
                     onClick = { stringCount = null },
                     label = { Text(stringResource(R.string.all_strings)) },
@@ -110,13 +117,6 @@ fun TuningLibraryScreen(
                     selected = stringCount == count,
                     onClick = { stringCount = count },
                     label = { Text(pluralStringResource(R.plurals.string_count, count, count)) },
-                )
-            }
-            item {
-                FilterChip(
-                    selected = favoritesOnly,
-                    onClick = { favoritesOnly = !favoritesOnly },
-                    label = { Text(stringResource(R.string.favorites)) },
                 )
             }
         }

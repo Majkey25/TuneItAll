@@ -1,4 +1,4 @@
-Intoniva `v0.3.0-alpha.9` prerelease testing build.
+Intoniva `v0.3.0-alpha.10` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -12,6 +12,22 @@ permission.
 
 Highlights:
 
+- Universal now uses the same maximum-sensitivity engine for quiet guitar,
+  bass, ukulele, and chromatic tuning without requiring a special profile.
+- Stable low-probability pYIN candidates can build confidence over time instead
+  of losing permanently to one global unvoiced score.
+- Strong string buzz retains a bounded no-trough candidate; changing broadband
+  noise remains rejected by periodicity and temporal continuity checks.
+- Multi-resolution 8192-sample analysis improves low notes while a 2048-sample
+  hop retains frequent updates and bounded detector work.
+- Auto input enables Android capture gain when the device exposes it and
+  disables speech-oriented noise suppression and echo cancellation. Raw and
+  Compatible inputs remain untouched.
+- Confirmation now requires 900 ms continuously in tune. Its 90 ms chime keeps
+  instrument-mode analysis live; Chromatic ignores only its 300 ms overlap.
+- Favorite tunings sort to the top and the Favorites filter appears first.
+- Auto-scroll now uses one clear bidirectional icon in the bottom bar and the
+  collapsed floating control.
 - New user-facing name: Intoniva. The Android application ID remains
   `com.tuneitall.tuner`, so this installs as an update rather than a new app.
 - Auto capture now uses Android's processed microphone path, and maximum
@@ -52,8 +68,8 @@ Highlights:
 - Classic hands-free Auto-scroll with a gesture-only Accessibility service,
   speed 1 through 30, movable floating controls, and no Shizuku or access to
   screen content.
-- Maximum microphone sensitivity now uses the safe absolute floor instead of
-  remaining blocked by a learned room-noise floor.
+- Maximum microphone sensitivity is no longer blocked by an amplitude or
+  learned room-noise floor; the periodic detector rejects silence and noise.
 - Eight professional English Play images built from exact emulator captures in
   a deterministic phone-frame renderer.
 - No ads, accounts, analytics, tracking, or network permission.
@@ -61,7 +77,8 @@ Highlights:
 The app passed unit, Lint, API 35 Compose, audio-session, local-file decoding,
 timeline, playback, and runtime UI gates.
 Auto-scroll Hide and reopen passed on a clean Android 15 emulator without a
-process restart or runtime exception. Quiet and room-noise behavior and acoustic
-metronome quality still require physical-device listening before a broader release.
+process restart or runtime exception. Synthetic quiet, buzz, bass, guitar,
+ukulele, silence, and broadband-noise regressions pass. Final acoustic behavior
+still requires physical-device listening before a broader release.
 
 The attached `.sha256` file verifies the downloaded APK.

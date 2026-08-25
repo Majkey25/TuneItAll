@@ -31,6 +31,6 @@ class DetectionSensitivityTest {
         assertTrue(normal.minimumRms > high.minimumRms)
         assertTrue(low.adaptiveNoiseScale > normal.adaptiveNoiseScale)
         assertTrue(normal.adaptiveNoiseScale > high.adaptiveNoiseScale)
-        assertTrue(high.minimumRms > 0.0)
+        assertEquals(0.0, high.minimumRms, 0.0)
     }
 }

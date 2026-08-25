@@ -4,6 +4,7 @@ import com.tuneitall.tuner.tuner.MusicMath
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
+import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -123,6 +124,64 @@ class YinPitchDetectorTest {
     }
 
     @Test
+    fun `analysis retains the fundamental under strong string buzz`() {
+        val expected = 82.41
+        val samples = noisyString(expected, seed = 7)
+        val frame = detector.analyze(samples, SAMPLE_RATE, 70.0, 420.0)
+
+        val candidate = assertNotNull(
+            frame.candidates.minByOrNull { abs(MusicMath.cents(it.hertz, expected)) },
+        )
+
+        val error = abs(MusicMath.cents(candidate.hertz, expected))
+        assertTrue(error <= 15.0, "Buzz candidate ${candidate.hertz} Hz was $error cents from E2")
+        assertTrue(frame.isDetectorVoiced, "A valid buzzing-string candidate must not train the noise floor: $frame")
+    }
+
+    @Test
+    fun `default universal pipeline acquires quiet buzzing guitar bass and ukulele`() {
+        listOf(
+            Triple(41.20, 34.0, 120.0),
+            Triple(82.41, 69.0, 420.0),
+            Triple(261.63, 190.0, 500.0),
+            Triple(329.63, 190.0, 500.0),
+        ).forEachIndexed { pitchIndex, (expected, minHertz, maxHertz) ->
+            val tracker = PitchTracker()
+            val rawCandidates = mutableListOf<Double>()
+            var estimate: PitchEstimate? = null
+
+            repeat(3) { frameIndex ->
+                val frame = detector.analyze(
+                    noisyString(expected, seed = 20 + pitchIndex * 10 + frameIndex, sampleCount = 8192),
+                    SAMPLE_RATE,
+                    minHertz,
+                    maxHertz,
+                )
+                frame.candidates.minByOrNull { abs(MusicMath.cents(it.hertz, expected)) }
+                    ?.let { rawCandidates += it.hertz }
+                estimate = tracker.update(frame, TunerProfile.BALANCED.settings)
+            }
+
+            val detected = assertNotNull(estimate, "No universal estimate for $expected Hz")
+            val error = abs(MusicMath.cents(detected.hertz, expected))
+            assertTrue(error <= 20.0, "$expected Hz universal error was $error cents from $rawCandidates")
+        }
+    }
+
+    @Test
+    fun `analysis rejects very quiet broadband noise`() {
+        val random = Random(11)
+        val samples = ShortArray(4096) {
+            (0.00025 * random.nextDouble(-1.0, 1.0) * Short.MAX_VALUE).toInt().toShort()
+        }
+
+        val frame = detector.analyze(samples, SAMPLE_RATE, 70.0, 420.0)
+
+        assertTrue(frame.candidates.isEmpty())
+        assertEquals(1.0, frame.unvoicedProbability, 0.0)
+    }
+
+    @Test
     fun `invalid detector arguments are rejected`() {
         val samples = sine(110.0, 4096)
 
@@ -137,14 +196,14 @@ class YinPitchDetectorTest {
     fun `reused detector processes one hundred guitar frames promptly`() {
         val frame = signal(
             frequency = 82.41,
-            sampleCount = 4096,
+            sampleCount = 8192,
             harmonics = listOf(1 to 0.70, 2 to 0.20, 3 to 0.10),
         )
 
-        detector.analyze(frame, SAMPLE_RATE, 70.0, 1000.0)
+        detector.analyze(frame, SAMPLE_RATE, 27.0, 4_300.0)
         val elapsed = measureTimeMillis {
             repeat(100) {
-                assertTrue(detector.analyze(frame, SAMPLE_RATE, 70.0, 1000.0).candidates.isNotEmpty())
+                assertTrue(detector.analyze(frame, SAMPLE_RATE, 27.0, 4_300.0).candidates.isNotEmpty())
             }
         }
 
@@ -164,6 +223,18 @@ class YinPitchDetectorTest {
             amplitude * sin(2.0 * PI * frequency * multiple * seconds)
         }.coerceIn(-1.0, 1.0)
         (sample * Short.MAX_VALUE).toInt().toShort()
+    }
+
+    private fun noisyString(frequency: Double, seed: Int, sampleCount: Int = 4096): ShortArray {
+        val random = Random(seed)
+        return ShortArray(sampleCount) { index ->
+            val seconds = index.toDouble() / SAMPLE_RATE
+            val periodic = 0.00020 * sin(2.0 * PI * frequency * seconds) +
+                0.00012 * sin(4.0 * PI * frequency * seconds) +
+                0.00008 * sin(6.0 * PI * frequency * seconds)
+            val buzz = 0.00025 * random.nextDouble(-1.0, 1.0)
+            ((periodic + buzz).coerceIn(-1.0, 1.0) * Short.MAX_VALUE).toInt().toShort()
+        }
     }
 
     private companion object {

@@ -82,6 +82,14 @@ class AdaptiveNoiseFloorTest {
     }
 
     @Test
+    fun `universal sensitivity does not amplitude gate quantized input`() {
+        val floor = AdaptiveNoiseFloor()
+
+        assertTrue(floor.accepts(0.000001, DetectionSensitivity.DEFAULT, noiseRejection = 100))
+        assertFalse(floor.accepts(0.000001, DetectionSensitivity(50), noiseRejection = 0))
+    }
+
+    @Test
     fun `reset restores the initial noise floor`() {
         val floor = AdaptiveNoiseFloor()
         repeat(100) { floor.observe(rms = 0.01, voiced = false) }

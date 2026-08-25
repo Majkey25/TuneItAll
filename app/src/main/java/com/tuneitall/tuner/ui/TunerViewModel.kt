@@ -13,7 +13,6 @@ import com.tuneitall.tuner.audio.AudioInputCapabilities
 import com.tuneitall.tuner.audio.AudioInputError
 import com.tuneitall.tuner.audio.AudioInputSource
 import com.tuneitall.tuner.audio.AdaptiveNoiseFloor
-import com.tuneitall.tuner.audio.CONFIRMATION_CHIME_DURATION_MILLIS
 import com.tuneitall.tuner.audio.ConfirmationChimePlayer
 import com.tuneitall.tuner.audio.DetectionSensitivity
 import com.tuneitall.tuner.audio.FeedbackInputGate
@@ -444,10 +443,12 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                             if (playConfirmation && confirmationTracker.isConfirmed) {
                                 try {
                                     confirmationPlayer.play()
-                                    feedbackInputGate.suppress(
-                                        nowMillis = SystemClock.elapsedRealtime(),
-                                        durationMillis = CONFIRMATION_INPUT_SUPPRESSION_MILLIS,
-                                    )
+                                    if (current.mode == TunerMode.CHROMATIC) {
+                                        feedbackInputGate.suppress(
+                                            nowMillis = SystemClock.elapsedRealtime(),
+                                            durationMillis = CHROMATIC_FEEDBACK_SUPPRESSION_MILLIS,
+                                        )
+                                    }
                                 } catch (error: RuntimeException) {
                                     failure = error
                                 }
@@ -571,8 +572,8 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
 
     private companion object {
         const val DEFAULT_TUNING_ID = "guitar-6-standard"
-        const val ANALYSIS_WINDOW_SIZE = 4_096
+        const val ANALYSIS_WINDOW_SIZE = 8_192
         const val REFERENCE_PREVIEW_MILLIS = 1_050L
-        const val CONFIRMATION_INPUT_SUPPRESSION_MILLIS = CONFIRMATION_CHIME_DURATION_MILLIS + 180L
+        const val CHROMATIC_FEEDBACK_SUPPRESSION_MILLIS = 300L
     }
 }

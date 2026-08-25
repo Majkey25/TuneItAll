@@ -19,6 +19,16 @@ class PitchTrackerTest {
     }
 
     @Test
+    fun `short confirmation chime cannot replace a stable guitar string`() {
+        val tracker = PitchTracker()
+        repeat(5) { tracker.update(frame(82.41, rms = 0.0002), settings) }
+
+        val result = tracker.update(frame(880.0, rms = 0.1), settings)
+
+        assertEquals(82.41, requireNotNull(result).hertz, 0.01)
+    }
+
+    @Test
     fun `three consistent frames switch to a new note`() {
         val tracker = PitchTracker()
         repeat(5) { tracker.update(frame(440.0, rms = 0.2), settings) }
@@ -35,6 +45,36 @@ class PitchTrackerTest {
 
         assertTrue(onsetFrames < equalRmsFrames)
         assertTrue(onsetFrames <= 3)
+    }
+
+    @Test
+    fun `universal tracking acquires a weak but periodic tone`() {
+        val tracker = PitchTracker()
+        val weakTone = PitchFrame(
+            candidates = listOf(PitchCandidate(82.41, probability = 0.13, periodicity = 0.78)),
+            rms = 0.0001,
+            peak = 0.0002,
+            unvoicedProbability = 0.87,
+        )
+
+        val result = List(3) { tracker.update(weakTone, settings) }.last()
+
+        assertEquals(82.41, requireNotNull(result).hertz, 0.01)
+    }
+
+    @Test
+    fun `universal tracking acquires persistent low clarity string buzz`() {
+        val tracker = PitchTracker()
+        val stringBuzz = PitchFrame(
+            candidates = listOf(PitchCandidate(82.41, probability = 0.05, periodicity = 0.40)),
+            rms = 0.0001,
+            peak = 0.0003,
+            unvoicedProbability = 0.95,
+        )
+
+        val result = List(3) { tracker.update(stringBuzz, settings) }.last()
+
+        assertEquals(82.41, requireNotNull(result).hertz, 0.01)
     }
 
     @Test

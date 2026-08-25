@@ -42,6 +42,21 @@ data class TrainerStats(val correct: Int = 0, val attempts: Int = 0) {
 class UserPreferences(context: Context) {
     private val preferences = context.applicationContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
+    init {
+        val defaultsVersion = preferences.valueOrDefault(0) { getInt(TUNER_DEFAULTS_VERSION_KEY, 0) }
+        if (defaultsVersion < TUNER_DEFAULTS_VERSION) {
+            val confirmationMillis = preferences.valueOrDefault(LEGACY_CONFIRMATION_MILLIS) {
+                getLong(CONFIRMATION_MILLIS_KEY, LEGACY_CONFIRMATION_MILLIS)
+            }
+            preferences.edit {
+                if (confirmationMillis == LEGACY_CONFIRMATION_MILLIS) {
+                    remove(CONFIRMATION_MILLIS_KEY)
+                }
+                putInt(TUNER_DEFAULTS_VERSION_KEY, TUNER_DEFAULTS_VERSION)
+            }
+        }
+    }
+
     var mode: TunerMode
         get() = preferences.enumValue(MODE_KEY, TunerMode.AUTO)
         set(value) = preferences.edit { putString(MODE_KEY, value.name) }
@@ -240,6 +255,7 @@ class UserPreferences(context: Context) {
         const val HARMONIC_PROTECTION_KEY = "tuner_harmonic_protection"
         const val IN_TUNE_CENTS_KEY = "tuner_in_tune_cents"
         const val CONFIRMATION_MILLIS_KEY = "tuner_confirmation_millis"
+        const val TUNER_DEFAULTS_VERSION_KEY = "tuner_defaults_version"
         const val READING_HOLD_MILLIS_KEY = "tuner_reading_hold_millis"
         const val INPUT_SOURCE_KEY = "tuner_input_source"
         const val METRONOME_BPM_KEY = "metronome_bpm"
@@ -252,6 +268,8 @@ class UserPreferences(context: Context) {
         const val METRONOME_SOUND_KEY = "metronome_sound"
         const val METRONOME_MUTED_KEY = "metronome_muted"
         const val FAVORITES_KEY = "favorite_ids"
+        const val TUNER_DEFAULTS_VERSION = 1
+        const val LEGACY_CONFIRMATION_MILLIS = 250L
         const val CUSTOM_TUNINGS_KEY = "custom_tunings"
         const val TRAINER_CORRECT_KEY = "trainer_correct"
         const val TRAINER_ATTEMPTS_KEY = "trainer_attempts"
