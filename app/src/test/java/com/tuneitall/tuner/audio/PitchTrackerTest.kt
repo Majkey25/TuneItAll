@@ -88,22 +88,37 @@ class PitchTrackerTest {
     }
 
     @Test
-    fun `unvoiced frames return null and clear old state after three empty frames`() {
+    fun `unvoiced frames return null and clear old state after eight empty frames`() {
         val tracker = PitchTracker()
         repeat(5) { tracker.update(frame(440.0, rms = 0.2), settings) }
 
         assertNull(tracker.update(emptyFrame(unvoicedProbability = 1.0), settings))
-        repeat(2) { assertNull(tracker.update(emptyFrame(unvoicedProbability = 0.01), settings)) }
+        repeat(7) { assertNull(tracker.update(emptyFrame(unvoicedProbability = 0.01), settings)) }
 
         assertEquals(880.0, requireNotNull(tracker.update(frame(880.0, rms = 0.2), settings)).hertz, 1.0)
     }
 
     @Test
-    fun `three RMS-gated frames clear old pitch state`() {
+    fun `short dropouts retain a decaying guitar pitch but a long dropout releases it`() {
+        val retained = PitchTracker()
+        repeat(5) { retained.update(frame(82.41, rms = 0.0002), settings) }
+        repeat(7) { assertNull(retained.update(emptyFrame(unvoicedProbability = 1.0), settings)) }
+
+        assertEquals(82.41, requireNotNull(retained.update(frame(880.0, rms = 0.0001), settings)).hertz, 0.01)
+
+        val released = PitchTracker()
+        repeat(5) { released.update(frame(82.41, rms = 0.0002), settings) }
+        repeat(8) { assertNull(released.update(emptyFrame(unvoicedProbability = 1.0), settings)) }
+
+        assertEquals(880.0, requireNotNull(released.update(frame(880.0, rms = 0.0001), settings)).hertz, 0.01)
+    }
+
+    @Test
+    fun `eight RMS-gated frames clear old pitch state`() {
         val tracker = PitchTracker()
         repeat(5) { tracker.update(frame(440.0, rms = 0.2), settings) }
 
-        repeat(3) { assertNull(tracker.update(gatedFrame(rms = 0.001), settings)) }
+        repeat(8) { assertNull(tracker.update(gatedFrame(rms = 0.001), settings)) }
 
         assertEquals(880.0, requireNotNull(tracker.update(frame(880.0, rms = 0.2), settings)).hertz, 1.0)
     }

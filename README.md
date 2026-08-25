@@ -13,17 +13,17 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing prerelease `0.3.0-alpha.10`. Intoniva is in Google Play
+Status: public testing prerelease `0.3.0-alpha.11`. Intoniva is in Google Play
 closed-testing review and is not available in production.
 
 ## Download
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.10/Intoniva-v0.3.0-alpha.10-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.11/Intoniva-v0.3.0-alpha.11-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.10).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.11).
 
 ## Features
 
@@ -53,7 +53,7 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
   Universal default, with optional quiet-room, unplugged-electric, noisy-room,
   and fast-response profiles.
 - Tap any string to switch to Manual mode and hear its generated reference tone.
-- One confirmation chime after the note stays in tune for 250 ms. It respects
+- One confirmation chime after the note stays in tune for 900 ms. It respects
   Silent/DND, is excluded from pitch detection, and never creates a notification
   or popup.
 - Sharps or flats notation and generated reference audio with no bundled samples.
@@ -92,8 +92,8 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
 
 One native Kotlin application module:
 
-- `AudioRecord` mono PCM16 input with processed, unprocessed, and compatible
-  voice-recognition modes.
+- `AudioRecord` mono PCM16 input that prefers unprocessed capture, then clean
+  voice recognition, with the processed microphone as the last fallback.
 - A clean-room, pYIN-derived streaming path: multi-candidate YIN analysis,
   adaptive noise rejection, and a bounded online pitch tracker.
 - Equal-temperament note math, target hysteresis, and needle-only visual
@@ -126,9 +126,10 @@ The real metronome player ran at 137 BPM for five minutes with zero reported
 `AudioTrack` underruns. A separate 400 BPM run kept one output session with zero
 underruns before and after a confirmed 400 → 137 BPM edit. A generated four-second
 C-major WAV completed picker, decoding, recognition, timeline, playback, and
-position-sync checks on the API 35 emulator. The target Samsung `SM-S938B` was not
-available for this acceptance run, so quiet/room-noise behavior and acoustic
-sound quality still require physical-device listening before a broader release.
+position-sync checks on the API 35 emulator. Huawei `YAL-L21` physical QA
+confirmed 48 kHz mono Voice Recognition capture without Huawei preprocessing,
+AGC, NS, or AEC. Acoustic quality still requires the instrument itself;
+emulator audio is not treated as microphone evidence.
 
 ## Build
 
@@ -172,7 +173,7 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-Pre-release tags such as `v0.3.0-alpha.10` build a verified, debug-signed APK and
+Pre-release tags such as `v0.3.0-alpha.11` build a verified, debug-signed APK and
 publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
 signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.

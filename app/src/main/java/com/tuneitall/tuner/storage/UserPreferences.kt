@@ -48,9 +48,18 @@ class UserPreferences(context: Context) {
             val confirmationMillis = preferences.valueOrDefault(LEGACY_CONFIRMATION_MILLIS) {
                 getLong(CONFIRMATION_MILLIS_KEY, LEGACY_CONFIRMATION_MILLIS)
             }
+            val readingHoldMillis = preferences.valueOrDefault(LEGACY_READING_HOLD_MILLIS) {
+                getLong(READING_HOLD_MILLIS_KEY, LEGACY_READING_HOLD_MILLIS)
+            }
             preferences.edit {
                 if (confirmationMillis == LEGACY_CONFIRMATION_MILLIS) {
                     remove(CONFIRMATION_MILLIS_KEY)
+                }
+                if (
+                    defaultsVersion < 2 &&
+                    (readingHoldMillis == 450L || readingHoldMillis == LEGACY_READING_HOLD_MILLIS)
+                ) {
+                    remove(READING_HOLD_MILLIS_KEY)
                 }
                 putInt(TUNER_DEFAULTS_VERSION_KEY, TUNER_DEFAULTS_VERSION)
             }
@@ -268,8 +277,9 @@ class UserPreferences(context: Context) {
         const val METRONOME_SOUND_KEY = "metronome_sound"
         const val METRONOME_MUTED_KEY = "metronome_muted"
         const val FAVORITES_KEY = "favorite_ids"
-        const val TUNER_DEFAULTS_VERSION = 1
+        const val TUNER_DEFAULTS_VERSION = 2
         const val LEGACY_CONFIRMATION_MILLIS = 250L
+        const val LEGACY_READING_HOLD_MILLIS = 600L
         const val CUSTOM_TUNINGS_KEY = "custom_tunings"
         const val TRAINER_CORRECT_KEY = "trainer_correct"
         const val TRAINER_ATTEMPTS_KEY = "trainer_attempts"

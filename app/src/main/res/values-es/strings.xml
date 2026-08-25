@@ -209,7 +209,7 @@
     <string name="reading_hold_help">Define cuánto tiempo permanece visible la última lectura fiable.</string>
     <string name="reading_hold_value">Retención de lectura: %1$d ms</string>
     <string name="audio_input">Entrada de audio</string>
-    <string name="audio_input_help">Auto usa el micrófono procesado del teléfono para instrumentos suaves. RAW evita el procesamiento. Compatible es el modo alternativo.</string>
+    <string name="audio_input_help">Auto elige la entrada compatible más limpia: primero RAW y después Compatible sin efectos de voz. El micrófono procesado queda como último recurso.</string>
     <string name="audio_input_auto">Auto</string>
     <string name="audio_input_raw">Sin procesar</string>
     <string name="audio_input_compatible">Compatible</string>

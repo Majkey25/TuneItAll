@@ -209,7 +209,7 @@
     <string name="reading_hold_help">Définit combien de temps la dernière mesure fiable reste visible.</string>
     <string name="reading_hold_value">Maintien de l’affichage : %1$d ms</string>
     <string name="audio_input">Entrée audio</string>
-    <string name="audio_input_help">Auto utilise le microphone traité du téléphone pour les instruments faibles. RAW contourne le traitement. Compatible est le mode de secours.</string>
+    <string name="audio_input_help">Auto choisit l’entrée compatible la plus propre : RAW d’abord, puis Compatible sans effets vocaux. Le microphone traité reste le dernier recours.</string>
     <string name="audio_input_auto">Auto</string>
     <string name="audio_input_raw">Brute</string>
     <string name="audio_input_compatible">Compatible</string>

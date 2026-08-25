@@ -13,6 +13,7 @@ Features:
 • Click-free reference tone when a string is tapped
 • Stable in-tune confirmation sound
 • Universal quiet-input engine with temporal buzz and broadband-noise separation
+• Clean Auto input: Raw when supported, otherwise effect-free compatible capture
 • Universal, unplugged-electric, quiet-room, noisy-room, and fast-response tuner profiles
 • Independent microphone sensitivity and needle stability controls
 • Mechanical metronome from 20 to 400 BPM with meter, subdivision, accent, sound, volume, mute, and count-in controls

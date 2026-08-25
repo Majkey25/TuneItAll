@@ -1,0 +1,1 @@
+Auto nyní obchází hlasové zpracování: použije RAW, nebo kompatibilní vstup bez efektů. Doznívající kytara dostane delší adaptivní okno, krátké výpadky zachovají tón a údaj zůstane sekundu viditelný. Ladění se otevřou rovnou v Oblíbených, pokud nějaká existují.

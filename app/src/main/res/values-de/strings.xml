@@ -204,7 +204,7 @@
     <string name="reading_hold_help">Legt fest, wie lange die letzte verlässliche Anzeige sichtbar bleibt.</string>
     <string name="reading_hold_value">Anzeige halten: %1$d ms</string>
     <string name="audio_input">Audioeingang</string>
-    <string name="audio_input_help">Auto nutzt den verarbeiteten Telefonmikrofonpfad für leise Instrumente. RAW umgeht die Verarbeitung. Kompatibel ist der Ausweichmodus.</string>
+    <string name="audio_input_help">Auto wählt den saubersten unterstützten Eingang: zuerst RAW, dann Kompatibel ohne Spracheffekte. Das verarbeitete Mikrofon ist nur die letzte Ausweichmöglichkeit.</string>
     <string name="audio_input_auto">Auto</string>
     <string name="audio_input_raw">Roh</string>
     <string name="audio_input_compatible">Kompatibel</string>

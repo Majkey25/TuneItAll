@@ -56,7 +56,7 @@ fun TuningLibraryScreen(
     var query by remember { mutableStateOf("") }
     var instrument by remember { mutableStateOf<Instrument?>(null) }
     var stringCount by remember { mutableStateOf<Int?>(null) }
-    var favoritesOnly by remember { mutableStateOf(false) }
+    var favoritesOnly by remember(favoriteIds) { mutableStateOf(favoriteIds.isNotEmpty()) }
     val textButtonColors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
     val filtered = presets.filter { preset ->
         val normalizedQuery = query.trim().lowercase(Locale.ROOT)

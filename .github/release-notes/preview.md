@@ -1,4 +1,4 @@
-Intoniva `v0.3.0-alpha.10` prerelease testing build.
+Intoniva `v0.3.0-alpha.11` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -12,6 +12,15 @@ permission.
 
 Highlights:
 
+- Physical Huawei YAL-L21 diagnostics found that processed `MIC` capture kept
+  Huawei's voice preprocessing enabled. Auto now selects Raw when supported,
+  otherwise effect-free Voice Recognition, with processed `MIC` last.
+- Adaptive decay analysis uses the full 8192-sample guitar window only when the
+  recent tail weakens; steady notes retain the faster short-window path.
+- Brief capture gaps preserve pitch state for eight frames and the last reliable
+  reading remains visible for one second.
+- Opening Tunings now activates the first-position Favorites filter whenever
+  favorite tunings exist.
 - Universal now uses the same maximum-sensitivity engine for quiet guitar,
   bass, ukulele, and chromatic tuning without requiring a special profile.
 - Stable low-probability pYIN candidates can build confidence over time instead
@@ -20,9 +29,7 @@ Highlights:
   noise remains rejected by periodicity and temporal continuity checks.
 - Multi-resolution 8192-sample analysis improves low notes while a 2048-sample
   hop retains frequent updates and bounded detector work.
-- Auto input enables Android capture gain when the device exposes it and
-  disables speech-oriented noise suppression and echo cancellation. Raw and
-  Compatible inputs remain untouched.
+- Auto input avoids voice effects before falling back to processed capture.
 - Confirmation now requires 900 ms continuously in tune. Its 90 ms chime keeps
   instrument-mode analysis live; Chromatic ignores only its 300 ms overlap.
 - Favorite tunings sort to the top and the Favorites filter appears first.
@@ -30,8 +37,8 @@ Highlights:
   collapsed floating control.
 - New user-facing name: Intoniva. The Android application ID remains
   `com.tuneitall.tuner`, so this installs as an update rather than a new app.
-- Auto capture now uses Android's processed microphone path, and maximum
-  sensitivity no longer remains pinned behind the learned room-noise floor.
+- Maximum sensitivity is independent from visible needle stability and the
+  learned room-noise floor.
 - Universal and Unplugged electric profiles keep microphone sensitivity high
   while smoothing the visible needle independently.
 - Auto-scroll replaces the duplicate Library bottom destination; tunings remain
@@ -76,9 +83,9 @@ Highlights:
 
 The app passed unit, Lint, API 35 Compose, audio-session, local-file decoding,
 timeline, playback, and runtime UI gates.
-Auto-scroll Hide and reopen passed on a clean Android 15 emulator without a
-process restart or runtime exception. Synthetic quiet, buzz, bass, guitar,
-ukulele, silence, and broadband-noise regressions pass. Final acoustic behavior
-still requires physical-device listening before a broader release.
+Auto-scroll Hide and reopen passed on Android 15. Synthetic quiet, decaying,
+buzz, bass, guitar, ukulele, silence, and broadband-noise regressions pass.
+Huawei YAL-L21 physical QA verified 48 kHz Voice Recognition capture with no
+active preprocessing effects; final acoustic judgment still requires a guitar.
 
 The attached `.sha256` file verifies the downloaded APK.

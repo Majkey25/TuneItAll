@@ -91,13 +91,13 @@ class AudioPipelineTest {
     }
 
     @Test
-    fun `auto capture prefers processed microphone gain while raw stays explicit`() {
+    fun `auto capture prefers the cleanest supported source while raw stays explicit`() {
         assertEquals(
-            MediaRecorder.AudioSource.MIC,
+            MediaRecorder.AudioSource.UNPROCESSED,
             resolveAudioSource(AudioInputSource.AUTO, rawSupported = true),
         )
         assertEquals(
-            MediaRecorder.AudioSource.MIC,
+            MediaRecorder.AudioSource.VOICE_RECOGNITION,
             resolveAudioSource(AudioInputSource.AUTO, rawSupported = false),
         )
         assertEquals(
@@ -115,10 +115,18 @@ class AudioPipelineTest {
     }
 
     @Test
-    fun `auto and raw capture retain one compatible fallback`() {
+    fun `auto capture falls back from raw to clean compatible then microphone`() {
         assertEquals(
-            listOf(MediaRecorder.AudioSource.MIC, MediaRecorder.AudioSource.VOICE_RECOGNITION),
+            listOf(
+                MediaRecorder.AudioSource.UNPROCESSED,
+                MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                MediaRecorder.AudioSource.MIC,
+            ),
             audioSourceAttempts(AudioInputSource.AUTO, rawSupported = true).toList(),
+        )
+        assertEquals(
+            listOf(MediaRecorder.AudioSource.VOICE_RECOGNITION, MediaRecorder.AudioSource.MIC),
+            audioSourceAttempts(AudioInputSource.AUTO, rawSupported = false).toList(),
         )
         assertEquals(
             listOf(MediaRecorder.AudioSource.VOICE_RECOGNITION),

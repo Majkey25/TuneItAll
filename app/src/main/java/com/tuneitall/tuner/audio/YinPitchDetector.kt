@@ -108,7 +108,19 @@ class YinPitchDetector {
         } else if (samples.size >= LONG_WINDOW_SIZE) {
             if (recentWindow.size != SHORT_WINDOW_SIZE) recentWindow = ShortArray(SHORT_WINDOW_SIZE)
             samples.copyInto(recentWindow, startIndex = samples.size - SHORT_WINDOW_SIZE)
-            analysisSamples = recentWindow
+            analysisSamples = if (
+                samples.size % 2 == 0 &&
+                maxFrequency <= sampleRate / 4.0 &&
+                calculateRms(recentWindow) < calculateRms(samples) * DECAY_WINDOW_RATIO
+            ) {
+                val outputSize = samples.size / 2
+                if (decimated.size != outputSize) decimated = ShortArray(outputSize)
+                decimate(samples, decimated)
+                analysisSampleRate = sampleRate / 2
+                decimated
+            } else {
+                recentWindow
+            }
         }
 
         val tauMin = floor(analysisSampleRate / maxFrequency).toInt().coerceAtLeast(MIN_TAU)
@@ -281,6 +293,7 @@ class YinPitchDetector {
         const val LOW_RANGE_MAX_HERTZ = 150.0
         const val HIGH_RANGE_MIN_HERTZ = 150.0
         const val WIDE_RANGE_MAX_HERTZ = 1_000.0
+        const val DECAY_WINDOW_RATIO = 0.75
         const val MIN_TAU = 2
         const val PCM_SCALE = 32768.0
         const val NO_TROUGH_MIN_PERIODICITY = 0.25

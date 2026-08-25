@@ -139,6 +139,27 @@ class YinPitchDetectorTest {
     }
 
     @Test
+    fun `analysis uses the full decaying guitar window instead of only its noisy tail`() {
+        val expected = 82.41
+        val random = Random(31)
+        val samples = ShortArray(SAMPLES_SIZE) { index ->
+            val seconds = index.toDouble() / SAMPLE_RATE
+            val envelope = 0.00028 * (1.0 - index.toDouble() / SAMPLES_SIZE).coerceAtLeast(0.03)
+            val guitar = envelope * sin(2.0 * PI * expected * seconds) +
+                envelope * 0.45 * sin(4.0 * PI * expected * seconds)
+            val noise = 0.000045 * random.nextDouble(-1.0, 1.0)
+            ((guitar + noise).coerceIn(-1.0, 1.0) * Short.MAX_VALUE).toInt().toShort()
+        }
+
+        val candidate = assertNotNull(
+            detector.analyze(samples, SAMPLE_RATE, 69.0, 420.0).candidates
+                .minByOrNull { abs(MusicMath.cents(it.hertz, expected)) },
+        )
+
+        assertTrue(abs(MusicMath.cents(candidate.hertz, expected)) <= 10.0)
+    }
+
+    @Test
     fun `default universal pipeline acquires quiet buzzing guitar bass and ukulele`() {
         listOf(
             Triple(41.20, 34.0, 120.0),
@@ -239,5 +260,6 @@ class YinPitchDetectorTest {
 
     private companion object {
         const val SAMPLE_RATE = 48_000
+        const val SAMPLES_SIZE = 8192
     }
 }

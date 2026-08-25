@@ -13,6 +13,7 @@ Funkce:
 • Plynulý referenční tón po klepnutí na strunu
 • Zvukové potvrzení stabilního naladění
 • Univerzální citlivý vstup s časovým rozlišením bzučící struny a širokopásmového šumu
+• Čistý Auto vstup: RAW, pokud je dostupný, jinak kompatibilní snímání bez efektů
 • Profily Univerzální, Elektrická bez zesilovače, Tichá místnost, Hlučná místnost a Rychlá odezva
 • Nezávislé nastavení citlivosti mikrofonu a stability ukazatele
 • Mechanický metronom od 20 do 400 BPM s nastavením taktu, dělení, přízvuku, zvuku, hlasitosti, ztlumení a odpočtu

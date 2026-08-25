@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0-alpha.11 — 2026-08-25
+
+- Make Auto prefer unprocessed capture when supported, then Android's clean
+  voice-recognition source, with processed `MIC` as the last fallback.
+- Bypass Huawei's active voice preprocessing and noise gate on the tested
+  YAL-L21 while retaining 48 kHz mono PCM input.
+- Analyze the full decaying guitar window when its recent tail weakens, while
+  preserving the faster short window for steady notes.
+- Retain pitch state across brief eight-frame capture gaps and hold the last
+  reliable reading for one second.
+- Open the tuning picker in Favorites mode whenever favorite tunings exist.
+
 ## 0.3.0-alpha.10 — 2026-08-25
 
 - Make Universal detect quiet instruments without requiring the unplugged

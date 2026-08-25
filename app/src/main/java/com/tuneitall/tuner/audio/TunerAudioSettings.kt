@@ -14,7 +14,7 @@ data class TunerAudioSettings(
     val harmonicProtection: Int = 90,
     val inTuneCents: Int = 3,
     val confirmationMillis: Long = 900,
-    val readingHoldMillis: Long = 450,
+    val readingHoldMillis: Long = 1_000,
     val inputSource: AudioInputSource = AudioInputSource.AUTO,
 ) {
     init {
@@ -36,9 +36,15 @@ enum class TunerProfile(val settings: TunerAudioSettings) {
             needleStability = 85,
             noiseRejection = 0,
             harmonicProtection = 95,
-            readingHoldMillis = 600,
         ),
     ),
     NOISY_ROOM(TunerAudioSettings(sensitivity = DetectionSensitivity(70), noiseRejection = 70, harmonicProtection = 95)),
-    FAST_RESPONSE(TunerAudioSettings(response = ResponseMode.FAST, needleStability = 35, harmonicProtection = 60)),
+    FAST_RESPONSE(
+        TunerAudioSettings(
+            response = ResponseMode.FAST,
+            needleStability = 35,
+            harmonicProtection = 60,
+            readingHoldMillis = 450,
+        ),
+    ),
 }

@@ -17,7 +17,7 @@ class TunerAudioSettingsTest {
                 harmonicProtection = 90,
                 inTuneCents = 3,
                 confirmationMillis = 900,
-                readingHoldMillis = 450,
+                readingHoldMillis = 1_000,
                 inputSource = AudioInputSource.AUTO,
             ),
             TunerProfile.BALANCED.settings,
@@ -34,7 +34,7 @@ class TunerAudioSettingsTest {
         assertEquals(ResponseMode.STABLE, settings.response)
         assertEquals(85, settings.needleStability)
         assertEquals(0, settings.noiseRejection)
-        assertEquals(600L, settings.readingHoldMillis)
+        assertEquals(1_000L, settings.readingHoldMillis)
         assertEquals(AudioInputSource.AUTO, settings.inputSource)
     }
 

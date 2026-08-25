@@ -125,6 +125,6 @@ class PitchTracker {
         const val ONSET_RATIO = 1.8
         const val ONSET_COST_SCALE = 0.25
         const val SAME_PITCH_CENTS = 15.0
-        const val MAX_MISSING_FRAMES = 3
+        const val MAX_MISSING_FRAMES = 8
     }
 }

@@ -204,7 +204,7 @@
     <string name="reading_hold_help">Sets how long the last reliable reading stays visible.</string>
     <string name="reading_hold_value">Reading hold: %1$d ms</string>
     <string name="audio_input">Audio input</string>
-    <string name="audio_input_help">Auto uses the phone’s processed microphone path for quiet instruments. Raw bypasses processing. Compatible is the fallback.</string>
+    <string name="audio_input_help">Auto chooses the cleanest supported input: Raw first, then Compatible without voice effects. The processed microphone is only the last fallback.</string>
     <string name="audio_input_auto">Auto</string>
     <string name="audio_input_raw">Raw</string>
     <string name="audio_input_compatible">Compatible</string>

@@ -214,7 +214,7 @@
     <string name="reading_hold_help">Nastavuje, jak dlouho zůstane poslední spolehlivá hodnota viditelná.</string>
     <string name="reading_hold_value">Podržení hodnoty: %1$d ms</string>
     <string name="audio_input">Zvukový vstup</string>
-    <string name="audio_input_help">Auto používá zpracovaný mikrofon telefonu pro tiché nástroje. RAW zpracování obchází. Kompatibilní režim je záložní.</string>
+    <string name="audio_input_help">Auto vybere nejčistší podporovaný vstup: nejdřív RAW, potom Kompatibilní bez hlasových efektů. Zpracovaný mikrofon použije jen jako poslední možnost.</string>
     <string name="audio_input_auto">Auto</string>
     <string name="audio_input_raw">Nezpracovaný</string>
     <string name="audio_input_compatible">Kompatibilní</string>

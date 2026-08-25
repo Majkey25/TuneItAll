@@ -1,0 +1,1 @@
+Auto now bypasses voice processing: Raw when supported, otherwise effect-free compatible capture. Decaying guitar notes use a longer adaptive window, short dropouts retain pitch state, and readings remain visible for one second. Tunings open directly in Favorites when favorites exist.
