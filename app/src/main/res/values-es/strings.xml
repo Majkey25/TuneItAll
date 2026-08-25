@@ -48,7 +48,7 @@
     <string name="destination_auto_scroll">Desplazar</string>
     <string name="destination_trainer">Entrenador</string>
     <string name="chords_library">Biblioteca de acordes</string>
-    <string name="song_chords">Acordes de canción</string>
+    <string name="song_chords">Obtener acordes de una canción</string>
     <string name="choose_tuning">Elegir afinación</string>
     <string name="choose_tuning_current">Elegir afinación. Actual: %1$s</string>
     <string name="chord_major">Mayor</string>
@@ -75,6 +75,13 @@
     <string name="song_error_decode">No se pudo analizar el archivo de audio.</string>
     <string name="song_error_no_chords">No se encontraron acordes mayores, menores o de séptima dominante estables.</string>
     <string name="song_error_playback">No se pudo reproducir el archivo de audio.</string>
+    <string name="get_tempo_from_song">Obtener tempo de una canción</string>
+    <string name="tempo_song_description">Elige un archivo de audio para estimar su tempo localmente en este dispositivo.</string>
+    <string name="tempo_detected">Tempo detectado: %1$d BPM</string>
+    <string name="tempo_confidence">Confianza de la estimación: %1$d%%</string>
+    <string name="tempo_use">Usar %1$d BPM</string>
+    <string name="tempo_octave_note">Algunas canciones pueden sentirse correctas a la mitad o al doble de este tempo. Ajusta los BPM si hace falta.</string>
+    <string name="tempo_error_no_stable_beat">No se encontró un pulso estable en este audio.</string>
     <string name="trainer_learn">Aprender</string>
     <string name="trainer_quiz">Prueba</string>
     <string name="trainer_chords">Acordes</string>
@@ -112,9 +119,11 @@
     <string name="metronome_start">Iniciar</string>
     <string name="metronome_stop">Detener</string>
     <string name="metronome_sound">Tipo de sonido</string>
+    <string name="metronome_sound_deep">Grave</string>
     <string name="metronome_sound_wood">Madera</string>
     <string name="metronome_sound_click">Clic</string>
     <string name="metronome_sound_rim">Aro</string>
+    <string name="metronome_sound_bright">Brillante</string>
     <string name="metronome_volume_value">Volumen: %1$d%%</string>
     <string name="metronome_mute">Silenciar</string>
     <string name="metronome_count_in">Compases de entrada</string>

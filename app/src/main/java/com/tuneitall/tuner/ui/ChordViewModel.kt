@@ -1,11 +1,10 @@
 package com.tuneitall.tuner.ui
 
 import android.app.Application
-import android.database.Cursor
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
-import android.provider.OpenableColumns
+import com.tuneitall.tuner.audio.audioDisplayName
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tuneitall.tuner.audio.SongAudioDecoder
@@ -120,7 +119,7 @@ class ChordViewModel internal constructor(
         analysisJob = viewModelScope.launch(Dispatchers.IO) {
             val job = currentCoroutineContext()[Job]
             try {
-                val resolvedName = displayName(uri)
+                val resolvedName = audioDisplayName(getApplication(), uri)
                 if (generation == analysisGeneration) {
                     mutableUiState.update { state -> state.copy(fileName = resolvedName) }
                 }
@@ -306,28 +305,6 @@ class ChordViewModel internal constructor(
         val activePlayer = player
         player = null
         activePlayer?.release()
-    }
-
-    private fun displayName(uri: Uri): String {
-        var cursor: Cursor? = null
-        return try {
-            cursor = getApplication<Application>().contentResolver.query(
-                uri,
-                arrayOf(OpenableColumns.DISPLAY_NAME),
-                null,
-                null,
-                null,
-            )
-            if (cursor?.moveToFirst() == true) {
-                cursor.getString(0).orEmpty().ifBlank { uri.lastPathSegment.orEmpty() }
-            } else {
-                uri.lastPathSegment.orEmpty()
-            }
-        } catch (_: RuntimeException) {
-            uri.lastPathSegment.orEmpty()
-        } finally {
-            cursor?.close()
-        }.ifBlank { "Audio" }
     }
 
     private fun SongDecodeError.toUiError(): SongChordError = when (this) {

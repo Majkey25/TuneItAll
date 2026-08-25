@@ -8,9 +8,11 @@ value class Bpm(val value: Int) {
 }
 
 enum class MetronomeSound {
+    DEEP,
     WOOD,
     CLICK,
     RIM,
+    BRIGHT,
 }
 
 data class MetronomeSettings(

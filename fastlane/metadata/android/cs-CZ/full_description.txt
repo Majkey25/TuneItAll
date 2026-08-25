@@ -16,7 +16,8 @@ Funkce:
 • Čistý Auto vstup: RAW, pokud je dostupný, jinak kompatibilní snímání bez efektů
 • Profily Univerzální, Elektrická bez zesilovače, Tichá místnost, Hlučná místnost a Rychlá odezva
 • Nezávislé nastavení citlivosti mikrofonu a stability ukazatele
-• Mechanický metronom od 20 do 400 BPM s nastavením taktu, dělení, přízvuku, zvuku, hlasitosti, ztlumení a odpočtu
+• Mechanický metronom od 20 do 400 BPM s nastavením taktu, dělení, přízvuku, pěti čistými zvuky, hlasitosti, ztlumení a odpočtu
+• Offline zjištění tempa vybrané písničky s jistotou odhadu a použitím BPM jedním klepnutím
 • Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
 • Experimentální offline časová osa akordů z vybraného zvukového souboru, přehrávání a transpozice
 • Učení akordů, kvíz akordů a rozpoznávání 12 tónů sluchem s místním skóre

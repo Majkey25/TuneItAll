@@ -19,6 +19,8 @@
 - [ ] Inspect 6/7/8/9-string, bass, and ukulele headstocks on a real device.
 - [ ] Test local MP3, AAC, FLAC, and WAV selection, decoding, chord timeline,
       playback, seek, transposition, cancellation, and unsupported-file errors.
+- [ ] Test tempo detection with 60, 90, 120, and 180 BPM songs, silence, missing
+      beats, cancellation, and half/double-tempo ambiguity.
 - [ ] Confirm song analysis never adds storage or network permissions.
 - [ ] Supply the private upload key outside Git and build a signed release AAB.
 - [ ] Enrol/configure Play App Signing and retain the upload-key recovery plan.

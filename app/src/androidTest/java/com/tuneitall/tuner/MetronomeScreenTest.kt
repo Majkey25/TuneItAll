@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.tuneitall.tuner.metronome.Bpm
@@ -65,5 +66,28 @@ class MetronomeScreenTest {
         compose.onNodeWithTag("metronome_rhythm_summary").performClick()
         compose.onNodeWithTag("metronome_settings_controls").assertIsDisplayed()
         compose.runOnIdle { assertEquals(0, globalSettingsCount) }
+    }
+
+    @Test
+    fun detectedSongTempoCanBeApplied() {
+        var applyCount = 0
+        compose.setContent {
+            TuneItAllTheme(darkTheme = false) {
+                MetronomeScreen(
+                    state = MetronomeUiState(detectedBpm = 132, tempoConfidence = 0.88),
+                    phaseProvider = { 0.0 },
+                    onBpmChange = {},
+                    onTap = {},
+                    onStart = {},
+                    onStop = {},
+                    onApplyDetectedTempo = { applyCount++ },
+                    onOpenSettings = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("tempo_detected").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("tempo_apply").performClick()
+        compose.runOnIdle { assertEquals(1, applyCount) }
     }
 }

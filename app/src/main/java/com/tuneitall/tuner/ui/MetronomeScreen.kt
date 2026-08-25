@@ -1,6 +1,9 @@
 package com.tuneitall.tuner.ui
 
+import android.net.Uri
 import android.view.Choreographer
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -28,6 +31,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -78,6 +82,7 @@ fun MetronomeScreen(
     state: MetronomeUiState,
     phaseProvider: () -> Double,
     onBpmChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
     onNumeratorChange: (Int) -> Unit = {},
     onDenominatorChange: (Int) -> Unit = {},
     onSubdivisionChange: (Int) -> Unit = {},
@@ -89,11 +94,15 @@ fun MetronomeScreen(
     onVolumeChange: (Int) -> Unit = {},
     onMutedChange: (Boolean) -> Unit = {},
     onCountInChange: (Int) -> Unit = {},
+    onLoadTempoSong: (Uri) -> Unit = {},
+    onApplyDetectedTempo: () -> Unit = {},
     onOpenSettings: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     var showQuickSettings by rememberSaveable { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val songLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(onLoadTempoSong)
+    }
 
     Column(
         modifier = modifier
@@ -109,6 +118,11 @@ fun MetronomeScreen(
         PhysicalMetronome(state.playing, phaseProvider)
         PlaybackControls(state, onTap, onStart, onStop)
         RhythmSummary(state, onClick = { showQuickSettings = true })
+        TempoSongPanel(
+            state = state,
+            onChooseAudio = { songLauncher.launch(arrayOf("audio/*")) },
+            onApplyDetectedTempo = onApplyDetectedTempo,
+        )
         Spacer(Modifier.height(4.dp))
     }
     if (showQuickSettings) {
@@ -123,6 +137,70 @@ fun MetronomeScreen(
             onVolumeChange = onVolumeChange,
             onMutedChange = onMutedChange,
             onCountInChange = onCountInChange,
+        )
+    }
+}
+
+@Composable
+private fun TempoSongPanel(
+    state: MetronomeUiState,
+    onChooseAudio: () -> Unit,
+    onApplyDetectedTempo: () -> Unit,
+) {
+    Text(
+        text = stringResource(R.string.get_tempo_from_song),
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+    )
+    Text(
+        text = stringResource(R.string.tempo_song_description),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    OutlinedButton(
+        onClick = onChooseAudio,
+        enabled = !state.tempoAnalyzing,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("tempo_choose_audio"),
+    ) {
+        Text(stringResource(if (state.tempoFileName == null) R.string.import_audio else R.string.replace_audio))
+    }
+    state.tempoFileName?.let { fileName ->
+        Text(fileName, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("tempo_file_name"))
+    }
+    if (state.tempoAnalyzing) {
+        LinearProgressIndicator(
+            progress = { state.tempoProgress / 100f },
+            modifier = Modifier.fillMaxWidth().testTag("tempo_analysis_progress"),
+        )
+        Text(stringResource(R.string.song_analysis_progress, state.tempoProgress))
+    }
+    state.detectedBpm?.let { bpm ->
+        Text(
+            text = stringResource(R.string.tempo_detected, bpm),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.testTag("tempo_detected"),
+        )
+        state.tempoConfidence?.let { confidence ->
+            Text(stringResource(R.string.tempo_confidence, (confidence * 100).toInt().coerceIn(0, 100)))
+        }
+        Button(
+            onClick = onApplyDetectedTempo,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("tempo_apply"),
+        ) {
+            Text(stringResource(R.string.tempo_use, bpm))
+        }
+        Text(
+            stringResource(R.string.tempo_octave_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    state.tempoError?.let { error ->
+        Text(
+            text = stringResource(tempoSongErrorResource(error)),
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.testTag("tempo_error"),
         )
     }
 }
@@ -509,4 +587,13 @@ internal fun metronomeErrorResource(error: MetronomeError): Int = when (error) {
     MetronomeError.OUTPUT_UNAVAILABLE -> R.string.metronome_error_output_unavailable
     MetronomeError.PLAYBACK_STOPPED -> R.string.metronome_error_playback_stopped
     MetronomeError.STOP_FAILED -> R.string.metronome_error_stop_failed
+}
+
+@StringRes
+internal fun tempoSongErrorResource(error: TempoSongError): Int = when (error) {
+    TempoSongError.NO_AUDIO_TRACK -> R.string.song_error_no_audio
+    TempoSongError.TOO_LONG -> R.string.song_error_too_long
+    TempoSongError.UNSUPPORTED_PCM -> R.string.song_error_pcm
+    TempoSongError.DECODE_FAILED -> R.string.song_error_decode
+    TempoSongError.NO_TEMPO -> R.string.tempo_error_no_stable_beat
 }

@@ -48,7 +48,7 @@
     <string name="destination_auto_scroll">Défilement</string>
     <string name="destination_trainer">Entraînement</string>
     <string name="chords_library">Bibliothèque d’accords</string>
-    <string name="song_chords">Accords du morceau</string>
+    <string name="song_chords">Trouver les accords d’un morceau</string>
     <string name="choose_tuning">Choisir l’accordage</string>
     <string name="choose_tuning_current">Choisir l’accordage. Actuel : %1$s</string>
     <string name="chord_major">Majeur</string>
@@ -75,6 +75,13 @@
     <string name="song_error_decode">Le fichier audio n’a pas pu être analysé.</string>
     <string name="song_error_no_chords">Aucun accord majeur, mineur ou de septième de dominante stable n’a été trouvé.</string>
     <string name="song_error_playback">Le fichier audio n’a pas pu être lu.</string>
+    <string name="get_tempo_from_song">Trouver le tempo d’un morceau</string>
+    <string name="tempo_song_description">Choisissez un fichier audio pour estimer son tempo localement sur cet appareil.</string>
+    <string name="tempo_detected">Tempo détecté : %1$d BPM</string>
+    <string name="tempo_confidence">Fiabilité de l’estimation : %1$d%%</string>
+    <string name="tempo_use">Utiliser %1$d BPM</string>
+    <string name="tempo_octave_note">Certains morceaux peuvent sembler justes à la moitié ou au double de ce tempo. Ajustez le BPM si nécessaire.</string>
+    <string name="tempo_error_no_stable_beat">Aucun rythme stable n’a été détecté dans cet audio.</string>
     <string name="trainer_learn">Apprendre</string>
     <string name="trainer_quiz">Quiz</string>
     <string name="trainer_chords">Accords</string>
@@ -112,9 +119,11 @@
     <string name="metronome_start">Démarrer</string>
     <string name="metronome_stop">Arrêter</string>
     <string name="metronome_sound">Type de son</string>
+    <string name="metronome_sound_deep">Grave</string>
     <string name="metronome_sound_wood">Bois</string>
     <string name="metronome_sound_click">Clic</string>
     <string name="metronome_sound_rim">Cercle</string>
+    <string name="metronome_sound_bright">Clair</string>
     <string name="metronome_volume_value">Volume : %1$d%%</string>
     <string name="metronome_mute">Muet</string>
     <string name="metronome_count_in">Mesures de décompte</string>

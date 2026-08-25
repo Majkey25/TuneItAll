@@ -230,8 +230,10 @@ private fun ChoiceChip(label: String, selected: Boolean, tag: String, onClick: (
 @Composable
 private fun soundLabel(sound: MetronomeSound): String = stringResource(
     when (sound) {
+        MetronomeSound.DEEP -> R.string.metronome_sound_deep
         MetronomeSound.WOOD -> R.string.metronome_sound_wood
         MetronomeSound.CLICK -> R.string.metronome_sound_click
         MetronomeSound.RIM -> R.string.metronome_sound_rim
+        MetronomeSound.BRIGHT -> R.string.metronome_sound_bright
     },
 )

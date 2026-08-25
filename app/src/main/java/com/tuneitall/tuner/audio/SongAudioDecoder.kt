@@ -1,13 +1,17 @@
 package com.tuneitall.tuner.audio
 
 import android.content.Context
+import android.database.Cursor
 import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
+import android.provider.OpenableColumns
 import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.StreamingChordAnalyzer
+import com.tuneitall.tuner.music.StreamingTempoAnalyzer
+import com.tuneitall.tuner.music.TempoEstimate
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.CancellationException
@@ -34,6 +38,33 @@ class SongAudioDecoder(context: Context) {
         isCancelled: () -> Boolean = { false },
         onProgress: (Int) -> Unit = {},
     ): SongAnalysisResult {
+        var analyzer: StreamingChordAnalyzer? = null
+        val durationMillis = decode(uri, isCancelled, onProgress) { sampleRate, mono ->
+            val activeAnalyzer = analyzer ?: StreamingChordAnalyzer(sampleRate).also { analyzer = it }
+            activeAnalyzer.accept(mono)
+        }
+        return SongAnalysisResult(durationMillis, analyzer?.finish().orEmpty())
+    }
+
+    fun analyzeTempo(
+        uri: Uri,
+        isCancelled: () -> Boolean = { false },
+        onProgress: (Int) -> Unit = {},
+    ): TempoEstimate? {
+        var analyzer: StreamingTempoAnalyzer? = null
+        decode(uri, isCancelled, onProgress) { sampleRate, mono ->
+            val activeAnalyzer = analyzer ?: StreamingTempoAnalyzer(sampleRate).also { analyzer = it }
+            activeAnalyzer.accept(mono)
+        }
+        return analyzer?.finish()
+    }
+
+    private fun decode(
+        uri: Uri,
+        isCancelled: () -> Boolean,
+        onProgress: (Int) -> Unit,
+        onSamples: (Int, FloatArray) -> Unit,
+    ): Long {
         val extractor = MediaExtractor()
         var codec: MediaCodec? = null
         try {
@@ -56,7 +87,6 @@ class SongAudioDecoder(context: Context) {
             var inputEnded = false
             var outputEnded = false
             var outputFormat = inputFormat
-            var analyzer: StreamingChordAnalyzer? = null
             var decodedFrames = 0L
             var decodedSampleRate = inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
             var lastProgress = -1
@@ -104,8 +134,7 @@ class SongAudioDecoder(context: Context) {
                                 AudioFormat.ENCODING_PCM_FLOAT -> pcmFloatToMono(pcm, channels)
                                 else -> throw SongDecodeException(SongDecodeError.UNSUPPORTED_PCM)
                             }
-                            val activeAnalyzer = analyzer ?: StreamingChordAnalyzer(sampleRate).also { analyzer = it }
-                            activeAnalyzer.accept(mono)
+                            onSamples(sampleRate, mono)
                             decodedFrames += mono.size
                             decodedSampleRate = sampleRate
                             if (durationMicros > 0L) {
@@ -127,7 +156,7 @@ class SongAudioDecoder(context: Context) {
             } else {
                 decodedFrames * MILLIS_PER_SECOND / decodedSampleRate
             }
-            return SongAnalysisResult(durationMillis, analyzer?.finish().orEmpty())
+            return durationMillis
         } catch (error: CancellationException) {
             throw error
         } catch (error: SongDecodeException) {
@@ -142,6 +171,18 @@ class SongAudioDecoder(context: Context) {
             extractor.release()
         }
     }
+}
+
+internal fun audioDisplayName(context: Context, uri: Uri): String {
+    var cursor: Cursor? = null
+    return try {
+        cursor = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+        if (cursor?.moveToFirst() == true) cursor.getString(0).orEmpty() else uri.lastPathSegment.orEmpty()
+    } catch (_: RuntimeException) {
+        uri.lastPathSegment.orEmpty()
+    } finally {
+        cursor?.close()
+    }.ifBlank { "Audio" }
 }
 
 internal fun pcm16ToMono(buffer: ByteBuffer, channelCount: Int): FloatArray {

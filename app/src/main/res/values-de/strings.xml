@@ -46,7 +46,7 @@
     <string name="destination_auto_scroll">Auto-Scroll</string>
     <string name="destination_trainer">Trainer</string>
     <string name="chords_library">Akkordbibliothek</string>
-    <string name="song_chords">Song-Akkorde</string>
+    <string name="song_chords">Akkorde aus Song erkennen</string>
     <string name="choose_tuning">Stimmung auswählen</string>
     <string name="choose_tuning_current">Stimmung auswählen. Aktuell: %1$s</string>
     <string name="chord_major">Dur</string>
@@ -73,6 +73,13 @@
     <string name="song_error_decode">Die Audiodatei konnte nicht analysiert werden.</string>
     <string name="song_error_no_chords">Es wurden keine stabilen Dur-, Moll- oder Dominantseptakkorde gefunden.</string>
     <string name="song_error_playback">Die Audiodatei konnte nicht abgespielt werden.</string>
+    <string name="get_tempo_from_song">Tempo aus Song erkennen</string>
+    <string name="tempo_song_description">Wähle eine Audiodatei aus, um ihr Tempo lokal auf diesem Gerät zu schätzen.</string>
+    <string name="tempo_detected">Erkanntes Tempo: %1$d BPM</string>
+    <string name="tempo_confidence">Schätzsicherheit: %1$d%%</string>
+    <string name="tempo_use">%1$d BPM verwenden</string>
+    <string name="tempo_octave_note">Manche Songs wirken auch im halben oder doppelten Tempo richtig. Passe die BPM bei Bedarf an.</string>
+    <string name="tempo_error_no_stable_beat">In diesem Audio wurde kein stabiler Takt gefunden.</string>
     <string name="trainer_learn">Lernen</string>
     <string name="trainer_quiz">Quiz</string>
     <string name="trainer_chords">Akkorde</string>
@@ -110,9 +117,11 @@
     <string name="metronome_start">Start</string>
     <string name="metronome_stop">Stopp</string>
     <string name="metronome_sound">Klang</string>
+    <string name="metronome_sound_deep">Tief</string>
     <string name="metronome_sound_wood">Holz</string>
     <string name="metronome_sound_click">Klick</string>
     <string name="metronome_sound_rim">Rand</string>
+    <string name="metronome_sound_bright">Hell</string>
     <string name="metronome_volume_value">Lautstärke: %1$d%%</string>
     <string name="metronome_mute">Stumm</string>
     <string name="metronome_count_in">Einzähltakte</string>

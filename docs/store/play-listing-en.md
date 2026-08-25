@@ -32,9 +32,10 @@ Features:
 - Click-free reference tone when a string is tapped
 - Stable in-tune confirmation sound
 - Universal and unplugged-electric profiles with independent microphone sensitivity and needle stability
-- Mechanical metronome with meter, subdivision, accent, sound, and count-in
+- Mechanical metronome with meter, subdivision, accent, five clean sound styles, and count-in
+- Offline song tempo estimation with confidence and one-tap BPM application
 - Canonical Standard E guitar and Standard C ukulele chord diagrams
-- Experimental offline chord timeline for a user-selected local audio file
+- Experimental offline Get Chords for Song timeline for a user-selected local audio file
 - Chord and single-note ear training with local scoring
 - Chord learning and quiz modes with generated audio and local scoring
 - Hands-free Auto-scroll with floating Start, Stop, Hide, and speed controls

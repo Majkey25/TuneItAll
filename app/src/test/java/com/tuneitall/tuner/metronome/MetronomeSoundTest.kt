@@ -51,9 +51,11 @@ class MetronomeSoundTest {
     @Test
     fun `dominant frequencies and subdivision level match the synthesis contract`() {
         mapOf(
+            MetronomeSound.DEEP to 650.0,
             MetronomeSound.WOOD to 1_100.0,
             MetronomeSound.CLICK to 1_800.0,
             MetronomeSound.RIM to 2_600.0,
+            MetronomeSound.BRIGHT to 3_000.0,
         ).forEach { (sound, mainHertz) ->
             val main = createClickBuffer(sound, PulseKind.MAIN, 48_000)
             val accent = createClickBuffer(sound, PulseKind.ACCENT, 48_000)

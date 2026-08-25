@@ -16,14 +16,18 @@ fun createClickBuffer(sound: MetronomeSound, kind: PulseKind, sampleRate: Int): 
     val frameCount = sampleRate * CLICK_DURATION_MILLIS / 1_000
     val attackFrames = (sampleRate + 999) / 1_000
     val baseHertz = when (sound) {
+        MetronomeSound.DEEP -> 650.0
         MetronomeSound.WOOD -> 1_100.0
         MetronomeSound.CLICK -> 1_800.0
         MetronomeSound.RIM -> 2_600.0
+        MetronomeSound.BRIGHT -> 3_000.0
     }
     val partials = when (sound) {
+        MetronomeSound.DEEP -> doubleArrayOf(0.85, 0.12, 0.03)
         MetronomeSound.WOOD -> doubleArrayOf(0.74, 0.20, 0.06)
         MetronomeSound.CLICK -> doubleArrayOf(0.60, 0.30, 0.10)
         MetronomeSound.RIM -> doubleArrayOf(0.55, 0.30, 0.15)
+        MetronomeSound.BRIGHT -> doubleArrayOf(0.75, 0.20, 0.05)
     }
     val frequency = baseHertz * if (kind == PulseKind.ACCENT) 1.25 else 1.0
     val amplitude = when (kind) {

@@ -1,0 +1,1 @@
+Zjistí tempo vybrané písničky offline a použije ho v metronomu. Akordy písničky se nyní jmenují Zjistit akordy písničky. K čistým zvukům Dřevo, Klik a Ráfek přibyly Hluboký a Jasný bez lupání na hranách bufferu.

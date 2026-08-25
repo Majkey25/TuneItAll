@@ -87,6 +87,7 @@ fun TuneItAllApp(
             (screen == AppScreen.Settings && settingsReturnScreen == AppScreen.Metronome)
         if (!metronomeActive) {
             metronomeViewModel.stopAsync()
+            metronomeViewModel.cancelTempoAnalysis()
         }
     }
     val parent = if (screen == AppScreen.Settings) settingsReturnScreen else parentScreen(screen)
@@ -150,6 +151,8 @@ fun TuneItAllApp(
                     onVolumeChange = metronomeViewModel::setVolume,
                     onMutedChange = metronomeViewModel::setMuted,
                     onCountInChange = metronomeViewModel::setCountIn,
+                    onLoadTempoSong = metronomeViewModel::loadTempoSong,
+                    onApplyDetectedTempo = metronomeViewModel::applyDetectedTempo,
                     onOpenSettings = {
                         settingsReturnScreen = AppScreen.Metronome
                         settingsInitialSection = SettingsSection.METRONOME

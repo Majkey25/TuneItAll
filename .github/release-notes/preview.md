@@ -1,4 +1,4 @@
-Intoniva `v0.3.0-alpha.11` prerelease testing build.
+Intoniva `v0.3.0-alpha.12` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -12,6 +12,11 @@ permission.
 
 Highlights:
 
+- Import a local song in Metronome to estimate its BPM fully offline, review
+  confidence, and apply the result in one tap.
+- Song Chords is now named Get Chords for Song in every supported language.
+- Deep and Bright join Wood, Click, and Rim as clean synthesized metronome
+  sounds. Every profile is DC-balanced, headroom-bounded, and faded to silence.
 - Physical Huawei YAL-L21 diagnostics found that processed `MIC` capture kept
   Huawei's voice preprocessing enabled. Auto now selects Raw when supported,
   otherwise effect-free Voice Recognition, with processed `MIC` last.
@@ -81,8 +86,11 @@ Highlights:
   a deterministic phone-frame renderer.
 - No ads, accounts, analytics, tracking, or network permission.
 
-The app passed unit, Lint, API 35 Compose, audio-session, local-file decoding,
+The app passed unit, Lint, API 29 Huawei runtime UI, audio-session, local-file decoding,
 timeline, playback, and runtime UI gates.
+Generated 60, 90, 120, and 180 BPM tracks, missing beats, silence, and all five
+metronome sound profiles pass deterministic regression checks. A 120 BPM WAV
+was detected and applied on the physical Huawei; silence returned no stable beat.
 Auto-scroll Hide and reopen passed on Android 15. Synthetic quiet, decaying,
 buzz, bass, guitar, ukulele, silence, and broadband-noise regressions pass.
 Huawei YAL-L21 physical QA verified 48 kHz Voice Recognition capture with no

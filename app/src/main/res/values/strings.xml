@@ -46,7 +46,7 @@
     <string name="destination_auto_scroll">Auto-scroll</string>
     <string name="destination_trainer">Trainer</string>
     <string name="chords_library">Chord library</string>
-    <string name="song_chords">Song chords</string>
+    <string name="song_chords">Get Chords for Song</string>
     <string name="choose_tuning">Choose tuning</string>
     <string name="choose_tuning_current">Choose tuning. Current: %1$s</string>
     <string name="chord_major">Major</string>
@@ -73,6 +73,13 @@
     <string name="song_error_decode">The audio file could not be analyzed.</string>
     <string name="song_error_no_chords">No stable major, minor, or dominant seventh chords were found.</string>
     <string name="song_error_playback">The audio file could not be played.</string>
+    <string name="get_tempo_from_song">Get Tempo from Song</string>
+    <string name="tempo_song_description">Choose an audio file to estimate its tempo locally on this device.</string>
+    <string name="tempo_detected">Detected tempo: %1$d BPM</string>
+    <string name="tempo_confidence">Estimate confidence: %1$d%%</string>
+    <string name="tempo_use">Use %1$d BPM</string>
+    <string name="tempo_octave_note">Some songs can feel correct at half or double this tempo. Adjust the BPM if needed.</string>
+    <string name="tempo_error_no_stable_beat">No stable beat was found in this audio.</string>
     <string name="trainer_learn">Learn</string>
     <string name="trainer_quiz">Quiz</string>
     <string name="trainer_chords">Chords</string>
@@ -110,9 +117,11 @@
     <string name="metronome_start">Start</string>
     <string name="metronome_stop">Stop</string>
     <string name="metronome_sound">Sound style</string>
+    <string name="metronome_sound_deep">Deep</string>
     <string name="metronome_sound_wood">Wood</string>
     <string name="metronome_sound_click">Click</string>
     <string name="metronome_sound_rim">Rim</string>
+    <string name="metronome_sound_bright">Bright</string>
     <string name="metronome_volume_value">Volume: %1$d%%</string>
     <string name="metronome_mute">Mute</string>
     <string name="metronome_count_in">Count-in bars</string>

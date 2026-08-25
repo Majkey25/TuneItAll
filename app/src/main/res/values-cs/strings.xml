@@ -50,7 +50,7 @@
     <string name="destination_auto_scroll">Posouvání</string>
     <string name="destination_trainer">Trénink</string>
     <string name="chords_library">Knihovna akordů</string>
-    <string name="song_chords">Akordy písničky</string>
+    <string name="song_chords">Zjistit akordy písničky</string>
     <string name="choose_tuning">Vybrat ladění</string>
     <string name="choose_tuning_current">Vybrat ladění. Aktuální: %1$s</string>
     <string name="chord_major">Dur</string>
@@ -77,6 +77,13 @@
     <string name="song_error_decode">Zvukový soubor se nepodařilo analyzovat.</string>
     <string name="song_error_no_chords">Nebyly nalezeny stabilní durové, mollové ani dominantní septakordy.</string>
     <string name="song_error_playback">Zvukový soubor se nepodařilo přehrát.</string>
+    <string name="get_tempo_from_song">Zjistit tempo písničky</string>
+    <string name="tempo_song_description">Vyberte zvukový soubor. Intoniva odhadne jeho tempo lokálně v tomto zařízení.</string>
+    <string name="tempo_detected">Zjištěné tempo: %1$d BPM</string>
+    <string name="tempo_confidence">Jistota odhadu: %1$d%%</string>
+    <string name="tempo_use">Použít %1$d BPM</string>
+    <string name="tempo_octave_note">Některé skladby mohou znít správně v polovičním nebo dvojnásobném tempu. BPM lze ručně upravit.</string>
+    <string name="tempo_error_no_stable_beat">V tomto zvuku nebyl nalezen stabilní rytmus.</string>
     <string name="trainer_learn">Učení</string>
     <string name="trainer_quiz">Kvíz</string>
     <string name="trainer_chords">Akordy</string>
@@ -114,9 +121,11 @@
     <string name="metronome_start">Spustit</string>
     <string name="metronome_stop">Zastavit</string>
     <string name="metronome_sound">Typ zvuku</string>
+    <string name="metronome_sound_deep">Hluboký</string>
     <string name="metronome_sound_wood">Dřevo</string>
     <string name="metronome_sound_click">Klik</string>
     <string name="metronome_sound_rim">Ráfek</string>
+    <string name="metronome_sound_bright">Jasný</string>
     <string name="metronome_volume_value">Hlasitost: %1$d %%</string>
     <string name="metronome_mute">Ztlumit</string>
     <string name="metronome_count_in">Odpočet taktů</string>

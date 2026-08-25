@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-alpha.12 — 2026-08-25
+
+- Add offline tempo estimation for a user-selected song, with progress,
+  confidence, explicit BPM application, and a clear no-stable-beat result.
+- Rename Song Chords to Get Chords for Song in every supported language.
+- Add Deep and Bright metronome sounds alongside Wood, Click, and Rim.
+- Keep every synthesized click DC-balanced, headroom-bounded, and faded to
+  exact silence at both buffer edges.
+
 ## 0.3.0-alpha.11 — 2026-08-25
 
 - Make Auto prefer unprocessed capture when supported, then Android's clean

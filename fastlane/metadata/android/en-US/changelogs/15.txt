@@ -1,0 +1,1 @@
+Estimate a selected song’s tempo fully offline and apply it to the metronome. Song Chords is now Get Chords for Song. Deep and Bright join Wood, Click, and Rim as clean, DC-balanced metronome sounds with click-free buffer edges.

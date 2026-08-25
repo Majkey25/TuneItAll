@@ -1,17 +1,23 @@
 package com.tuneitall.tuner.ui
 
 import android.app.Application
+import android.net.Uri
 import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tuneitall.tuner.audio.MetronomePlayer
 import com.tuneitall.tuner.audio.MetronomeStopResult
+import com.tuneitall.tuner.audio.SongAudioDecoder
+import com.tuneitall.tuner.audio.SongDecodeError
+import com.tuneitall.tuner.audio.SongDecodeException
+import com.tuneitall.tuner.audio.audioDisplayName
 import com.tuneitall.tuner.metronome.Bpm
 import com.tuneitall.tuner.metronome.MetronomeSettings
 import com.tuneitall.tuner.metronome.MetronomeSound
 import com.tuneitall.tuner.storage.UserPreferences
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +37,14 @@ enum class MetronomeError {
     STOP_FAILED,
 }
 
+enum class TempoSongError {
+    NO_AUDIO_TRACK,
+    TOO_LONG,
+    UNSUPPORTED_PCM,
+    DECODE_FAILED,
+    NO_TEMPO,
+}
+
 data class MetronomeUiState(
     val settings: MetronomeSettings = MetronomeSettings(),
     val starting: Boolean = false,
@@ -38,6 +52,12 @@ data class MetronomeUiState(
     val stopping: Boolean = false,
     val muted: Boolean = false,
     val error: MetronomeError? = null,
+    val tempoFileName: String? = null,
+    val tempoAnalyzing: Boolean = false,
+    val tempoProgress: Int = 0,
+    val detectedBpm: Int? = null,
+    val tempoConfidence: Double? = null,
+    val tempoError: TempoSongError? = null,
 )
 
 class MetronomeViewModel internal constructor(
@@ -48,6 +68,7 @@ class MetronomeViewModel internal constructor(
     constructor(application: Application) : this(application, MetronomePlayer())
 
     private val tapTempo = TapTempo()
+    private val songDecoder = SongAudioDecoder(application)
     private val lock = Any()
     private val preferences = UserPreferences(application)
     private val mutableUiState = MutableStateFlow(
@@ -60,6 +81,9 @@ class MetronomeViewModel internal constructor(
     private var startInFlightGeneration: Long? = null
     private var startCancellation: AtomicBoolean? = null
     private var playbackJob: Job? = null
+    private var tempoJob: Job? = null
+    @Volatile
+    private var tempoGeneration = 0L
     val uiState: StateFlow<MetronomeUiState> = mutableUiState.asStateFlow()
 
     fun startAsync() {
@@ -164,7 +188,10 @@ class MetronomeViewModel internal constructor(
         }
     }
 
-    fun onStop() = stopAsync()
+    fun onStop() {
+        stopAsync()
+        cancelTempoAnalysis()
+    }
 
     fun phase(): Double = player.phase()
 
@@ -195,7 +222,70 @@ class MetronomeViewModel internal constructor(
         tapTempo.tap(nowMillis)?.let { bpm -> setSettingsLocked { it.copy(bpm = bpm) } }
     }
 
+    fun loadTempoSong(uri: Uri) {
+        tempoJob?.cancel()
+        val generation = ++tempoGeneration
+        mutableUiState.update {
+            it.copy(
+                tempoFileName = uri.lastPathSegment.orEmpty().ifBlank { "Audio" },
+                tempoAnalyzing = true,
+                tempoProgress = 0,
+                detectedBpm = null,
+                tempoConfidence = null,
+                tempoError = null,
+            )
+        }
+        tempoJob = viewModelScope.launch(blockingDispatcher) {
+            val job = currentCoroutineContext()[Job]
+            try {
+                val fileName = audioDisplayName(getApplication(), uri)
+                if (generation == tempoGeneration) {
+                    mutableUiState.update { it.copy(tempoFileName = fileName) }
+                }
+                val tempo = songDecoder.analyzeTempo(
+                    uri = uri,
+                    isCancelled = { job?.isActive == false },
+                    onProgress = { progress ->
+                        if (generation == tempoGeneration) {
+                            mutableUiState.update { it.copy(tempoProgress = progress) }
+                        }
+                    },
+                )
+                if (generation != tempoGeneration) return@launch
+                mutableUiState.update {
+                    it.copy(
+                        tempoAnalyzing = false,
+                        tempoProgress = 100,
+                        detectedBpm = tempo?.bpm,
+                        tempoConfidence = tempo?.confidence,
+                        tempoError = if (tempo == null) TempoSongError.NO_TEMPO else null,
+                    )
+                }
+            } catch (_: CancellationException) {
+                Unit
+            } catch (error: SongDecodeException) {
+                if (generation == tempoGeneration) {
+                    mutableUiState.update {
+                        it.copy(tempoAnalyzing = false, tempoError = error.reason.toTempoSongError())
+                    }
+                }
+            }
+        }
+    }
+
+    fun applyDetectedTempo() {
+        mutableUiState.value.detectedBpm?.let(::setBpm)
+    }
+
+    fun cancelTempoAnalysis() {
+        tempoJob?.cancel()
+        tempoJob = null
+        tempoGeneration++
+        mutableUiState.update { it.copy(tempoAnalyzing = false) }
+    }
+
     override fun onCleared() {
+        cancelTempoAnalysis()
         synchronized(lock) {
             playbackGeneration++
             startCancellation?.set(true)
@@ -308,6 +398,13 @@ class MetronomeViewModel internal constructor(
         val settings: MetronomeSettings,
         val cancellation: AtomicBoolean,
     )
+
+    private fun SongDecodeError.toTempoSongError(): TempoSongError = when (this) {
+        SongDecodeError.NO_AUDIO_TRACK -> TempoSongError.NO_AUDIO_TRACK
+        SongDecodeError.TOO_LONG -> TempoSongError.TOO_LONG
+        SongDecodeError.UNSUPPORTED_PCM -> TempoSongError.UNSUPPORTED_PCM
+        SongDecodeError.DECODE_FAILED -> TempoSongError.DECODE_FAILED
+    }
 
     private companion object {
         const val TAG = "TuneItAll-Metronome"

@@ -32,7 +32,8 @@ Funkce:
 - Plynulý referenční tón po klepnutí na strunu
 - Zvukové potvrzení stabilního naladění
 - Univerzální profil a profil Elektrická bez zesilovače s oddělenou citlivostí mikrofonu a stabilitou ukazatele
-- Mechanický metronom s taktem, dělením, akcentem, zvukem a odpočtem
+- Mechanický metronom s taktem, dělením, akcentem, pěti čistými zvuky a odpočtem
+- Offline zjištění tempa písničky s jistotou odhadu a použitím BPM jedním klepnutím
 - Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
 - Experimentální offline časová osa akordů z vybraného zvukového souboru
 - Učení akordů, kvíz akordů a rozpoznávání jednotlivých tónů sluchem
