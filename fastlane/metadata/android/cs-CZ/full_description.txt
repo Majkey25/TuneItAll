@@ -11,7 +11,7 @@ Funkce:
 • Nastavitelná reference A4 od 410,0 do 480,0 Hz
 • Zápis tónů pomocí křížků nebo béček
 • Plynulý referenční tón po klepnutí na strunu
-• Zvukové potvrzení stabilního naladění
+• Zvukové potvrzení stabilního naladění se zelenou animací
 • Univerzální citlivý vstup s časovým rozlišením bzučící struny a širokopásmového šumu
 • Čistý Auto vstup: RAW, pokud je dostupný, jinak kompatibilní snímání bez efektů
 • Profily Univerzální, Elektrická bez zesilovače, Tichá místnost, Hlučná místnost a Rychlá odezva

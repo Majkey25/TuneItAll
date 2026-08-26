@@ -1,6 +1,10 @@
 package com.tuneitall.tuner.ui
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -25,9 +30,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
@@ -98,6 +105,7 @@ fun TunerScreen(
         DetectedNote(
             note = currentNote,
             notation = state.notation,
+            confirmed = state.tuningConfirmed,
         )
 
         CentsRail(
@@ -183,10 +191,19 @@ private fun TunerStatusRow(state: TunerUiState) {
 }
 
 @Composable
-private fun DetectedNote(note: com.tuneitall.tuner.model.MidiNote?, notation: NoteNotation) {
+private fun DetectedNote(
+    note: com.tuneitall.tuner.model.MidiNote?,
+    notation: NoteNotation,
+    confirmed: Boolean,
+) {
     val parts = note?.let { noteParts(it, notation) }
     val color = MaterialTheme.colorScheme.onBackground
     val description = note?.let { formatNote(it, notation) } ?: "—"
+    val confirmationProgress by animateFloatAsState(
+        targetValue = if (confirmed) 1f else 0f,
+        animationSpec = tween(220),
+        label = "tuner confirmation",
+    )
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -194,6 +211,18 @@ private fun DetectedNote(note: com.tuneitall.tuner.model.MidiNote?, notation: No
             .testTag("detected_note")
             .clearAndSetSemantics { contentDescription = description },
     ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer {
+                    alpha = confirmationProgress
+                    scaleX = 0.8f + confirmationProgress * 0.2f
+                    scaleY = scaleX
+                }
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), RoundedCornerShape(28.dp))
+                .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(28.dp))
+                .testTag("tuner_confirmation_feedback"),
+        )
         if (parts == null) {
             Text(
                 text = "—",

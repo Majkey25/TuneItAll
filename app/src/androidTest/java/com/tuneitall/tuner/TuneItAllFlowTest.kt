@@ -897,6 +897,31 @@ class TuneItAllFlowTest {
     }
 
     @Test
+    fun confirmedTuningShowsVisibleFeedback() {
+        val tuning = standardTuning()
+        val target = tuning.notesLowToHigh.first()
+        composeRule.setContent {
+            TuneItAllTheme(darkTheme = false) {
+                TunerScreen(
+                    state = state().copy(
+                        tuning = tuning,
+                        reading = TunerReading(target, target, 82.41, 0.0, inTune = true),
+                        tuningConfirmed = true,
+                    ),
+                    onModeSelected = {},
+                    onStringSelected = {},
+                    onToggleFavorite = {},
+                    onOpenLibrary = {},
+                    onOpenSettings = {},
+                    onOpenApplicationSettings = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("tuner_confirmation_feedback", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
     fun resolvedThemeUpdatesSystemBarIconAppearance() {
         var darkTheme by mutableStateOf(false)
         lateinit var activity: Activity

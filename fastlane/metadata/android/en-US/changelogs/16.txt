@@ -1,0 +1,1 @@
+Restores reliable in-tune feedback. Brief detector gaps no longer cancel confirmation, a green glow animates around the detected note, and the clean confirmation chime remains isolated from instrument pitch tracking.

@@ -30,7 +30,7 @@ Features:
 - Adjustable A4 reference from 410.0 to 480.0 Hz
 - Sharps or flats note naming
 - Click-free reference tone when a string is tapped
-- Stable in-tune confirmation sound
+- Stable in-tune confirmation sound with animated green feedback
 - Universal and unplugged-electric profiles with independent microphone sensitivity and needle stability
 - Mechanical metronome with meter, subdivision, accent, five clean sound styles, and count-in
 - Offline song tempo estimation with confidence and one-tap BPM application

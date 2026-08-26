@@ -30,7 +30,7 @@ Funkce:
 - Nastavitelná reference A4 od 410,0 do 480,0 Hz
 - Zápis tónů pomocí křížků nebo béček
 - Plynulý referenční tón po klepnutí na strunu
-- Zvukové potvrzení stabilního naladění
+- Zvukové potvrzení stabilního naladění se zelenou animací
 - Univerzální profil a profil Elektrická bez zesilovače s oddělenou citlivostí mikrofonu a stabilitou ukazatele
 - Mechanický metronom s taktem, dělením, akcentem, pěti čistými zvuky a odpočtem
 - Offline zjištění tempa písničky s jistotou odhadu a použitím BPM jedním klepnutím

@@ -78,6 +78,27 @@ class InTuneConfirmationTrackerTest {
     }
 
     @Test
+    fun `brief missing frame preserves pending confirmation until a fresh in-tune reading`() {
+        val tracker = InTuneConfirmationTracker()
+
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_000, confirmationMillis = 250))
+        assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_100, confirmationMillis = 250))
+        assertFalse(tracker.isConfirmed)
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_250, confirmationMillis = 250))
+    }
+
+    @Test
+    fun `long missing interval restarts pending confirmation`() {
+        val tracker = InTuneConfirmationTracker()
+
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_000, confirmationMillis = 250))
+        assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_100, confirmationMillis = 250))
+        assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_301, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_302, confirmationMillis = 250))
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_552, confirmationMillis = 250))
+    }
+
+    @Test
     fun `clock cannot move backwards`() {
         val tracker = InTuneConfirmationTracker()
         tracker.update(a4, inTune = true, nowMillis = 100, confirmationMillis = 100)

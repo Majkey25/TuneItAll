@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-alpha.13 — 2026-08-26
+
+- Preserve pending in-tune confirmation through detector gaps up to 200 ms,
+  while still requiring a fresh in-tune reading before confirming.
+- Restore clear confirmation feedback with a green fade-and-scale glow around
+  the detected note.
+- Keep the 90 ms confirmation chime isolated from instrument pitch tracking and
+  preserve Android Silent/DND behavior.
+
 ## 0.3.0-alpha.12 — 2026-08-25
 
 - Add offline tempo estimation for a user-selected song, with progress,

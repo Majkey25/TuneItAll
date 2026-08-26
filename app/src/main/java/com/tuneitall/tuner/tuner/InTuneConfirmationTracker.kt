@@ -5,6 +5,7 @@ import com.tuneitall.tuner.model.MidiNote
 class InTuneConfirmationTracker {
     private var activeTarget: MidiNote? = null
     private var inTuneSince: Long? = null
+    private var missingSince: Long? = null
     private var outOfTuneSince: Long? = null
     private var confirmed = false
     private var lastUpdateMillis: Long? = null
@@ -26,7 +27,20 @@ class InTuneConfirmationTracker {
             activeTarget = target
         }
 
-        if (target != null && inTune) {
+        if (target == null) {
+            if (!confirmed) {
+                val startedAt = missingSince ?: nowMillis.also { missingSince = it }
+                if (nowMillis - startedAt > MAX_DROPOUT_MILLIS) inTuneSince = null
+                return false
+            }
+            val startedAt = outOfTuneSince ?: nowMillis.also { outOfTuneSince = it }
+            if (nowMillis - startedAt >= REARM_MILLIS) clearConfirmation()
+            return false
+        }
+
+        missingSince = null
+
+        if (inTune) {
             outOfTuneSince = null
             if (confirmed) return false
             val startedAt = inTuneSince ?: nowMillis.also { inTuneSince = it }
@@ -53,11 +67,13 @@ class InTuneConfirmationTracker {
 
     private fun clearConfirmation() {
         inTuneSince = null
+        missingSince = null
         outOfTuneSince = null
         confirmed = false
     }
 
     private companion object {
+        const val MAX_DROPOUT_MILLIS = 200L
         const val REARM_MILLIS = 500L
     }
 }

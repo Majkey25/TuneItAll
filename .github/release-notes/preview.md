@@ -1,4 +1,4 @@
-Intoniva `v0.3.0-alpha.12` prerelease testing build.
+Intoniva `v0.3.0-alpha.13` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -12,6 +12,11 @@ permission.
 
 Highlights:
 
+- In-tune confirmation now survives brief detector gaps without accepting a
+  stale held display as a new reading.
+- A green fade-and-scale glow makes successful tuning clearly visible again.
+- The 90 ms confirmation chime remains isolated from instrument pitch tracking
+  and follows Android notification Silent/DND behavior.
 - Import a local song in Metronome to estimate its BPM fully offline, review
   confidence, and apply the result in one tap.
 - Song Chords is now named Get Chords for Song in every supported language.
@@ -35,8 +40,8 @@ Highlights:
 - Multi-resolution 8192-sample analysis improves low notes while a 2048-sample
   hop retains frequent updates and bounded detector work.
 - Auto input avoids voice effects before falling back to processed capture.
-- Confirmation now requires 900 ms continuously in tune. Its 90 ms chime keeps
-  instrument-mode analysis live; Chromatic ignores only its 300 ms overlap.
+- Confirmation requires 900 ms in tune, tolerates gaps up to 200 ms, and still
+  needs a fresh in-tune reading. Instrument analysis stays live during the chime.
 - Favorite tunings sort to the top and the Favorites filter appears first.
 - Auto-scroll now uses one clear bidirectional icon in the bottom bar and the
   collapsed floating control.

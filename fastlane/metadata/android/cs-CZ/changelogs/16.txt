@@ -1,0 +1,1 @@
+Vrací spolehlivé potvrzení naladění. Krátké výpadky detekce už potvrzení neruší, kolem tónu se zobrazí zelená animace a čisté cinknutí zůstává oddělené od ladění nástroje.

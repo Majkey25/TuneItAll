@@ -11,7 +11,7 @@ Features:
 • Adjustable A4 reference from 410.0 to 480.0 Hz
 • Sharps or flats note naming
 • Click-free reference tone when a string is tapped
-• Stable in-tune confirmation sound
+• Stable in-tune confirmation sound with animated green feedback
 • Universal quiet-input engine with temporal buzz and broadband-noise separation
 • Clean Auto input: Raw when supported, otherwise effect-free compatible capture
 • Universal, unplugged-electric, quiet-room, noisy-room, and fast-response tuner profiles
