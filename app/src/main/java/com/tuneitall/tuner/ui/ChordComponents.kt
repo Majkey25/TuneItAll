@@ -204,6 +204,7 @@ fun chordQualityName(quality: ChordQuality): String = stringResource(
         ChordQuality.MAJOR -> R.string.chord_major
         ChordQuality.MINOR -> R.string.chord_minor
         ChordQuality.DOMINANT_SEVENTH -> R.string.chord_dominant_seventh
+        ChordQuality.POWER -> R.string.chord_power
     },
 )
 
@@ -212,6 +213,7 @@ fun formatChord(chord: Chord, notation: NoteNotation): String {
         ChordQuality.MAJOR -> ""
         ChordQuality.MINOR -> "m"
         ChordQuality.DOMINANT_SEVENTH -> "7"
+        ChordQuality.POWER -> "5"
     }
     return formatPitchClass(chord.rootPitchClass, notation) + suffix
 }

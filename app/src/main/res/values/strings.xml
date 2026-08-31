@@ -52,6 +52,8 @@
     <string name="chord_major">Major</string>
     <string name="chord_minor">Minor</string>
     <string name="chord_dominant_seventh">Dominant 7</string>
+    <string name="chord_power">Power 5</string>
+    <string name="show_chord_diagrams">Show chord diagrams</string>
     <string name="chord_voicing">Voicing for %1$s</string>
     <string name="chord_diagram_description">Chord diagram. Frets from low to high: %1$s</string>
     <string name="chord_shape_standard_only">Canonical diagrams are available for Standard E guitar and Standard C ukulele.</string>
@@ -71,7 +73,7 @@
     <string name="song_error_too_long">Songs longer than 30 minutes are not supported.</string>
     <string name="song_error_pcm">This device returned an unsupported decoded audio format.</string>
     <string name="song_error_decode">The audio file could not be analyzed.</string>
-    <string name="song_error_no_chords">No stable major, minor, or dominant seventh chords were found.</string>
+    <string name="song_error_no_chords">No stable major, minor, dominant seventh, or power chords were found.</string>
     <string name="song_error_playback">The audio file could not be played.</string>
     <string name="get_tempo_from_song">Get Tempo from Song</string>
     <string name="tempo_song_description">Choose an audio file to estimate its tempo locally on this device.</string>

@@ -56,6 +56,8 @@
     <string name="chord_major">Dur</string>
     <string name="chord_minor">Moll</string>
     <string name="chord_dominant_seventh">Dominantní 7</string>
+    <string name="chord_power">Power 5</string>
+    <string name="show_chord_diagrams">Zobrazit hmaty</string>
     <string name="chord_voicing">Hmat pro %1$s</string>
     <string name="chord_diagram_description">Diagram akordu. Pražce od nejnižší struny: %1$s</string>
     <string name="chord_shape_standard_only">Ověřené diagramy jsou dostupné pro kytaru Standard E a ukulele Standard C.</string>
@@ -75,7 +77,7 @@
     <string name="song_error_too_long">Písničky delší než 30 minut nejsou podporované.</string>
     <string name="song_error_pcm">Zařízení vrátilo nepodporovaný dekódovaný zvukový formát.</string>
     <string name="song_error_decode">Zvukový soubor se nepodařilo analyzovat.</string>
-    <string name="song_error_no_chords">Nebyly nalezeny stabilní durové, mollové ani dominantní septakordy.</string>
+    <string name="song_error_no_chords">Nebyly nalezeny stabilní durové, mollové, dominantní ani power akordy.</string>
     <string name="song_error_playback">Zvukový soubor se nepodařilo přehrát.</string>
     <string name="get_tempo_from_song">Zjistit tempo písničky</string>
     <string name="tempo_song_description">Vyberte zvukový soubor. Intoniva odhadne jeho tempo lokálně v tomto zařízení.</string>

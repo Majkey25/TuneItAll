@@ -54,6 +54,8 @@
     <string name="chord_major">Majeur</string>
     <string name="chord_minor">Mineur</string>
     <string name="chord_dominant_seventh">Septième de dominante</string>
+    <string name="chord_power">Power 5</string>
+    <string name="show_chord_diagrams">Afficher les diagrammes d’accords</string>
     <string name="chord_voicing">Position pour %1$s</string>
     <string name="chord_diagram_description">Diagramme d’accord. Frettes de la corde grave à la corde aiguë : %1$s</string>
     <string name="chord_shape_standard_only">Des diagrammes fiables sont disponibles pour la guitare en Standard E et le ukulélé en Standard C.</string>
@@ -73,7 +75,7 @@
     <string name="song_error_too_long">Les morceaux de plus de 30 minutes ne sont pas pris en charge.</string>
     <string name="song_error_pcm">Cet appareil a renvoyé un format audio décodé non compatible.</string>
     <string name="song_error_decode">Le fichier audio n’a pas pu être analysé.</string>
-    <string name="song_error_no_chords">Aucun accord majeur, mineur ou de septième de dominante stable n’a été trouvé.</string>
+    <string name="song_error_no_chords">Aucun accord majeur, mineur, de septième de dominante ou power chord stable n’a été trouvé.</string>
     <string name="song_error_playback">Le fichier audio n’a pas pu être lu.</string>
     <string name="get_tempo_from_song">Trouver le tempo d’un morceau</string>
     <string name="tempo_song_description">Choisissez un fichier audio pour estimer son tempo localement sur cet appareil.</string>

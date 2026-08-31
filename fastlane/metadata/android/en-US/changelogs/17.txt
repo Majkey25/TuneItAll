@@ -1,0 +1,1 @@
+Song analysis now recognizes distorted guitar power chords, keeps the current chord fixed, follows playback in the timeline, rejects isolated flicker, and makes diagrams optional.

@@ -54,6 +54,8 @@
     <string name="chord_major">Mayor</string>
     <string name="chord_minor">Menor</string>
     <string name="chord_dominant_seventh">Séptima dominante</string>
+    <string name="chord_power">Power 5</string>
+    <string name="show_chord_diagrams">Mostrar diagramas de acordes</string>
     <string name="chord_voicing">Posición para %1$s</string>
     <string name="chord_diagram_description">Diagrama de acorde. Trastes desde la cuerda grave a la aguda: %1$s</string>
     <string name="chord_shape_standard_only">Hay diagramas fiables para guitarra en Standard E y ukelele en Standard C.</string>
@@ -73,7 +75,7 @@
     <string name="song_error_too_long">No se admiten canciones de más de 30 minutos.</string>
     <string name="song_error_pcm">Este dispositivo devolvió un formato de audio decodificado no compatible.</string>
     <string name="song_error_decode">No se pudo analizar el archivo de audio.</string>
-    <string name="song_error_no_chords">No se encontraron acordes mayores, menores o de séptima dominante estables.</string>
+    <string name="song_error_no_chords">No se encontraron acordes mayores, menores, de séptima dominante o power estables.</string>
     <string name="song_error_playback">No se pudo reproducir el archivo de audio.</string>
     <string name="get_tempo_from_song">Obtener tempo de una canción</string>
     <string name="tempo_song_description">Elige un archivo de audio para estimar su tempo localmente en este dispositivo.</string>

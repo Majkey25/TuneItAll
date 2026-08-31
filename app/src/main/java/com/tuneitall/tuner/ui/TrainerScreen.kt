@@ -39,6 +39,7 @@ import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordQuality
 import com.tuneitall.tuner.music.ChordShapeCatalog
+import com.tuneitall.tuner.music.instructionalChordQualities
 import com.tuneitall.tuner.music.NoteQuestion
 import com.tuneitall.tuner.music.midiToHertz
 import com.tuneitall.tuner.music.noteQuestion
@@ -80,7 +81,7 @@ fun TrainerScreen(
     var selectedChordAnswer by remember { mutableStateOf<Chord?>(null) }
     var selectedNoteAnswer by remember { mutableStateOf<Int?>(null) }
     var audioFailed by remember { mutableStateOf(false) }
-    val chords = remember { buildList { repeat(12) { root -> ChordQuality.entries.forEach { add(Chord(root, it)) } } } }
+    val chords = remember { buildList { repeat(12) { root -> instructionalChordQualities.forEach { add(Chord(root, it)) } } } }
     val tuning = supportedTunings.firstOrNull { it.id == selectedTuningId } ?: supportedTunings.first()
     val tonePlayer = remember { ReferenceTonePlayer() }
     val scope = rememberCoroutineScope()

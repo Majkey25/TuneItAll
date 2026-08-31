@@ -35,7 +35,7 @@ Features:
 - Mechanical metronome with meter, subdivision, accent, five clean sound styles, and count-in
 - Offline song tempo estimation with confidence and one-tap BPM application
 - Canonical Standard E guitar and Standard C ukulele chord diagrams
-- Experimental offline Get Chords for Song timeline for a user-selected local audio file
+- Offline Get Chords for Song timeline with stable power-chord detection and optional diagrams
 - Chord and single-note ear training with local scoring
 - Chord learning and quiz modes with generated audio and local scoring
 - Hands-free Auto-scroll with floating Start, Stop, Hide, and speed controls

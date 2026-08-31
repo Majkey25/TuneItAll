@@ -11,6 +11,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.music.Chord
@@ -132,6 +134,117 @@ class MusicToolsScreenTest {
 
         compose.onNodeWithTag("current_song_chord").assertTextEquals("C♯")
         compose.runOnIdle { assertEquals(listOf(original), state.events) }
+    }
+
+    @Test
+    fun songChordDiagramIsOptionalAndOffByDefault() {
+        val event = ChordEvent(0L, 4_000L, Chord(0, ChordQuality.MAJOR), 0.9)
+        val state = ChordUiState(
+            tab = ChordTab.SONG,
+            fileName = "test.wav",
+            events = listOf(event),
+            prepared = true,
+            durationMillis = 4_000L,
+            positionMillis = 1_000L,
+        )
+        compose.setContent {
+            TuneItAllTheme {
+                ChordsScreen(
+                    state = state,
+                    tunings = listOf(tuning),
+                    notation = NoteNotation.SHARPS,
+                    catalog = catalog,
+                    onTabSelected = {},
+                    onChordSelected = {},
+                    onTuningSelected = {},
+                    onTransposeChanged = {},
+                    onLoadSong = {},
+                    onPlayPause = {},
+                    onSeek = {},
+                    onClearSong = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("chord_diagram").assertDoesNotExist()
+        compose.onNodeWithTag("song_diagrams_toggle").performClick()
+        compose.onNodeWithTag("chord_diagram").assertIsDisplayed()
+    }
+
+    @Test
+    fun songCurrentChordStaysInFixedBottomBar() {
+        val state = ChordUiState(
+            tab = ChordTab.SONG,
+            fileName = "test.wav",
+            events = listOf(ChordEvent(0L, 4_000L, Chord(0, ChordQuality.MAJOR), 0.9)),
+            prepared = true,
+            durationMillis = 4_000L,
+            positionMillis = 1_000L,
+        )
+        compose.setContent {
+            TuneItAllTheme {
+                ChordsScreen(
+                    state = state,
+                    tunings = listOf(tuning),
+                    notation = NoteNotation.SHARPS,
+                    catalog = catalog,
+                    onTabSelected = {},
+                    onChordSelected = {},
+                    onTuningSelected = {},
+                    onTransposeChanged = {},
+                    onLoadSong = {},
+                    onPlayPause = {},
+                    onSeek = {},
+                    onClearSong = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("current_song_chord_bar").assertIsDisplayed()
+        compose.onNodeWithTag("current_song_chord").assertTextEquals("C")
+        compose.onNodeWithTag("song_diagrams_toggle").performClick()
+        compose.onNodeWithTag("chords_content").performTouchInput { swipeUp() }
+        compose.onNodeWithTag("current_song_chord_bar").assertIsDisplayed()
+    }
+
+    @Test
+    fun songTimelineFollowsTheActiveChord() {
+        val events = List(20) { index ->
+            ChordEvent(
+                startMillis = index * 1_000L,
+                endMillis = (index + 1) * 1_000L,
+                chord = Chord(index % 12, ChordQuality.MAJOR),
+                confidence = 0.9,
+            )
+        }
+        val state = ChordUiState(
+            tab = ChordTab.SONG,
+            fileName = "test.wav",
+            events = events,
+            prepared = true,
+            durationMillis = 20_000L,
+            positionMillis = 18_500L,
+        )
+        compose.setContent {
+            TuneItAllTheme {
+                ChordsScreen(
+                    state = state,
+                    tunings = listOf(tuning),
+                    notation = NoteNotation.SHARPS,
+                    catalog = catalog,
+                    onTabSelected = {},
+                    onChordSelected = {},
+                    onTuningSelected = {},
+                    onTransposeChanged = {},
+                    onLoadSong = {},
+                    onPlayPause = {},
+                    onSeek = {},
+                    onClearSong = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("song_chord_18").assertIsDisplayed()
     }
 
     @Test

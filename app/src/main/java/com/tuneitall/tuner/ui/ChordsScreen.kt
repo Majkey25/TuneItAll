@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -25,10 +27,12 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -43,9 +47,11 @@ import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.Chord
+import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
 import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.music.chordEventAt
+import com.tuneitall.tuner.music.instructionalChordQualities
 import com.tuneitall.tuner.storage.NoteNotation
 import kotlin.math.roundToLong
 
@@ -68,59 +74,103 @@ fun ChordsScreen(
         uri?.let(onLoadSong)
     }
     val selectedTuning = tunings.firstOrNull { it.id == state.selectedTuningId } ?: tunings.first()
-    Column(
+    val activeEvent = if (state.tab == ChordTab.SONG) chordEventAt(state.events, state.positionMillis) else null
+    val activeChord = activeEvent?.chord?.transpose(state.transposeSemitones)
+    val showCurrentChordBar = state.tab == ChordTab.SONG && state.fileName != null
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .safeDrawingPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp)
             .testTag("chords_screen"),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(
-            stringResource(R.string.destination_chords),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ChordTab.entries.forEach { tab ->
-                FilterChip(
-                    selected = state.tab == tab,
-                    onClick = { onTabSelected(tab) },
-                    label = {
-                        Text(stringResource(if (tab == ChordTab.LIBRARY) R.string.chords_library else R.string.song_chords))
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("chord_tab_${tab.name.lowercase()}"),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(bottom = if (showCurrentChordBar) 88.dp else 0.dp)
+                .testTag("chords_content"),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                stringResource(R.string.destination_chords),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ChordTab.entries.forEach { tab ->
+                    FilterChip(
+                        selected = state.tab == tab,
+                        onClick = { onTabSelected(tab) },
+                        label = {
+                            Text(stringResource(if (tab == ChordTab.LIBRARY) R.string.chords_library else R.string.song_chords))
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("chord_tab_${tab.name.lowercase()}"),
+                    )
+                }
+            }
+            TuningSelector(tunings, selectedTuning.id, onTuningSelected)
+            when (state.tab) {
+                ChordTab.LIBRARY -> ChordLibrary(
+                    chord = state.selectedChord,
+                    tuning = selectedTuning,
+                    notation = notation,
+                    catalog = catalog,
+                    onChordSelected = onChordSelected,
+                )
+
+                ChordTab.SONG -> SongChordPanel(
+                    state = state,
+                    tuning = selectedTuning,
+                    notation = notation,
+                    catalog = catalog,
+                    activeEvent = activeEvent,
+                    activeChord = activeChord,
+                    onChooseAudio = { launcher.launch(arrayOf("audio/*")) },
+                    onPlayPause = onPlayPause,
+                    onSeek = onSeek,
+                    onTransposeChanged = onTransposeChanged,
+                    onClearSong = onClearSong,
                 )
             }
+            Spacer(Modifier.height(8.dp))
         }
-        TuningSelector(tunings, selectedTuning.id, onTuningSelected)
-        when (state.tab) {
-            ChordTab.LIBRARY -> ChordLibrary(
-                chord = state.selectedChord,
-                tuning = selectedTuning,
+        if (showCurrentChordBar) {
+            CurrentChordBar(
+                chord = activeChord,
                 notation = notation,
-                catalog = catalog,
-                onChordSelected = onChordSelected,
+                modifier = Modifier.align(Alignment.BottomCenter),
             )
+        }
+    }
+}
 
-            ChordTab.SONG -> SongChordPanel(
-                state = state,
-                tuning = selectedTuning,
-                notation = notation,
-                catalog = catalog,
-                onChooseAudio = { launcher.launch(arrayOf("audio/*")) },
-                onPlayPause = onPlayPause,
-                onSeek = onSeek,
-                onTransposeChanged = onTransposeChanged,
-                onClearSong = onClearSong,
+@Composable
+private fun CurrentChordBar(chord: Chord?, notation: NoteNotation, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            .testTag("current_song_chord_bar"),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 4.dp,
+        shadowElevation = 4.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(stringResource(R.string.current_chord), style = MaterialTheme.typography.labelMedium)
+            Text(
+                chord?.let { formatChord(it, notation) } ?: stringResource(R.string.no_current_chord),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.testTag("current_song_chord"),
             )
         }
-        Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -147,7 +197,7 @@ private fun ChordLibrary(
         }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        ChordQuality.entries.forEach { quality ->
+        instructionalChordQualities.forEach { quality ->
             FilterChip(
                 selected = chord.quality == quality,
                 onClick = { onChordSelected(chord.copy(quality = quality)) },
@@ -173,12 +223,15 @@ private fun SongChordPanel(
     tuning: TuningPreset,
     notation: NoteNotation,
     catalog: ChordShapeCatalog,
+    activeEvent: ChordEvent?,
+    activeChord: Chord?,
     onChooseAudio: () -> Unit,
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
     onTransposeChanged: (Int) -> Unit,
     onClearSong: () -> Unit,
 ) {
+    var showDiagrams by rememberSaveable { mutableStateOf(false) }
     Text(stringResource(R.string.song_detector_note), style = MaterialTheme.typography.bodySmall)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = onChooseAudio, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("choose_song")) {
@@ -238,17 +291,15 @@ private fun SongChordPanel(
         ) { Text("+") }
     }
 
-    val activeEvent = chordEventAt(state.events, state.positionMillis)
-    val activeChord = activeEvent?.chord?.transpose(state.transposeSemitones)
-    Text(stringResource(R.string.current_chord), style = MaterialTheme.typography.titleMedium)
-    Text(
-        activeChord?.let { formatChord(it, notation) } ?: stringResource(R.string.no_current_chord),
-        style = MaterialTheme.typography.displaySmall,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.fillMaxWidth().testTag("current_song_chord"),
-        textAlign = TextAlign.Center,
+    FilterChip(
+        selected = showDiagrams,
+        onClick = { showDiagrams = !showDiagrams },
+        label = { Text(stringResource(R.string.show_chord_diagrams)) },
+        modifier = Modifier.heightIn(min = 48.dp).testTag("song_diagrams_toggle"),
     )
-    if (activeChord != null) ChordDiagram(activeChord, tuning, notation, catalog, Modifier.fillMaxWidth())
+    if (showDiagrams && activeChord != null) {
+        ChordDiagram(activeChord, tuning, notation, catalog, Modifier.fillMaxWidth())
+    }
 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Button(
@@ -265,8 +316,14 @@ private fun SongChordPanel(
     }
     SongSeekBar(state.positionMillis, state.durationMillis, onSeek)
     if (state.events.isNotEmpty()) {
+        val activeIndex = remember(state.events, activeEvent) { state.events.indexOf(activeEvent) }
+        val timelineState = rememberLazyListState()
+        LaunchedEffect(activeIndex) {
+            if (activeIndex >= 0) timelineState.scrollToItem(activeIndex)
+        }
         Text(stringResource(R.string.chord_timeline), style = MaterialTheme.typography.titleMedium)
         LazyRow(
+            state = timelineState,
             modifier = Modifier.fillMaxWidth().testTag("chord_timeline"),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -276,7 +333,7 @@ private fun SongChordPanel(
             ) { index, event ->
                 val displayedChord = event.chord.transpose(state.transposeSemitones)
                 FilterChip(
-                    selected = event === activeEvent,
+                    selected = index == activeIndex,
                     onClick = { onSeek(event.startMillis) },
                     label = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {

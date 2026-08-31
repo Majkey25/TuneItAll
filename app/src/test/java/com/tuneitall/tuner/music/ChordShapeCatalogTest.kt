@@ -56,7 +56,7 @@ class ChordShapeCatalogTest {
         listOf("guitar-6-standard", "ukulele-standard").forEach { tuningId ->
             val tuning = requireNotNull(TuningCatalog.byId(tuningId))
             repeat(12) { root ->
-                ChordQuality.entries.forEach { quality ->
+                instructionalChordQualities.forEach { quality ->
                     val chord = Chord(root, quality)
                     val voicing = requireNotNull(catalog.shape(tuningId, chord))
                     val soundedPitchClasses = voicing.frets.mapIndexedNotNull { index, fret ->

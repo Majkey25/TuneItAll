@@ -1,0 +1,1 @@
+Analýza písní nově rozpozná zkreslené power akordy, připne aktuální akord, posouvá časovou osu podle přehrávání, odstraní blikání a nabízí volitelné hmaty.

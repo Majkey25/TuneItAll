@@ -39,7 +39,9 @@ fun chordEventAt(events: List<ChordEvent>, positionMillis: Long): ChordEvent? {
             else -> return event
         }
     }
-    return null
+    if (low >= events.size) return null
+    val previous = events.getOrNull(high) ?: return null
+    return previous.takeIf { positionMillis - it.endMillis <= DISPLAY_HOLD_MILLIS }
 }
 
 fun matchChord(chroma: DoubleArray): ChordMatch? {
@@ -159,7 +161,7 @@ class StreamingChordAnalyzer internal constructor(
         if (matches.isEmpty()) return null
         val winner = matches.groupingBy(ChordMatch::chord).eachCount().maxBy { it.value }.key
         val winningMatches = matches.filter { it.chord == winner }
-        if (winningMatches.size < MIN_SMOOTH_VOTES && frames[index].match?.chord != winner) return frames[index].match
+        if (frames.size > 1 && winningMatches.size < MIN_SMOOTH_VOTES) return null
         return ChordMatch(winner, winningMatches.map(ChordMatch::confidence).average())
     }
 
@@ -181,7 +183,7 @@ class StreamingChordAnalyzer internal constructor(
             val frequency = bin.toDouble() * sampleRate / FFT_SIZE
             val midi = 69.0 + 12.0 * log2(frequency / 440.0)
             val pitchClass = Math.floorMod(kotlin.math.round(midi).toInt(), PITCH_CLASS_COUNT)
-            chroma[pitchClass] += ln1p(magnitude) / sqrt(frequency)
+            chroma[pitchClass] += ln1p(magnitude) / frequency
         }
         val norm = sqrt(chroma.sumOf { it * it })
         if (norm > 0.0) chroma.indices.forEach { chroma[it] /= norm }
@@ -248,5 +250,6 @@ private const val MIN_SCORE_MARGIN = 0.025
 private const val SMOOTH_RADIUS = 2
 private const val MIN_SMOOTH_VOTES = 2
 private const val MIN_EVENT_MILLIS = 300L
+private const val DISPLAY_HOLD_MILLIS = 500L
 private const val MILLIS_PER_SECOND = 1_000L
 private const val MAX_ANALYSIS_SECONDS = 30 * 60

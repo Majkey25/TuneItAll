@@ -33,7 +33,7 @@ private fun parseInstrument(json: String, sourceKeys: List<String>, stringCount:
     return buildMap {
         sourceKeys.forEachIndexed { rootPitchClass, sourceKey ->
             val entries = sourceChords.getJSONArray(sourceKey)
-            ChordQuality.entries.forEach { quality ->
+            instructionalChordQualities.forEach { quality ->
                 val source = entries.findChord(SUFFIXES.getValue(quality))
                 put(Chord(rootPitchClass, quality), source.firstVoicing(stringCount))
             }

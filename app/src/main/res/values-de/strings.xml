@@ -52,6 +52,8 @@
     <string name="chord_major">Dur</string>
     <string name="chord_minor">Moll</string>
     <string name="chord_dominant_seventh">Dominantseptakkord</string>
+    <string name="chord_power">Power 5</string>
+    <string name="show_chord_diagrams">Akkorddiagramme anzeigen</string>
     <string name="chord_voicing">Griff für %1$s</string>
     <string name="chord_diagram_description">Akkorddiagramm. Bünde von der tiefsten zur höchsten Saite: %1$s</string>
     <string name="chord_shape_standard_only">Verlässliche Diagramme sind für Gitarre in Standard-E und Ukulele in Standard-C verfügbar.</string>
@@ -71,7 +73,7 @@
     <string name="song_error_too_long">Songs über 30 Minuten werden nicht unterstützt.</string>
     <string name="song_error_pcm">Dieses Gerät hat ein nicht unterstütztes decodiertes Audioformat zurückgegeben.</string>
     <string name="song_error_decode">Die Audiodatei konnte nicht analysiert werden.</string>
-    <string name="song_error_no_chords">Es wurden keine stabilen Dur-, Moll- oder Dominantseptakkorde gefunden.</string>
+    <string name="song_error_no_chords">Es wurden keine stabilen Dur-, Moll-, Dominantsept- oder Powerchords gefunden.</string>
     <string name="song_error_playback">Die Audiodatei konnte nicht abgespielt werden.</string>
     <string name="get_tempo_from_song">Tempo aus Song erkennen</string>
     <string name="tempo_song_description">Wähle eine Audiodatei aus, um ihr Tempo lokal auf diesem Gerät zu schätzen.</string>

@@ -2,6 +2,7 @@ package com.tuneitall.tuner.music
 
 import kotlin.math.PI
 import kotlin.math.sin
+import kotlin.math.tanh
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -14,6 +15,17 @@ class ChordAnalyzerTest {
         assertEquals(Chord(9, ChordQuality.MINOR), matchChord(chroma(9, 0, 4))?.chord)
         assertEquals(Chord(7, ChordQuality.DOMINANT_SEVENTH), matchChord(chroma(7, 11, 2, 5))?.chord)
         assertEquals(null, matchChord(DoubleArray(12)))
+    }
+
+    @Test
+    fun `template matcher recognizes a distorted E power chord`() {
+        val chroma = DoubleArray(12) { 0.02 }.apply {
+            this[4] = 1.0
+            this[11] = 0.86
+            this[8] = 0.18
+        }
+
+        assertEquals(Chord(4, ChordQuality.POWER), matchChord(chroma)?.chord)
     }
 
     @Test
@@ -45,6 +57,17 @@ class ChordAnalyzerTest {
     }
 
     @Test
+    fun `streaming analyzer recognizes a clipped E power chord`() {
+        val sampleRate = 48_000
+        val analyzer = StreamingChordAnalyzer(sampleRate)
+        analyzer.accept(distortedPowerChord(sampleRate, seconds = 4, rootHertz = 82.41))
+
+        val event = analyzer.finish().maxBy(ChordEvent::durationMillis)
+
+        assertEquals(Chord(4, ChordQuality.POWER), event.chord)
+    }
+
+    @Test
     fun `streaming analyzer rejects input beyond its bounded duration`() {
         val analyzer = StreamingChordAnalyzer(sampleRate = 8_000, maxDurationSeconds = 1)
 
@@ -59,5 +82,12 @@ class ChordAnalyzerTest {
         FloatArray(sampleRate * seconds) { frame ->
             val value = frequencies.sumOf { frequency -> sin(2.0 * PI * frequency * frame / sampleRate) }
             (value / frequencies.size).toFloat()
+        }
+
+    private fun distortedPowerChord(sampleRate: Int, seconds: Int, rootHertz: Double): FloatArray =
+        FloatArray(sampleRate * seconds) { frame ->
+            val root = sin(2.0 * PI * rootHertz * frame / sampleRate)
+            val fifth = sin(2.0 * PI * rootHertz * 1.5 * frame / sampleRate)
+            (0.75 * tanh(3.5 * (root + 0.8 * fifth))).toFloat()
         }
 }

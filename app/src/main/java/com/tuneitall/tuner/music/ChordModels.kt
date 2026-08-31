@@ -8,7 +8,10 @@ enum class ChordQuality(val intervals: Set<Int>) {
     MAJOR(setOf(0, 4, 7)),
     MINOR(setOf(0, 3, 7)),
     DOMINANT_SEVENTH(setOf(0, 4, 7, 10)),
+    POWER(setOf(0, 7)),
 }
+
+val instructionalChordQualities: List<ChordQuality> = ChordQuality.entries.filter { it != ChordQuality.POWER }
 
 data class Chord(
     val rootPitchClass: Int,
@@ -58,7 +61,7 @@ fun trainerChoices(answer: Chord, seed: Int): List<Chord> {
     val random = Random(seed)
     val distractors = buildList {
         for (root in 0..11) {
-            ChordQuality.entries.forEach { quality ->
+            instructionalChordQualities.forEach { quality ->
                 Chord(root, quality).takeIf { it != answer }?.let(::add)
             }
         }

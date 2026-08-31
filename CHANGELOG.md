@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0-alpha.14 — 2026-08-31
+
+- Detect power chords in distorted guitar audio and label them with the standard
+  `5` suffix, such as E5 or F♯5.
+- Weight low-frequency spectral evidence more strongly so fundamentals and
+  fifths survive dense upper harmonics.
+- Hold the last stable chord through gaps up to 500 ms and reject isolated
+  single-frame matches to stop the current-chord label from flickering.
+- Hide song chord diagrams by default and add an explicit Show chord diagrams
+  toggle; the chord name and timeline remain visible.
+- Keep the current chord in a fixed bottom bar and automatically reveal the
+  active event in the timeline during playback.
+
 ## 0.3.0-alpha.13 — 2026-08-26
 
 - Preserve pending in-tune confirmation through detector gaps up to 200 ms,

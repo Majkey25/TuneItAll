@@ -1,4 +1,4 @@
-Intoniva `v0.3.0-alpha.13` prerelease testing build.
+Intoniva `v0.3.0-alpha.14` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -12,6 +12,14 @@ permission.
 
 Highlights:
 
+- Song analysis now recognizes distorted guitar power chords such as E5.
+- Stronger low-frequency evidence resists false major/minor labels from upper
+  distortion harmonics.
+- The current chord holds through brief gaps and isolated one-frame matches are
+  rejected, so the label stays readable instead of flickering.
+- Song chord diagrams are hidden by default and can be enabled with one toggle.
+- The current chord stays fixed above navigation while the timeline follows the
+  active event.
 - In-tune confirmation now survives brief detector gaps without accepting a
   stale held display as a new reading.
 - A green fade-and-scale glow makes successful tuning clearly visible again.
