@@ -158,6 +158,9 @@ internal fun createToneBuffer(
     require(fadeSamples > 0 && fadeSamples * 2 < sampleCount) { "Tone fade must fit the sample buffer" }
 
     val attackSamples = sampleRate * TONE_ATTACK_MILLISECONDS / 1_000
+    val lowToneBlend = ((LOW_TONE_EQ_CEILING_HERTZ - hertz) / LOW_TONE_EQ_RANGE_HERTZ)
+        .coerceIn(0.0, 1.0)
+    val toneNormalization = HARMONIC_NORMALIZATION + LOW_TONE_NORMALIZATION_LIFT * lowToneBlend
     return ShortArray(sampleCount) { index ->
         val seconds = index.toDouble() / sampleRate
         val attack = (index.toDouble() / attackSamples).coerceAtMost(1.0)
@@ -166,11 +169,14 @@ internal fun createToneBuffer(
         HARMONIC_AMPLITUDES.forEachIndexed { harmonicIndex, amplitude ->
             val harmonic = harmonicIndex + 1
             if (hertz * harmonic >= sampleRate / 2.0) return@forEachIndexed
-            val decay = exp(-seconds * (TONE_DECAY + harmonicIndex * HARMONIC_DECAY))
-            wave += amplitude * decay * sin(2.0 * PI * hertz * harmonic * seconds)
+            val equalizedAmplitude = amplitude +
+                (LOW_TONE_HARMONIC_AMPLITUDES[harmonicIndex] - amplitude) * lowToneBlend
+            val harmonicDecay = HARMONIC_DECAY * (1.0 - lowToneBlend)
+            val decay = exp(-seconds * (TONE_DECAY + harmonicIndex * harmonicDecay))
+            wave += equalizedAmplitude * decay * sin(2.0 * PI * hertz * harmonic * seconds)
         }
         val envelope = attack * release * release
-        val value = TONE_AMPLITUDE * envelope * wave / HARMONIC_NORMALIZATION
+        val value = TONE_AMPLITUDE * envelope * wave / toneNormalization
         (value * Short.MAX_VALUE).roundToInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
     }
 }
@@ -200,6 +206,10 @@ private val HARMONIC_AMPLITUDES = doubleArrayOf(1.0, 0.55, 0.32, 0.20, 0.13, 0.0
 private const val HARMONIC_NORMALIZATION = 1.70
 private const val MAX_ACTIVE_TRACKS = 4
 private const val CHORD_MAX_PEAK = 29_000
+private const val LOW_TONE_EQ_CEILING_HERTZ = 330.0
+private const val LOW_TONE_EQ_RANGE_HERTZ = 250.0
+private const val LOW_TONE_NORMALIZATION_LIFT = 0.41
+private val LOW_TONE_HARMONIC_AMPLITUDES = doubleArrayOf(0.05, 1.00, 0.80, 0.38, 0.13, 0.06)
 private val TONE_SWITCH_FADE = ToneSwitchFade(
     durationMillis = 45L,
     times = listOf(0f, 1f),

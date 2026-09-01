@@ -8,6 +8,7 @@ import kotlin.math.hypot
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -225,6 +226,20 @@ class AudioPipelineTest {
     }
 
     @Test
+    fun `standard guitar references have comparable phone speaker energy`() {
+        val buffers = listOf(82.4069, 110.0, 146.8324, 195.9977, 246.9417, 329.6276)
+            .map(::createToneBuffer)
+        val levels = buffers.map(::phoneSpeakerRms)
+        val peaks = buffers.map { samples -> samples.maxOf { abs(it.toInt()) } }
+
+        assertTrue(peaks.max() <= 29_000, "peaks=$peaks")
+        assertTrue(
+            levels.min() >= levels.max() * 0.75,
+            "phoneSpeakerRms=$levels peaks=$peaks",
+        )
+    }
+
+    @Test
     fun `reference tone omits harmonics above Nyquist`() {
         val samples = createToneBuffer(hertz = 10_000.0)
         val fundamental = amplitudeAt(samples, 10_000.0)
@@ -279,5 +294,20 @@ class AudioPipelineTest {
             imaginary -= sample * sin(phase)
         }
         return hypot(real, imaginary) / samples.size
+    }
+
+    private fun phoneSpeakerRms(samples: ShortArray, sampleRate: Int = 48_000): Double {
+        val rc = 1.0 / (2.0 * PI * 180.0)
+        val alpha = rc / (rc + 1.0 / sampleRate)
+        var previousInput = 0.0
+        var previousOutput = 0.0
+        var energy = 0.0
+        samples.forEach { sample ->
+            val output = alpha * (previousOutput + sample - previousInput)
+            previousInput = sample.toDouble()
+            previousOutput = output
+            energy += output * output
+        }
+        return sqrt(energy / samples.size)
     }
 }

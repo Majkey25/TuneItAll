@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-alpha.17 — 2026-09-01
+
+- Make low guitar reference tones easier to hear on phone speakers by keeping
+  the second and third harmonics present without clipping the PCM output.
+- Keep all six standard-guitar reference tones within a bounded phone-speaker
+  loudness range while preserving the existing fade and rapid-switch cleanup.
+
 ## 0.3.0-alpha.16 — 2026-09-01
 
 - Keep low-contrast harmonic evidence from dense rock and metal mixes instead
