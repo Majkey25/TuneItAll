@@ -188,8 +188,9 @@ and [security policy](SECURITY.md).
 - Play icon: `fastlane/metadata/android/en-US/images/icon.png`
 - Regenerate the Play icon with `java tools/RenderStoreIcon.java` from the
   repository root.
-- Capture the eight verified emulator screens, then regenerate framed Play
-  artwork with `java tools/RenderStoreScreenshots.java`.
+- Capture eight verified 1080×2340 device screens, then generate English and
+  Czech 1080×1920 framed Play artwork with
+  `java tools/RenderStoreScreenshots.java`.
 - English/Czech listings: `docs/store/`
 - Privacy policies: `docs/privacy/`
 - Public website: `https://majkey25.github.io/TuneItAll/`
