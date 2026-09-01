@@ -33,6 +33,15 @@ class PredominantNoteAnalyzerTest {
         assertTrue(events.isEmpty(), events.toString())
     }
 
+    @Test
+    fun `harmonic stack resolves to its weak fundamental`() {
+        val events = analyze(harmonicTone(SAMPLE_RATE, seconds = 4, fundamentalHertz = 82.41), NoteRange.GUITAR)
+
+        val longest = events.maxBy(NoteEvent::durationMillis)
+        assertEquals(40, longest.midiNote)
+        assertTrue(longest.durationMillis >= 3_000L, events.toString())
+    }
+
     private fun analyze(samples: FloatArray, range: NoteRange): List<NoteEvent> {
         val extractor = StreamingHarmonicFeatureExtractor(SAMPLE_RATE)
         extractor.accept(samples)

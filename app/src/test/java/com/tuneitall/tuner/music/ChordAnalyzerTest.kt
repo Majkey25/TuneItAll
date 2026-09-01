@@ -102,6 +102,14 @@ class ChordAnalyzerTest {
     }
 
     @Test
+    fun `changing broadband noise produces no chord events`() {
+        val analyzer = StreamingChordAnalyzer(48_000, SongAnalysisMode.CHORDS)
+        analyzer.accept(changingNoise(48_000, seconds = 4))
+
+        assertTrue(analyzer.finish().isEmpty())
+    }
+
+    @Test
     fun `streaming analyzer rejects input beyond its bounded duration`() {
         val analyzer = StreamingChordAnalyzer(sampleRate = 8_000, maxDurationSeconds = 1)
 

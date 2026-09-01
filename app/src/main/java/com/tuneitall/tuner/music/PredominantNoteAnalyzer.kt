@@ -12,7 +12,7 @@ internal fun analyzeNotes(
     val emissions = frames.map { frame ->
         DoubleArray(midiRange.count() + 1).also { scores ->
             scores[0] = NO_NOTE_BASE + NO_NOTE_TONAL_WEIGHT * (1.0 - frame.tonalStrength)
-            midiRange.forEachIndexed { index, midi -> scores[index + 1] = noteEmission(frame, midi) }
+            midiRange.forEachIndexed { index, midi -> scores[index + 1] = noteEmission(frame, midi, range) }
         }
     }
     val states = decodeNoteStates(frames, emissions, midiRange)
@@ -48,14 +48,14 @@ internal fun analyzeNotes(
     return mergeNoteGaps(events.filter { it.durationMillis >= MIN_NOTE_MILLIS })
 }
 
-private fun noteEmission(frame: HarmonicFrame, midi: Int): Double {
+private fun noteEmission(frame: HarmonicFrame, midi: Int, range: NoteRange): Double {
+    if (frame.tonalStrength < MIN_TONAL_STRENGTH) return 0.0
     val index = midi - NoteRange.ANY.midiRange.first
     val salience = frame.noteSalience.getOrElse(index) { 0f }
-    val lowerHarmonic = listOf(index - 12, index - 19, index - 24)
-        .mapNotNull(frame.noteSalience::getOrNull)
-        .maxOrNull()
-        ?: 0f
-    val independent = (salience - HARMONIC_PENALTY * lowerHarmonic).coerceAtLeast(0f)
+    val belowRangeEnd = (range.midiRange.first - NoteRange.ANY.midiRange.first).coerceAtLeast(0)
+    val belowRange = frame.noteSalience.take(belowRangeEnd).maxOrNull() ?: 0f
+    val rangePenalty = if (range == NoteRange.VIOLIN) BELOW_RANGE_PENALTY * belowRange else 0f
+    val independent = (salience - rangePenalty).coerceAtLeast(0f)
     return if (independent < MIN_NOTE_SALIENCE) 0.0 else independent.toDouble()
 }
 
@@ -137,14 +137,15 @@ private fun mergeNoteGaps(events: List<NoteEvent>): List<NoteEvent> = buildList 
     }
 }
 
-private const val NO_NOTE_BASE = 0.18
-private const val NO_NOTE_TONAL_WEIGHT = 0.55
+private const val NO_NOTE_BASE = 0.06
+private const val NO_NOTE_TONAL_WEIGHT = 0.12
 private const val NO_NOTE_TRANSITION = 0.08
 private const val NOTE_CHANGE_BASE = 0.14
 private const val NOTE_JUMP_PENALTY = 0.012
 private const val ONSET_TRANSITION_RELIEF = 0.75
 private const val MAX_PENALIZED_JUMP = 24
-private const val HARMONIC_PENALTY = 0.85f
-private const val MIN_NOTE_SALIENCE = 0.18f
+private const val BELOW_RANGE_PENALTY = 0.85f
+private const val MIN_NOTE_SALIENCE = 0.14f
+private const val MIN_TONAL_STRENGTH = 0.10f
 private const val MIN_NOTE_MILLIS = 120L
 private const val MAX_NOTE_GAP_MILLIS = 120L

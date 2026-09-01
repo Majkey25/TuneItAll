@@ -39,3 +39,12 @@ internal fun changingNoise(sampleRate: Int, seconds: Int): FloatArray {
         (envelope * random.nextDouble(-1.0, 1.0)).toFloat()
     }
 }
+
+internal fun harmonicTone(sampleRate: Int, seconds: Int, fundamentalHertz: Double): FloatArray =
+    FloatArray(sampleRate * seconds) { frame ->
+        val sample = 0.70 * sin(2.0 * PI * fundamentalHertz * 2.0 * frame / sampleRate) +
+            0.48 * sin(2.0 * PI * fundamentalHertz * 3.0 * frame / sampleRate) +
+            0.30 * sin(2.0 * PI * fundamentalHertz * 4.0 * frame / sampleRate) +
+            0.18 * sin(2.0 * PI * fundamentalHertz * 5.0 * frame / sampleRate)
+        (sample * 0.55).coerceIn(-1.0, 1.0).toFloat()
+    }

@@ -128,7 +128,7 @@ internal fun analyzeChords(
 }
 
 private fun chordEmission(frame: HarmonicFrame, chord: Chord): Double {
-    if (frame.tonalStrength <= 0f) return 0.0
+    if (frame.tonalStrength < MIN_TONAL_STRENGTH) return 0.0
     if (chord.quality == ChordQuality.DOMINANT_SEVENTH && !hasStableSeventh(frame.chroma, chord.rootPitchClass)) {
         return INVALID_EMISSION
     }
@@ -212,8 +212,8 @@ private const val MIN_SCORE_MARGIN = 0.025
 private const val MIN_EVENT_MILLIS = 300L
 private const val MIN_SEVENTH_MILLIS = 750L
 private const val MAX_BRIDGE_GAP_MILLIS = 350L
-private const val NO_CHORD_BASE = 0.12
-private const val NO_CHORD_TONAL_WEIGHT = 0.40
+private const val NO_CHORD_BASE = 0.05
+private const val NO_CHORD_TONAL_WEIGHT = 0.12
 private const val NO_CHORD_TRANSITION = 0.08
 private const val CHORD_TRANSITION = 0.18
 private const val IN_CHORD_WEIGHT = 0.60
@@ -224,4 +224,5 @@ private const val SEVENTH_BONUS = 0.15
 private const val MIN_SEVENTH_SALIENCE = 0.24f
 private const val SEVENTH_OUTSIDE_RATIO = 2f
 private const val INVALID_EMISSION = -1.0
+private const val MIN_TONAL_STRENGTH = 0.10f
 private const val MAX_ANALYSIS_SECONDS = 30 * 60

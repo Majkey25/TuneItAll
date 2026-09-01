@@ -93,7 +93,7 @@ internal class StreamingHarmonicFeatureExtractor(
         }
         val standardized = standardize(noteFrames)
         val chordFrames = centeredAverage(standardized, framesForHalfWindow(CHORD_WINDOW_SECONDS))
-        val melodyFrames = centeredAverage(standardized, NOTE_SMOOTH_RADIUS)
+        val melodyFrames = centeredAverage(standardized.map(::harmonicSalience), NOTE_SMOOTH_RADIUS)
 
         val result = starts.indices.map { index ->
             val chroma = FloatArray(PITCH_CLASS_COUNT)
@@ -259,6 +259,17 @@ private fun normalize(values: FloatArray) {
     if (norm > 0.0) values.indices.forEach { values[it] = (values[it] / norm).toFloat() }
 }
 
+private fun harmonicSalience(notes: FloatArray): FloatArray = FloatArray(notes.size) { candidate ->
+    var score = 0f
+    var supportingHarmonics = 0
+    HARMONIC_OFFSETS.indices.forEach { index ->
+        val salience = notes.getOrElse(candidate + HARMONIC_OFFSETS[index]) { 0f }
+        score += HARMONIC_WEIGHTS[index] * salience
+        if (salience >= MIN_SUPPORTING_HARMONIC) supportingHarmonics++
+    }
+    score + supportingHarmonics * HARMONIC_COUNT_BONUS
+}.also(::normalize)
+
 private fun tonalStrength(chroma: FloatArray): Float {
     if (chroma.all { it == 0f }) return 0f
     val flatMaximum = 1.0 / sqrt(PITCH_CLASS_COUNT.toDouble())
@@ -346,6 +357,10 @@ private const val WHITENED_FEATURE_WEIGHT = 0.3
 private const val STANDARDIZATION_WINDOW_SECONDS = 6.0
 private const val CHORD_WINDOW_SECONDS = 2.0
 private const val NOTE_SMOOTH_RADIUS = 1
+private val HARMONIC_OFFSETS = intArrayOf(0, 12, 19, 24, 28, 31)
+private val HARMONIC_WEIGHTS = floatArrayOf(1f, 0.707f, 0.577f, 0.5f, 0.447f, 0.408f)
+private const val MIN_SUPPORTING_HARMONIC = 0.04f
+private const val HARMONIC_COUNT_BONUS = 0.12f
 private const val MILLIS_PER_SECOND = 1_000L
 private const val MAX_ANALYSIS_SECONDS = 30 * 60
 private val EMPTY_FEATURES = FloatArray(0)
