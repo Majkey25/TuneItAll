@@ -11,19 +11,16 @@ import kotlin.math.sqrt
 data class ChordMatch(val chord: Chord, val confidence: Double)
 
 data class ChordEvent(
-    val startMillis: Long,
-    val endMillis: Long,
+    override val startMillis: Long,
+    override val endMillis: Long,
     val chord: Chord,
-    val confidence: Double,
-) {
+    override val confidence: Double,
+) : SongEvent {
     init {
         require(startMillis >= 0L)
         require(endMillis > startMillis)
         require(confidence in 0.0..1.0)
     }
-
-    val durationMillis: Long
-        get() = endMillis - startMillis
 }
 
 fun chordEventAt(events: List<ChordEvent>, positionMillis: Long): ChordEvent? {
