@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0-alpha.16 — 2026-09-01
+
+- Keep low-contrast harmonic evidence from dense rock and metal mixes instead
+  of discarding every frame below the old fixed tonal-strength threshold.
+- Reject short or low-confidence whole events so increased coverage does not
+  turn changing broadband noise into chords.
+- Add suspended-second recognition and reduce bass-root bias so inverted
+  chords keep their annotated root.
+- Improve the reported 210.6-second metal track from 59.3% to 88.1% Classic
+  chord coverage while the broadband-noise regression remains empty.
+- Move the optional chord diagram into the fixed current-chord panel and
+  replace the oversized text control with a compact accessible fretboard icon.
+- Replace the dark promotional screenshots with fresh English and Czech
+  SeliaScan-style 1080×1920 artwork based on Huawei device captures.
+
 ## 0.3.0-alpha.15 — 2026-09-01
 
 - Add separate Classic chords, Notes, and Power chords modes to offline song

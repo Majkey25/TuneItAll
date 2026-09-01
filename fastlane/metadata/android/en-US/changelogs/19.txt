@@ -1,0 +1,1 @@
+Song chords now keep weak harmonic evidence in dense rock and metal mixes, reject short noise events, and recognize sus2 chords. The optional diagram stays in the fixed current-chord panel. Store screenshots use the clean SeliaScan-style presentation.

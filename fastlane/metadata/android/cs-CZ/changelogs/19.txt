@@ -1,0 +1,1 @@
+Akordy skladby nyní zachovají slabší harmonické informace v hutném rockovém a metalovém mixu, odmítnou krátké šumové události a rozpoznají sus2. Volitelný hmat zůstává v pevném panelu aktuálního akordu. Screenshoty obchodu mají čistý styl podle SeliaScan.
