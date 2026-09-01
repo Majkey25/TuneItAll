@@ -5,7 +5,6 @@ import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.ln1p
 import kotlin.math.log2
-import kotlin.math.sin
 import kotlin.math.sqrt
 
 data class ChordMatch(val chord: Chord, val confidence: Double)
@@ -188,51 +187,6 @@ class StreamingChordAnalyzer internal constructor(
     }
 
     private data class ChordFrame(val startMillis: Long, val match: ChordMatch?)
-}
-
-private fun fft(real: DoubleArray, imaginary: DoubleArray) {
-    require(real.size == imaginary.size && real.size.countOneBits() == 1)
-    var reversed = 0
-    for (index in 1 until real.size) {
-        var bit = real.size shr 1
-        while (reversed and bit != 0) {
-            reversed = reversed xor bit
-            bit = bit shr 1
-        }
-        reversed = reversed xor bit
-        if (index < reversed) {
-            val realValue = real[index]
-            real[index] = real[reversed]
-            real[reversed] = realValue
-            val imaginaryValue = imaginary[index]
-            imaginary[index] = imaginary[reversed]
-            imaginary[reversed] = imaginaryValue
-        }
-    }
-    var length = 2
-    while (length <= real.size) {
-        val angle = -2.0 * PI / length
-        val stepReal = cos(angle)
-        val stepImaginary = sin(angle)
-        for (block in real.indices step length) {
-            var weightReal = 1.0
-            var weightImaginary = 0.0
-            for (offset in 0 until length / 2) {
-                val even = block + offset
-                val odd = even + length / 2
-                val oddReal = real[odd] * weightReal - imaginary[odd] * weightImaginary
-                val oddImaginary = real[odd] * weightImaginary + imaginary[odd] * weightReal
-                real[odd] = real[even] - oddReal
-                imaginary[odd] = imaginary[even] - oddImaginary
-                real[even] += oddReal
-                imaginary[even] += oddImaginary
-                val nextWeightReal = weightReal * stepReal - weightImaginary * stepImaginary
-                weightImaginary = weightReal * stepImaginary + weightImaginary * stepReal
-                weightReal = nextWeightReal
-            }
-        }
-        length = length shl 1
-    }
 }
 
 private const val PITCH_CLASS_COUNT = 12
