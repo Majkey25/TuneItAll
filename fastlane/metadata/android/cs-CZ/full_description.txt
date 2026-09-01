@@ -19,7 +19,7 @@ Funkce:
 • Mechanický metronom od 20 do 400 BPM s nastavením taktu, dělení, přízvuku, pěti čistými zvuky, hlasitosti, ztlumení a odpočtu
 • Offline zjištění tempa vybrané písničky s jistotou odhadu a použitím BPM jedním klepnutím
 • Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
-• Offline časová osa akordů s detekcí power akordů, volitelnými hmaty, přehráváním a transpozicí
+• Offline analýza písní se samostatnými režimy Klasické akordy, Tóny a Power akordy, rozsahy nástrojů, přehráváním a transpozicí
 • Učení akordů, kvíz akordů a rozpoznávání 12 tónů sluchem s místním skóre
 • Jednoduché světlé a tmavé rozhraní
 • Rozhraní podle systému, anglicky, česky, německy, francouzsky a španělsky

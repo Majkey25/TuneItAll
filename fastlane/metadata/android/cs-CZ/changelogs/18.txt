@@ -1,0 +1,1 @@
+Analýza písní má samostatné režimy Klasické akordy, Tóny a Power akordy. Nové harmonické funkce s korekcí ladění a časovým vyhlazením vytvářejí delší a čitelnější synchronizované časové osy.

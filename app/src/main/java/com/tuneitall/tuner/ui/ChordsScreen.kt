@@ -119,7 +119,7 @@ fun ChordsScreen(
                     )
                 }
             }
-            if (state.tab == ChordTab.LIBRARY || state.analysisMode != SongAnalysisMode.NOTES) {
+            if (state.tab == ChordTab.LIBRARY || state.analysisMode == SongAnalysisMode.CHORDS) {
                 TuningSelector(tunings, selectedTuning.id, onTuningSelected)
             }
             when (state.tab) {

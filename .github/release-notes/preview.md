@@ -1,4 +1,4 @@
-Intoniva `v0.3.0-alpha.14` prerelease testing build.
+Intoniva `v0.3.0-alpha.15` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -12,6 +12,15 @@ permission.
 
 Highlights:
 
+- Get Chords for Song now offers separate Classic, Notes, and Power modes.
+- Notes follows a predominant melody inside Any, Guitar, Bass, Violin, or Piano
+  ranges and displays octave-aware names.
+- Tuning-corrected log-frequency features, temporal whitening, two-second chord
+  context, and sequence decoding replace the unstable short-frame matcher.
+- The reported 210.6-second metal track now reaches 61% Classic/Power coverage
+  with a 1.45-second median segment; Guitar Notes reaches 28% coverage.
+- Noise, missing-fundamental harmonic stacks, drum transients, and instrument
+  ranges have deterministic regression coverage.
 - Song analysis now recognizes distorted guitar power chords such as E5.
 - Stronger low-frequency evidence resists false major/minor labels from upper
   distortion harmonics.
@@ -72,9 +81,9 @@ Highlights:
   subdivision, accent, sound, volume, mute, and count-in controls.
 - Canonical major, minor, and dominant-seventh diagrams for Standard E guitar
   and Standard C ukulele, with finger numbers, starting frets, and barres.
-- Experimental offline chord detection for a local audio file, with synchronized
-  playback, timeline navigation, canonical standard-instrument diagrams, and
-  transposition.
+- Offline Classic chord, predominant-note, and Power chord analysis for a local
+  audio file, with synchronized playback, timeline navigation, reviewed
+  diagrams where available, and transposition.
 - Chord learning, hidden-answer chord quiz, and a 12-note ear trainer with
   generated audio and local scoring.
 - Stable confirmed BPM editing, audio-synchronized mechanical animation, a

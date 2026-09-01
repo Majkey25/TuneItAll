@@ -19,7 +19,7 @@ Features:
 • Mechanical metronome from 20 to 400 BPM with meter, subdivision, accent, five clean sound styles, volume, mute, and count-in controls
 • Offline tempo estimation for a selected song, with confidence and one-tap BPM application
 • Canonical Standard E guitar and Standard C ukulele chord diagrams
-• Offline Get Chords for Song timeline with stable power-chord detection, optional diagrams, playback, and transposition
+• Offline song analysis with separate Classic chords, predominant Notes, and Power chords timelines, instrument ranges, playback, and transposition
 • Chord learning, hidden-answer chord quiz, and 12-note ear training with local scoring
 • Simple Light and Dark interface
 • System-default, English, Czech, German, French, and Spanish interfaces

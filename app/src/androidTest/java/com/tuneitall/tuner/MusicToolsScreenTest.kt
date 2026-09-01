@@ -325,6 +325,7 @@ class MusicToolsScreenTest {
         }
 
         compose.onNodeWithTag("song_diagrams_toggle").assertDoesNotExist()
+        compose.onNodeWithTag("chord_tuning_selector").assertDoesNotExist()
         compose.onNodeWithTag("current_song_chord").assertTextEquals("E5")
     }
 

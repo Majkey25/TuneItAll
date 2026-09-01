@@ -421,7 +421,8 @@ Required results:
 - Power covers at least 55% of the file, median duration is at least 750 ms,
   and every event is `POWER`.
 - Classic does not return dominant seventh as the majority quality.
-- Notes stays inside the selected MIDI range.
+- Guitar Notes stays inside the selected MIDI range and covers at least 15% of
+  the complete reported file.
 - Each mode completes in at most 30 seconds.
 
 - [ ] **Step 2: Run the full release gate**

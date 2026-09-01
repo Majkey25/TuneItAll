@@ -1,7 +1,7 @@
 # Offline song analysis modes
 
 Date: 2026-09-01
-Status: Approved direction, written specification awaiting review
+Status: Implemented and verified
 
 ## Goal
 
@@ -192,6 +192,7 @@ Connected Huawei tests must use the real Android decoder and verify:
 - Notes mode returns only MIDI notes inside the selected range. Its exact-note
   accuracy is accepted against synthetic annotated melodies, not guessed from
   the unannotated reported song.
+- Guitar Notes covers at least 15% of the complete reported file.
 - Each mode completes the 210,576 ms file in at most 30 seconds on the Huawei
   YAL-L21.
 - The current-event bar stays fixed and the timeline follows playback.

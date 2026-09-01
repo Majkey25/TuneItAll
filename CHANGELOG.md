@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0-alpha.15 — 2026-09-01
+
+- Add separate Classic chords, Notes, and Power chords modes to offline song
+  analysis.
+- Replace short-frame matching with tuning-corrected, temporally standardized
+  harmonic features and persistence-biased sequence decoding.
+- Add Guitar, Bass, Violin, Piano, and Any melody ranges to predominant-note
+  analysis with octave-aware note names.
+- Keep Notes and Power timelines free of unreviewed chord diagrams while
+  preserving fixed current-event display and timeline auto-follow.
+- Improve the reported 210.6-second metal track from 16% unstable chord
+  coverage to 61% Classic/Power coverage with a 1.45-second median segment;
+  Guitar Notes reaches 28% coverage.
+
 ## 0.3.0-alpha.14 — 2026-08-31
 
 - Detect power chords in distorted guitar audio and label them with the standard

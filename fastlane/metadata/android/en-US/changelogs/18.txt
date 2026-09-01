@@ -1,0 +1,1 @@
+Song analysis now has separate Classic chords, predominant Notes, and Power chords modes. New tuning-corrected harmonic features and sequence smoothing produce longer, more readable synchronized timelines.
