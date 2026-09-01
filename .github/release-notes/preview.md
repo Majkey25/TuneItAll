@@ -1,4 +1,4 @@
-Intoniva `v0.3.0-alpha.15` prerelease testing build.
+Intoniva `v0.3.0-alpha.17` prerelease testing build.
 
 Download the APK attached below and open it on an Android 8.0+ device. Android
 may ask for permission to install apps from your browser or file manager because
@@ -12,13 +12,20 @@ permission.
 
 Highlights:
 
+- Low guitar reference tones retain stronger second and third harmonics, so E2
+  through E4 sound closer in loudness on small phone speakers without clipping.
+- All six standard-guitar reference tones now have a bounded phone-speaker
+  loudness regression test alongside the existing fade and switching tests.
+- Dense rock and metal mixes keep weak harmonic evidence, reject short noise
+  events, and recognize suspended-second chords.
+- English and Czech Play screenshots now use the clean SeliaScan-style layout.
 - Get Chords for Song now offers separate Classic, Notes, and Power modes.
 - Notes follows a predominant melody inside Any, Guitar, Bass, Violin, or Piano
   ranges and displays octave-aware names.
 - Tuning-corrected log-frequency features, temporal whitening, two-second chord
   context, and sequence decoding replace the unstable short-frame matcher.
-- The reported 210.6-second metal track now reaches 61% Classic/Power coverage
-  with a 1.45-second median segment; Guitar Notes reaches 28% coverage.
+- The reported 210.6-second metal track now reaches 88.1% Classic chord
+  coverage while the broadband-noise regression remains empty.
 - Noise, missing-fundamental harmonic stacks, drum transients, and instrument
   ranges have deterministic regression coverage.
 - Song analysis now recognizes distorted guitar power chords such as E5.
@@ -104,8 +111,8 @@ Highlights:
   screen content.
 - Maximum microphone sensitivity is no longer blocked by an amplitude or
   learned room-noise floor; the periodic detector rejects silence and noise.
-- Eight professional English Play images built from exact emulator captures in
-  a deterministic phone-frame renderer.
+- Sixteen professional English and Czech Play images built from exact emulator
+  captures in a deterministic phone-frame renderer.
 - No ads, accounts, analytics, tracking, or network permission.
 
 The app passed unit, Lint, API 29 Huawei runtime UI, audio-session, local-file decoding,
