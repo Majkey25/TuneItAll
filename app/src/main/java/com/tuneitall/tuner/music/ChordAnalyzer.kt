@@ -1,10 +1,5 @@
 package com.tuneitall.tuner.music
 
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.hypot
-import kotlin.math.ln1p
-import kotlin.math.log2
 import kotlin.math.sqrt
 
 data class ChordMatch(val chord: Chord, val confidence: Double)
@@ -67,140 +62,181 @@ fun matchChord(chroma: DoubleArray): ChordMatch? {
 }
 
 class StreamingChordAnalyzer internal constructor(
-    private val sampleRate: Int,
+    sampleRate: Int,
+    private val mode: SongAnalysisMode = SongAnalysisMode.CHORDS,
     maxDurationSeconds: Int = MAX_ANALYSIS_SECONDS,
 ) {
-    private val window = FloatArray(FFT_SIZE)
-    private val real = DoubleArray(FFT_SIZE)
-    private val imaginary = DoubleArray(FFT_SIZE)
-    private val frames = mutableListOf<ChordFrame>()
-    private var fill = 0
-    private var frameStart = 0L
-    private var totalSamples = 0L
-    private val maxSamples: Long
+    private val extractor = StreamingHarmonicFeatureExtractor(sampleRate, maxDurationSeconds)
 
     init {
-        require(sampleRate in 8_000..192_000)
-        require(maxDurationSeconds in 1..MAX_ANALYSIS_SECONDS)
-        maxSamples = Math.multiplyExact(sampleRate.toLong(), maxDurationSeconds.toLong())
+        require(mode != SongAnalysisMode.NOTES)
     }
 
-    fun accept(samples: FloatArray) {
-        require(samples.all(Float::isFinite))
-        require(totalSamples + samples.size <= maxSamples) { "Song analysis exceeds the duration limit" }
-        var sourceOffset = 0
-        totalSamples += samples.size
-        while (sourceOffset < samples.size) {
-            val count = minOf(FFT_SIZE - fill, samples.size - sourceOffset)
-            samples.copyInto(window, fill, sourceOffset, sourceOffset + count)
-            fill += count
-            sourceOffset += count
-            if (fill == FFT_SIZE) {
-                frames += ChordFrame(
-                    startMillis = frameStart * MILLIS_PER_SECOND / sampleRate,
-                    match = matchChord(extractChroma()),
-                )
-                window.copyInto(window, 0, HOP_SIZE, FFT_SIZE)
-                fill = FFT_SIZE - HOP_SIZE
-                frameStart += HOP_SIZE
+    fun accept(samples: FloatArray) = extractor.accept(samples)
+
+    fun finish(): List<ChordEvent> = analyzeChords(extractor.finish(), mode, extractor.durationMillis)
+}
+
+internal fun analyzeChords(
+    frames: List<HarmonicFrame>,
+    mode: SongAnalysisMode,
+    songEndMillis: Long,
+): List<ChordEvent> {
+    require(mode != SongAnalysisMode.NOTES)
+    if (frames.isEmpty() || songEndMillis <= 0L) return emptyList()
+    val chords = if (mode == SongAnalysisMode.POWER) {
+        List(PITCH_CLASS_COUNT) { root -> Chord(root, ChordQuality.POWER) }
+    } else {
+        buildList {
+            listOf(ChordQuality.MAJOR, ChordQuality.MINOR, ChordQuality.DOMINANT_SEVENTH).forEach { quality ->
+                repeat(PITCH_CLASS_COUNT) { root -> add(Chord(root, quality)) }
             }
         }
     }
-
-    fun finish(): List<ChordEvent> {
-        if (frames.isEmpty() && fill >= MIN_PARTIAL_WINDOW) {
-            window.fill(0f, fill)
-            frames += ChordFrame(0L, matchChord(extractChroma()))
-        }
-        if (frames.isEmpty()) return emptyList()
-        val smoothed = frames.indices.map { index -> smoothMatch(index) }
-        val frameDuration = FFT_SIZE.toLong() * MILLIS_PER_SECOND / sampleRate
-        val songEnd = maxOf(totalSamples * MILLIS_PER_SECOND / sampleRate, frameDuration)
-        val events = mutableListOf<ChordEvent>()
-        var activeChord: Chord? = null
-        var activeStart = 0L
-        var confidenceTotal = 0.0
-        var confidenceCount = 0
-
-        fun close(endMillis: Long) {
-            val chord = activeChord ?: return
-            if (endMillis > activeStart) {
-                events += ChordEvent(activeStart, endMillis, chord, confidenceTotal / confidenceCount)
+    val emissions = frames.map { frame ->
+        DoubleArray(chords.size + 1).also { scores ->
+            scores[0] = NO_CHORD_BASE + NO_CHORD_TONAL_WEIGHT * (1.0 - frame.tonalStrength)
+            chords.forEachIndexed { index, chord ->
+                scores[index + 1] = chordEmission(frame, chord)
             }
-            activeChord = null
+        }
+    }
+    val states = viterbi(emissions)
+    val events = mutableListOf<ChordEvent>()
+    var activeState = states.first()
+    var activeStart = frames.first().startMillis
+    var confidenceTotal = emissions.first()[activeState]
+    var confidenceCount = 1
+
+    fun close(endMillis: Long) {
+        if (activeState == 0 || endMillis <= activeStart) return
+        val sourceChord = chords[activeState - 1]
+        val duration = endMillis - activeStart
+        val chord = if (sourceChord.quality == ChordQuality.DOMINANT_SEVENTH && duration < MIN_SEVENTH_MILLIS) {
+            Chord(sourceChord.rootPitchClass, ChordQuality.MAJOR)
+        } else {
+            sourceChord
+        }
+        events += ChordEvent(
+            startMillis = activeStart,
+            endMillis = endMillis,
+            chord = chord,
+            confidence = (confidenceTotal / confidenceCount).coerceIn(0.0, 1.0),
+        )
+    }
+
+    for (index in 1 until states.size) {
+        val state = states[index]
+        if (state != activeState) {
+            close(frames[index].startMillis)
+            activeState = state
+            activeStart = frames[index].startMillis
             confidenceTotal = 0.0
             confidenceCount = 0
         }
+        confidenceTotal += emissions[index][state]
+        confidenceCount++
+    }
+    close(songEndMillis)
+    return mergeChordGaps(events.filter { it.durationMillis >= MIN_EVENT_MILLIS })
+}
 
-        smoothed.forEachIndexed { index, match ->
-            val start = frames[index].startMillis
-            if (match?.chord != activeChord) {
-                close(start)
-                if (match != null) {
-                    activeChord = match.chord
-                    activeStart = start
+private fun chordEmission(frame: HarmonicFrame, chord: Chord): Double {
+    if (frame.tonalStrength <= 0f) return 0.0
+    if (chord.quality == ChordQuality.DOMINANT_SEVENTH && !hasStableSeventh(frame.chroma, chord.rootPitchClass)) {
+        return INVALID_EMISSION
+    }
+    val inChord = chord.pitchClasses.map { frame.chroma[it].toDouble() }
+    val outOfChord = frame.chroma.indices.filterNot(chord.pitchClasses::contains).map { frame.chroma[it].toDouble() }
+    val inAverage = inChord.average()
+    val minimum = inChord.min()
+    val outAverage = outOfChord.average()
+    val bassRoot = frame.bassChroma[chord.rootPitchClass]
+    val extensionBonus = if (chord.quality == ChordQuality.DOMINANT_SEVENTH) {
+        SEVENTH_BONUS * frame.chroma[(chord.rootPitchClass + 10) % PITCH_CLASS_COUNT]
+    } else {
+        0.0
+    }
+    return (
+        IN_CHORD_WEIGHT * inAverage + MINIMUM_NOTE_WEIGHT * minimum + BASS_ROOT_WEIGHT * bassRoot -
+            OUT_OF_CHORD_WEIGHT * outAverage + extensionBonus
+        ).coerceIn(0.0, 1.0)
+}
+
+private fun hasStableSeventh(chroma: FloatArray, root: Int): Boolean {
+    val seventh = chroma[(root + 10) % PITCH_CLASS_COUNT]
+    if (seventh < MIN_SEVENTH_SALIENCE) return false
+    val chordPitches = setOf(root, (root + 4) % PITCH_CLASS_COUNT, (root + 7) % PITCH_CLASS_COUNT, (root + 10) % PITCH_CLASS_COUNT)
+    val outside = chroma.indices.filterNot(chordPitches::contains).map(chroma::get).sorted()
+    return seventh >= SEVENTH_OUTSIDE_RATIO * outside[outside.size / 2]
+}
+
+private fun viterbi(emissions: List<DoubleArray>): IntArray {
+    val stateCount = emissions.first().size
+    val backPointers = Array(emissions.size) { ByteArray(stateCount) }
+    var previous = emissions.first().copyOf()
+    for (frameIndex in 1 until emissions.size) {
+        val current = DoubleArray(stateCount)
+        for (state in 0 until stateCount) {
+            var bestPrevious = state
+            var bestScore = previous[state]
+            for (candidate in 0 until stateCount) {
+                if (candidate == state) continue
+                val penalty = if (candidate == 0 || state == 0) NO_CHORD_TRANSITION else CHORD_TRANSITION
+                val score = previous[candidate] - penalty
+                if (score > bestScore) {
+                    bestScore = score
+                    bestPrevious = candidate
                 }
             }
-            if (match != null && match.chord == activeChord) {
-                confidenceTotal += match.confidence
-                confidenceCount++
-            }
+            current[state] = bestScore + emissions[frameIndex][state]
+            backPointers[frameIndex][state] = bestPrevious.toByte()
         }
-        close(songEnd)
-        return events.filter { it.durationMillis >= MIN_EVENT_MILLIS }
+        previous = current
     }
-
-    private fun smoothMatch(index: Int): ChordMatch? {
-        val start = maxOf(0, index - SMOOTH_RADIUS)
-        val end = minOf(frames.lastIndex, index + SMOOTH_RADIUS)
-        val matches = (start..end).mapNotNull { frames[it].match }
-        if (matches.isEmpty()) return null
-        val winner = matches.groupingBy(ChordMatch::chord).eachCount().maxBy { it.value }.key
-        val winningMatches = matches.filter { it.chord == winner }
-        if (frames.size > 1 && winningMatches.size < MIN_SMOOTH_VOTES) return null
-        return ChordMatch(winner, winningMatches.map(ChordMatch::confidence).average())
+    val states = IntArray(emissions.size)
+    states[states.lastIndex] = previous.indices.maxBy(previous::get)
+    for (frameIndex in states.lastIndex downTo 1) {
+        states[frameIndex - 1] = backPointers[frameIndex][states[frameIndex]].toInt()
     }
+    return states
+}
 
-    private fun extractChroma(): DoubleArray {
-        for (index in window.indices) {
-            val hann = 0.5 - 0.5 * cos(2.0 * PI * index / (FFT_SIZE - 1))
-            real[index] = window[index] * hann
-            imaginary[index] = 0.0
+private fun mergeChordGaps(events: List<ChordEvent>): List<ChordEvent> = buildList {
+    events.forEach { event ->
+        val previous = lastOrNull()
+        if (previous != null && previous.chord == event.chord && event.startMillis - previous.endMillis <= MAX_BRIDGE_GAP_MILLIS) {
+            val combinedDuration = previous.durationMillis + event.durationMillis
+            this[lastIndex] = previous.copy(
+                endMillis = event.endMillis,
+                confidence = (
+                    previous.confidence * previous.durationMillis + event.confidence * event.durationMillis
+                    ) / combinedDuration,
+            )
+        } else {
+            add(event)
         }
-        fft(real, imaginary)
-        val chroma = DoubleArray(PITCH_CLASS_COUNT)
-        val firstBin = (MIN_ANALYSIS_HERTZ * FFT_SIZE / sampleRate).toInt().coerceAtLeast(1)
-        val lastBin = (MAX_ANALYSIS_HERTZ * FFT_SIZE / sampleRate).toInt().coerceAtMost(FFT_SIZE / 2 - 1)
-        for (bin in firstBin..lastBin) {
-            val magnitude = hypot(real[bin], imaginary[bin])
-            val previous = hypot(real[bin - 1], imaginary[bin - 1])
-            val next = hypot(real[bin + 1], imaginary[bin + 1])
-            if (magnitude <= previous || magnitude < next) continue
-            val frequency = bin.toDouble() * sampleRate / FFT_SIZE
-            val midi = 69.0 + 12.0 * log2(frequency / 440.0)
-            val pitchClass = Math.floorMod(kotlin.math.round(midi).toInt(), PITCH_CLASS_COUNT)
-            chroma[pitchClass] += ln1p(magnitude) / frequency
-        }
-        val norm = sqrt(chroma.sumOf { it * it })
-        if (norm > 0.0) chroma.indices.forEach { chroma[it] /= norm }
-        return chroma
     }
-
-    private data class ChordFrame(val startMillis: Long, val match: ChordMatch?)
 }
 
 private const val PITCH_CLASS_COUNT = 12
-private const val FFT_SIZE = 8_192
-private const val HOP_SIZE = 4_096
-private const val MIN_PARTIAL_WINDOW = FFT_SIZE / 2
-private const val MIN_ANALYSIS_HERTZ = 65.0
-private const val MAX_ANALYSIS_HERTZ = 2_000.0
 private const val MIN_CHROMA_NORM = 1e-9
 private const val MIN_TEMPLATE_SCORE = 0.72
 private const val MIN_SCORE_MARGIN = 0.025
-private const val SMOOTH_RADIUS = 2
-private const val MIN_SMOOTH_VOTES = 2
 private const val MIN_EVENT_MILLIS = 300L
+private const val MIN_SEVENTH_MILLIS = 750L
+private const val MAX_BRIDGE_GAP_MILLIS = 350L
 private const val DISPLAY_HOLD_MILLIS = 500L
-private const val MILLIS_PER_SECOND = 1_000L
+private const val NO_CHORD_BASE = 0.12
+private const val NO_CHORD_TONAL_WEIGHT = 0.40
+private const val NO_CHORD_TRANSITION = 0.08
+private const val CHORD_TRANSITION = 0.18
+private const val IN_CHORD_WEIGHT = 0.60
+private const val MINIMUM_NOTE_WEIGHT = 0.15
+private const val BASS_ROOT_WEIGHT = 0.20
+private const val OUT_OF_CHORD_WEIGHT = 0.35
+private const val SEVENTH_BONUS = 0.15
+private const val MIN_SEVENTH_SALIENCE = 0.24f
+private const val SEVENTH_OUTSIDE_RATIO = 2f
+private const val INVALID_EMISSION = -1.0
 private const val MAX_ANALYSIS_SECONDS = 30 * 60

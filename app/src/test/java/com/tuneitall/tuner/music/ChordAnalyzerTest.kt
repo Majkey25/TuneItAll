@@ -59,12 +59,46 @@ class ChordAnalyzerTest {
     @Test
     fun `streaming analyzer recognizes a clipped E power chord`() {
         val sampleRate = 48_000
-        val analyzer = StreamingChordAnalyzer(sampleRate)
+        val analyzer = StreamingChordAnalyzer(sampleRate, SongAnalysisMode.POWER)
         analyzer.accept(distortedPowerChord(sampleRate, seconds = 4, rootHertz = 82.41))
 
         val event = analyzer.finish().maxBy(ChordEvent::durationMillis)
 
         assertEquals(Chord(4, ChordQuality.POWER), event.chord)
+    }
+
+    @Test
+    fun `power mode keeps a distorted riff stable through drum transients`() {
+        val analyzer = StreamingChordAnalyzer(48_000, SongAnalysisMode.POWER)
+        analyzer.accept(noisyPowerRiff(48_000, seconds = 6, rootHertz = 82.41))
+
+        val events = analyzer.finish()
+        val longest = events.maxBy(ChordEvent::durationMillis)
+
+        assertEquals(Chord(4, ChordQuality.POWER), longest.chord)
+        assertTrue(longest.durationMillis >= 4_000L, events.toString())
+        assertTrue(events.all { it.chord.quality == ChordQuality.POWER })
+    }
+
+    @Test
+    fun `classic mode does not turn an E power chord into E7`() {
+        val analyzer = StreamingChordAnalyzer(48_000, SongAnalysisMode.CHORDS)
+        analyzer.accept(noisyPowerRiff(48_000, seconds = 6, rootHertz = 82.41))
+
+        val events = analyzer.finish()
+
+        assertTrue(events.none { it.chord == Chord(4, ChordQuality.DOMINANT_SEVENTH) }, events.toString())
+    }
+
+    @Test
+    fun `classic mode accepts a persistent genuine G7`() {
+        val analyzer = StreamingChordAnalyzer(48_000, SongAnalysisMode.CHORDS)
+        analyzer.accept(sineChord(48_000, 5, 196.0, 246.94, 293.66, 349.23))
+
+        val event = analyzer.finish().maxBy(ChordEvent::durationMillis)
+
+        assertEquals(Chord(7, ChordQuality.DOMINANT_SEVENTH), event.chord)
+        assertTrue(event.durationMillis >= 3_000L)
     }
 
     @Test

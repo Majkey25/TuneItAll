@@ -47,6 +47,9 @@ internal class StreamingHarmonicFeatureExtractor(
         maxSamples = Math.multiplyExact(sampleRate.toLong(), maxDurationSeconds.toLong())
     }
 
+    val durationMillis: Long
+        get() = totalSamples * MILLIS_PER_SECOND / sampleRate
+
     fun accept(samples: FloatArray) {
         check(finishedFrames == null) { "Song analysis already finished" }
         require(samples.all(Float::isFinite))
