@@ -74,7 +74,12 @@ internal fun analyzeChords(
         List(PITCH_CLASS_COUNT) { root -> Chord(root, ChordQuality.POWER) }
     } else {
         buildList {
-            listOf(ChordQuality.MAJOR, ChordQuality.MINOR, ChordQuality.DOMINANT_SEVENTH).forEach { quality ->
+            listOf(
+                ChordQuality.MAJOR,
+                ChordQuality.MINOR,
+                ChordQuality.SUSPENDED_SECOND,
+                ChordQuality.DOMINANT_SEVENTH,
+            ).forEach { quality ->
                 repeat(PITCH_CLASS_COUNT) { root -> add(Chord(root, quality)) }
             }
         }
@@ -103,11 +108,13 @@ internal fun analyzeChords(
         } else {
             sourceChord
         }
+        val confidence = (confidenceTotal / confidenceCount).coerceIn(0.0, 1.0)
+        if (confidence < MIN_EVENT_CONFIDENCE) return
         events += ChordEvent(
             startMillis = activeStart,
             endMillis = endMillis,
             chord = chord,
-            confidence = (confidenceTotal / confidenceCount).coerceIn(0.0, 1.0),
+            confidence = confidence,
         )
     }
 
@@ -146,7 +153,7 @@ private fun chordEmission(frame: HarmonicFrame, chord: Chord): Double {
     return (
         IN_CHORD_WEIGHT * inAverage + MINIMUM_NOTE_WEIGHT * minimum + BASS_ROOT_WEIGHT * bassRoot -
             OUT_OF_CHORD_WEIGHT * outAverage + extensionBonus
-        ).coerceIn(0.0, 1.0)
+    ).coerceIn(0.0, 1.0)
 }
 
 private fun hasStableSeventh(chroma: FloatArray, root: Int): Boolean {
@@ -210,6 +217,7 @@ private const val MIN_CHROMA_NORM = 1e-9
 private const val MIN_TEMPLATE_SCORE = 0.72
 private const val MIN_SCORE_MARGIN = 0.025
 private const val MIN_EVENT_MILLIS = 300L
+private const val MIN_EVENT_CONFIDENCE = 0.18
 private const val MIN_SEVENTH_MILLIS = 750L
 private const val MAX_BRIDGE_GAP_MILLIS = 350L
 private const val NO_CHORD_BASE = 0.05
@@ -218,11 +226,11 @@ private const val NO_CHORD_TRANSITION = 0.08
 private const val CHORD_TRANSITION = 0.18
 private const val IN_CHORD_WEIGHT = 0.60
 private const val MINIMUM_NOTE_WEIGHT = 0.15
-private const val BASS_ROOT_WEIGHT = 0.20
+private const val BASS_ROOT_WEIGHT = 0.10
 private const val OUT_OF_CHORD_WEIGHT = 0.35
 private const val SEVENTH_BONUS = 0.15
 private const val MIN_SEVENTH_SALIENCE = 0.24f
 private const val SEVENTH_OUTSIDE_RATIO = 2f
 private const val INVALID_EMISSION = -1.0
-private const val MIN_TONAL_STRENGTH = 0.10f
+private const val MIN_TONAL_STRENGTH = 0.05f
 private const val MAX_ANALYSIS_SECONDS = 30 * 60

@@ -7,6 +7,7 @@ import kotlin.random.Random
 enum class ChordQuality(val intervals: Set<Int>) {
     MAJOR(setOf(0, 4, 7)),
     MINOR(setOf(0, 3, 7)),
+    SUSPENDED_SECOND(setOf(0, 2, 7)),
     DOMINANT_SEVENTH(setOf(0, 4, 7, 10)),
     POWER(setOf(0, 7)),
 }

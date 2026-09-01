@@ -55,6 +55,7 @@
     <string name="choose_tuning_current">Vybrat ladění. Aktuální: %1$s</string>
     <string name="chord_major">Dur</string>
     <string name="chord_minor">Moll</string>
+    <string name="chord_suspended_second">Sus2</string>
     <string name="chord_dominant_seventh">Dominantní 7</string>
     <string name="chord_power">Power 5</string>
     <string name="show_chord_diagrams">Zobrazit hmaty</string>

@@ -51,6 +51,7 @@
     <string name="choose_tuning_current">Choose tuning. Current: %1$s</string>
     <string name="chord_major">Major</string>
     <string name="chord_minor">Minor</string>
+    <string name="chord_suspended_second">Sus2</string>
     <string name="chord_dominant_seventh">Dominant 7</string>
     <string name="chord_power">Power 5</string>
     <string name="show_chord_diagrams">Show chord diagrams</string>

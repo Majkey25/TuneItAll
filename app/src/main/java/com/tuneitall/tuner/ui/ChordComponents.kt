@@ -203,6 +203,7 @@ fun chordQualityName(quality: ChordQuality): String = stringResource(
     when (quality) {
         ChordQuality.MAJOR -> R.string.chord_major
         ChordQuality.MINOR -> R.string.chord_minor
+        ChordQuality.SUSPENDED_SECOND -> R.string.chord_suspended_second
         ChordQuality.DOMINANT_SEVENTH -> R.string.chord_dominant_seventh
         ChordQuality.POWER -> R.string.chord_power
     },
@@ -212,6 +213,7 @@ fun formatChord(chord: Chord, notation: NoteNotation): String {
     val suffix = when (chord.quality) {
         ChordQuality.MAJOR -> ""
         ChordQuality.MINOR -> "m"
+        ChordQuality.SUSPENDED_SECOND -> "sus2"
         ChordQuality.DOMINANT_SEVENTH -> "7"
         ChordQuality.POWER -> "5"
     }

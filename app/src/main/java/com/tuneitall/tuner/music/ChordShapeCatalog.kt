@@ -74,6 +74,7 @@ private fun Resources.readRawText(resourceId: Int): String =
 private val SUFFIXES = mapOf(
     ChordQuality.MAJOR to "major",
     ChordQuality.MINOR to "minor",
+    ChordQuality.SUSPENDED_SECOND to "sus2",
     ChordQuality.DOMINANT_SEVENTH to "7",
 )
 private val GUITAR_KEYS = listOf("C", "Csharp", "D", "Eb", "E", "F", "Fsharp", "G", "Ab", "A", "Bb", "B")

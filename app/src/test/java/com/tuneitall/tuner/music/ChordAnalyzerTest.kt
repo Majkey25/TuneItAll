@@ -1,5 +1,7 @@
 package com.tuneitall.tuner.music
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.tanh
@@ -91,6 +93,31 @@ class ChordAnalyzerTest {
     }
 
     @Test
+    fun `clear chord chroma survives low full mix tonal contrast`() {
+        val chroma = FloatArray(12) { 0.10f }.apply {
+            this[4] = 0.70f
+            this[8] = 0.65f
+            this[11] = 0.65f
+        }
+        val bass = FloatArray(12).apply { this[4] = 0.80f }
+        val frames = List(20) { index ->
+            HarmonicFrame(
+                startMillis = index * 100L,
+                chroma = chroma,
+                bassChroma = bass,
+                noteSalience = FloatArray(88),
+                tonalStrength = 0.06f,
+                onsetStrength = 0f,
+            )
+        }
+
+        val event = analyzeChords(frames, SongAnalysisMode.CHORDS, songEndMillis = 2_000L)
+            .maxBy(ChordEvent::durationMillis)
+
+        assertEquals(Chord(4, ChordQuality.MAJOR), event.chord)
+    }
+
+    @Test
     fun `classic mode accepts a persistent genuine G7`() {
         val analyzer = StreamingChordAnalyzer(48_000, SongAnalysisMode.CHORDS)
         analyzer.accept(sineChord(48_000, 5, 196.0, 246.94, 293.66, 349.23))
@@ -106,7 +133,9 @@ class ChordAnalyzerTest {
         val analyzer = StreamingChordAnalyzer(48_000, SongAnalysisMode.CHORDS)
         analyzer.accept(changingNoise(48_000, seconds = 4))
 
-        assertTrue(analyzer.finish().isEmpty())
+        val events = analyzer.finish()
+
+        assertTrue(events.isEmpty(), events.toString())
     }
 
     @Test
@@ -114,6 +143,36 @@ class ChordAnalyzerTest {
         val analyzer = StreamingChordAnalyzer(sampleRate = 8_000, maxDurationSeconds = 1)
 
         assertFailsWith<IllegalArgumentException> { analyzer.accept(FloatArray(8_001)) }
+    }
+
+    @Test
+    fun `real GuitarSet rock excerpt follows annotated chord roots without blank gaps`() {
+        val (sampleRate, samples) = loadMonoPcm16("/guitarset/00_Rock1-130-A_comp_mic.wav")
+        val analyzer = StreamingChordAnalyzer(sampleRate)
+        analyzer.accept(samples)
+
+        val events = analyzer.finish()
+        val annotations = listOf(
+            AnnotatedRoot(0L, 7_385L, 9),
+            AnnotatedRoot(7_385L, 11_077L, 2),
+            AnnotatedRoot(11_077L, 14_769L, 9),
+            AnnotatedRoot(14_769L, 16_615L, 4),
+            AnnotatedRoot(16_615L, 18_462L, 2),
+            AnnotatedRoot(18_462L, 22_147L, 9),
+        )
+        val checkpoints = annotations.flatMap { annotation ->
+            ((annotation.startMillis + 650L) until (annotation.endMillis - 650L) step 250L)
+                .map { it to annotation.rootPitchClass }
+        }
+        val detected = checkpoints.map { (time, _) -> chordEventAt(events, time) }
+        val covered = detected.count { it != null }
+        val correct = detected.zip(checkpoints).count { (event, checkpoint) ->
+            event?.chord?.rootPitchClass == checkpoint.second
+        }
+
+        assertEquals(checkpoints.size, covered, "events=$events")
+        assertEquals(checkpoints.size, correct, "events=$events")
+        assertEquals(Chord(2, ChordQuality.SUSPENDED_SECOND), chordEventAt(events, 17_600L)?.chord)
     }
 
     private fun chroma(vararg pitchClasses: Int) = DoubleArray(12) { index ->
@@ -132,4 +191,25 @@ class ChordAnalyzerTest {
             val fifth = sin(2.0 * PI * rootHertz * 1.5 * frame / sampleRate)
             (0.75 * tanh(3.5 * (root + 0.8 * fifth))).toFloat()
         }
+
+    private fun loadMonoPcm16(resource: String): Pair<Int, FloatArray> {
+        val bytes = requireNotNull(javaClass.getResourceAsStream(resource)).use { it.readBytes() }
+        require(bytes.copyOfRange(0, 4).decodeToString() == "RIFF")
+        val header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        require(header.getShort(22).toInt() == 1 && header.getShort(34).toInt() == 16)
+        val samples = FloatArray((bytes.size - WAV_HEADER_BYTES) / Short.SIZE_BYTES) { index ->
+            header.getShort(WAV_HEADER_BYTES + index * Short.SIZE_BYTES) / Short.MAX_VALUE.toFloat()
+        }
+        return header.getInt(24) to samples
+    }
+
+    private data class AnnotatedRoot(
+        val startMillis: Long,
+        val endMillis: Long,
+        val rootPitchClass: Int,
+    )
+
+    private companion object {
+        const val WAV_HEADER_BYTES = 44
+    }
 }

@@ -73,6 +73,11 @@ imply endorsement.
 - JUnit 4: Eclipse Public License 1.0
 - JSON-java (`org.json`, test scope only): subject to its upstream license
 - AndroidX Test and Espresso: Apache License 2.0
+- GuitarSet track `00_Rock1-130-A_comp`, mono microphone recording, by
+  Qingyang Xi, Rachel M. Bittner, Xuzhou Ye, Johan Pauwels, and Juan Pablo
+  Bello: Creative Commons Attribution 4.0 International. The regression
+  excerpt is test-only and is not packaged in the APK or AAB.
+  <https://zenodo.org/records/3371780>
 
 Dependency versions are defined in `app/build.gradle.kts`, `build.gradle.kts`,
 and `gradle/wrapper/gradle-wrapper.properties`.
@@ -84,3 +89,5 @@ Eclipse Public License 1.0: <https://www.eclipse.org/legal/epl-v10.html>
 Creative Commons CC0 1.0: <https://creativecommons.org/publicdomain/zero/1.0/>
 
 Creative Commons BY 3.0: <https://creativecommons.org/licenses/by/3.0/>
+
+Creative Commons BY 4.0: <https://creativecommons.org/licenses/by/4.0/>
