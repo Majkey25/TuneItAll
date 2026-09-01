@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tuneitall.tuner.audio.MetronomePlayer
 import com.tuneitall.tuner.audio.MetronomeOutput
+import com.tuneitall.tuner.metronome.MetronomeSound
 import com.tuneitall.tuner.ui.MetronomeViewModel
 import com.tuneitall.tuner.ui.TunerViewModel
 import java.util.concurrent.CountDownLatch
@@ -22,6 +23,31 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class MetronomePlaybackTest {
+    @Test
+    fun allMetronomeSoundsPlayThroughOneNativeSession() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MetronomeViewModel(application)
+        viewModel.setBpm(240)
+        viewModel.setSubdivision(4)
+        viewModel.setAccentEvery(2)
+        viewModel.setVolume(60)
+        viewModel.setMuted(false)
+
+        try {
+            viewModel.start()
+            MetronomeSound.entries.forEach { sound ->
+                viewModel.setSound(sound)
+                Thread.sleep(600L)
+                assertTrue("$sound stopped playback", viewModel.uiState.value.playing)
+                assertEquals("$sound failed", null, viewModel.uiState.value.error)
+            }
+            viewModel.stop()
+            assertFalse(viewModel.uiState.value.playing)
+        } finally {
+            viewModel.onStop()
+        }
+    }
+
     @Test
     fun rapidSettingsChangesCompleteInOnePlaybackSession() {
         val application = ApplicationProvider.getApplicationContext<Application>()
