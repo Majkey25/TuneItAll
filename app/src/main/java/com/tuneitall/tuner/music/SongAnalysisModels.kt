@@ -36,3 +36,23 @@ data class NoteEvent(
         require(confidence in 0.0..1.0)
     }
 }
+
+fun <T : SongEvent> songEventAt(events: List<T>, positionMillis: Long): T? {
+    require(positionMillis >= 0L)
+    var low = 0
+    var high = events.lastIndex
+    while (low <= high) {
+        val middle = (low + high).ushr(1)
+        val event = events[middle]
+        when {
+            positionMillis < event.startMillis -> high = middle - 1
+            positionMillis >= event.endMillis -> low = middle + 1
+            else -> return event
+        }
+    }
+    if (low >= events.size) return null
+    val previous = events.getOrNull(high) ?: return null
+    return previous.takeIf { positionMillis - it.endMillis <= DISPLAY_HOLD_MILLIS }
+}
+
+private const val DISPLAY_HOLD_MILLIS = 500L

@@ -223,6 +223,11 @@ fun formatPitchClass(pitchClass: Int, notation: NoteNotation): String {
     return (if (notation == NoteNotation.FLATS) FLAT_NAMES else SHARP_NAMES)[pitchClass]
 }
 
+fun formatMidiNote(midiNote: Int, notation: NoteNotation): String {
+    require(midiNote in 0..127)
+    return formatPitchClass(midiNote % 12, notation) + (midiNote / 12 - 1)
+}
+
 fun formatSongTime(millis: Long): String {
     require(millis >= 0L)
     val totalSeconds = millis / 1_000L

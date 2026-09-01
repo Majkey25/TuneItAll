@@ -6,6 +6,7 @@ import com.tuneitall.tuner.audio.SongAudioDecoder
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
+import com.tuneitall.tuner.music.SongAnalysisMode
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -24,9 +25,13 @@ class SongChordDecoderTest {
         try {
             file.writeBytes(distortedPowerChordWav())
 
-            val result = SongAudioDecoder(context).analyze(Uri.fromFile(file))
+            val result = SongAudioDecoder(context).analyze(
+                uri = Uri.fromFile(file),
+                mode = SongAnalysisMode.POWER,
+            )
 
-            assertEquals(Chord(4, ChordQuality.POWER), result.events.maxBy(ChordEvent::durationMillis).chord)
+            val event = result.events.filterIsInstance<ChordEvent>().maxBy(ChordEvent::durationMillis)
+            assertEquals(Chord(4, ChordQuality.POWER), event.chord)
         } finally {
             file.delete()
         }

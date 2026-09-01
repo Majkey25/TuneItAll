@@ -19,6 +19,9 @@ import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
 import com.tuneitall.tuner.music.ChordShapeCatalog
+import com.tuneitall.tuner.music.NoteEvent
+import com.tuneitall.tuner.music.NoteRange
+import com.tuneitall.tuner.music.SongAnalysisMode
 import com.tuneitall.tuner.music.trainerChoices
 import com.tuneitall.tuner.music.noteQuestion
 import com.tuneitall.tuner.storage.NoteNotation
@@ -245,6 +248,84 @@ class MusicToolsScreenTest {
         }
 
         compose.onNodeWithTag("song_chord_18").assertIsDisplayed()
+    }
+
+    @Test
+    fun notesModeShowsRangesAndHidesChordDiagrams() {
+        var state by mutableStateOf(
+            ChordUiState(
+                tab = ChordTab.SONG,
+                analysisMode = SongAnalysisMode.NOTES,
+                noteRange = NoteRange.VIOLIN,
+                fileName = "melody.wav",
+                events = listOf(NoteEvent(0L, 2_000L, 69, 0.9)),
+                prepared = true,
+                durationMillis = 2_000L,
+                positionMillis = 500L,
+            ),
+        )
+        compose.setContent {
+            TuneItAllTheme {
+                ChordsScreen(
+                    state = state,
+                    tunings = listOf(tuning),
+                    notation = NoteNotation.SHARPS,
+                    catalog = catalog,
+                    onTabSelected = {},
+                    onChordSelected = {},
+                    onTuningSelected = {},
+                    onTransposeChanged = {},
+                    onAnalysisModeSelected = { state = state.copy(analysisMode = it) },
+                    onNoteRangeSelected = { state = state.copy(noteRange = it) },
+                    onLoadSong = {},
+                    onPlayPause = {},
+                    onSeek = {},
+                    onClearSong = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("song_mode_notes").assertIsDisplayed()
+        compose.onNodeWithTag("song_note_range_violin").assertIsDisplayed()
+        compose.onNodeWithTag("song_diagrams_toggle").assertDoesNotExist()
+        compose.onNodeWithTag("current_song_note").assertTextEquals("A4")
+        compose.onNodeWithTag("song_mode_power").performClick()
+        compose.runOnIdle { assertEquals(SongAnalysisMode.POWER, state.analysisMode) }
+    }
+
+    @Test
+    fun powerModeHidesUnreviewedChordDiagrams() {
+        val state = ChordUiState(
+            tab = ChordTab.SONG,
+            analysisMode = SongAnalysisMode.POWER,
+            fileName = "riff.wav",
+            events = listOf(ChordEvent(0L, 2_000L, Chord(4, ChordQuality.POWER), 0.9)),
+            durationMillis = 2_000L,
+            positionMillis = 500L,
+        )
+        compose.setContent {
+            TuneItAllTheme {
+                ChordsScreen(
+                    state = state,
+                    tunings = listOf(tuning),
+                    notation = NoteNotation.SHARPS,
+                    catalog = catalog,
+                    onTabSelected = {},
+                    onChordSelected = {},
+                    onTuningSelected = {},
+                    onTransposeChanged = {},
+                    onAnalysisModeSelected = {},
+                    onNoteRangeSelected = {},
+                    onLoadSong = {},
+                    onPlayPause = {},
+                    onSeek = {},
+                    onClearSong = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("song_diagrams_toggle").assertDoesNotExist()
+        compose.onNodeWithTag("current_song_chord").assertTextEquals("E5")
     }
 
     @Test

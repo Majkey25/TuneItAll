@@ -25,4 +25,13 @@ class SongAnalysisModelsTest {
         assertFailsWith<IllegalArgumentException> { NoteEvent(0L, 100L, 128, 0.9) }
         assertFailsWith<IllegalArgumentException> { NoteEvent(0L, 100L, 69, 1.1) }
     }
+
+    @Test
+    fun `song timeline lookup supports notes and short gaps`() {
+        val a = NoteEvent(0L, 1_000L, 69, 0.9)
+        val c = NoteEvent(1_400L, 2_000L, 72, 0.8)
+
+        assertEquals(a, songEventAt(listOf(a, c), 1_200L))
+        assertEquals(c, songEventAt(listOf(a, c), 1_500L))
+    }
 }

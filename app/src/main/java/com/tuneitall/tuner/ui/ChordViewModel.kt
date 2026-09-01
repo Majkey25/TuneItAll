@@ -11,8 +11,10 @@ import com.tuneitall.tuner.audio.SongAudioDecoder
 import com.tuneitall.tuner.audio.SongDecodeError
 import com.tuneitall.tuner.audio.SongDecodeException
 import com.tuneitall.tuner.music.Chord
-import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
+import com.tuneitall.tuner.music.NoteRange
+import com.tuneitall.tuner.music.SongAnalysisMode
+import com.tuneitall.tuner.music.SongEvent
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,10 +46,12 @@ data class ChordUiState(
     val selectedChord: Chord = Chord(0, ChordQuality.MAJOR),
     val selectedTuningId: String = DEFAULT_CHORD_TUNING_ID,
     val transposeSemitones: Int = 0,
+    val analysisMode: SongAnalysisMode = SongAnalysisMode.CHORDS,
+    val noteRange: NoteRange = NoteRange.ANY,
     val fileName: String? = null,
     val analyzing: Boolean = false,
     val analysisProgress: Int = 0,
-    val events: List<ChordEvent> = emptyList(),
+    val events: List<SongEvent> = emptyList(),
     val prepared: Boolean = false,
     val playing: Boolean = false,
     val durationMillis: Long = 0L,
@@ -85,6 +89,18 @@ class ChordViewModel internal constructor(
         it.copy(transposeSemitones = semitones.coerceIn(MIN_TRANSPOSE, MAX_TRANSPOSE))
     }
 
+    fun setSongAnalysisMode(mode: SongAnalysisMode) {
+        if (mutableUiState.value.analysisMode == mode) return
+        mutableUiState.update { it.copy(analysisMode = mode, events = emptyList(), analysisError = null) }
+        currentSongUri?.let(::startAnalysis)
+    }
+
+    fun setNoteRange(range: NoteRange) {
+        if (mutableUiState.value.noteRange == range) return
+        mutableUiState.update { it.copy(noteRange = range, events = emptyList(), analysisError = null) }
+        if (mutableUiState.value.analysisMode == SongAnalysisMode.NOTES) currentSongUri?.let(::startAnalysis)
+    }
+
     fun loadSong(uri: Uri) {
         analysisJob?.cancel()
         analysisGeneration++
@@ -113,6 +129,7 @@ class ChordViewModel internal constructor(
     private fun startAnalysis(uri: Uri) {
         analysisJob?.cancel()
         val generation = ++analysisGeneration
+        val request = mutableUiState.value
         mutableUiState.update {
             it.copy(analyzing = true, analysisProgress = 0, events = emptyList(), analysisError = null)
         }
@@ -125,6 +142,8 @@ class ChordViewModel internal constructor(
                 }
                 val result = decoder.analyze(
                     uri = uri,
+                    mode = request.analysisMode,
+                    noteRange = request.noteRange,
                     isCancelled = { job?.isActive == false },
                     onProgress = { progress ->
                         if (generation == analysisGeneration) {

@@ -176,6 +176,8 @@ fun TuneItAllApp(
                         onChordSelected = activeViewModel::setChord,
                         onTuningSelected = activeViewModel::setTuning,
                         onTransposeChanged = activeViewModel::setTranspose,
+                        onAnalysisModeSelected = activeViewModel::setSongAnalysisMode,
+                        onNoteRangeSelected = activeViewModel::setNoteRange,
                         onLoadSong = activeViewModel::loadSong,
                         onPlayPause = activeViewModel::playPause,
                         onSeek = activeViewModel::seekTo,

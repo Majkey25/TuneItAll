@@ -50,8 +50,12 @@ import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
 import com.tuneitall.tuner.music.ChordShapeCatalog
-import com.tuneitall.tuner.music.chordEventAt
+import com.tuneitall.tuner.music.NoteEvent
+import com.tuneitall.tuner.music.NoteRange
+import com.tuneitall.tuner.music.SongAnalysisMode
+import com.tuneitall.tuner.music.SongEvent
 import com.tuneitall.tuner.music.instructionalChordQualities
+import com.tuneitall.tuner.music.songEventAt
 import com.tuneitall.tuner.storage.NoteNotation
 import kotlin.math.roundToLong
 
@@ -65,6 +69,8 @@ fun ChordsScreen(
     onChordSelected: (Chord) -> Unit,
     onTuningSelected: (String) -> Unit,
     onTransposeChanged: (Int) -> Unit,
+    onAnalysisModeSelected: (SongAnalysisMode) -> Unit = {},
+    onNoteRangeSelected: (NoteRange) -> Unit = {},
     onLoadSong: (Uri) -> Unit,
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
@@ -74,8 +80,8 @@ fun ChordsScreen(
         uri?.let(onLoadSong)
     }
     val selectedTuning = tunings.firstOrNull { it.id == state.selectedTuningId } ?: tunings.first()
-    val activeEvent = if (state.tab == ChordTab.SONG) chordEventAt(state.events, state.positionMillis) else null
-    val activeChord = activeEvent?.chord?.transpose(state.transposeSemitones)
+    val activeEvent = if (state.tab == ChordTab.SONG) songEventAt(state.events, state.positionMillis) else null
+    val activeChord = (activeEvent as? ChordEvent)?.chord?.transpose(state.transposeSemitones)
     val showCurrentChordBar = state.tab == ChordTab.SONG && state.fileName != null
     Box(
         modifier = Modifier
@@ -113,7 +119,9 @@ fun ChordsScreen(
                     )
                 }
             }
-            TuningSelector(tunings, selectedTuning.id, onTuningSelected)
+            if (state.tab == ChordTab.LIBRARY || state.analysisMode != SongAnalysisMode.NOTES) {
+                TuningSelector(tunings, selectedTuning.id, onTuningSelected)
+            }
             when (state.tab) {
                 ChordTab.LIBRARY -> ChordLibrary(
                     chord = state.selectedChord,
@@ -130,6 +138,8 @@ fun ChordsScreen(
                     catalog = catalog,
                     activeEvent = activeEvent,
                     activeChord = activeChord,
+                    onAnalysisModeSelected = onAnalysisModeSelected,
+                    onNoteRangeSelected = onNoteRangeSelected,
                     onChooseAudio = { launcher.launch(arrayOf("audio/*")) },
                     onPlayPause = onPlayPause,
                     onSeek = onSeek,
@@ -140,8 +150,10 @@ fun ChordsScreen(
             Spacer(Modifier.height(8.dp))
         }
         if (showCurrentChordBar) {
-            CurrentChordBar(
-                chord = activeChord,
+            CurrentSongEventBar(
+                event = activeEvent,
+                mode = state.analysisMode,
+                transposeSemitones = state.transposeSemitones,
                 notation = notation,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
@@ -150,7 +162,19 @@ fun ChordsScreen(
 }
 
 @Composable
-private fun CurrentChordBar(chord: Chord?, notation: NoteNotation, modifier: Modifier = Modifier) {
+private fun CurrentSongEventBar(
+    event: SongEvent?,
+    mode: SongAnalysisMode,
+    transposeSemitones: Int,
+    notation: NoteNotation,
+    modifier: Modifier = Modifier,
+) {
+    val noteMode = mode == SongAnalysisMode.NOTES
+    val label = when (event) {
+        is ChordEvent -> formatChord(event.chord.transpose(transposeSemitones), notation)
+        is NoteEvent -> formatMidiNote(event.midiNote + transposeSemitones, notation)
+        null -> stringResource(if (noteMode) R.string.no_current_note else R.string.no_current_chord)
+    }
     Surface(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             .testTag("current_song_chord_bar"),
@@ -163,12 +187,15 @@ private fun CurrentChordBar(chord: Chord?, notation: NoteNotation, modifier: Mod
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(stringResource(R.string.current_chord), style = MaterialTheme.typography.labelMedium)
             Text(
-                chord?.let { formatChord(it, notation) } ?: stringResource(R.string.no_current_chord),
+                stringResource(if (noteMode) R.string.current_note else R.string.current_chord),
+                style = MaterialTheme.typography.labelMedium,
+            )
+            Text(
+                label,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.testTag("current_song_chord"),
+                modifier = Modifier.testTag(if (noteMode) "current_song_note" else "current_song_chord"),
             )
         }
     }
@@ -218,13 +245,58 @@ private fun ChordLibrary(
 }
 
 @Composable
+private fun SongModeSelector(selected: SongAnalysisMode, onSelected: (SongAnalysisMode) -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        SongAnalysisMode.entries.forEach { mode ->
+            val label = when (mode) {
+                SongAnalysisMode.CHORDS -> R.string.song_mode_chords
+                SongAnalysisMode.NOTES -> R.string.song_mode_notes
+                SongAnalysisMode.POWER -> R.string.song_mode_power
+            }
+            FilterChip(
+                selected = selected == mode,
+                onClick = { onSelected(mode) },
+                label = { Text(stringResource(label)) },
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("song_mode_${mode.name.lowercase()}"),
+            )
+        }
+    }
+}
+
+@Composable
+private fun NoteRangeSelector(selected: NoteRange, onSelected: (NoteRange) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        NoteRange.entries.forEach { range ->
+            val label = when (range) {
+                NoteRange.ANY -> R.string.note_range_any
+                NoteRange.GUITAR -> R.string.instrument_guitar
+                NoteRange.BASS -> R.string.instrument_bass
+                NoteRange.VIOLIN -> R.string.note_range_violin
+                NoteRange.PIANO -> R.string.note_range_piano
+            }
+            FilterChip(
+                selected = selected == range,
+                onClick = { onSelected(range) },
+                label = { Text(stringResource(label)) },
+                modifier = Modifier.heightIn(min = 48.dp).testTag("song_note_range_${range.name.lowercase()}"),
+            )
+        }
+    }
+}
+
+@Composable
 private fun SongChordPanel(
     state: ChordUiState,
     tuning: TuningPreset,
     notation: NoteNotation,
     catalog: ChordShapeCatalog,
-    activeEvent: ChordEvent?,
+    activeEvent: SongEvent?,
     activeChord: Chord?,
+    onAnalysisModeSelected: (SongAnalysisMode) -> Unit,
+    onNoteRangeSelected: (NoteRange) -> Unit,
     onChooseAudio: () -> Unit,
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
@@ -232,7 +304,20 @@ private fun SongChordPanel(
     onClearSong: () -> Unit,
 ) {
     var showDiagrams by rememberSaveable { mutableStateOf(false) }
-    Text(stringResource(R.string.song_detector_note), style = MaterialTheme.typography.bodySmall)
+    SongModeSelector(state.analysisMode, onAnalysisModeSelected)
+    if (state.analysisMode == SongAnalysisMode.NOTES) {
+        NoteRangeSelector(state.noteRange, onNoteRangeSelected)
+    }
+    Text(
+        stringResource(
+            when (state.analysisMode) {
+                SongAnalysisMode.CHORDS -> R.string.song_detector_note
+                SongAnalysisMode.NOTES -> R.string.song_detector_notes_note
+                SongAnalysisMode.POWER -> R.string.song_detector_power_note
+            },
+        ),
+        style = MaterialTheme.typography.bodySmall,
+    )
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = onChooseAudio, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("choose_song")) {
             Text(stringResource(if (state.fileName == null) R.string.import_audio else R.string.replace_audio))
@@ -258,7 +343,7 @@ private fun SongChordPanel(
     }
     listOfNotNull(state.analysisError, state.playbackError).distinct().forEach { error ->
         Text(
-            songErrorText(error),
+            songErrorText(error, state.analysisMode),
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.testTag("song_error_${error.name.lowercase()}"),
         )
@@ -291,14 +376,16 @@ private fun SongChordPanel(
         ) { Text("+") }
     }
 
-    FilterChip(
-        selected = showDiagrams,
-        onClick = { showDiagrams = !showDiagrams },
-        label = { Text(stringResource(R.string.show_chord_diagrams)) },
-        modifier = Modifier.heightIn(min = 48.dp).testTag("song_diagrams_toggle"),
-    )
-    if (showDiagrams && activeChord != null) {
-        ChordDiagram(activeChord, tuning, notation, catalog, Modifier.fillMaxWidth())
+    if (state.analysisMode == SongAnalysisMode.CHORDS) {
+        FilterChip(
+            selected = showDiagrams,
+            onClick = { showDiagrams = !showDiagrams },
+            label = { Text(stringResource(R.string.show_chord_diagrams)) },
+            modifier = Modifier.heightIn(min = 48.dp).testTag("song_diagrams_toggle"),
+        )
+        if (showDiagrams && activeChord != null) {
+            ChordDiagram(activeChord, tuning, notation, catalog, Modifier.fillMaxWidth())
+        }
     }
 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -321,7 +408,10 @@ private fun SongChordPanel(
         LaunchedEffect(activeIndex) {
             if (activeIndex >= 0) timelineState.scrollToItem(activeIndex)
         }
-        Text(stringResource(R.string.chord_timeline), style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(if (state.analysisMode == SongAnalysisMode.NOTES) R.string.note_timeline else R.string.chord_timeline),
+            style = MaterialTheme.typography.titleMedium,
+        )
         LazyRow(
             state = timelineState,
             modifier = Modifier.fillMaxWidth().testTag("chord_timeline"),
@@ -331,21 +421,27 @@ private fun SongChordPanel(
                 items = state.events,
                 key = { index, event -> "$index:${event.startMillis}:${event.endMillis}" },
             ) { index, event ->
-                val displayedChord = event.chord.transpose(state.transposeSemitones)
                 FilterChip(
                     selected = index == activeIndex,
                     onClick = { onSeek(event.startMillis) },
                     label = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(formatChord(displayedChord, notation), fontWeight = FontWeight.Bold)
+                            Text(formatSongEvent(event, state.transposeSemitones, notation), fontWeight = FontWeight.Bold)
                             Text(formatSongTime(event.startMillis), style = MaterialTheme.typography.labelSmall)
                         }
                     },
-                    modifier = Modifier.heightIn(min = 56.dp).testTag("song_chord_$index"),
+                    modifier = Modifier.heightIn(min = 56.dp).testTag(
+                        if (event is NoteEvent) "song_note_$index" else "song_chord_$index",
+                    ),
                 )
             }
         }
     }
+}
+
+private fun formatSongEvent(event: SongEvent, transposeSemitones: Int, notation: NoteNotation): String = when (event) {
+    is ChordEvent -> formatChord(event.chord.transpose(transposeSemitones), notation)
+    is NoteEvent -> formatMidiNote(event.midiNote + transposeSemitones, notation)
 }
 
 @Composable
@@ -372,13 +468,13 @@ private fun SongSeekBar(positionMillis: Long, durationMillis: Long, onSeek: (Lon
 }
 
 @Composable
-private fun songErrorText(error: SongChordError): String = stringResource(
+private fun songErrorText(error: SongChordError, mode: SongAnalysisMode): String = stringResource(
     when (error) {
         SongChordError.NO_AUDIO_TRACK -> R.string.song_error_no_audio
         SongChordError.TOO_LONG -> R.string.song_error_too_long
         SongChordError.UNSUPPORTED_PCM -> R.string.song_error_pcm
         SongChordError.DECODE_FAILED -> R.string.song_error_decode
-        SongChordError.NO_CHORDS -> R.string.song_error_no_chords
+        SongChordError.NO_CHORDS -> if (mode == SongAnalysisMode.NOTES) R.string.song_error_no_notes else R.string.song_error_no_chords
         SongChordError.PLAYBACK_FAILED -> R.string.song_error_playback
     },
 )

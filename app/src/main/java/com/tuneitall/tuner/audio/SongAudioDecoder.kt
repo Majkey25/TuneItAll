@@ -8,10 +8,14 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
 import android.provider.OpenableColumns
-import com.tuneitall.tuner.music.ChordEvent
-import com.tuneitall.tuner.music.StreamingChordAnalyzer
+import com.tuneitall.tuner.music.NoteRange
+import com.tuneitall.tuner.music.SongAnalysisMode
+import com.tuneitall.tuner.music.SongEvent
+import com.tuneitall.tuner.music.StreamingHarmonicFeatureExtractor
 import com.tuneitall.tuner.music.StreamingTempoAnalyzer
 import com.tuneitall.tuner.music.TempoEstimate
+import com.tuneitall.tuner.music.analyzeChords
+import com.tuneitall.tuner.music.analyzeNotes
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.CancellationException
@@ -27,7 +31,7 @@ class SongDecodeException(val reason: SongDecodeError, cause: Throwable? = null)
 
 data class SongAnalysisResult(
     val durationMillis: Long,
-    val events: List<ChordEvent>,
+    val events: List<SongEvent>,
 )
 
 class SongAudioDecoder(context: Context) {
@@ -35,15 +39,22 @@ class SongAudioDecoder(context: Context) {
 
     fun analyze(
         uri: Uri,
+        mode: SongAnalysisMode = SongAnalysisMode.CHORDS,
+        noteRange: NoteRange = NoteRange.ANY,
         isCancelled: () -> Boolean = { false },
         onProgress: (Int) -> Unit = {},
     ): SongAnalysisResult {
-        var analyzer: StreamingChordAnalyzer? = null
+        var extractor: StreamingHarmonicFeatureExtractor? = null
         val durationMillis = decode(uri, isCancelled, onProgress) { sampleRate, mono ->
-            val activeAnalyzer = analyzer ?: StreamingChordAnalyzer(sampleRate).also { analyzer = it }
-            activeAnalyzer.accept(mono)
+            val activeExtractor = extractor ?: StreamingHarmonicFeatureExtractor(sampleRate).also { extractor = it }
+            activeExtractor.accept(mono)
         }
-        return SongAnalysisResult(durationMillis, analyzer?.finish().orEmpty())
+        val frames = extractor?.finish().orEmpty()
+        val events = when (mode) {
+            SongAnalysisMode.CHORDS, SongAnalysisMode.POWER -> analyzeChords(frames, mode, durationMillis)
+            SongAnalysisMode.NOTES -> analyzeNotes(frames, noteRange, durationMillis)
+        }
+        return SongAnalysisResult(durationMillis, events)
     }
 
     fun analyzeTempo(
