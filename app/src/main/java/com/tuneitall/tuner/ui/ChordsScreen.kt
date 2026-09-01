@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
@@ -23,6 +24,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -41,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -83,7 +88,8 @@ fun ChordsScreen(
     val activeEvent = if (state.tab == ChordTab.SONG) songEventAt(state.events, state.positionMillis) else null
     val activeChord = (activeEvent as? ChordEvent)?.chord?.transpose(state.transposeSemitones)
     val showCurrentChordBar = state.tab == ChordTab.SONG && state.fileName != null
-    Box(
+    var showDiagrams by rememberSaveable { mutableStateOf(false) }
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .safeDrawingPadding()
@@ -91,10 +97,9 @@ fun ChordsScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 12.dp)
-                .padding(bottom = if (showCurrentChordBar) 88.dp else 0.dp)
                 .testTag("chords_content"),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -133,11 +138,8 @@ fun ChordsScreen(
 
                 ChordTab.SONG -> SongChordPanel(
                     state = state,
-                    tuning = selectedTuning,
                     notation = notation,
-                    catalog = catalog,
                     activeEvent = activeEvent,
-                    activeChord = activeChord,
                     onAnalysisModeSelected = onAnalysisModeSelected,
                     onNoteRangeSelected = onNoteRangeSelected,
                     onChooseAudio = { launcher.launch(arrayOf("audio/*")) },
@@ -155,7 +157,11 @@ fun ChordsScreen(
                 mode = state.analysisMode,
                 transposeSemitones = state.transposeSemitones,
                 notation = notation,
-                modifier = Modifier.align(Alignment.BottomCenter),
+                chord = activeChord,
+                tuning = selectedTuning,
+                catalog = catalog,
+                showDiagram = showDiagrams,
+                onShowDiagramChanged = { showDiagrams = it },
             )
         }
     }
@@ -167,6 +173,11 @@ private fun CurrentSongEventBar(
     mode: SongAnalysisMode,
     transposeSemitones: Int,
     notation: NoteNotation,
+    chord: Chord?,
+    tuning: TuningPreset,
+    catalog: ChordShapeCatalog,
+    showDiagram: Boolean,
+    onShowDiagramChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val noteMode = mode == SongAnalysisMode.NOTES
@@ -187,16 +198,40 @@ private fun CurrentSongEventBar(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                stringResource(if (noteMode) R.string.current_note else R.string.current_chord),
-                style = MaterialTheme.typography.labelMedium,
-            )
-            Text(
-                label,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.testTag(if (noteMode) "current_song_note" else "current_song_chord"),
-            )
+            Box(Modifier.fillMaxWidth()) {
+                Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        stringResource(if (noteMode) R.string.current_note else R.string.current_chord),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.testTag(if (noteMode) "current_song_note" else "current_song_chord"),
+                    )
+                }
+                if (mode == SongAnalysisMode.CHORDS) {
+                    val diagramDescription = stringResource(R.string.show_chord_diagrams)
+                    FilledTonalIconToggleButton(
+                        checked = showDiagram,
+                        onCheckedChange = onShowDiagramChanged,
+                        enabled = chord != null,
+                        colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
+                            checkedContainerColor = MaterialTheme.colorScheme.primary,
+                            checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
+                        modifier = Modifier.align(Alignment.CenterEnd).size(48.dp)
+                            .semantics { contentDescription = diagramDescription }
+                            .testTag("song_diagrams_toggle"),
+                    ) {
+                        DestinationIcon(PrimaryDestination.CHORDS, "song_diagram_toggle")
+                    }
+                }
+            }
+            if (showDiagram && chord != null && mode == SongAnalysisMode.CHORDS) {
+                ChordDiagram(chord, tuning, notation, catalog, Modifier.fillMaxWidth().padding(top = 8.dp))
+            }
         }
     }
 }
@@ -290,11 +325,8 @@ private fun NoteRangeSelector(selected: NoteRange, onSelected: (NoteRange) -> Un
 @Composable
 private fun SongChordPanel(
     state: ChordUiState,
-    tuning: TuningPreset,
     notation: NoteNotation,
-    catalog: ChordShapeCatalog,
     activeEvent: SongEvent?,
-    activeChord: Chord?,
     onAnalysisModeSelected: (SongAnalysisMode) -> Unit,
     onNoteRangeSelected: (NoteRange) -> Unit,
     onChooseAudio: () -> Unit,
@@ -303,7 +335,6 @@ private fun SongChordPanel(
     onTransposeChanged: (Int) -> Unit,
     onClearSong: () -> Unit,
 ) {
-    var showDiagrams by rememberSaveable { mutableStateOf(false) }
     SongModeSelector(state.analysisMode, onAnalysisModeSelected)
     if (state.analysisMode == SongAnalysisMode.NOTES) {
         NoteRangeSelector(state.noteRange, onNoteRangeSelected)
@@ -374,18 +405,6 @@ private fun SongChordPanel(
             enabled = state.transposeSemitones < 12,
             modifier = Modifier.heightIn(min = 48.dp).testTag("transpose_up"),
         ) { Text("+") }
-    }
-
-    if (state.analysisMode == SongAnalysisMode.CHORDS) {
-        FilterChip(
-            selected = showDiagrams,
-            onClick = { showDiagrams = !showDiagrams },
-            label = { Text(stringResource(R.string.show_chord_diagrams)) },
-            modifier = Modifier.heightIn(min = 48.dp).testTag("song_diagrams_toggle"),
-        )
-        if (showDiagrams && activeChord != null) {
-            ChordDiagram(activeChord, tuning, notation, catalog, Modifier.fillMaxWidth())
-        }
     }
 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

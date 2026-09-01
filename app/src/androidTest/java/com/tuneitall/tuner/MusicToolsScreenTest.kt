@@ -6,6 +6,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -13,6 +16,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.music.Chord
@@ -170,8 +174,12 @@ class MusicToolsScreenTest {
         }
 
         compose.onNodeWithTag("chord_diagram").assertDoesNotExist()
-        compose.onNodeWithTag("song_diagrams_toggle").performClick()
-        compose.onNodeWithTag("chord_diagram").assertIsDisplayed()
+        compose.onNode(
+            hasTestTag("song_diagrams_toggle") and hasAnyAncestor(hasTestTag("current_song_chord_bar")),
+        ).assertWidthIsEqualTo(48.dp).performClick()
+        compose.onNode(
+            hasTestTag("chord_diagram") and hasAnyAncestor(hasTestTag("current_song_chord_bar")),
+        ).assertIsDisplayed()
     }
 
     @Test

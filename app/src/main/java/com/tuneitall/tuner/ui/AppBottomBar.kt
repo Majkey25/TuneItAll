@@ -107,7 +107,7 @@ fun AppBottomBar(
 }
 
 @Composable
-private fun DestinationIcon(destination: PrimaryDestination, key: String) {
+internal fun DestinationIcon(destination: PrimaryDestination, key: String) {
     val color = LocalContentColor.current
     Canvas(
         modifier = Modifier
