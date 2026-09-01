@@ -15,6 +15,7 @@ internal data class HarmonicFrame(
     val bassChroma: FloatArray,
     val noteSalience: FloatArray,
     val tonalStrength: Float,
+    val onsetStrength: Float,
 ) {
     init {
         require(startMillis >= 0L)
@@ -22,6 +23,7 @@ internal data class HarmonicFrame(
         require(bassChroma.size == PITCH_CLASS_COUNT)
         require(noteSalience.size == NOTE_COUNT)
         require(tonalStrength in 0f..1f)
+        require(onsetStrength in 0f..1f)
     }
 }
 
@@ -112,6 +114,7 @@ internal class StreamingHarmonicFeatureExtractor(
                 bassChroma = bassChroma,
                 noteSalience = melodyFrames[index],
                 tonalStrength = tonalStrength(chroma),
+                onsetStrength = onsetStrength(melodyFrames, index),
             )
         }
         rawFrames.clear()
@@ -260,6 +263,18 @@ private fun tonalStrength(chroma: FloatArray): Float {
     if (chroma.all { it == 0f }) return 0f
     val flatMaximum = 1.0 / sqrt(PITCH_CLASS_COUNT.toDouble())
     return ((chroma.max() - flatMaximum) / (1.0 - flatMaximum)).toFloat().coerceIn(0f, 1f)
+}
+
+private fun onsetStrength(frames: List<FloatArray>, index: Int): Float {
+    if (index == 0) return 0f
+    var positiveFlux = 0f
+    var total = 0f
+    frames[index].indices.forEach { noteIndex ->
+        val current = frames[index][noteIndex]
+        positiveFlux += (current - frames[index - 1][noteIndex]).coerceAtLeast(0f)
+        total += current
+    }
+    return if (total > 0f) (positiveFlux / total).coerceIn(0f, 1f) else 0f
 }
 
 internal fun fft(real: DoubleArray, imaginary: DoubleArray) {
