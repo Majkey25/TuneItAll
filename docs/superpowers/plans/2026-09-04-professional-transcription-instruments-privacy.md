@@ -469,39 +469,47 @@ feat(tunings): expose instrument filters
 - Modify: `app/src/main/java/com/tuneitall/tuner/ui/AutoScrollScreen.kt`
 - Modify: `app/src/main/java/com/tuneitall/tuner/autoscroll/AutoScrollPreferences.kt`
 - Modify: `app/src/main/res/values*/strings.xml`
-- Create: `app/src/test/java/com/tuneitall/tuner/PrivacyContractTest.kt`
 - Modify: `app/src/androidTest/java/com/tuneitall/tuner/MusicToolsScreenTest.kt`
 
 **Interfaces:**
 - `AutoScrollPreferences.disclosureAccepted: Boolean` defaults to false.
 - Android settings open only after `I understand, continue`.
 
-- [ ] **Step 1: Write failing privacy contract tests**
+- [ ] **Step 1: Write a failing disclosure behavior test**
 
 ```kotlin
 @Test
-fun `public policy contains required release disclosures`() {
-    val policy = File("docs/privacy/index.html").readText()
-    listOf(
-        "MajkeyLab",
-        "majkeylab@gmail.com",
-        "Selected song files",
-        "Accessibility",
-        "GDPR",
-        "United States",
-        "Children",
-        "12 months",
-    ).forEach { assertTrue(it in policy, "missing $it") }
+fun `accessibility settings require disclosure acceptance`() {
+    var settingsOpened = false
+    compose.setContent {
+        AutoScrollScreen(
+            overlayAllowed = false,
+            accessibilityEnabled = false,
+            disclosureAccepted = false,
+            speed = 10,
+            onSpeedChanged = {},
+            onOpenOverlaySettings = {},
+            onDisclosureAccepted = {},
+            onOpenAccessibilitySettings = { settingsOpened = true },
+            onShowControls = {},
+        )
+    }
+    compose.onNodeWithTag("auto_scroll_accessibility_action").performClick()
+    compose.onNodeWithTag("auto_scroll_disclosure").assertIsDisplayed()
+    assertFalse(settingsOpened)
+    compose.onNodeWithTag("auto_scroll_disclosure_continue").performClick()
+    assertTrue(settingsOpened)
 }
 ```
 
-Add manifest assertions for absent `INTERNET` and `AD_ID`, plus
-`canRetrieveWindowContent=false`.
+Add a dismissal branch that leaves `settingsOpened == false`. Keep manifest
+verification in `tools/verify-release.ps1`, which already inspects the built
+artifact instead of source text.
 
 - [ ] **Step 2: Verify RED**
 
-Run `PrivacyContractTest`. Expected: publisher, email, rights, and support
-retention text are absent.
+Run the new `MusicToolsScreenTest` method. Expected: Android settings open
+immediately because no disclosure gate exists.
 
 - [ ] **Step 3: Replace public and in-app policy text**
 
@@ -519,7 +527,7 @@ nothing.
 - [ ] **Step 5: Run policy and Compose tests**
 
 ```powershell
-.\gradlew.bat :app:testDebugUnitTest --tests "com.tuneitall.tuner.PrivacyContractTest" --console=plain
+.\tools\build.ps1 -AllowUnsigned
 .\gradlew.bat :app:assembleDebugAndroidTest --console=plain
 curl.exe -L --fail --head https://majkey25.github.io/TuneItAll/privacy/
 ```
