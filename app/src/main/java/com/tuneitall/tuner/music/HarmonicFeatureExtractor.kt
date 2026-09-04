@@ -12,6 +12,7 @@ import kotlin.math.sqrt
 internal data class HarmonicFrame(
     val startMillis: Long,
     val chroma: FloatArray,
+    val contextChroma: FloatArray = chroma,
     val bassChroma: FloatArray,
     val noteSalience: FloatArray,
     val tonalStrength: Float,
@@ -20,6 +21,7 @@ internal data class HarmonicFrame(
     init {
         require(startMillis >= 0L)
         require(chroma.size == PITCH_CLASS_COUNT)
+        require(contextChroma.size == PITCH_CLASS_COUNT)
         require(bassChroma.size == PITCH_CLASS_COUNT)
         require(noteSalience.size == NOTE_COUNT)
         require(tonalStrength in 0f..1f)
@@ -92,29 +94,20 @@ internal class StreamingHarmonicFeatureExtractor(
             collapseToNotes(frame.highResolution, tuningCents).also { frame.highResolution = EMPTY_FEATURES }
         }
         val standardized = standardize(noteFrames)
-        val chordFrames = centeredAverage(standardized, framesForHalfWindow(CHORD_WINDOW_SECONDS))
+        val chordFrames = centeredAverage(standardized, LOCAL_CHORD_RADIUS)
+        val contextFrames = centeredAverage(standardized, framesForHalfWindow(CONTEXT_CHORD_WINDOW_SECONDS))
         val melodyFrames = centeredAverage(standardized.map(::harmonicSalience), NOTE_SMOOTH_RADIUS)
 
         val result = starts.indices.map { index ->
-            val chroma = FloatArray(PITCH_CLASS_COUNT)
-            val bassChroma = FloatArray(PITCH_CLASS_COUNT)
-            chordFrames[index].forEachIndexed { noteIndex, salience ->
-                val midi = MIN_MIDI + noteIndex
-                val pitchClass = Math.floorMod(midi, PITCH_CLASS_COUNT)
-                chroma[pitchClass] += salience
-                if (midi <= BASS_MAX_MIDI) {
-                    bassChroma[pitchClass] += salience / (1f + BASS_ROLLOFF * (midi - MIN_MIDI))
-                }
-            }
-            normalize(chroma)
-            normalize(bassChroma)
+            val chroma = collapseToChroma(chordFrames[index])
             HarmonicFrame(
                 startMillis = starts[index],
                 chroma = chroma,
-                bassChroma = bassChroma,
+                contextChroma = collapseToChroma(contextFrames[index]),
+                bassChroma = collapseToChroma(chordFrames[index], bassOnly = true),
                 noteSalience = melodyFrames[index],
                 tonalStrength = tonalStrength(chroma),
-                onsetStrength = onsetStrength(melodyFrames, index),
+                onsetStrength = onsetStrength(standardized, index),
             )
         }
         rawFrames.clear()
@@ -242,6 +235,18 @@ internal class StreamingHarmonicFeatureExtractor(
     private data class RawFrame(val startMillis: Long, var highResolution: FloatArray)
 }
 
+private fun collapseToChroma(notes: FloatArray, bassOnly: Boolean = false): FloatArray {
+    val chroma = FloatArray(PITCH_CLASS_COUNT)
+    notes.forEachIndexed { noteIndex, salience ->
+        val midi = MIN_MIDI + noteIndex
+        if (bassOnly && midi > BASS_MAX_MIDI) return@forEachIndexed
+        val weight = if (bassOnly) 1f / (1f + BASS_ROLLOFF * (midi - MIN_MIDI)) else 1f
+        chroma[Math.floorMod(midi, PITCH_CLASS_COUNT)] += salience * weight
+    }
+    normalize(chroma)
+    return chroma
+}
+
 private fun addFrame(frame: FloatArray, sums: DoubleArray, squareSums: DoubleArray, direction: Double) {
     frame.indices.forEach { index ->
         val value = frame[index].toDouble()
@@ -355,7 +360,8 @@ private const val STANDARDIZATION_EPSILON = 0.08
 private const val RAW_FEATURE_WEIGHT = 0.7
 private const val WHITENED_FEATURE_WEIGHT = 0.3
 private const val STANDARDIZATION_WINDOW_SECONDS = 6.0
-private const val CHORD_WINDOW_SECONDS = 2.0
+private const val LOCAL_CHORD_RADIUS = 1
+private const val CONTEXT_CHORD_WINDOW_SECONDS = 1.5
 private const val NOTE_SMOOTH_RADIUS = 1
 private val HARMONIC_OFFSETS = intArrayOf(0, 12, 19, 24, 28, 31)
 private val HARMONIC_WEIGHTS = floatArrayOf(1f, 0.707f, 0.577f, 0.5f, 0.447f, 0.408f)

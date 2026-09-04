@@ -85,18 +85,26 @@ internal fun analyzeChords(
         }
     }
     val emissions = frames.map { frame ->
+        val localScores = DoubleArray(chords.size) { index -> chordEmission(frame, chords[index]) }
+        val bestLocal = localScores.max()
         DoubleArray(chords.size + 1).also { scores ->
             scores[0] = NO_CHORD_BASE + NO_CHORD_TONAL_WEIGHT * (1.0 - frame.tonalStrength)
             chords.forEachIndexed { index, chord ->
-                scores[index + 1] = chordEmission(frame, chord)
+                val local = localScores[index]
+                scores[index + 1] = if (bestLocal - local <= CONTEXT_TIE_MARGIN) {
+                    (local + CONTEXT_TIE_WEIGHT * chordEmission(frame, chord, frame.contextChroma)).coerceAtMost(1.0)
+                } else {
+                    local
+                }
             }
         }
     }
-    val states = viterbi(emissions)
+    val states = viterbi(emissions, frames)
     val events = mutableListOf<ChordEvent>()
     var activeState = states.first()
     var activeStart = frames.first().startMillis
     var confidenceTotal = emissions.first()[activeState]
+    var contextConfidenceTotal = contextConfidence(frames.first(), activeState, chords)
     var confidenceCount = 1
 
     fun close(endMillis: Long) {
@@ -109,7 +117,10 @@ internal fun analyzeChords(
             sourceChord
         }
         val confidence = (confidenceTotal / confidenceCount).coerceIn(0.0, 1.0)
-        if (confidence < MIN_EVENT_CONFIDENCE) return
+        val contextConfidence = (contextConfidenceTotal / confidenceCount).coerceIn(0.0, 1.0)
+        if (confidence < MIN_EVENT_CONFIDENCE || maxOf(confidence, contextConfidence) < MIN_STABLE_EVENT_CONFIDENCE) {
+            return
+        }
         events += ChordEvent(
             startMillis = activeStart,
             endMillis = endMillis,
@@ -125,28 +136,33 @@ internal fun analyzeChords(
             activeState = state
             activeStart = frames[index].startMillis
             confidenceTotal = 0.0
+            contextConfidenceTotal = 0.0
             confidenceCount = 0
         }
         confidenceTotal += emissions[index][state]
+        contextConfidenceTotal += contextConfidence(frames[index], state, chords)
         confidenceCount++
     }
     close(songEndMillis)
     return mergeChordGaps(events.filter { it.durationMillis >= MIN_EVENT_MILLIS })
 }
 
-private fun chordEmission(frame: HarmonicFrame, chord: Chord): Double {
+private fun contextConfidence(frame: HarmonicFrame, state: Int, chords: List<Chord>): Double =
+    if (state == 0) 0.0 else chordEmission(frame, chords[state - 1], frame.contextChroma)
+
+private fun chordEmission(frame: HarmonicFrame, chord: Chord, chroma: FloatArray = frame.chroma): Double {
     if (frame.tonalStrength < MIN_TONAL_STRENGTH) return 0.0
-    if (chord.quality == ChordQuality.DOMINANT_SEVENTH && !hasStableSeventh(frame.chroma, chord.rootPitchClass)) {
+    if (chord.quality == ChordQuality.DOMINANT_SEVENTH && !hasStableSeventh(chroma, chord.rootPitchClass)) {
         return INVALID_EMISSION
     }
-    val inChord = chord.pitchClasses.map { frame.chroma[it].toDouble() }
-    val outOfChord = frame.chroma.indices.filterNot(chord.pitchClasses::contains).map { frame.chroma[it].toDouble() }
+    val inChord = chord.pitchClasses.map { chroma[it].toDouble() }
+    val outOfChord = chroma.indices.filterNot(chord.pitchClasses::contains).map { chroma[it].toDouble() }
     val inAverage = inChord.average()
     val minimum = inChord.min()
     val outAverage = outOfChord.average()
     val bassRoot = frame.bassChroma[chord.rootPitchClass]
     val extensionBonus = if (chord.quality == ChordQuality.DOMINANT_SEVENTH) {
-        SEVENTH_BONUS * frame.chroma[(chord.rootPitchClass + 10) % PITCH_CLASS_COUNT]
+        SEVENTH_BONUS * chroma[(chord.rootPitchClass + 10) % PITCH_CLASS_COUNT]
     } else {
         0.0
     }
@@ -164,11 +180,14 @@ private fun hasStableSeventh(chroma: FloatArray, root: Int): Boolean {
     return seventh >= SEVENTH_OUTSIDE_RATIO * outside[outside.size / 2]
 }
 
-private fun viterbi(emissions: List<DoubleArray>): IntArray {
+private fun viterbi(emissions: List<DoubleArray>, frames: List<HarmonicFrame>): IntArray {
+    require(emissions.size == frames.size)
     val stateCount = emissions.first().size
     val backPointers = Array(emissions.size) { ByteArray(stateCount) }
     var previous = emissions.first().copyOf()
     for (frameIndex in 1 until emissions.size) {
+        val transitionScale = (1.0 - ONSET_TRANSITION_DISCOUNT * frames[frameIndex].onsetStrength)
+            .coerceIn(MIN_TRANSITION_SCALE, 1.0)
         val current = DoubleArray(stateCount)
         for (state in 0 until stateCount) {
             var bestPrevious = state
@@ -176,7 +195,7 @@ private fun viterbi(emissions: List<DoubleArray>): IntArray {
             for (candidate in 0 until stateCount) {
                 if (candidate == state) continue
                 val penalty = if (candidate == 0 || state == 0) NO_CHORD_TRANSITION else CHORD_TRANSITION
-                val score = previous[candidate] - penalty
+                val score = previous[candidate] - penalty * transitionScale
                 if (score > bestScore) {
                     bestScore = score
                     bestPrevious = candidate
@@ -216,10 +235,11 @@ private const val PITCH_CLASS_COUNT = 12
 private const val MIN_CHROMA_NORM = 1e-9
 private const val MIN_TEMPLATE_SCORE = 0.72
 private const val MIN_SCORE_MARGIN = 0.025
-private const val MIN_EVENT_MILLIS = 300L
+private const val MIN_EVENT_MILLIS = 170L
 private const val MIN_EVENT_CONFIDENCE = 0.18
+private const val MIN_STABLE_EVENT_CONFIDENCE = 0.25
 private const val MIN_SEVENTH_MILLIS = 750L
-private const val MAX_BRIDGE_GAP_MILLIS = 350L
+private const val MAX_BRIDGE_GAP_MILLIS = 100L
 private const val NO_CHORD_BASE = 0.05
 private const val NO_CHORD_TONAL_WEIGHT = 0.12
 private const val NO_CHORD_TRANSITION = 0.08
@@ -233,4 +253,8 @@ private const val MIN_SEVENTH_SALIENCE = 0.24f
 private const val SEVENTH_OUTSIDE_RATIO = 2f
 private const val INVALID_EMISSION = -1.0
 private const val MIN_TONAL_STRENGTH = 0.05f
+private const val CONTEXT_TIE_MARGIN = 0.04
+private const val CONTEXT_TIE_WEIGHT = 0.04
+private const val ONSET_TRANSITION_DISCOUNT = 0.85
+private const val MIN_TRANSITION_SCALE = 0.15
 private const val MAX_ANALYSIS_SECONDS = 30 * 60

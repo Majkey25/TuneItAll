@@ -1,6 +1,7 @@
 package com.tuneitall.tuner.music
 
 import kotlin.math.PI
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.tanh
 import kotlin.random.Random
@@ -15,6 +16,22 @@ internal fun sineChord(sampleRate: Int, seconds: Int, vararg frequencies: Double
         val sample = frequencies.sumOf { frequency -> sin(2.0 * PI * frequency * frame / sampleRate) }
         (0.75 * sample / frequencies.size).toFloat()
     }
+
+internal fun sineChord(sampleRate: Int, seconds: Double, vararg frequencies: Double): FloatArray =
+    FloatArray((sampleRate * seconds).roundToInt()) { frame ->
+        val sample = frequencies.sumOf { frequency -> sin(2.0 * PI * frequency * frame / sampleRate) }
+        (0.75 * sample / frequencies.size).toFloat()
+    }
+
+internal fun concatenate(vararg parts: FloatArray): FloatArray {
+    val result = FloatArray(parts.sumOf(FloatArray::size))
+    var offset = 0
+    parts.forEach { part ->
+        part.copyInto(result, offset)
+        offset += part.size
+    }
+    return result
+}
 
 internal fun noisyPowerRiff(sampleRate: Int, seconds: Int, rootHertz: Double): FloatArray {
     val random = Random(2_026)

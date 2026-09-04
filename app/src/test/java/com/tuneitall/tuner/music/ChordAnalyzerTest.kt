@@ -59,6 +59,26 @@ class ChordAnalyzerTest {
     }
 
     @Test
+    fun `streaming analyzer preserves three chords inside one second`() {
+        val samples = concatenate(
+            sineChord(48_000, 0.333, 261.63, 329.63, 392.0),
+            sineChord(48_000, 0.333, 196.0, 246.94, 293.66),
+            sineChord(48_000, 0.334, 220.0, 261.63, 329.63),
+        )
+        val analyzer = StreamingChordAnalyzer(48_000)
+        analyzer.accept(samples)
+        val events = analyzer.finish()
+        val reference = listOf(
+            ChordEvent(0, 333, Chord(0, ChordQuality.MAJOR), 1.0),
+            ChordEvent(333, 666, Chord(7, ChordQuality.MAJOR), 1.0),
+            ChordEvent(666, 1_000, Chord(9, ChordQuality.MINOR), 1.0),
+        )
+
+        assertEquals(reference.map(ChordEvent::chord), events.map(ChordEvent::chord), events.toString())
+        assertTrue(evaluateChords(reference, events, 1_000).medianBoundaryErrorMillis <= 100.0, events.toString())
+    }
+
+    @Test
     fun `streaming analyzer recognizes a clipped E power chord`() {
         val sampleRate = 48_000
         val analyzer = StreamingChordAnalyzer(sampleRate, SongAnalysisMode.POWER)
