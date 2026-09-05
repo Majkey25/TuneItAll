@@ -16,9 +16,6 @@ jobs:
     timeout-minutes: 25
     env:
       TUNEITALL_KEYSTORE_PATH: ${{ github.workspace }}/tuneitall-upload.jks
-      TUNEITALL_KEYSTORE_PASSWORD: ${{ secrets.TUNEITALL_KEYSTORE_PASSWORD }}
-      TUNEITALL_KEY_ALIAS: ${{ secrets.TUNEITALL_KEY_ALIAS }}
-      TUNEITALL_KEY_PASSWORD: ${{ secrets.TUNEITALL_KEY_PASSWORD }}
 
     steps:
       - name: Check out source
@@ -44,9 +41,17 @@ jobs:
 
       - name: Build and verify signed bundle
         shell: pwsh
+        env:
+          TUNEITALL_KEYSTORE_PASSWORD: ${{ secrets.TUNEITALL_KEYSTORE_PASSWORD }}
+          TUNEITALL_KEY_ALIAS: ${{ secrets.TUNEITALL_KEY_ALIAS }}
+          TUNEITALL_KEY_PASSWORD: ${{ secrets.TUNEITALL_KEY_PASSWORD }}
         run: |
           chmod +x ./gradlew
           ./tools/build.ps1
+
+      - name: Remove upload keystore
+        if: always()
+        run: rm -f "$TUNEITALL_KEYSTORE_PATH"
 
       - name: Upload Play bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -55,7 +60,3 @@ jobs:
           if-no-files-found: error
           retention-days: 30
           path: app/build/outputs/bundle/release/app-release.aab
-
-      - name: Remove upload keystore
-        if: always()
-        run: rm -f "$TUNEITALL_KEYSTORE_PATH"

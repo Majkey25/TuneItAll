@@ -22,6 +22,7 @@ class AutoScrollManifestTest {
             ComponentName(context, AutoScrollAccessibilityService::class.java),
             PackageManager.GET_META_DATA,
         )
+        assertTrue(service.exported)
         val parser = context.resources.getXml(
             service.metaData.getInt("android.accessibilityservice"),
         )

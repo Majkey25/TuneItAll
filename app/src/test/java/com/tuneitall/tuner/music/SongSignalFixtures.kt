@@ -49,8 +49,8 @@ internal fun noisyPowerRiff(sampleRate: Int, seconds: Int, rootHertz: Double): F
     }
 }
 
-internal fun changingNoise(sampleRate: Int, seconds: Int): FloatArray {
-    val random = Random(4_404)
+internal fun changingNoise(sampleRate: Int, seconds: Int, seed: Int = 4_404): FloatArray {
+    val random = Random(seed)
     return FloatArray(sampleRate * seconds) { frame ->
         val envelope = 0.15 + 0.25 * sin(2.0 * PI * frame / (sampleRate / 2.0))
         (envelope * random.nextDouble(-1.0, 1.0)).toFloat()

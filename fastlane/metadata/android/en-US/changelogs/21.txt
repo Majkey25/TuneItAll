@@ -1,0 +1,1 @@
+More accurate offline song chords, notes, power chords, inversions, and acoustic arrangements. Long-song analysis is faster and uses less memory. More instrument tunings, custom-tuning deletion, microphone retry, accessible Auto-scroll controls, and stricter release security checks.

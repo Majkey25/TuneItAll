@@ -21,9 +21,6 @@ jobs:
     timeout-minutes: 25
     env:
       TUNEITALL_KEYSTORE_PATH: ${{ github.workspace }}/tuneitall-upload.jks
-      TUNEITALL_KEYSTORE_PASSWORD: ${{ secrets.TUNEITALL_KEYSTORE_PASSWORD }}
-      TUNEITALL_KEY_ALIAS: ${{ secrets.TUNEITALL_KEY_ALIAS }}
-      TUNEITALL_KEY_PASSWORD: ${{ secrets.TUNEITALL_KEY_PASSWORD }}
 
     steps:
       - name: Check out source
@@ -49,9 +46,17 @@ jobs:
 
       - name: Build and verify signed bundle
         shell: pwsh
+        env:
+          TUNEITALL_KEYSTORE_PASSWORD: ${{ secrets.TUNEITALL_KEYSTORE_PASSWORD }}
+          TUNEITALL_KEY_ALIAS: ${{ secrets.TUNEITALL_KEY_ALIAS }}
+          TUNEITALL_KEY_PASSWORD: ${{ secrets.TUNEITALL_KEY_PASSWORD }}
         run: |
           chmod +x ./gradlew
           ./tools/build.ps1
+
+      - name: Remove upload keystore
+        if: always()
+        run: rm -f "$TUNEITALL_KEYSTORE_PATH"
 
       - name: Create draft GitHub release
         env:
@@ -60,7 +65,3 @@ jobs:
           gh release create "$GITHUB_REF_NAME"
           "app/build/outputs/bundle/release/app-release.aab#Intoniva $GITHUB_REF_NAME signed Android App Bundle"
           --draft --verify-tag --generate-notes --title "Intoniva $GITHUB_REF_NAME"
-
-      - name: Remove upload keystore
-        if: always()
-        run: rm -f "$TUNEITALL_KEYSTORE_PATH"

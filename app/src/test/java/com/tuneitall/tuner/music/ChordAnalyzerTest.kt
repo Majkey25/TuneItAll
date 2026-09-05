@@ -5,7 +5,9 @@ import java.nio.ByteOrder
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.tanh
+import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -17,6 +19,12 @@ class ChordAnalyzerTest {
         assertEquals(Chord(9, ChordQuality.MINOR), matchChord(chroma(9, 0, 4))?.chord)
         assertEquals(Chord(7, ChordQuality.DOMINANT_SEVENTH), matchChord(chroma(7, 11, 2, 5))?.chord)
         assertEquals(null, matchChord(DoubleArray(12)))
+    }
+
+    @Test
+    fun `template matcher recognizes unambiguous extended qualities`() {
+        assertEquals(Chord(0, ChordQuality.MAJOR_SEVENTH), matchChord(chroma(0, 4, 7, 11))?.chord)
+        assertEquals(Chord(0, ChordQuality.ADD_NINTH), matchChord(chroma(0, 2, 4, 7))?.chord)
     }
 
     @Test
@@ -76,6 +84,42 @@ class ChordAnalyzerTest {
 
         assertEquals(reference.map(ChordEvent::chord), events.map(ChordEvent::chord), events.toString())
         assertTrue(evaluateChords(reference, events, 1_000).medianBoundaryErrorMillis <= 100.0, events.toString())
+    }
+
+    @Test
+    fun `streaming analyzer preserves a same root quality change`() {
+        val analyzer = StreamingChordAnalyzer(48_000)
+        analyzer.accept(
+            concatenate(
+                sineChord(48_000, 0.5, 261.63, 329.63, 392.0),
+                sineChord(48_000, 0.5, 261.63, 329.63, 392.0, 466.16),
+            ),
+        )
+
+        assertEquals(
+            listOf(ChordQuality.MAJOR, ChordQuality.DOMINANT_SEVENTH),
+            analyzer.finish().map { it.chord.quality },
+        )
+    }
+
+    @Test
+    fun `linear viterbi matches exhaustive transitions`() {
+        val random = Random(7)
+        val emissions = List(50) {
+            DoubleArray(25) { random.nextDouble(-0.5, 1.0) }
+        }
+        val frames = List(emissions.size) { index ->
+            HarmonicFrame(
+                startMillis = index * 85L,
+                chroma = FloatArray(12),
+                bassChroma = FloatArray(12),
+                noteSalience = FloatArray(88),
+                tonalStrength = 0f,
+                onsetStrength = random.nextFloat(),
+            )
+        }
+
+        assertContentEquals(exhaustiveViterbi(emissions, frames), viterbi(emissions, frames))
     }
 
     @Test
@@ -149,13 +193,53 @@ class ChordAnalyzerTest {
     }
 
     @Test
-    fun `changing broadband noise produces no chord events`() {
+    fun `classic mode keeps a short clear dominant seventh`() {
         val analyzer = StreamingChordAnalyzer(48_000, SongAnalysisMode.CHORDS)
-        analyzer.accept(changingNoise(48_000, seconds = 4))
+        analyzer.accept(sineChord(48_000, 0.333, 261.63, 329.63, 392.0, 466.16))
 
-        val events = analyzer.finish()
+        val event = analyzer.finish().maxBy(ChordEvent::durationMillis)
 
-        assertTrue(events.isEmpty(), events.toString())
+        assertEquals(Chord(0, ChordQuality.DOMINANT_SEVENTH), event.chord)
+    }
+
+    @Test
+    fun `stable non root bass is reported as an inversion`() {
+        val chroma = FloatArray(12) { 0.02f }.apply {
+            this[0] = 0.75f
+            this[4] = 0.90f
+            this[7] = 0.70f
+        }
+        val bass = FloatArray(12).apply {
+            this[0] = 0.50f
+            this[4] = 0.90f
+        }
+        val frames = List(20) { index ->
+            HarmonicFrame(
+                startMillis = index * 100L,
+                chroma = chroma,
+                bassChroma = bass,
+                noteSalience = FloatArray(88),
+                tonalStrength = 0.8f,
+                onsetStrength = 0f,
+            )
+        }
+
+        val event = analyzeChords(frames, SongAnalysisMode.CHORDS, 2_000L)
+            .maxBy(ChordEvent::durationMillis)
+
+        assertEquals(Chord(0, ChordQuality.MAJOR, bassPitchClass = 4), event.chord)
+    }
+
+    @Test
+    fun `changing broadband noise produces no chord events`() {
+        listOf(1, 4_404, 9_001).forEach { seed ->
+            val analyzer = StreamingChordAnalyzer(48_000, SongAnalysisMode.CHORDS)
+            analyzer.accept(changingNoise(48_000, seconds = 4, seed = seed))
+
+            val events = analyzer.finish()
+
+            assertTrue(events.isEmpty(), "seed=$seed events=$events")
+        }
     }
 
     @Test
@@ -177,8 +261,20 @@ class ChordAnalyzerTest {
             AnnotatedRoot(7_385L, 11_077L, 2),
             AnnotatedRoot(11_077L, 14_769L, 9),
             AnnotatedRoot(14_769L, 16_615L, 4),
-            AnnotatedRoot(16_615L, 18_462L, 2),
+            AnnotatedRoot(16_615L, 18_462L, 2, ChordQuality.SUSPENDED_SECOND),
             AnnotatedRoot(18_462L, 22_147L, 9),
+        )
+        val evaluation = evaluateChords(
+            reference = annotations.map { annotation ->
+                ChordEvent(
+                    annotation.startMillis,
+                    annotation.endMillis,
+                    Chord(annotation.rootPitchClass, annotation.quality),
+                    1.0,
+                )
+            },
+            estimate = events,
+            songEndMillis = 22_147L,
         )
         val checkpoints = annotations.flatMap { annotation ->
             ((annotation.startMillis + 650L) until (annotation.endMillis - 650L) step 250L)
@@ -189,10 +285,16 @@ class ChordAnalyzerTest {
         val correct = detected.zip(checkpoints).count { (event, checkpoint) ->
             event?.chord?.rootPitchClass == checkpoint.second
         }
+        println("GuitarSet evaluation: $evaluation")
 
         assertEquals(checkpoints.size, covered, "events=$events")
         assertEquals(checkpoints.size, correct, "events=$events")
-        assertEquals(Chord(2, ChordQuality.SUSPENDED_SECOND), chordEventAt(events, 17_600L)?.chord)
+        assertEquals(2, chordEventAt(events, 17_600L)?.chord?.rootPitchClass)
+        assertEquals(ChordQuality.SUSPENDED_SECOND, chordEventAt(events, 17_600L)?.chord?.quality)
+        assertTrue(evaluation.rootWcsr >= 0.95, evaluation.toString())
+        assertTrue(evaluation.majorMinorWcsr >= 0.85, evaluation.toString())
+        assertTrue(evaluation.qualityWcsr >= 0.75, evaluation.toString())
+        assertTrue(evaluation.segmentationScore >= 0.85, evaluation.toString())
     }
 
     private fun chroma(vararg pitchClasses: Int) = DoubleArray(12) { index ->
@@ -227,9 +329,42 @@ class ChordAnalyzerTest {
         val startMillis: Long,
         val endMillis: Long,
         val rootPitchClass: Int,
+        val quality: ChordQuality = ChordQuality.MAJOR,
     )
 
     private companion object {
         const val WAV_HEADER_BYTES = 44
     }
+}
+
+private fun exhaustiveViterbi(emissions: List<DoubleArray>, frames: List<HarmonicFrame>): IntArray {
+    val stateCount = emissions.first().size
+    val backPointers = Array(emissions.size) { ShortArray(stateCount) }
+    var previous = emissions.first().copyOf()
+    for (frameIndex in 1 until emissions.size) {
+        val transitionScale = (1.0 - 0.85 * frames[frameIndex].onsetStrength).coerceIn(0.15, 1.0)
+        val current = DoubleArray(stateCount)
+        for (state in 0 until stateCount) {
+            var bestPrevious = state
+            var bestScore = previous[state]
+            for (candidate in 0 until stateCount) {
+                if (candidate == state) continue
+                val penalty = if (candidate == 0 || state == 0) 0.08 else 0.18
+                val score = previous[candidate] - penalty * transitionScale
+                if (score > bestScore) {
+                    bestScore = score
+                    bestPrevious = candidate
+                }
+            }
+            current[state] = bestScore + emissions[frameIndex][state]
+            backPointers[frameIndex][state] = bestPrevious.toShort()
+        }
+        previous = current
+    }
+    val states = IntArray(emissions.size)
+    states[states.lastIndex] = previous.indices.maxBy(previous::get)
+    for (frameIndex in states.lastIndex downTo 1) {
+        states[frameIndex - 1] = backPointers[frameIndex][states[frameIndex]].toInt()
+    }
+    return states
 }

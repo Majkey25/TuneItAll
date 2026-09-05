@@ -11,8 +11,15 @@ class AutoScrollPreferences(context: Context) {
             preferences.edit().putInt(KEY_SPEED, AutoScrollSpeed.clamp(value)).apply()
         }
 
+    var disclosureAccepted: Boolean
+        get() = preferences.getBoolean(KEY_DISCLOSURE_ACCEPTED, false)
+        set(value) {
+            preferences.edit().putBoolean(KEY_DISCLOSURE_ACCEPTED, value).apply()
+        }
+
     private companion object {
         const val PREFS_NAME = "auto_scroll_settings"
         const val KEY_SPEED = "speed"
+        const val KEY_DISCLOSURE_ACCEPTED = "disclosure_accepted"
     }
 }

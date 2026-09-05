@@ -11,7 +11,7 @@ $gradle = Join-Path $repoRoot $gradleName
 
 Push-Location $repoRoot
 try {
-    & $gradle clean :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:bundleRelease --no-daemon
+    & $gradle clean :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleQa :app:assembleQaAndroidTest :app:bundleRelease --no-daemon
     if ($LASTEXITCODE -ne 0) {
         throw "Gradle quality gate failed with exit code $LASTEXITCODE"
     }

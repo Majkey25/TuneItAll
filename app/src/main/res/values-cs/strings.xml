@@ -3,6 +3,7 @@
     <string name="app_name">Intoniva</string>
     <string name="microphone_explanation">Přístup k mikrofonu je potřeba pro poslech nástroje. Zvuk zůstává v tomto zařízení.</string>
     <string name="open_settings">Otevřít nastavení aplikace</string>
+    <string name="retry_microphone">Zkusit mikrofon znovu</string>
     <string name="mode_auto">Auto</string>
     <string name="mode_manual">Manuál</string>
     <string name="mode_chromatic">Chromatická</string>
@@ -56,7 +57,17 @@
     <string name="chord_major">Dur</string>
     <string name="chord_minor">Moll</string>
     <string name="chord_suspended_second">Sus2</string>
+    <string name="chord_suspended_fourth">Sus4</string>
+    <string name="chord_diminished">Zmenšený</string>
+    <string name="chord_augmented">Zvětšený</string>
+    <string name="chord_major_sixth">Dur 6</string>
+    <string name="chord_minor_sixth">Moll 6</string>
     <string name="chord_dominant_seventh">Dominantní 7</string>
+    <string name="chord_major_seventh">Velký septakord</string>
+    <string name="chord_minor_seventh">Mollový septakord</string>
+    <string name="chord_half_diminished_seventh">Polovičně zmenšený 7</string>
+    <string name="chord_add_ninth">Přidaná 9</string>
+    <string name="chord_minor_add_ninth">Moll s přidanou 9</string>
     <string name="chord_power">Power 5</string>
     <string name="show_chord_diagrams">Zobrazit hmaty</string>
     <string name="chord_voicing">Hmat pro %1$s</string>
@@ -79,11 +90,17 @@
     <string name="song_play">Přehrát</string>
     <string name="song_pause">Pozastavit</string>
     <string name="transpose">Transpozice</string>
+    <string name="transpose_decrease">Transponovat o půltón dolů</string>
+    <string name="transpose_increase">Transponovat o půltón nahoru</string>
+    <string name="song_position_description">Pozice skladby %1$s z %2$s</string>
     <string name="current_chord">Aktuální akord</string>
     <string name="current_note">Aktuální tón</string>
     <string name="no_current_chord">Žádný stabilní akord</string>
     <string name="no_current_note">Žádný stabilní tón</string>
     <string name="chord_timeline">Časová osa akordů</string>
+    <string name="arrangement_exact">Přesně</string>
+    <string name="arrangement_simplified">Snadná akustika</string>
+    <string name="acoustic_shape">Kapodastr %1$d · hraj %2$s</string>
     <string name="note_timeline">Časová osa tónů</string>
     <string name="song_error_no_audio">Vybraný soubor nemá podporovanou zvukovou stopu.</string>
     <string name="song_error_too_long">Písničky delší než 30 minut nejsou podporované.</string>
@@ -157,6 +174,10 @@
     <string name="audio_read_failed">Zvukový vstup se zastavil (kód %1$d).</string>
     <string name="back">Zpět</string>
     <string name="tuning_library">Ladění</string>
+    <string name="delete">Smazat</string>
+    <string name="cancel">Zrušit</string>
+    <string name="delete_custom_tuning_title">Smazat vlastní ladění?</string>
+    <string name="delete_custom_tuning_message">Ladění %1$s bude z tohoto zařízení odstraněno.</string>
     <string name="search_tunings">Hledat ladění</string>
     <string name="all_instruments">Vše</string>
     <string name="all_strings">Všechny počty</string>
@@ -172,6 +193,10 @@
     <string name="instrument_guitar">Kytara</string>
     <string name="instrument_bass">Baskytara</string>
     <string name="instrument_ukulele">Ukulele</string>
+    <string name="instrument_violin">Housle</string>
+    <string name="instrument_viola">Viola</string>
+    <string name="instrument_cello">Violoncello</string>
+    <string name="instrument_mandolin">Mandolína</string>
     <plurals name="layout_inline">
         <item quantity="one">%1$d v řadě</item>
         <item quantity="few">%1$d v řadě</item>
@@ -255,7 +280,7 @@
     <string name="microphone_about">Vzorky z mikrofonu se zpracují dočasně v tomto zařízení. Nikdy se nenahrávají, neuchovávají, nesdílejí ani neodesílají.</string>
     <string name="headstock_icon_attribution">Ikony Gibson Les Paul a gibson explorer: Alessandro Curci, thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Zásady ochrany soukromí</string>
-    <string name="privacy_policy_full">Intoniva používá mikrofon jen během aktivního ladění. Zvukové vzorky zpracuje v paměti zařízení a ihned je zahodí. Aplikace neshromažďuje ani nesdílí osobní údaje a nežádá o přístup k internetu.</string>
+    <string name="privacy_policy_full">Vydavatelem Intoniva je MajkeyLab (majkeylab@gmail.com). Zvuk z mikrofonu a vámi vybraný soubor písně se zpracují pouze v zařízení; výsledky akordů, tónů, tempa a aranže zůstávají v paměti. Nastavení, oblíbená a vlastní ladění a skóre tréninku se ukládají místně, dokud nevymažete data aplikace nebo ji neodinstalujete. Automatické posouvání provádí uživatelem vyžádaná gesta a nemůže získat obsah obrazovky. Aplikace nemá účty, reklamy, analytiku, profilování, sledování, prodej či sdílení údajů, server vydavatele ani oprávnění k internetu. Buy Me a Coffee a volitelný e-mail či GitHub podpora se otevírají mimo aplikaci podle podmínek poskytovatelů. Pokud podporu kontaktujete, MajkeyLab může obdržet adresu nebo název účtu, zprávu a přílohy, které odešlete, kvůli podpoře, prevenci zneužití nebo právním povinnostem na základě vámi vyžádaných kroků či oprávněného zájmu. Údaje se běžně smažou do 12 měsíců od uzavření požadavku, pokud nepožádáte dříve nebo zákon nevyžaduje delší dobu. Uživatelé v EU a EHP mohou uplatnit příslušná práva na přístup, opravu, výmaz, omezení, námitku či přenositelnost a podat stížnost dozorovému úřadu. Příslušná práva států USA lze uplatnit e-mailem; Intoniva osobní údaje neprodává ani nesdílí, nepoužívá cílenou reklamu ani finanční pobídky a za žádost nediskriminuje. MajkeyLab nemá žádný serverový záznam aplikace, který by mohl zpřístupnit, exportovat, opravit nebo smazat. Intoniva není určena dětem; dítě nesmí poslat údaje podpoře bez rodiče či zákonného zástupce.</string>
     <string name="license">Proprietární licence</string>
     <string name="license_summary">Intoniva je proprietární software. Kopírování, úpravy, distribuce, sublicencování nebo komerční použití vyžadují předchozí písemný souhlas. Součásti třetích stran si ponechávají vlastní licence.</string>
     <string name="support_app">Podpořit tuto aplikaci → Buy Me a Coffee</string>
@@ -291,4 +316,7 @@
     <string name="auto_scroll_speed">Rychlost posouvání</string>
     <string name="auto_scroll_show_controls">Zobrazit plovoucí ovládání</string>
     <string name="auto_scroll_privacy_note">Intoniva pouze provádí gesta přejetí. Obsah obrazovky nečte, neukládá ani neodesílá.</string>
+    <string name="auto_scroll_disclosure_title">Jak funguje automatické posouvání</string>
+    <string name="auto_scroll_disclosure_body">Automatické posouvání používá přístupnost Androidu k přesně daným gestům přejetí, když ho spustíte. Nemůže získat obsah oken a data obrazovky nečte, neshromažďuje, neukládá ani nesdílí.</string>
+    <string name="auto_scroll_disclosure_continue">Rozumím, pokračovat</string>
 </resources>

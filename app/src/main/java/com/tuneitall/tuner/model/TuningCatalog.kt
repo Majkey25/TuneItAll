@@ -61,6 +61,13 @@ object TuningCatalog {
             spec = "B0 E1 A1 D2",
             layouts = BASS_4_LAYOUTS,
         ),
+        preset("bass-4-standard-e-flat", "Standard E♭", Instrument.BASS, "Eb1 Ab1 Db2 Gb2", BASS_4_LAYOUTS),
+        preset("bass-4-standard-c", "Standard C", Instrument.BASS, "C1 F1 Bb1 Eb2", BASS_4_LAYOUTS),
+        preset("bass-5-standard", "Standard B", Instrument.BASS, "B0 E1 A1 D2 G2", BASS_5_LAYOUTS),
+        preset("bass-5-drop-a", "Drop A", Instrument.BASS, "A0 E1 A1 D2 G2", BASS_5_LAYOUTS),
+        preset("bass-5-high-c", "High C", Instrument.BASS, "E1 A1 D2 G2 C3", BASS_5_LAYOUTS),
+        preset("bass-5-standard-e-flat", "Standard B♭", Instrument.BASS, "Bb0 Eb1 Ab1 Db2 Gb2", BASS_5_LAYOUTS),
+        preset("bass-6-standard", "Standard B", Instrument.BASS, "B0 E1 A1 D2 G2 C3", BASS_6_LAYOUTS),
         preset(
             id = "ukulele-standard",
             name = "Standard C",
@@ -82,6 +89,10 @@ object TuningCatalog {
             spec = "D3 G3 B3 E4",
             layouts = UKULELE_LAYOUTS,
         ),
+        preset("violin-standard", "Standard", Instrument.VIOLIN, "G3 D4 A4 E5", FOUR_STRING_LAYOUTS),
+        preset("viola-standard", "Standard", Instrument.VIOLA, "C3 G3 D4 A4", FOUR_STRING_LAYOUTS),
+        preset("cello-standard", "Standard", Instrument.CELLO, "C2 G2 D3 A3", FOUR_STRING_LAYOUTS),
+        preset("mandolin-standard", "Standard", Instrument.MANDOLIN, "G3 D4 A4 E5", FOUR_STRING_LAYOUTS),
     )
 
     private val presetsById: Map<String, TuningPreset> = presets.associateBy(TuningPreset::id)
@@ -144,4 +155,7 @@ private val GUITAR_7_LAYOUTS = setOf(HeadstockLayout.INLINE_7, HeadstockLayout.S
 private val GUITAR_8_LAYOUTS = setOf(HeadstockLayout.INLINE_8, HeadstockLayout.SPLIT_4_4)
 private val GUITAR_9_LAYOUTS = setOf(HeadstockLayout.INLINE_9, HeadstockLayout.SPLIT_5_4)
 private val BASS_4_LAYOUTS = setOf(HeadstockLayout.INLINE_4, HeadstockLayout.SPLIT_2_2)
-private val UKULELE_LAYOUTS = setOf(HeadstockLayout.SPLIT_2_2)
+private val BASS_5_LAYOUTS = setOf(HeadstockLayout.INLINE_5, HeadstockLayout.SPLIT_3_2)
+private val BASS_6_LAYOUTS = setOf(HeadstockLayout.SPLIT_3_3, HeadstockLayout.INLINE_6)
+private val FOUR_STRING_LAYOUTS = setOf(HeadstockLayout.SPLIT_2_2)
+private val UKULELE_LAYOUTS = FOUR_STRING_LAYOUTS

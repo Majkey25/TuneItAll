@@ -13,17 +13,17 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing prerelease `0.3.0-alpha.15`. Intoniva is in Google Play
+Status: public testing prerelease `0.3.0-alpha.18`. Intoniva is in Google Play
 closed-testing review and is not available in production.
 
 ## Download
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.15/Intoniva-v0.3.0-alpha.15-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.18/Intoniva-v0.3.0-alpha.18-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.15).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.18).
 
 ## Features
 
@@ -46,7 +46,7 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
   generated audio and local scoring.
 - Guitar: 6, 7, 8, and 9 strings with inline and split headstocks.
 - Four-string bass and ukulele.
-- 38 built-in tunings, including lowered standard, Drop D through Drop F,
+- 49 built-in tunings, including lowered standard, Drop D through Drop F,
   DADGAD, open tunings, extended-range guitar, bass, and ukulele presets.
 - Searchable library, favorites, last-used state, and up to 100 custom tunings.
 - Adjustable A4 reference from 410.0 to 480.0 Hz in 0.1 Hz steps; 440.0 Hz is
@@ -175,7 +175,7 @@ GitHub Actions runs unit tests, Android Lint, debug assembly, release bundle
 assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
-Pre-release tags such as `v0.3.0-alpha.15` build a verified, debug-signed APK and
+Pre-release tags such as `v0.3.0-alpha.18` build a verified, debug-signed APK and
 publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
 signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.

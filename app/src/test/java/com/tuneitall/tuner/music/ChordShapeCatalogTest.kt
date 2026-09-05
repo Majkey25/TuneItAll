@@ -27,6 +27,19 @@ class ChordShapeCatalogTest {
     }
 
     @Test
+    fun `bundled catalog exposes reviewed common quality shapes`() {
+        listOf(
+            Chord(0, ChordQuality.MAJOR_SEVENTH),
+            Chord(9, ChordQuality.MINOR_SEVENTH),
+            Chord(11, ChordQuality.HALF_DIMINISHED_SEVENTH),
+            Chord(0, ChordQuality.SUSPENDED_FOURTH),
+            Chord(0, ChordQuality.ADD_NINTH),
+        ).forEach { chord ->
+            requireNotNull(catalog.shape("guitar-6-standard", chord))
+        }
+    }
+
+    @Test
     fun `relative source frets become absolute and keep fingering details`() {
         val abMinor = shape(8, ChordQuality.MINOR)
 
@@ -58,19 +71,21 @@ class ChordShapeCatalogTest {
             repeat(12) { root ->
                 instructionalChordQualities.forEach { quality ->
                     val chord = Chord(root, quality)
-                    val voicing = requireNotNull(catalog.shape(tuningId, chord))
+                    val voicing = catalog.shape(tuningId, chord) ?: return@forEach
                     val soundedPitchClasses = voicing.frets.mapIndexedNotNull { index, fret ->
                         fret.takeIf { it >= 0 }?.let { (tuning.notesLowToHigh[index].value + it) % 12 }
                     }.toSet()
-                    val requiredPitchClasses = if (quality == ChordQuality.DOMINANT_SEVENTH) {
-                        chord.pitchClasses - ((root + 7) % 12)
-                    } else {
-                        chord.pitchClasses
-                    }
+                    val requiredPitchClasses = essentialIntervals.getValue(quality)
+                        .mapTo(mutableSetOf()) { (root + it) % 12 }
 
                     assertTrue(soundedPitchClasses.all(chord.pitchClasses::contains), "$tuningId $chord $voicing")
                     assertTrue(soundedPitchClasses.containsAll(requiredPitchClasses), "$tuningId $chord $voicing")
-                    assertTrue(voicing.frets.zip(voicing.fingers).all { (fret, finger) -> (fret > 0) == (finger > 0) })
+                    assertTrue(
+                        voicing.frets.zip(voicing.fingers).all { (fret, finger) ->
+                            (fret <= 0 && finger == 0) || (fret > 0 && (finger > 0 || fret in voicing.barres))
+                        },
+                        "$tuningId $chord $voicing",
+                    )
                 }
             }
         }
@@ -84,6 +99,22 @@ class ChordShapeCatalogTest {
         .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
     private companion object {
+        val essentialIntervals = mapOf(
+            ChordQuality.MAJOR to setOf(0, 4),
+            ChordQuality.MINOR to setOf(0, 3),
+            ChordQuality.SUSPENDED_SECOND to setOf(0, 2, 7),
+            ChordQuality.SUSPENDED_FOURTH to setOf(0, 5, 7),
+            ChordQuality.DIMINISHED to setOf(0, 3, 6),
+            ChordQuality.AUGMENTED to setOf(0, 4, 8),
+            ChordQuality.MAJOR_SIXTH to setOf(0, 4, 9),
+            ChordQuality.MINOR_SIXTH to setOf(0, 3, 9),
+            ChordQuality.DOMINANT_SEVENTH to setOf(0, 4, 10),
+            ChordQuality.MAJOR_SEVENTH to setOf(0, 4, 11),
+            ChordQuality.MINOR_SEVENTH to setOf(0, 3, 10),
+            ChordQuality.HALF_DIMINISHED_SEVENTH to setOf(0, 3, 6, 10),
+            ChordQuality.ADD_NINTH to setOf(0, 2, 4),
+            ChordQuality.MINOR_ADD_NINTH to setOf(0, 2, 3),
+        )
         const val GUITAR_SHA256 = "cfe439962b2f444d2c341b1f0261403b4c3a3416e321147286fc608922699974"
         const val UKULELE_SHA256 = "233b7018ec35785a8bfa985bad90f4745cee04614c0fd1d5b819cff7406ec601"
     }

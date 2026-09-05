@@ -995,6 +995,32 @@ class TuneItAllFlowTest {
     }
 
     @Test
+    fun tuningLibraryShowsFavoritesFirstAndExposesFiveStringBass() {
+        val bass = requireNotNull(TuningCatalog.byId("bass-5-standard"))
+        composeRule.setContent {
+            TuneItAllTheme {
+                TuningLibraryScreen(
+                    presets = listOf(standardTuning(), bass),
+                    favoriteIds = setOf("bass-5-standard"),
+                    notation = NoteNotation.SHARPS,
+                    onSelect = {},
+                    onToggleFavorite = {},
+                    onCreateCustom = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("tuning_filter_favorites").assertIsDisplayed()
+        composeRule.onNodeWithTag("tuning_item_bass-5-standard").assertIsDisplayed()
+        val favoriteTop = composeRule.onNodeWithTag("tuning_item_bass-5-standard").fetchSemanticsNode().boundsInRoot.top
+        val otherTop = composeRule.onNodeWithTag("tuning_item_guitar-6-standard").fetchSemanticsNode().boundsInRoot.top
+        assertTrue(favoriteTop < otherTop)
+        composeRule.onNodeWithTag("tuning_filter_bass").performClick()
+        composeRule.onNodeWithTag("tuning_item_bass-5-standard").assertIsDisplayed()
+    }
+
+    @Test
     fun currentTuningControlClearlyOpensTheTuningLibrary() {
         var opened = false
         composeRule.setContent {
@@ -1624,6 +1650,27 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithContentDescription("String 6 E2").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("String 1 E4").performScrollTo().performClick()
         assertEquals(5, selectedString)
+    }
+
+    @Test
+    fun fiveStringBassHeadstockUsesB0AsStringFiveAndG2AsStringOne() {
+        val bass = requireNotNull(TuningCatalog.byId("bass-5-standard"))
+        composeRule.setContent {
+            TuneItAllTheme {
+                Headstock(
+                    layout = HeadstockLayout.SPLIT_3_2,
+                    notes = bass.notesLowToHigh,
+                    selectedIndex = null,
+                    confirmed = false,
+                    notation = NoteNotation.SHARPS,
+                    onStringSelected = {},
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("String 5 B0").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("String 1 G2").assertIsDisplayed()
     }
 
     @Test

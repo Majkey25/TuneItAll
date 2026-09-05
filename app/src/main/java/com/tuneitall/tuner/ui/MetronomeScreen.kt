@@ -67,6 +67,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -179,7 +181,7 @@ private fun TempoSongPanel(
             text = stringResource(R.string.tempo_detected, bpm),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.testTag("tempo_detected"),
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag("tempo_detected"),
         )
         state.tempoConfidence?.let { confidence ->
             Text(stringResource(R.string.tempo_confidence, (confidence * 100).toInt().coerceIn(0, 100)))
@@ -200,7 +202,7 @@ private fun TempoSongPanel(
         Text(
             text = stringResource(tempoSongErrorResource(error)),
             color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.testTag("tempo_error"),
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive }.testTag("tempo_error"),
         )
     }
 }
@@ -545,7 +547,9 @@ private fun PlaybackControls(state: MetronomeUiState, onTap: () -> Unit, onStart
             text = it,
             color = if (state.error == null) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.fillMaxWidth().testTag("metronome_status"),
+            modifier = Modifier.fillMaxWidth().semantics {
+                if (state.error != null) liveRegion = LiveRegionMode.Assertive
+            }.testTag("metronome_status"),
         )
     }
     Row(

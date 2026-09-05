@@ -39,11 +39,13 @@ import com.tuneitall.tuner.tuner.pitchSearchRange
 import com.tuneitall.tuner.ui.theme.ThemeMode
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class TunerUiState(
     val mode: TunerMode,
@@ -201,6 +203,17 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun retryAudio() {
+        if (!mutableUiState.value.microphoneGranted) return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { audioInput.stop() }
+            invalidateAudioSession {
+                it.copy(listening = false, reading = null, tuningConfirmed = false, error = null)
+            }
+            startAudioIfReady()
+        }
+    }
+
     fun selectMode(mode: TunerMode) {
         stopReferenceTone()
         preferences.mode = mode
@@ -304,6 +317,17 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         preferences.customTunings = updated
         mutableUiState.update { it.copy(customTunings = updated) }
         selectTuning(tuning)
+    }
+
+    fun deleteCustomTuning(tuningId: String) {
+        val state = mutableUiState.value
+        val updated = state.customTunings.filterNot { it.id == tuningId }
+        if (updated.size == state.customTunings.size) return
+        val favorites = state.favoriteIds - tuningId
+        preferences.customTunings = updated
+        preferences.favoriteIds = favorites
+        mutableUiState.update { it.copy(customTunings = updated, favoriteIds = favorites) }
+        if (state.tuning.id == tuningId) selectTuning(requireNotNull(TuningCatalog.byId(DEFAULT_TUNING_ID)))
     }
 
     private fun playReferenceTone() {

@@ -50,6 +50,10 @@ jobs:
           chmod +x ./gradlew
           ./tools/build.ps1 -AllowUnsigned
 
+      - name: Remove preview signing key
+        if: always()
+        run: rm -f "$TUNEITALL_PREVIEW_KEYSTORE_PATH"
+
       - name: Verify preview signer
         run: |
           signer="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
@@ -75,7 +79,3 @@ jobs:
             --verify-tag \
             --title "Intoniva $GITHUB_REF_NAME" \
             --notes-file .github/release-notes/preview.md
-
-      - name: Remove preview signing key
-        if: always()
-        run: rm -f "$TUNEITALL_PREVIEW_KEYSTORE_PATH"

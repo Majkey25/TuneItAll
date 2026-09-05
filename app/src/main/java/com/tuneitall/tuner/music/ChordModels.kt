@@ -4,11 +4,24 @@ import com.tuneitall.tuner.model.MidiNote
 import kotlin.math.pow
 import kotlin.random.Random
 
-enum class ChordQuality(val intervals: Set<Int>) {
-    MAJOR(setOf(0, 4, 7)),
-    MINOR(setOf(0, 3, 7)),
+enum class ChordQuality(
+    val intervals: Set<Int>,
+    val essentialIntervals: Set<Int> = intervals,
+) {
+    MAJOR(setOf(0, 4, 7), setOf(0, 4)),
+    MINOR(setOf(0, 3, 7), setOf(0, 3)),
     SUSPENDED_SECOND(setOf(0, 2, 7)),
-    DOMINANT_SEVENTH(setOf(0, 4, 7, 10)),
+    SUSPENDED_FOURTH(setOf(0, 5, 7)),
+    DIMINISHED(setOf(0, 3, 6)),
+    AUGMENTED(setOf(0, 4, 8)),
+    MAJOR_SIXTH(setOf(0, 4, 7, 9), setOf(0, 4, 9)),
+    MINOR_SIXTH(setOf(0, 3, 7, 9), setOf(0, 3, 9)),
+    DOMINANT_SEVENTH(setOf(0, 4, 7, 10), setOf(0, 4, 10)),
+    MAJOR_SEVENTH(setOf(0, 4, 7, 11), setOf(0, 4, 11)),
+    MINOR_SEVENTH(setOf(0, 3, 7, 10), setOf(0, 3, 10)),
+    HALF_DIMINISHED_SEVENTH(setOf(0, 3, 6, 10)),
+    ADD_NINTH(setOf(0, 2, 4, 7), setOf(0, 2, 4)),
+    MINOR_ADD_NINTH(setOf(0, 2, 3, 7), setOf(0, 2, 3)),
     POWER(setOf(0, 7)),
 }
 
@@ -17,14 +30,19 @@ val instructionalChordQualities: List<ChordQuality> = ChordQuality.entries.filte
 data class Chord(
     val rootPitchClass: Int,
     val quality: ChordQuality,
+    val bassPitchClass: Int? = null,
 ) {
     init {
         require(rootPitchClass in 0..11)
+        require(bassPitchClass == null || bassPitchClass in 0..11)
     }
 
     val pitchClasses: Set<Int> = quality.intervals.mapTo(mutableSetOf()) { (rootPitchClass + it) % 12 }
 
-    fun transpose(semitones: Int): Chord = copy(rootPitchClass = Math.floorMod(rootPitchClass + semitones, 12))
+    fun transpose(semitones: Int): Chord = copy(
+        rootPitchClass = Math.floorMod(rootPitchClass + semitones, 12),
+        bassPitchClass = bassPitchClass?.let { Math.floorMod(it + semitones, 12) },
+    )
 }
 
 data class ChordVoicing(

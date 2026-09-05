@@ -177,6 +177,11 @@ fix(chords): preserve fast harmonic changes
 - Modify: `app/src/main/java/com/tuneitall/tuner/music/ChordAnalyzer.kt`
 - Modify: `app/src/main/java/com/tuneitall/tuner/music/ChordShapeCatalog.kt`
 - Modify: `app/src/main/java/com/tuneitall/tuner/ui/ChordComponents.kt`
+- Modify: `app/src/main/res/values/strings.xml`
+- Modify: `app/src/main/res/values-cs/strings.xml`
+- Modify: `app/src/main/res/values-de/strings.xml`
+- Modify: `app/src/main/res/values-fr/strings.xml`
+- Modify: `app/src/main/res/values-es/strings.xml`
 - Modify: `app/src/test/java/com/tuneitall/tuner/music/ChordModelsTest.kt`
 - Modify: `app/src/test/java/com/tuneitall/tuner/music/ChordAnalyzerTest.kt`
 - Modify: `app/src/test/java/com/tuneitall/tuner/music/ChordShapeCatalogTest.kt`
@@ -333,7 +338,7 @@ when mode changes.
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest --tests "com.tuneitall.tuner.music.AcousticArrangementTest" --console=plain
-.\gradlew.bat :app:assembleDebugAndroidTest --console=plain
+.\gradlew.bat :app:assembleQaAndroidTest --console=plain
 ```
 
 - [ ] **Step 6: Commit the arrangement slice**
@@ -404,7 +409,7 @@ string 5 is `B0` and string 1 is `G2` for standard five-string bass.
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest --tests "com.tuneitall.tuner.model.TuningCatalogTest" --console=plain
-.\gradlew.bat :app:assembleDebugAndroidTest --console=plain
+.\gradlew.bat :app:assembleQaAndroidTest --console=plain
 ```
 
 - [ ] **Step 7: Commit the instrument slice**
@@ -528,7 +533,7 @@ nothing.
 
 ```powershell
 .\tools\build.ps1 -AllowUnsigned
-.\gradlew.bat :app:assembleDebugAndroidTest --console=plain
+.\gradlew.bat :app:assembleQaAndroidTest --console=plain
 curl.exe -L --fail --head https://majkey25.github.io/TuneItAll/privacy/
 ```
 

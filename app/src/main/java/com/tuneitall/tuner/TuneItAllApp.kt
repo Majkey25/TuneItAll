@@ -7,11 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -19,6 +18,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
 import com.tuneitall.tuner.model.TuningCatalog
+import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.ui.AboutScreen
 import com.tuneitall.tuner.ui.AutoScrollRoute
@@ -38,16 +38,16 @@ import com.tuneitall.tuner.ui.TuningLibraryScreen
 import com.tuneitall.tuner.ui.TrainerScreen
 import com.tuneitall.tuner.ui.TrainerViewModel
 
-sealed interface AppScreen {
-    data object Tuner : AppScreen
-    data object Metronome : AppScreen
-    data object Chords : AppScreen
-    data object Library : AppScreen
-    data object Trainer : AppScreen
-    data object CustomTuning : AppScreen
-    data object Settings : AppScreen
-    data object About : AppScreen
-    data object AutoScroll : AppScreen
+enum class AppScreen {
+    Tuner,
+    Metronome,
+    Chords,
+    Library,
+    Trainer,
+    CustomTuning,
+    Settings,
+    About,
+    AutoScroll,
 }
 
 internal fun parentScreen(screen: AppScreen): AppScreen? = when (screen) {
@@ -66,6 +66,7 @@ fun TuneItAllApp(
     openSupportPage: () -> Unit,
     appLanguage: AppLanguage,
     onAppLanguageChanged: (AppLanguage) -> Unit,
+    requestMicrophonePermission: () -> Unit = {},
     metronomeViewModel: MetronomeViewModel = composeViewModel(),
     chordViewModel: ChordViewModel? = null,
     trainerViewModel: TrainerViewModel? = null,
@@ -74,9 +75,9 @@ fun TuneItAllApp(
     val chordCatalog = remember(resources) {
         lazy(LazyThreadSafetyMode.NONE) { ChordShapeCatalog.fromResources(resources) }
     }
-    var screen: AppScreen by remember { mutableStateOf(AppScreen.Tuner) }
-    var settingsReturnScreen: AppScreen by remember { mutableStateOf(AppScreen.Tuner) }
-    var settingsInitialSection by remember { mutableStateOf(SettingsSection.TUNER) }
+    var screen by rememberSaveable { androidx.compose.runtime.mutableStateOf(AppScreen.Tuner) }
+    var settingsReturnScreen by rememberSaveable { androidx.compose.runtime.mutableStateOf(AppScreen.Tuner) }
+    var settingsInitialSection by rememberSaveable { androidx.compose.runtime.mutableStateOf(SettingsSection.TUNER) }
     val metronomeState by metronomeViewModel.uiState.collectAsStateWithLifecycle()
     LifecycleStartEffect(metronomeViewModel) {
         onStopOrDispose { metronomeViewModel.onStop() }
@@ -133,6 +134,8 @@ fun TuneItAllApp(
                         settingsInitialSection = SettingsSection.TUNER
                         screen = AppScreen.Settings
                     },
+                    onRequestMicrophonePermission = requestMicrophonePermission,
+                    onRetryAudio = viewModel::retryAudio,
                     onOpenApplicationSettings = openApplicationSettings,
                 )
 
@@ -163,9 +166,9 @@ fun TuneItAllApp(
                 AppScreen.Chords -> {
                     val activeViewModel = chordViewModel ?: composeViewModel()
                     val activeState by activeViewModel.uiState.collectAsStateWithLifecycle()
-                    DisposableEffect(activeViewModel) {
+                    LifecycleStartEffect(activeViewModel) {
                         activeViewModel.onScreenActive(true)
-                        onDispose { activeViewModel.onScreenActive(false) }
+                        onStopOrDispose { activeViewModel.onScreenActive(false) }
                     }
                     ChordsScreen(
                         state = activeState,
@@ -177,6 +180,7 @@ fun TuneItAllApp(
                         onTuningSelected = activeViewModel::setTuning,
                         onTransposeChanged = activeViewModel::setTranspose,
                         onAnalysisModeSelected = activeViewModel::setSongAnalysisMode,
+                        onArrangementModeSelected = activeViewModel::setArrangementMode,
                         onNoteRangeSelected = activeViewModel::setNoteRange,
                         onLoadSong = activeViewModel::loadSong,
                         onPlayPause = activeViewModel::playPause,
@@ -196,10 +200,12 @@ fun TuneItAllApp(
                     onToggleFavorite = viewModel::toggleFavorite,
                     onCreateCustom = { screen = AppScreen.CustomTuning },
                     onBack = { screen = AppScreen.Tuner },
+                    customIds = state.customTunings.mapTo(mutableSetOf(), TuningPreset::id),
+                    onDeleteCustom = viewModel::deleteCustomTuning,
                 )
 
                 AppScreen.CustomTuning -> CustomTuningScreen(
-                    existing = state.customTunings,
+                    existing = TuningCatalog.presets + state.customTunings,
                     onSave = { tuning ->
                         viewModel.saveCustomTuning(tuning)
                         screen = AppScreen.Tuner

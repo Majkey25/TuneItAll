@@ -1,6 +1,6 @@
 # Security policy
 
-TuneItAll `0.1.x` is the only supported pre-release line.
+The latest Intoniva `0.3.x` prerelease is the only supported line.
 
 Do not disclose a vulnerability in a public issue. After the repository is
 published, use its private GitHub Security Advisory form. Include the affected

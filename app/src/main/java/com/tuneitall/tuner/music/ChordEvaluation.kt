@@ -28,16 +28,21 @@ fun evaluateChords(
     validateTimeline(estimate, songEndMillis)
     val referenceDuration = reference.sumOf(ChordEvent::durationMillis)
     require(referenceDuration > 0L)
+    val majorMinorDuration = reference.filter { majorMinorClass(it.chord) != null }.sumOf(ChordEvent::durationMillis)
     return ChordEvaluation(
         rootWcsr = matchingOverlap(reference, estimate) { expected, actual ->
             expected.rootPitchClass == actual.rootPitchClass
         } / referenceDuration,
-        majorMinorWcsr = matchingOverlap(reference, estimate) { expected, actual ->
-            val expectedClass = majorMinorClass(expected)
-            expected.rootPitchClass == actual.rootPitchClass &&
-                expectedClass != null && expectedClass == majorMinorClass(actual)
+        majorMinorWcsr = if (majorMinorDuration == 0L) 0.0 else {
+            matchingOverlap(reference, estimate) { expected, actual ->
+                val expectedClass = majorMinorClass(expected)
+                expected.rootPitchClass == actual.rootPitchClass &&
+                    expectedClass != null && expectedClass == majorMinorClass(actual)
+            } / majorMinorDuration
+        },
+        qualityWcsr = matchingOverlap(reference, estimate) { expected, actual ->
+            expected.rootPitchClass == actual.rootPitchClass && expected.quality == actual.quality
         } / referenceDuration,
-        qualityWcsr = matchingOverlap(reference, estimate, Chord::equals) / referenceDuration,
         segmentationScore = (
             1.0 - maxOf(
                 directionalSegmentationLoss(reference, estimate),
@@ -100,11 +105,23 @@ private fun overlap(first: ChordEvent, second: ChordEvent): Long =
 
 private fun majorMinorClass(chord: Chord): Int? = when (chord.quality) {
     ChordQuality.MAJOR,
+    ChordQuality.MAJOR_SIXTH,
     ChordQuality.DOMINANT_SEVENTH,
+    ChordQuality.MAJOR_SEVENTH,
+    ChordQuality.ADD_NINTH,
     -> 0
 
-    ChordQuality.MINOR -> 1
+    ChordQuality.MINOR,
+    ChordQuality.MINOR_SIXTH,
+    ChordQuality.MINOR_SEVENTH,
+    ChordQuality.MINOR_ADD_NINTH,
+    -> 1
+
     ChordQuality.SUSPENDED_SECOND,
+    ChordQuality.SUSPENDED_FOURTH,
+    ChordQuality.DIMINISHED,
+    ChordQuality.AUGMENTED,
+    ChordQuality.HALF_DIMINISHED_SEVENTH,
     ChordQuality.POWER,
     -> null
 }

@@ -4,7 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -68,7 +68,7 @@ fun Headstock(
     val pegHeight = if (inline) INLINE_PEG_HEIGHT else PEG_HEIGHT
     val topPadding = if (layout == HeadstockLayout.INLINE_6) 0.dp else HEADSTOCK_TOP_PADDING
     val bottomPadding = if (layout == HeadstockLayout.INLINE_6) 0.dp else HEADSTOCK_BOTTOM_PADDING
-    val centerWidth = when (layout) {
+    val desiredCenterWidth = when (layout) {
         HeadstockLayout.SPLIT_3_3 -> SplitHeadstockGeometry.centerGap
         HeadstockLayout.INLINE_6 -> InlineSixGeometry.centerGap
         else -> HEADSTOCK_CENTER_WIDTH
@@ -79,12 +79,13 @@ fun Headstock(
     val stringColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        Box(
+        BoxWithConstraints(
             modifier = modifier
                 .height(totalHeight)
                 .testTag("headstock"),
             contentAlignment = Alignment.Center,
         ) {
+            val centerWidth = minOf(desiredCenterWidth, (maxWidth - pegWidth * 2).coerceAtLeast(0.dp))
             if (layout == HeadstockLayout.SPLIT_3_3) {
                 Image(
                     painter = painterResource(R.drawable.headstock_3x3_noun),
@@ -303,6 +304,8 @@ internal fun HeadstockLayout.stringIndicesAtRow(row: Int): Pair<Int?, Int?> {
 private fun HeadstockLayout.sides(): HeadstockSides = when (this) {
     HeadstockLayout.INLINE_4 -> HeadstockSides(4, 0)
     HeadstockLayout.SPLIT_2_2 -> HeadstockSides(2, 2)
+    HeadstockLayout.INLINE_5 -> HeadstockSides(5, 0)
+    HeadstockLayout.SPLIT_3_2 -> HeadstockSides(3, 2)
     HeadstockLayout.SPLIT_3_3 -> HeadstockSides(3, 3)
     HeadstockLayout.INLINE_6 -> HeadstockSides(6, 0)
     HeadstockLayout.INLINE_7 -> HeadstockSides(7, 0)

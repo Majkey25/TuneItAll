@@ -177,9 +177,9 @@ class SongAudioDecoder(context: Context) {
         } finally {
             codec?.let { activeCodec ->
                 runCatching { activeCodec.stop() }
-                activeCodec.release()
+                runCatching { activeCodec.release() }
             }
-            extractor.release()
+            runCatching { extractor.release() }
         }
     }
 }

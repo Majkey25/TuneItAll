@@ -31,12 +31,18 @@ enum class Instrument {
     GUITAR,
     BASS,
     UKULELE,
+    VIOLIN,
+    VIOLA,
+    CELLO,
+    MANDOLIN,
     CHROMATIC,
 }
 
 enum class HeadstockLayout {
     INLINE_4,
     SPLIT_2_2,
+    INLINE_5,
+    SPLIT_3_2,
     SPLIT_3_3,
     INLINE_6,
     INLINE_7,
@@ -52,6 +58,10 @@ val HeadstockLayout.stringCount: Int
         HeadstockLayout.INLINE_4,
         HeadstockLayout.SPLIT_2_2,
         -> 4
+
+        HeadstockLayout.INLINE_5,
+        HeadstockLayout.SPLIT_3_2,
+        -> 5
 
         HeadstockLayout.SPLIT_3_3,
         HeadstockLayout.INLINE_6,
@@ -93,7 +103,11 @@ data class TuningPreset(
 
 private fun Instrument.validStringCounts(): Set<Int> = when (this) {
     Instrument.GUITAR -> setOf(6, 7, 8, 9)
-    Instrument.BASS,
+    Instrument.BASS -> setOf(4, 5, 6)
+    Instrument.VIOLIN,
+    Instrument.VIOLA,
+    Instrument.CELLO,
+    Instrument.MANDOLIN,
     Instrument.UKULELE,
     -> setOf(4)
 

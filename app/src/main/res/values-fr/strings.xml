@@ -3,6 +3,7 @@
     <string name="app_name">Intoniva</string>
     <string name="microphone_explanation">L’accès au microphone est nécessaire pour entendre votre instrument. Le son reste sur cet appareil.</string>
     <string name="open_settings">Ouvrir les paramètres de l’application</string>
+    <string name="retry_microphone">Réessayer le microphone</string>
     <string name="mode_auto">Auto</string>
     <string name="mode_manual">Manuel</string>
     <string name="mode_chromatic">Chromatique</string>
@@ -54,7 +55,17 @@
     <string name="chord_major">Majeur</string>
     <string name="chord_minor">Mineur</string>
     <string name="chord_suspended_second">Sus2</string>
+    <string name="chord_suspended_fourth">Sus4</string>
+    <string name="chord_diminished">Diminué</string>
+    <string name="chord_augmented">Augmenté</string>
+    <string name="chord_major_sixth">Sixte majeure</string>
+    <string name="chord_minor_sixth">Sixte mineure</string>
     <string name="chord_dominant_seventh">Septième de dominante</string>
+    <string name="chord_major_seventh">Septième majeure</string>
+    <string name="chord_minor_seventh">Septième mineure</string>
+    <string name="chord_half_diminished_seventh">Septième demi-diminuée</string>
+    <string name="chord_add_ninth">Neuvième ajoutée</string>
+    <string name="chord_minor_add_ninth">Mineur avec neuvième ajoutée</string>
     <string name="chord_power">Power 5</string>
     <string name="show_chord_diagrams">Afficher les diagrammes d’accords</string>
     <string name="chord_voicing">Position pour %1$s</string>
@@ -77,11 +88,17 @@
     <string name="song_play">Lire</string>
     <string name="song_pause">Pause</string>
     <string name="transpose">Transposer</string>
+    <string name="transpose_decrease">Transposer d’un demi-ton vers le bas</string>
+    <string name="transpose_increase">Transposer d’un demi-ton vers le haut</string>
+    <string name="song_position_description">Position dans le morceau %1$s sur %2$s</string>
     <string name="current_chord">Accord actuel</string>
     <string name="current_note">Note actuelle</string>
     <string name="no_current_chord">Aucun accord stable</string>
     <string name="no_current_note">Aucune note stable</string>
     <string name="chord_timeline">Chronologie des accords</string>
+    <string name="arrangement_exact">Exact</string>
+    <string name="arrangement_simplified">Acoustique facile</string>
+    <string name="acoustic_shape">Capodastre %1$d · jouer %2$s</string>
     <string name="note_timeline">Chronologie des notes</string>
     <string name="song_error_no_audio">Le fichier sélectionné ne contient aucune piste audio compatible.</string>
     <string name="song_error_too_long">Les morceaux de plus de 30 minutes ne sont pas pris en charge.</string>
@@ -155,6 +172,10 @@
     <string name="audio_read_failed">L’entrée audio s’est arrêtée (code %1$d).</string>
     <string name="back">Retour</string>
     <string name="tuning_library">Accordages</string>
+    <string name="delete">Supprimer</string>
+    <string name="cancel">Annuler</string>
+    <string name="delete_custom_tuning_title">Supprimer l’accordage personnalisé ?</string>
+    <string name="delete_custom_tuning_message">%1$s sera supprimé de cet appareil.</string>
     <string name="search_tunings">Rechercher des accordages</string>
     <string name="all_instruments">Tous</string>
     <string name="all_strings">Toutes les cordes</string>
@@ -169,6 +190,10 @@
     <string name="instrument_guitar">Guitare</string>
     <string name="instrument_bass">Basse</string>
     <string name="instrument_ukulele">Ukulélé</string>
+    <string name="instrument_violin">Violon</string>
+    <string name="instrument_viola">Alto</string>
+    <string name="instrument_cello">Violoncelle</string>
+    <string name="instrument_mandolin">Mandoline</string>
     <plurals name="layout_inline">
         <item quantity="one">%1$d en ligne</item>
         <item quantity="many">%1$d en ligne</item>
@@ -250,7 +275,7 @@
     <string name="microphone_about">Les échantillons du microphone sont analysés temporairement sur cet appareil. Ils ne sont jamais enregistrés, conservés, partagés ni transmis.</string>
     <string name="headstock_icon_attribution">Icônes Gibson Les Paul et gibson explorer par Alessandro Curci, thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Politique de confidentialité</string>
-    <string name="privacy_policy_full">Intoniva utilise le microphone uniquement quand l’accordeur est actif. Les échantillons audio sont traités en mémoire sur l’appareil puis immédiatement supprimés. L’application ne collecte ni ne partage aucune donnée personnelle et ne demande aucun accès à Internet.</string>
+    <string name="privacy_policy_full">Intoniva est publiée par MajkeyLab (majkeylab@gmail.com). Le son du microphone et le fichier musical choisi sont traités uniquement sur l’appareil ; les résultats d’accords, notes, tempo et arrangement restent en mémoire. Les réglages, favoris, accordages personnalisés et scores restent locaux jusqu’à l’effacement des données ou la désinstallation. Le défilement automatique exécute les balayages demandés et ne peut pas récupérer le contenu de l’écran. L’application n’a ni compte, publicité, analyse, profilage, suivi, vente ou partage de données, serveur de l’éditeur, ni autorisation Internet. Buy Me a Coffee et l’assistance facultative par e-mail ou GitHub s’ouvrent hors de l’application selon les conditions de leurs fournisseurs. Si vous contactez l’assistance, MajkeyLab peut recevoir l’adresse ou le compte, le message et les pièces jointes choisis, pour l’assistance, la prévention des abus ou les obligations légales, sur la base des démarches demandées ou d’intérêts légitimes. Ils sont normalement supprimés dans les 12 mois suivant la clôture, sauf demande plus rapide ou obligation légale. Les utilisateurs de l’UE et de l’EEE peuvent exercer les droits applicables d’accès, rectification, effacement, limitation, opposition ou portabilité et saisir leur autorité de contrôle. Les droits applicables des États américains peuvent être demandés par e-mail ; Intoniva ne vend ni ne partage d’informations personnelles, n’utilise ni publicité ciblée ni incitation financière et ne discrimine pas après une demande. MajkeyLab ne possède aucun dossier serveur de l’application. Intoniva ne vise pas les enfants ; un enfant ne doit pas envoyer de données au support sans parent ou tuteur.</string>
     <string name="license">Licence propriétaire</string>
     <string name="license_summary">Intoniva est un logiciel propriétaire. La copie, la modification, la redistribution, la sous-licence ou l’utilisation commerciale nécessitent une autorisation écrite préalable. Les composants tiers conservent leurs propres licences.</string>
     <string name="support_app">Soutenir cette application → Buy Me a Coffee</string>
@@ -286,4 +311,7 @@
     <string name="auto_scroll_speed">Vitesse de défilement</string>
     <string name="auto_scroll_show_controls">Afficher les commandes flottantes</string>
     <string name="auto_scroll_privacy_note">Intoniva effectue uniquement des gestes de balayage. Le contenu de l’écran n’est ni lu, ni stocké, ni envoyé.</string>
+    <string name="auto_scroll_disclosure_title">Fonctionnement du défilement automatique</string>
+    <string name="auto_scroll_disclosure_body">Il utilise l’accessibilité Android pour effectuer des balayages déterministes lorsque vous le démarrez. Il ne peut pas récupérer le contenu des fenêtres et ne lit, collecte, stocke ou partage aucune donnée d’écran.</string>
+    <string name="auto_scroll_disclosure_continue">J’ai compris, continuer</string>
 </resources>

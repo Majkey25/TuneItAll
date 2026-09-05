@@ -204,7 +204,17 @@ fun chordQualityName(quality: ChordQuality): String = stringResource(
         ChordQuality.MAJOR -> R.string.chord_major
         ChordQuality.MINOR -> R.string.chord_minor
         ChordQuality.SUSPENDED_SECOND -> R.string.chord_suspended_second
+        ChordQuality.SUSPENDED_FOURTH -> R.string.chord_suspended_fourth
+        ChordQuality.DIMINISHED -> R.string.chord_diminished
+        ChordQuality.AUGMENTED -> R.string.chord_augmented
+        ChordQuality.MAJOR_SIXTH -> R.string.chord_major_sixth
+        ChordQuality.MINOR_SIXTH -> R.string.chord_minor_sixth
         ChordQuality.DOMINANT_SEVENTH -> R.string.chord_dominant_seventh
+        ChordQuality.MAJOR_SEVENTH -> R.string.chord_major_seventh
+        ChordQuality.MINOR_SEVENTH -> R.string.chord_minor_seventh
+        ChordQuality.HALF_DIMINISHED_SEVENTH -> R.string.chord_half_diminished_seventh
+        ChordQuality.ADD_NINTH -> R.string.chord_add_ninth
+        ChordQuality.MINOR_ADD_NINTH -> R.string.chord_minor_add_ninth
         ChordQuality.POWER -> R.string.chord_power
     },
 )
@@ -214,10 +224,27 @@ fun formatChord(chord: Chord, notation: NoteNotation): String {
         ChordQuality.MAJOR -> ""
         ChordQuality.MINOR -> "m"
         ChordQuality.SUSPENDED_SECOND -> "sus2"
+        ChordQuality.SUSPENDED_FOURTH -> "sus4"
+        ChordQuality.DIMINISHED -> "dim"
+        ChordQuality.AUGMENTED -> "aug"
+        ChordQuality.MAJOR_SIXTH -> "6"
+        ChordQuality.MINOR_SIXTH -> "m6"
         ChordQuality.DOMINANT_SEVENTH -> "7"
+        ChordQuality.MAJOR_SEVENTH -> "maj7"
+        ChordQuality.MINOR_SEVENTH -> "m7"
+        ChordQuality.HALF_DIMINISHED_SEVENTH -> "m7♭5"
+        ChordQuality.ADD_NINTH -> "add9"
+        ChordQuality.MINOR_ADD_NINTH -> "madd9"
         ChordQuality.POWER -> "5"
     }
-    return formatPitchClass(chord.rootPitchClass, notation) + suffix
+    return buildString {
+        append(formatPitchClass(chord.rootPitchClass, notation))
+        append(suffix)
+        chord.bassPitchClass?.takeIf { it != chord.rootPitchClass }?.let {
+            append('/')
+            append(formatPitchClass(it, notation))
+        }
+    }
 }
 
 fun formatPitchClass(pitchClass: Int, notation: NoteNotation): String {

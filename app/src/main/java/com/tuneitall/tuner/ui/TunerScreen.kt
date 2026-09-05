@@ -69,6 +69,8 @@ fun TunerScreen(
     onOpenSettings: () -> Unit,
     onOpenApplicationSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    onRequestMicrophonePermission: () -> Unit = {},
+    onRetryAudio: () -> Unit = {},
 ) {
     val currentNote = state.reading?.target ?: state.tuning.notesLowToHigh
         .getOrNull(state.selectedString)
@@ -117,7 +119,7 @@ fun TunerScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        MicrophoneStatus(state, onOpenApplicationSettings)
+        MicrophoneStatus(state, onRequestMicrophonePermission, onRetryAudio, onOpenApplicationSettings)
 
         if (state.mode != TunerMode.CHROMATIC) {
             Text(
@@ -382,7 +384,12 @@ private fun ModeSelector(selected: TunerMode, onSelected: (TunerMode) -> Unit) {
 }
 
 @Composable
-private fun MicrophoneStatus(state: TunerUiState, onOpenApplicationSettings: () -> Unit) {
+private fun MicrophoneStatus(
+    state: TunerUiState,
+    onRequestMicrophonePermission: () -> Unit,
+    onRetryAudio: () -> Unit,
+    onOpenApplicationSettings: () -> Unit,
+) {
     when {
         state.microphonePermanentlyDenied -> {
             Text(stringResource(R.string.microphone_explanation), style = MaterialTheme.typography.bodySmall)
@@ -394,16 +401,31 @@ private fun MicrophoneStatus(state: TunerUiState, onOpenApplicationSettings: () 
             }
         }
 
-        !state.microphoneGranted -> Text(
-            text = stringResource(R.string.microphone_explanation),
-            style = MaterialTheme.typography.bodySmall,
-        )
+        !state.microphoneGranted -> {
+            Text(stringResource(R.string.microphone_explanation), style = MaterialTheme.typography.bodySmall)
+            TextButton(
+                onClick = onRequestMicrophonePermission,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+                modifier = Modifier.testTag("retry_microphone"),
+            ) {
+                Text(stringResource(R.string.retry_microphone))
+            }
+        }
 
-        state.error != null -> Text(
-            text = audioErrorText(state.error),
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall,
-        )
+        state.error != null -> {
+            Text(
+                text = audioErrorText(state.error),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            TextButton(
+                onClick = onRetryAudio,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+                modifier = Modifier.testTag("retry_audio"),
+            ) {
+                Text(stringResource(R.string.retry_microphone))
+            }
+        }
 
         else -> Unit
     }

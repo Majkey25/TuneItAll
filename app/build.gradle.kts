@@ -28,8 +28,8 @@ android {
         applicationId = "com.tuneitall.tuner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20
-        versionName = "0.3.0-alpha.17"
+        versionCode = 21
+        versionName = "0.3.0-alpha.18"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -53,6 +53,12 @@ android {
     }
 
     buildTypes {
+        create("qa") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".qa"
+            versionNameSuffix = "-qa"
+            matchingFallbacks += listOf("debug")
+        }
         release {
             isMinifyEnabled = false
             if (releaseSigningEnabled) signingConfig = signingConfigs.getByName("release")
@@ -62,6 +68,7 @@ android {
             )
         }
     }
+    testBuildType = "qa"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -110,4 +117,5 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    add("qaImplementation", "androidx.compose.ui:ui-test-manifest")
 }

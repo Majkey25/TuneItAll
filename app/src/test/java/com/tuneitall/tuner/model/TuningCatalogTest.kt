@@ -54,6 +54,29 @@ class TuningCatalogTest {
     }
 
     @Test
+    fun `catalog includes five string bass and bowed standards`() {
+        val expected = mapOf(
+            "bass-5-standard" to "B0 E1 A1 D2 G2",
+            "bass-5-drop-a" to "A0 E1 A1 D2 G2",
+            "bass-5-high-c" to "E1 A1 D2 G2 C3",
+            "bass-5-standard-e-flat" to "Bb0 Eb1 Ab1 Db2 Gb2",
+            "bass-6-standard" to "B0 E1 A1 D2 G2 C3",
+            "violin-standard" to "G3 D4 A4 E5",
+            "viola-standard" to "C3 G3 D4 A4",
+            "cello-standard" to "C2 G2 D3 A3",
+            "mandolin-standard" to "G3 D4 A4 E5",
+        )
+
+        expected.forEach { (id, spec) ->
+            assertEquals(notes(spec), assertNotNull(TuningCatalog.byId(id)).notesLowToHigh)
+        }
+        assertEquals(
+            setOf(HeadstockLayout.INLINE_5, HeadstockLayout.SPLIT_3_2),
+            assertNotNull(TuningCatalog.byId("bass-5-standard")).layouts,
+        )
+    }
+
+    @Test
     fun `six string drop presets cover every semitone from D through F`() {
         val expected = mapOf(
             "guitar-6-drop-d" to "D2 A2 D3 G3 B3 E4",

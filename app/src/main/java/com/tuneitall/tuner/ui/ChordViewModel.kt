@@ -11,10 +11,15 @@ import com.tuneitall.tuner.audio.SongAudioDecoder
 import com.tuneitall.tuner.audio.SongDecodeError
 import com.tuneitall.tuner.audio.SongDecodeException
 import com.tuneitall.tuner.music.Chord
+import com.tuneitall.tuner.music.AcousticArrangement
+import com.tuneitall.tuner.music.ArrangementMode
+import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
+import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.music.NoteRange
 import com.tuneitall.tuner.music.SongAnalysisMode
 import com.tuneitall.tuner.music.SongEvent
+import com.tuneitall.tuner.music.arrangeForStandardE
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,6 +53,8 @@ data class ChordUiState(
     val transposeSemitones: Int = 0,
     val analysisMode: SongAnalysisMode = SongAnalysisMode.CHORDS,
     val noteRange: NoteRange = NoteRange.ANY,
+    val arrangementMode: ArrangementMode = ArrangementMode.EXACT,
+    val arrangement: AcousticArrangement? = null,
     val fileName: String? = null,
     val analyzing: Boolean = false,
     val analysisProgress: Int = 0,
@@ -74,6 +81,7 @@ class ChordViewModel internal constructor(
     private var player: MediaPlayer? = null
     private var currentSongUri: Uri? = null
     private var analysisPausedForScreen = false
+    private val chordCatalog by lazy { ChordShapeCatalog.fromResources(application.resources) }
     val uiState: StateFlow<ChordUiState> = mutableUiState.asStateFlow()
 
     fun setTab(tab: ChordTab) = mutableUiState.update { it.copy(tab = tab) }
@@ -85,13 +93,19 @@ class ChordViewModel internal constructor(
         mutableUiState.update { it.copy(selectedTuningId = id) }
     }
 
-    fun setTranspose(semitones: Int) = mutableUiState.update {
-        it.copy(transposeSemitones = semitones.coerceIn(MIN_TRANSPOSE, MAX_TRANSPOSE))
+    fun setTranspose(semitones: Int) = mutableUiState.update { state ->
+        val next = state.copy(transposeSemitones = semitones.coerceIn(MIN_TRANSPOSE, MAX_TRANSPOSE))
+        next.copy(arrangement = buildArrangement(next))
+    }
+
+    fun setArrangementMode(mode: ArrangementMode) = mutableUiState.update { state ->
+        val next = state.copy(arrangementMode = mode)
+        next.copy(arrangement = buildArrangement(next))
     }
 
     fun setSongAnalysisMode(mode: SongAnalysisMode) {
         if (mutableUiState.value.analysisMode == mode) return
-        mutableUiState.update { it.copy(analysisMode = mode, events = emptyList(), analysisError = null) }
+        mutableUiState.update { it.copy(analysisMode = mode, events = emptyList(), arrangement = null, analysisError = null) }
         currentSongUri?.let(::startAnalysis)
     }
 
@@ -114,6 +128,7 @@ class ChordViewModel internal constructor(
                 analyzing = false,
                 analysisProgress = 0,
                 events = emptyList(),
+                arrangement = null,
                 prepared = false,
                 playing = false,
                 durationMillis = 0L,
@@ -153,13 +168,14 @@ class ChordViewModel internal constructor(
                 )
                 if (generation != analysisGeneration) return@launch
                 mutableUiState.update { state ->
-                    state.copy(
+                    val next = state.copy(
                         analyzing = false,
                         analysisProgress = 100,
                         events = result.events,
                         durationMillis = maxOf(state.durationMillis, result.durationMillis),
                         analysisError = if (result.events.isEmpty()) SongChordError.NO_CHORDS else null,
                     )
+                    next.copy(arrangement = buildArrangement(next))
                 }
             } catch (_: CancellationException) {
                 Unit
@@ -167,6 +183,12 @@ class ChordViewModel internal constructor(
                 if (generation == analysisGeneration) {
                     mutableUiState.update { state ->
                         state.copy(analyzing = false, analysisError = error.reason.toUiError())
+                    }
+                }
+            } catch (_: RuntimeException) {
+                if (generation == analysisGeneration) {
+                    mutableUiState.update { state ->
+                        state.copy(analyzing = false, analysisError = SongChordError.DECODE_FAILED)
                     }
                 }
             }
@@ -236,6 +258,7 @@ class ChordViewModel internal constructor(
                 analyzing = false,
                 analysisProgress = 0,
                 events = emptyList(),
+                arrangement = null,
                 prepared = false,
                 playing = false,
                 durationMillis = 0L,
@@ -324,6 +347,14 @@ class ChordViewModel internal constructor(
         val activePlayer = player
         player = null
         activePlayer?.release()
+    }
+
+    private fun buildArrangement(state: ChordUiState): AcousticArrangement? {
+        if (state.analysisMode != SongAnalysisMode.CHORDS) return null
+        val chords = state.events.filterIsInstance<ChordEvent>().map { event ->
+            event.chord.transpose(state.transposeSemitones)
+        }
+        return if (chords.isEmpty()) null else arrangeForStandardE(chords, chordCatalog, state.arrangementMode)
     }
 
     private fun SongDecodeError.toUiError(): SongChordError = when (this) {

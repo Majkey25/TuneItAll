@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -19,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -39,11 +41,11 @@ fun CustomTuningScreen(
     onSave: (TuningPreset) -> Unit,
     onBack: () -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
-    var instrument by remember { mutableStateOf(Instrument.GUITAR) }
-    var stringCount by remember { mutableIntStateOf(6) }
-    var noteInputs by remember { mutableStateOf(defaultNotes(instrument, stringCount)) }
-    var layout by remember { mutableStateOf(layoutsFor(instrument, stringCount).first()) }
+    var name by rememberSaveable { mutableStateOf("") }
+    var instrument by rememberSaveable { mutableStateOf(Instrument.GUITAR) }
+    var stringCount by rememberSaveable { mutableIntStateOf(6) }
+    var noteInputs by rememberSaveable { mutableStateOf(defaultNotes(instrument, stringCount).toTypedArray()) }
+    var layout by rememberSaveable { mutableStateOf(layoutsFor(instrument, stringCount).first()) }
     val parsedNotes = noteInputs.map(::parseSingleNote)
     val duplicateName = existing.any { it.name.equals(name.trim(), ignoreCase = true) }
     val valid = name.isNotBlank() && !duplicateName && parsedNotes.all { it != null } &&
@@ -52,7 +54,7 @@ fun CustomTuningScreen(
     fun updateShape(nextInstrument: Instrument, nextCount: Int) {
         instrument = nextInstrument
         stringCount = nextCount
-        noteInputs = defaultNotes(nextInstrument, nextCount)
+        noteInputs = defaultNotes(nextInstrument, nextCount).toTypedArray()
         layout = layoutsFor(nextInstrument, nextCount).first()
     }
 
@@ -77,22 +79,24 @@ fun CustomTuningScreen(
             modifier = Modifier.fillMaxWidth(),
         )
         Text(stringResource(R.string.instrument), style = MaterialTheme.typography.titleMedium)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            listOf(Instrument.GUITAR, Instrument.BASS, Instrument.UKULELE).forEach { option ->
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        ) {
+            Instrument.entries.filterNot { it == Instrument.CHROMATIC }.forEach { option ->
                 FilterChip(
                     selected = instrument == option,
                     onClick = {
-                        updateShape(option, if (option == Instrument.GUITAR) 6 else 4)
+                        updateShape(option, defaultStringCount(option))
                     },
                     label = { Text(instrumentName(option)) },
-                    modifier = Modifier.weight(1f),
                 )
             }
         }
-        if (instrument == Instrument.GUITAR) {
+        if (instrument == Instrument.GUITAR || instrument == Instrument.BASS) {
             Text(stringResource(R.string.strings), style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                listOf(6, 7, 8, 9).forEach { count ->
+                stringCountsFor(instrument).forEach { count ->
                     FilterChip(
                         selected = stringCount == count,
                         onClick = { updateShape(instrument, count) },
@@ -121,7 +125,7 @@ fun CustomTuningScreen(
             OutlinedTextField(
                 value = value,
                 onValueChange = { next ->
-                    noteInputs = noteInputs.toMutableList().also { it[index] = next.take(MAX_NOTE_LENGTH) }
+                    noteInputs = noteInputs.copyOf().also { it[index] = next.take(MAX_NOTE_LENGTH) }
                 },
                 label = { Text(stringResource(R.string.string_note, instrumentStringNumber(index, noteInputs.size))) },
                 isError = value.isNotBlank() && parsedNotes[index] == null,
@@ -174,8 +178,19 @@ private fun layoutsFor(instrument: Instrument, stringCount: Int): List<Headstock
         else -> error("Unsupported guitar string count")
     }
 
-    Instrument.BASS -> listOf(HeadstockLayout.INLINE_4, HeadstockLayout.SPLIT_2_2)
-    Instrument.UKULELE -> listOf(HeadstockLayout.SPLIT_2_2)
+    Instrument.BASS -> when (stringCount) {
+        4 -> listOf(HeadstockLayout.INLINE_4, HeadstockLayout.SPLIT_2_2)
+        5 -> listOf(HeadstockLayout.INLINE_5, HeadstockLayout.SPLIT_3_2)
+        6 -> listOf(HeadstockLayout.SPLIT_3_3, HeadstockLayout.INLINE_6)
+        else -> error("Unsupported bass string count")
+    }
+
+    Instrument.UKULELE,
+    Instrument.VIOLIN,
+    Instrument.VIOLA,
+    Instrument.CELLO,
+    Instrument.MANDOLIN,
+    -> listOf(HeadstockLayout.SPLIT_2_2)
     Instrument.CHROMATIC -> error("Chromatic mode does not use custom tunings")
 }
 
@@ -188,9 +203,29 @@ private fun defaultNotes(instrument: Instrument, stringCount: Int): List<String>
         else -> error("Unsupported guitar string count")
     }
 
-    Instrument.BASS -> listOf("E1", "A1", "D2", "G2")
+    Instrument.BASS -> when (stringCount) {
+        4 -> listOf("E1", "A1", "D2", "G2")
+        5 -> listOf("B0", "E1", "A1", "D2", "G2")
+        6 -> listOf("B0", "E1", "A1", "D2", "G2", "C3")
+        else -> error("Unsupported bass string count")
+    }
+
     Instrument.UKULELE -> listOf("G4", "C4", "E4", "A4")
+    Instrument.VIOLIN,
+    Instrument.MANDOLIN,
+    -> listOf("G3", "D4", "A4", "E5")
+
+    Instrument.VIOLA -> listOf("C3", "G3", "D4", "A4")
+    Instrument.CELLO -> listOf("C2", "G2", "D3", "A3")
     Instrument.CHROMATIC -> error("Chromatic mode does not use custom tunings")
+}
+
+private fun defaultStringCount(instrument: Instrument): Int = if (instrument == Instrument.GUITAR) 6 else 4
+
+private fun stringCountsFor(instrument: Instrument): List<Int> = when (instrument) {
+    Instrument.GUITAR -> listOf(6, 7, 8, 9)
+    Instrument.BASS -> listOf(4, 5, 6)
+    else -> error("Instrument does not expose a string-count selector")
 }
 
 private const val MAX_NAME_LENGTH = 60

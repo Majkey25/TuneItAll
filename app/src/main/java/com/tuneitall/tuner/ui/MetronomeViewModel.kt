@@ -269,6 +269,12 @@ class MetronomeViewModel internal constructor(
                         it.copy(tempoAnalyzing = false, tempoError = error.reason.toTempoSongError())
                     }
                 }
+            } catch (_: RuntimeException) {
+                if (generation == tempoGeneration) {
+                    mutableUiState.update {
+                        it.copy(tempoAnalyzing = false, tempoError = TempoSongError.DECODE_FAILED)
+                    }
+                }
             }
         }
     }

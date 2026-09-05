@@ -1,7 +1,10 @@
 package com.tuneitall.tuner.music
 
+import com.tuneitall.tuner.storage.NoteNotation
+import com.tuneitall.tuner.ui.formatChord
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class ChordModelsTest {
     @Test
@@ -13,6 +16,34 @@ class ChordModelsTest {
         assertEquals(Chord(1, ChordQuality.MAJOR), cMajor.transpose(13))
         assertEquals(setOf(0, 4, 7, 10), Chord(0, ChordQuality.DOMINANT_SEVENTH).pitchClasses)
         assertEquals(setOf(4, 11), Chord(4, ChordQuality.POWER).pitchClasses)
+    }
+
+    @Test
+    fun `common qualities expose exact pitch classes`() {
+        assertEquals(setOf(0, 5, 7), Chord(0, ChordQuality.SUSPENDED_FOURTH).pitchClasses)
+        assertEquals(setOf(0, 3, 6), Chord(0, ChordQuality.DIMINISHED).pitchClasses)
+        assertEquals(setOf(0, 4, 8), Chord(0, ChordQuality.AUGMENTED).pitchClasses)
+        assertEquals(setOf(0, 4, 7, 11), Chord(0, ChordQuality.MAJOR_SEVENTH).pitchClasses)
+        assertEquals(setOf(0, 3, 7, 10), Chord(0, ChordQuality.MINOR_SEVENTH).pitchClasses)
+        assertEquals(setOf(0, 3, 6, 10), Chord(0, ChordQuality.HALF_DIMINISHED_SEVENTH).pitchClasses)
+        assertEquals(setOf(0, 2, 4, 7), Chord(0, ChordQuality.ADD_NINTH).pitchClasses)
+    }
+
+    @Test
+    fun `transposition moves root and inversion bass`() {
+        assertEquals(
+            Chord(2, ChordQuality.MAJOR, bassPitchClass = 6),
+            Chord(0, ChordQuality.MAJOR, bassPitchClass = 4).transpose(2),
+        )
+        assertFailsWith<IllegalArgumentException> {
+            Chord(0, ChordQuality.MAJOR, bassPitchClass = 12)
+        }
+    }
+
+    @Test
+    fun `formatting includes quality and inversion bass`() {
+        assertEquals("Cmaj7/E", formatChord(Chord(0, ChordQuality.MAJOR_SEVENTH, 4), NoteNotation.SHARPS))
+        assertEquals("D♭m7/A♭", formatChord(Chord(1, ChordQuality.MINOR_SEVENTH, 8), NoteNotation.FLATS))
     }
 
     @Test

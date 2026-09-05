@@ -66,6 +66,25 @@ class ChordEvaluationTest {
         assertFailsWith<IllegalArgumentException> { evaluateChords(emptyList(), emptyList(), 0) }
     }
 
+    @Test
+    fun `quality score is independent of inversion bass`() {
+        val reference = listOf(ChordEvent(0, 1_000, Chord(0, ChordQuality.MAJOR, 4), 1.0))
+        val estimate = listOf(ChordEvent(0, 1_000, Chord(0, ChordQuality.MAJOR, 7), 1.0))
+
+        assertEquals(1.0, evaluateChords(reference, estimate, 1_000).qualityWcsr, 0.0)
+    }
+
+    @Test
+    fun `major minor score excludes unsupported reference qualities`() {
+        val reference = listOf(
+            event(0, 500, 0, ChordQuality.MAJOR),
+            event(500, 1_000, 5, ChordQuality.SUSPENDED_SECOND),
+        )
+        val estimate = listOf(event(0, 500, 0, ChordQuality.MAJOR))
+
+        assertEquals(1.0, evaluateChords(reference, estimate, 1_000).majorMinorWcsr, 0.0)
+    }
+
     private fun event(start: Long, end: Long, root: Int, quality: ChordQuality) =
         ChordEvent(start, end, Chord(root, quality), confidence = 1.0)
 }

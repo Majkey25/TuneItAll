@@ -26,7 +26,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -134,6 +133,10 @@ private fun TuneItAllRoot(
                 appLanguage = appLanguage,
                 onAppLanguageChanged = onAppLanguageChanged,
                 openSupportPage = openSupportPage,
+                requestMicrophonePermission = {
+                    permissionRequested = true
+                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                },
                 openApplicationSettings = {
                     context.startActivity(
                         Intent(
@@ -160,7 +163,7 @@ private fun localizedContext(context: Context, language: AppLanguage): Context {
 @Composable
 internal fun UpdateSystemBarAppearance(darkTheme: Boolean) {
     val activity = requireNotNull(LocalActivity.current) as ComponentActivity
-    SideEffect {
+    LaunchedEffect(activity, darkTheme) {
         val style = if (darkTheme) {
             SystemBarStyle.dark(Color.TRANSPARENT)
         } else {

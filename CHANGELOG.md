@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0-alpha.18 — 2026-09-05
+
+- Expand offline song transcription to full common chord qualities, inversions,
+  exact/power/note modes, instrument ranges, and playable acoustic arrangements.
+- Replace quadratic chord-sequence decoding with an exact linear transition
+  pass and compact harmonic features for long-song speed and memory safety.
+- Add guitar, bass, ukulele, violin, cello, mandolin, viola, and banjo tunings,
+  with custom-tuning deletion and favorites kept first.
+- Preserve navigation and custom-tuning drafts across activity recreation, add
+  microphone retry, and fix compact Auto-scroll/headstock accessibility.
+- Make Auto-scroll system-bindable, add a notification Exit action, guard
+  overlay permission races, and align the offline privacy disclosures.
+- Harden CI and release verification by compiling QA instrumentation tests,
+  pinning Gradle, checking the release manifest, and pinning the upload signer.
+
 ## 0.3.0-alpha.17 — 2026-09-01
 
 - Make low guitar reference tones easier to hear on phone speakers by keeping

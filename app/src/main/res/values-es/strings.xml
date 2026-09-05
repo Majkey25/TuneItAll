@@ -3,6 +3,7 @@
     <string name="app_name">Intoniva</string>
     <string name="microphone_explanation">Se necesita acceso al micrófono para escuchar tu instrumento. El audio permanece en este dispositivo.</string>
     <string name="open_settings">Abrir ajustes de la aplicación</string>
+    <string name="retry_microphone">Volver a intentar el micrófono</string>
     <string name="mode_auto">Auto</string>
     <string name="mode_manual">Manual</string>
     <string name="mode_chromatic">Cromático</string>
@@ -54,7 +55,17 @@
     <string name="chord_major">Mayor</string>
     <string name="chord_minor">Menor</string>
     <string name="chord_suspended_second">Sus2</string>
+    <string name="chord_suspended_fourth">Sus4</string>
+    <string name="chord_diminished">Disminuido</string>
+    <string name="chord_augmented">Aumentado</string>
+    <string name="chord_major_sixth">Sexta mayor</string>
+    <string name="chord_minor_sixth">Sexta menor</string>
     <string name="chord_dominant_seventh">Séptima dominante</string>
+    <string name="chord_major_seventh">Séptima mayor</string>
+    <string name="chord_minor_seventh">Séptima menor</string>
+    <string name="chord_half_diminished_seventh">Séptima semidisminuida</string>
+    <string name="chord_add_ninth">Novena añadida</string>
+    <string name="chord_minor_add_ninth">Menor con novena añadida</string>
     <string name="chord_power">Power 5</string>
     <string name="show_chord_diagrams">Mostrar diagramas de acordes</string>
     <string name="chord_voicing">Posición para %1$s</string>
@@ -77,11 +88,17 @@
     <string name="song_play">Reproducir</string>
     <string name="song_pause">Pausa</string>
     <string name="transpose">Transponer</string>
+    <string name="transpose_decrease">Transponer un semitono hacia abajo</string>
+    <string name="transpose_increase">Transponer un semitono hacia arriba</string>
+    <string name="song_position_description">Posición de la canción %1$s de %2$s</string>
     <string name="current_chord">Acorde actual</string>
     <string name="current_note">Nota actual</string>
     <string name="no_current_chord">Sin acorde estable</string>
     <string name="no_current_note">Sin nota estable</string>
     <string name="chord_timeline">Línea de tiempo de acordes</string>
+    <string name="arrangement_exact">Exacto</string>
+    <string name="arrangement_simplified">Acústica fácil</string>
+    <string name="acoustic_shape">Cejilla %1$d · toca %2$s</string>
     <string name="note_timeline">Línea de tiempo de notas</string>
     <string name="song_error_no_audio">El archivo seleccionado no contiene una pista de audio compatible.</string>
     <string name="song_error_too_long">No se admiten canciones de más de 30 minutos.</string>
@@ -155,6 +172,10 @@
     <string name="audio_read_failed">La entrada de audio se detuvo (código %1$d).</string>
     <string name="back">Atrás</string>
     <string name="tuning_library">Afinaciones</string>
+    <string name="delete">Eliminar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete_custom_tuning_title">¿Eliminar afinación personalizada?</string>
+    <string name="delete_custom_tuning_message">%1$s se eliminará de este dispositivo.</string>
     <string name="search_tunings">Buscar afinaciones</string>
     <string name="all_instruments">Todos</string>
     <string name="all_strings">Cualquier número de cuerdas</string>
@@ -169,6 +190,10 @@
     <string name="instrument_guitar">Guitarra</string>
     <string name="instrument_bass">Bajo</string>
     <string name="instrument_ukulele">Ukelele</string>
+    <string name="instrument_violin">Violín</string>
+    <string name="instrument_viola">Viola</string>
+    <string name="instrument_cello">Violonchelo</string>
+    <string name="instrument_mandolin">Mandolina</string>
     <plurals name="layout_inline">
         <item quantity="one">%1$d en línea</item>
         <item quantity="many">%1$d en línea</item>
@@ -250,7 +275,7 @@
     <string name="microphone_about">Las muestras del micrófono se analizan temporalmente en este dispositivo. Nunca se graban, conservan, comparten ni transmiten.</string>
     <string name="headstock_icon_attribution">Iconos Gibson Les Paul y gibson explorer de Alessandro Curci, thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Política de privacidad</string>
-    <string name="privacy_policy_full">Intoniva usa el micrófono solo mientras el afinador está activo. Las muestras de audio se procesan en la memoria del dispositivo y se descartan de inmediato. La aplicación no recopila ni comparte datos personales y no solicita acceso a Internet.</string>
+    <string name="privacy_policy_full">MajkeyLab (majkeylab@gmail.com) publica Intoniva. El audio del micrófono y el archivo de canción que elija se procesan solo en el dispositivo; los resultados de acordes, notas, tempo y arreglo quedan en memoria. Los ajustes, favoritos, afinaciones y puntuaciones se guardan localmente hasta borrar los datos o desinstalar. El desplazamiento automático realiza gestos solicitados y no puede obtener el contenido de la pantalla. La aplicación no tiene cuentas, anuncios, analítica, perfiles, seguimiento, venta o intercambio de datos, servidor del editor ni permiso de Internet. Buy Me a Coffee y el soporte opcional por correo o GitHub se abren fuera de la aplicación bajo las condiciones de sus proveedores. Si contacta con soporte, MajkeyLab puede recibir la dirección o cuenta, mensaje y adjuntos que decida enviar para soporte, prevención de abuso o cumplimiento legal, basándose en pasos solicitados o intereses legítimos. Se eliminan normalmente en un plazo de 12 meses desde el cierre, salvo solicitud anterior u obligación legal. Los usuarios de la UE y el EEE pueden ejercer los derechos aplicables de acceso, rectificación, supresión, limitación, oposición o portabilidad y reclamar ante su autoridad. Los derechos estatales aplicables de EE. UU. pueden solicitarse por correo; Intoniva no vende ni comparte información personal, no usa publicidad dirigida ni incentivos financieros y no discrimina por una solicitud. MajkeyLab no tiene ningún registro de la aplicación en servidor. Intoniva no está dirigida a menores; un menor no debe enviar datos al soporte sin padre, madre o tutor.</string>
     <string name="license">Licencia propietaria</string>
     <string name="license_summary">Intoniva es software propietario. La copia, modificación, redistribución, sublicencia o uso comercial requieren autorización previa por escrito. Los componentes de terceros conservan sus propias licencias.</string>
     <string name="support_app">Apoya esta aplicación → Buy Me a Coffee</string>
@@ -286,4 +311,7 @@
     <string name="auto_scroll_speed">Velocidad de desplazamiento</string>
     <string name="auto_scroll_show_controls">Mostrar controles flotantes</string>
     <string name="auto_scroll_privacy_note">Intoniva solo realiza gestos de deslizamiento. No lee, guarda ni envía el contenido de la pantalla.</string>
+    <string name="auto_scroll_disclosure_title">Cómo funciona el desplazamiento automático</string>
+    <string name="auto_scroll_disclosure_body">Usa Accesibilidad de Android para realizar gestos de deslizamiento determinados cuando usted lo inicia. No puede obtener el contenido de las ventanas y no lee, recopila, guarda ni comparte datos de pantalla.</string>
+    <string name="auto_scroll_disclosure_continue">Entiendo, continuar</string>
 </resources>

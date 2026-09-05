@@ -13,6 +13,10 @@ fun instrumentName(instrument: Instrument): String = stringResource(
         Instrument.GUITAR -> R.string.instrument_guitar
         Instrument.BASS -> R.string.instrument_bass
         Instrument.UKULELE -> R.string.instrument_ukulele
+        Instrument.VIOLIN -> R.string.instrument_violin
+        Instrument.VIOLA -> R.string.instrument_viola
+        Instrument.CELLO -> R.string.instrument_cello
+        Instrument.MANDOLIN -> R.string.instrument_mandolin
         Instrument.CHROMATIC -> R.string.mode_chromatic
     },
 )
@@ -21,6 +25,8 @@ fun instrumentName(instrument: Instrument): String = stringResource(
 fun layoutName(layout: HeadstockLayout): String = when (layout) {
     HeadstockLayout.INLINE_4 -> pluralStringResource(R.plurals.layout_inline, 4, 4)
     HeadstockLayout.SPLIT_2_2 -> "2 + 2"
+    HeadstockLayout.INLINE_5 -> pluralStringResource(R.plurals.layout_inline, 5, 5)
+    HeadstockLayout.SPLIT_3_2 -> "3 + 2"
     HeadstockLayout.SPLIT_3_3 -> "3 + 3"
     HeadstockLayout.INLINE_6 -> pluralStringResource(R.plurals.layout_inline, 6, 6)
     HeadstockLayout.INLINE_7 -> pluralStringResource(R.plurals.layout_inline, 7, 7)

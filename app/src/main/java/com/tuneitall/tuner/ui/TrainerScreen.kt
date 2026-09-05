@@ -30,6 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -372,7 +375,7 @@ private fun Feedback(correct: Boolean, answer: String, incorrectString: Int, tag
     Text(
         if (correct) stringResource(R.string.trainer_correct) else stringResource(incorrectString, answer),
         color = if (correct) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-        modifier = Modifier.fillMaxWidth().testTag(tag),
+        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite }.testTag(tag),
         textAlign = TextAlign.Center,
     )
 }

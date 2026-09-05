@@ -23,6 +23,8 @@ import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
 import com.tuneitall.tuner.music.ChordShapeCatalog
+import com.tuneitall.tuner.music.ArrangementMode
+import com.tuneitall.tuner.music.arrangeForStandardE
 import com.tuneitall.tuner.music.NoteEvent
 import com.tuneitall.tuner.music.NoteRange
 import com.tuneitall.tuner.music.SongAnalysisMode
@@ -38,6 +40,7 @@ import com.tuneitall.tuner.ui.TrainerScreen
 import com.tuneitall.tuner.ui.formatChord
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -102,6 +105,57 @@ class MusicToolsScreenTest {
         compose.onNodeWithTag("auto_scroll_overlay_permission").assertIsDisplayed()
         compose.onNodeWithTag("auto_scroll_accessibility_permission").assertIsDisplayed()
         compose.onNodeWithTag("auto_scroll_show_controls").assertIsNotEnabled()
+    }
+
+    @Test
+    fun accessibilitySettingsRequireDisclosureAcceptance() {
+        var settingsOpened = false
+        compose.setContent {
+            TuneItAllTheme {
+                AutoScrollScreen(
+                    overlayAllowed = false,
+                    accessibilityEnabled = false,
+                    disclosureAccepted = false,
+                    speed = 10,
+                    onSpeedChanged = {},
+                    onOpenOverlaySettings = {},
+                    onDisclosureAccepted = {},
+                    onOpenAccessibilitySettings = { settingsOpened = true },
+                    onShowControls = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("auto_scroll_accessibility_action").performClick()
+        compose.onNodeWithTag("auto_scroll_disclosure").assertIsDisplayed()
+        compose.runOnIdle { assertFalse(settingsOpened) }
+        compose.onNodeWithTag("auto_scroll_disclosure_continue").performClick()
+        compose.runOnIdle { assertTrue(settingsOpened) }
+    }
+
+    @Test
+    fun dismissingAccessibilityDisclosureDoesNotOpenSettings() {
+        var settingsOpened = false
+        compose.setContent {
+            TuneItAllTheme {
+                AutoScrollScreen(
+                    overlayAllowed = false,
+                    accessibilityEnabled = false,
+                    disclosureAccepted = false,
+                    speed = 10,
+                    onSpeedChanged = {},
+                    onOpenOverlaySettings = {},
+                    onOpenAccessibilitySettings = { settingsOpened = true },
+                    onShowControls = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("auto_scroll_accessibility_action").performClick()
+        compose.onNodeWithTag("auto_scroll_disclosure_cancel").performClick()
+
+        compose.onNodeWithTag("auto_scroll_disclosure").assertDoesNotExist()
+        compose.runOnIdle { assertFalse(settingsOpened) }
     }
 
     @Test
@@ -216,6 +270,46 @@ class MusicToolsScreenTest {
         compose.onNodeWithTag("song_diagrams_toggle").performClick()
         compose.onNodeWithTag("chords_content").performTouchInput { swipeUp() }
         compose.onNodeWithTag("current_song_chord_bar").assertIsDisplayed()
+    }
+
+    @Test
+    fun songShowsStandardECapoAndShapeInFixedBar() {
+        val events = listOf(
+            ChordEvent(0L, 1_000L, Chord(6, ChordQuality.MINOR), 0.9),
+            ChordEvent(1_000L, 2_000L, Chord(11, ChordQuality.MAJOR), 0.9),
+            ChordEvent(2_000L, 3_000L, Chord(2, ChordQuality.MAJOR), 0.9),
+        )
+        val state = ChordUiState(
+            tab = ChordTab.SONG,
+            fileName = "test.wav",
+            events = events,
+            arrangementMode = ArrangementMode.EXACT,
+            arrangement = arrangeForStandardE(events.map { it.chord }, catalog, ArrangementMode.EXACT),
+            durationMillis = 3_000L,
+            positionMillis = 500L,
+        )
+        compose.setContent {
+            TuneItAllTheme {
+                ChordsScreen(
+                    state = state,
+                    tunings = listOf(tuning),
+                    notation = NoteNotation.SHARPS,
+                    catalog = catalog,
+                    onTabSelected = {},
+                    onChordSelected = {},
+                    onTuningSelected = {},
+                    onTransposeChanged = {},
+                    onLoadSong = {},
+                    onPlayPause = {},
+                    onSeek = {},
+                    onClearSong = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("current_song_chord").assertTextEquals("F♯m")
+        compose.onNodeWithTag("acoustic_shape").assertTextEquals("Capo 2 · play Em")
+        compose.onNodeWithTag("arrangement_exact").assertIsDisplayed()
     }
 
     @Test

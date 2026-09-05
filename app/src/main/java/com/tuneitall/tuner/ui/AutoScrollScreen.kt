@@ -12,11 +12,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -28,6 +32,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -46,6 +54,7 @@ fun AutoScrollRoute() {
     var overlayAllowed by remember { mutableStateOf(AutoScrollPermissionState.canDrawOverlays(context)) }
     var accessibilityEnabled by remember { mutableStateOf(AutoScrollPermissionState.isAccessibilityEnabled(context)) }
     var speed by remember { mutableIntStateOf(preferences.speed) }
+    var disclosureAccepted by remember { mutableStateOf(preferences.disclosureAccepted) }
 
     LifecycleResumeEffect(context) {
         overlayAllowed = AutoScrollPermissionState.canDrawOverlays(context)
@@ -56,6 +65,7 @@ fun AutoScrollRoute() {
     AutoScrollScreen(
         overlayAllowed = overlayAllowed,
         accessibilityEnabled = accessibilityEnabled,
+        disclosureAccepted = disclosureAccepted,
         speed = speed,
         onSpeedChanged = {
             speed = AutoScrollSpeed.clamp(it)
@@ -71,6 +81,10 @@ fun AutoScrollRoute() {
         },
         onOpenAccessibilitySettings = {
             context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        },
+        onDisclosureAccepted = {
+            disclosureAccepted = true
+            preferences.disclosureAccepted = true
         },
         onShowControls = {
             try {
@@ -91,16 +105,51 @@ fun AutoScrollRoute() {
 fun AutoScrollScreen(
     overlayAllowed: Boolean,
     accessibilityEnabled: Boolean,
+    disclosureAccepted: Boolean = false,
     speed: Int,
     onSpeedChanged: (Int) -> Unit,
     onOpenOverlaySettings: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
+    onDisclosureAccepted: () -> Unit = {},
     onShowControls: () -> Unit,
 ) {
+    var showDisclosure by remember { mutableStateOf(false) }
+    val decreaseSpeedDescription = stringResource(R.string.auto_scroll_decrease_speed)
+    val increaseSpeedDescription = stringResource(R.string.auto_scroll_increase_speed)
+    val speedDescription = stringResource(R.string.auto_scroll_speed)
+    if (showDisclosure) {
+        AlertDialog(
+            onDismissRequest = { showDisclosure = false },
+            title = { Text(stringResource(R.string.auto_scroll_disclosure_title)) },
+            text = { Text(stringResource(R.string.auto_scroll_disclosure_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDisclosureAccepted()
+                        showDisclosure = false
+                        onOpenAccessibilitySettings()
+                    },
+                    modifier = Modifier.testTag("auto_scroll_disclosure_continue"),
+                ) {
+                    Text(stringResource(R.string.auto_scroll_disclosure_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDisclosure = false },
+                    modifier = Modifier.testTag("auto_scroll_disclosure_cancel"),
+                ) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+            modifier = Modifier.testTag("auto_scroll_disclosure"),
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .safeDrawingPadding()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .testTag("auto_scroll_screen"),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -109,6 +158,7 @@ fun AutoScrollScreen(
             stringResource(R.string.auto_scroll_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
+            modifier = Modifier.semantics { heading() },
         )
         Text(stringResource(R.string.auto_scroll_description), style = MaterialTheme.typography.bodyLarge)
         PermissionRow(
@@ -122,8 +172,11 @@ fun AutoScrollScreen(
             title = stringResource(R.string.auto_scroll_accessibility_permission),
             granted = accessibilityEnabled,
             action = stringResource(R.string.auto_scroll_enable_accessibility),
-            onClick = onOpenAccessibilitySettings,
+            onClick = {
+                if (disclosureAccepted) onOpenAccessibilitySettings() else showDisclosure = true
+            },
             tag = "auto_scroll_accessibility_permission",
+            actionTag = "auto_scroll_accessibility_action",
         )
         Text(stringResource(R.string.auto_scroll_speed), style = MaterialTheme.typography.titleMedium)
         Row(
@@ -133,7 +186,9 @@ fun AutoScrollScreen(
         ) {
             OutlinedButton(
                 onClick = { onSpeedChanged(AutoScrollSpeed.stepDown(speed)) },
-                modifier = Modifier.heightIn(min = 48.dp),
+                modifier = Modifier.heightIn(min = 48.dp).semantics {
+                    contentDescription = decreaseSpeedDescription
+                },
             ) { Text("−") }
             Text(
                 AutoScrollSpeed.clamp(speed).toString(),
@@ -143,7 +198,9 @@ fun AutoScrollScreen(
             )
             OutlinedButton(
                 onClick = { onSpeedChanged(AutoScrollSpeed.stepUp(speed)) },
-                modifier = Modifier.heightIn(min = 48.dp),
+                modifier = Modifier.heightIn(min = 48.dp).semantics {
+                    contentDescription = increaseSpeedDescription
+                },
             ) { Text("+") }
         }
         Slider(
@@ -151,7 +208,10 @@ fun AutoScrollScreen(
             onValueChange = { onSpeedChanged(it.roundToInt()) },
             valueRange = AutoScrollSpeed.MIN_LEVEL.toFloat()..AutoScrollSpeed.MAX_LEVEL.toFloat(),
             steps = AutoScrollSpeed.MAX_LEVEL - AutoScrollSpeed.MIN_LEVEL - 1,
-            modifier = Modifier.fillMaxWidth().testTag("auto_scroll_speed_slider"),
+            modifier = Modifier.fillMaxWidth().testTag("auto_scroll_speed_slider").semantics {
+                contentDescription = speedDescription
+                stateDescription = AutoScrollSpeed.clamp(speed).toString()
+            },
         )
         Button(
             onClick = onShowControls,
@@ -175,6 +235,7 @@ private fun PermissionRow(
     action: String,
     onClick: () -> Unit,
     tag: String,
+    actionTag: String? = null,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().testTag(tag),
@@ -189,7 +250,12 @@ private fun PermissionRow(
             )
         }
         if (!granted) {
-            OutlinedButton(onClick = onClick, modifier = Modifier.heightIn(min = 48.dp)) {
+            OutlinedButton(
+                onClick = onClick,
+                modifier = Modifier.heightIn(min = 48.dp).then(
+                    if (actionTag == null) Modifier else Modifier.testTag(actionTag),
+                ),
+            ) {
                 Text(action)
             }
         }

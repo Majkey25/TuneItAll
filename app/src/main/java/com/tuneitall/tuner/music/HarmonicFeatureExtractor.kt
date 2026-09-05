@@ -2,7 +2,9 @@ package com.tuneitall.tuner.music
 
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.exp
 import kotlin.math.hypot
+import kotlin.math.ln
 import kotlin.math.ln1p
 import kotlin.math.log2
 import kotlin.math.roundToInt
@@ -17,6 +19,7 @@ internal data class HarmonicFrame(
     val noteSalience: FloatArray,
     val tonalStrength: Float,
     val onsetStrength: Float,
+    val spectralFlatness: Float = 0f,
 ) {
     init {
         require(startMillis >= 0L)
@@ -26,6 +29,7 @@ internal data class HarmonicFrame(
         require(noteSalience.size == NOTE_COUNT)
         require(tonalStrength in 0f..1f)
         require(onsetStrength in 0f..1f)
+        require(spectralFlatness in 0f..1f)
     }
 }
 
@@ -36,6 +40,7 @@ internal class StreamingHarmonicFeatureExtractor(
     private val window = FloatArray(FFT_SIZE)
     private val real = DoubleArray(FFT_SIZE)
     private val imaginary = DoubleArray(FFT_SIZE)
+    private val magnitudes = DoubleArray(FFT_SIZE / 2 + 1)
     private val rawFrames = mutableListOf<RawFrame>()
     private val maxSamples: Long
     private var fill = 0
@@ -89,25 +94,47 @@ internal class StreamingHarmonicFeatureExtractor(
                 .coerceIn(-MAX_TUNING_CENTS, MAX_TUNING_CENTS)
         }
         val starts = LongArray(rawFrames.size)
-        val noteFrames = rawFrames.mapIndexed { index, frame ->
+        val noteFrames = rawFrames.mapIndexedTo(ArrayList(rawFrames.size)) { index, frame ->
             starts[index] = frame.startMillis
             collapseToNotes(frame.highResolution, tuningCents).also { frame.highResolution = EMPTY_FEATURES }
         }
         val standardized = standardize(noteFrames)
-        val chordFrames = centeredAverage(standardized, LOCAL_CHORD_RADIUS)
-        val contextFrames = centeredAverage(standardized, framesForHalfWindow(CONTEXT_CHORD_WINDOW_SECONDS))
-        val melodyFrames = centeredAverage(standardized.map(::harmonicSalience), NOTE_SMOOTH_RADIUS)
+        noteFrames.clear()
+        val onsetStrengths = FloatArray(standardized.size) { onsetStrength(standardized, it) }
+        val harmonicFrames = standardized.mapTo(ArrayList(standardized.size), ::harmonicSalience)
+        val chordChromas = ArrayList<FloatArray>(standardized.size)
+        val bassChromas = ArrayList<FloatArray>(standardized.size)
+        standardized.indices.forEach { index ->
+            val harmonicWeight = (
+                (HARMONIC_BLEND_MAX_FLATNESS - rawFrames[index].spectralFlatness) /
+                    (HARMONIC_BLEND_MAX_FLATNESS - HARMONIC_BLEND_MIN_FLATNESS)
+                ).coerceIn(0f, 1f)
+            val features = FloatArray(NOTE_COUNT) { note ->
+                (1f - harmonicWeight) * standardized[index][note] + harmonicWeight * harmonicFrames[index][note]
+            }.also(::normalize)
+            chordChromas += collapseToChroma(features, normalizeOutput = false)
+            bassChromas += collapseToChroma(features, bassOnly = true, normalizeOutput = false)
+        }
+        standardized.clear()
+        val chordFrames = centeredAverage(chordChromas, LOCAL_CHORD_RADIUS)
+        val contextFrames = centeredAverage(chordChromas, framesForHalfWindow(CONTEXT_CHORD_WINDOW_SECONDS))
+        val bassFrames = centeredAverage(bassChromas, LOCAL_CHORD_RADIUS)
+        chordChromas.clear()
+        bassChromas.clear()
+        val melodyFrames = centeredAverage(harmonicFrames, NOTE_SMOOTH_RADIUS)
+        harmonicFrames.clear()
 
         val result = starts.indices.map { index ->
-            val chroma = collapseToChroma(chordFrames[index])
+            val chroma = chordFrames[index]
             HarmonicFrame(
                 startMillis = starts[index],
                 chroma = chroma,
-                contextChroma = collapseToChroma(contextFrames[index]),
-                bassChroma = collapseToChroma(chordFrames[index], bassOnly = true),
+                contextChroma = contextFrames[index],
+                bassChroma = bassFrames[index],
                 noteSalience = melodyFrames[index],
                 tonalStrength = tonalStrength(chroma),
-                onsetStrength = onsetStrength(standardized, index),
+                onsetStrength = onsetStrengths[index],
+                spectralFlatness = rawFrames[index].spectralFlatness,
             )
         }
         rawFrames.clear()
@@ -125,16 +152,28 @@ internal class StreamingHarmonicFeatureExtractor(
             imaginary[index] = 0.0
         }
         val rms = sqrt(squareTotal / window.size)
-        if (rms < SILENCE_RMS) return RawFrame(startMillis, FloatArray(HIGH_RESOLUTION_BIN_COUNT))
+        if (rms < SILENCE_RMS) return RawFrame(startMillis, FloatArray(HIGH_RESOLUTION_BIN_COUNT), 1f)
 
         fft(real, imaginary)
         val salience = FloatArray(HIGH_RESOLUTION_BIN_COUNT)
         val firstBin = (MIN_FREQUENCY_HERTZ * FFT_SIZE / sampleRate).toInt().coerceAtLeast(1)
         val lastBin = (MAX_FREQUENCY_HERTZ * FFT_SIZE / sampleRate).toInt().coerceAtMost(FFT_SIZE / 2 - 2)
+        for (bin in firstBin - 1..lastBin + 1) magnitudes[bin] = hypot(real[bin], imaginary[bin])
+        var magnitudeTotal = 0.0
+        var logMagnitudeTotal = 0.0
         for (bin in firstBin..lastBin) {
-            val previous = hypot(real[bin - 1], imaginary[bin - 1])
-            val magnitude = hypot(real[bin], imaginary[bin])
-            val next = hypot(real[bin + 1], imaginary[bin + 1])
+            val magnitude = magnitudes[bin]
+            magnitudeTotal += magnitude
+            logMagnitudeTotal += ln(magnitude + SPECTRAL_EPSILON)
+        }
+        val binCount = lastBin - firstBin + 1
+        val spectralFlatness = if (magnitudeTotal == 0.0) 1f else {
+            (exp(logMagnitudeTotal / binCount) / (magnitudeTotal / binCount)).toFloat().coerceIn(0f, 1f)
+        }
+        for (bin in firstBin..lastBin) {
+            val previous = magnitudes[bin - 1]
+            val magnitude = magnitudes[bin]
+            val next = magnitudes[bin + 1]
             if (magnitude <= previous || magnitude < next) continue
             val denominator = previous - 2.0 * magnitude + next
             val offset = if (kotlin.math.abs(denominator) < PEAK_EPSILON) {
@@ -155,7 +194,7 @@ internal class StreamingHarmonicFeatureExtractor(
             tuningCos += weight * cos(angle)
         }
         normalize(salience)
-        return RawFrame(startMillis, salience)
+        return RawFrame(startMillis, salience, spectralFlatness)
     }
 
     private fun collapseToNotes(highResolution: FloatArray, tuningCents: Double): FloatArray {
@@ -171,7 +210,7 @@ internal class StreamingHarmonicFeatureExtractor(
         return notes
     }
 
-    private fun standardize(frames: List<FloatArray>): List<FloatArray> {
+    private fun standardize(frames: List<FloatArray>): MutableList<FloatArray> {
         val radius = framesForHalfWindow(STANDARDIZATION_WINDOW_SECONDS)
         val sums = DoubleArray(NOTE_COUNT)
         val squareSums = DoubleArray(NOTE_COUNT)
@@ -179,7 +218,7 @@ internal class StreamingHarmonicFeatureExtractor(
         var end = minOf(frames.lastIndex, radius)
         for (index in start..end) addFrame(frames[index], sums, squareSums, 1.0)
 
-        return frames.indices.map { frameIndex ->
+        return frames.indices.mapTo(ArrayList(frames.size)) { frameIndex ->
             val count = end - start + 1
             val standardized = FloatArray(NOTE_COUNT) { noteIndex ->
                 val value = frames[frameIndex][noteIndex].toDouble()
@@ -204,15 +243,15 @@ internal class StreamingHarmonicFeatureExtractor(
         }
     }
 
-    private fun centeredAverage(frames: List<FloatArray>, radius: Int): List<FloatArray> {
-        val sums = FloatArray(NOTE_COUNT)
+    private fun centeredAverage(frames: List<FloatArray>, radius: Int): MutableList<FloatArray> {
+        val sums = FloatArray(frames.first().size)
         var start = 0
         var end = minOf(frames.lastIndex, radius)
         for (index in start..end) addFrame(frames[index], sums, 1f)
 
-        return frames.indices.map { frameIndex ->
+        return frames.indices.mapTo(ArrayList(frames.size)) { frameIndex ->
             val count = end - start + 1
-            val average = FloatArray(NOTE_COUNT) { sums[it] / count }
+            val average = FloatArray(sums.size) { sums[it] / count }
             normalize(average)
 
             val nextStart = maxOf(0, frameIndex + 1 - radius)
@@ -232,10 +271,18 @@ internal class StreamingHarmonicFeatureExtractor(
     private fun framesForHalfWindow(seconds: Double): Int =
         (seconds * sampleRate / HOP_SIZE / 2.0).roundToInt().coerceAtLeast(1)
 
-    private data class RawFrame(val startMillis: Long, var highResolution: FloatArray)
+    private data class RawFrame(
+        val startMillis: Long,
+        var highResolution: FloatArray,
+        val spectralFlatness: Float,
+    )
 }
 
-private fun collapseToChroma(notes: FloatArray, bassOnly: Boolean = false): FloatArray {
+private fun collapseToChroma(
+    notes: FloatArray,
+    bassOnly: Boolean = false,
+    normalizeOutput: Boolean = true,
+): FloatArray {
     val chroma = FloatArray(PITCH_CLASS_COUNT)
     notes.forEachIndexed { noteIndex, salience ->
         val midi = MIN_MIDI + noteIndex
@@ -243,7 +290,7 @@ private fun collapseToChroma(notes: FloatArray, bassOnly: Boolean = false): Floa
         val weight = if (bassOnly) 1f / (1f + BASS_ROLLOFF * (midi - MIN_MIDI)) else 1f
         chroma[Math.floorMod(midi, PITCH_CLASS_COUNT)] += salience * weight
     }
-    normalize(chroma)
+    if (normalizeOutput) normalize(chroma)
     return chroma
 }
 
@@ -356,9 +403,12 @@ private const val MAX_TUNING_CENTS = 50.0
 private const val SEMITONES_PER_OCTAVE = 12.0
 private const val SILENCE_RMS = 1e-5
 private const val PEAK_EPSILON = 1e-12
+private const val SPECTRAL_EPSILON = 1e-12
 private const val STANDARDIZATION_EPSILON = 0.08
 private const val RAW_FEATURE_WEIGHT = 0.7
 private const val WHITENED_FEATURE_WEIGHT = 0.3
+private const val HARMONIC_BLEND_MIN_FLATNESS = 0.30f
+private const val HARMONIC_BLEND_MAX_FLATNESS = 0.45f
 private const val STANDARDIZATION_WINDOW_SECONDS = 6.0
 private const val LOCAL_CHORD_RADIUS = 1
 private const val CONTEXT_CHORD_WINDOW_SECONDS = 1.5

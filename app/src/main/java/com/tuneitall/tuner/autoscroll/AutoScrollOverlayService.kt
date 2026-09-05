@@ -96,7 +96,7 @@ class AutoScrollOverlayService : Service() {
             dp(OVERLAY_MARGIN_DP),
         )
         if (!view.isAttachedToWindow) {
-            windowManager.addView(view, params)
+            if (!add(view, params)) return
             animateIn(view)
         }
         render()
@@ -184,7 +184,7 @@ class AutoScrollOverlayService : Service() {
             dp(OVERLAY_MARGIN_DP),
         )
         if (!target.isAttachedToWindow) {
-            windowManager.addView(target, bubbleLayout)
+            if (!add(target, bubbleLayout)) return
             animateIn(target)
         }
     }
@@ -229,14 +229,14 @@ class AutoScrollOverlayService : Service() {
                         height,
                         dp(OVERLAY_MARGIN_DP),
                     )
-                    windowManager.updateViewLayout(target, params)
+                    if (!update(target, params)) return@OnTouchListener true
                     true
                 }
 
                 MotionEvent.ACTION_UP -> {
                     if (isBubble) {
                         params.x = AutoScrollOverlayPositioning.snapBubbleToEdge(params.x, screenSize().x, params.width)
-                        windowManager.updateViewLayout(target, params)
+                        if (!update(target, params)) return@OnTouchListener true
                     } else {
                         lastPanelX = params.x
                         lastPanelY = params.y
@@ -258,12 +258,19 @@ class AutoScrollOverlayService : Service() {
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+        val exitIntent = PendingIntent.getService(
+            this,
+            1,
+            Intent(this, AutoScrollOverlayService::class.java).setAction(ACTION_EXIT),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle(getString(R.string.auto_scroll_notification_title))
             .setContentText(getString(R.string.auto_scroll_notification_text))
             .setOngoing(true)
             .setContentIntent(pendingIntent)
+            .addAction(R.drawable.ic_auto_scroll, getString(R.string.auto_scroll_close), exitIntent)
             .build()
     }
 
@@ -316,8 +323,30 @@ class AutoScrollOverlayService : Service() {
         view.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(160L).start()
     }
 
+    private fun add(view: View, params: WindowManager.LayoutParams): Boolean = windowOperation {
+        windowManager.addView(view, params)
+    }
+
+    private fun update(view: View, params: WindowManager.LayoutParams): Boolean = windowOperation {
+        windowManager.updateViewLayout(view, params)
+    }
+
+    private inline fun windowOperation(operation: () -> Unit): Boolean = try {
+        operation()
+        true
+    } catch (_: SecurityException) {
+        shutdown()
+        false
+    } catch (_: WindowManager.BadTokenException) {
+        shutdown()
+        false
+    } catch (_: IllegalArgumentException) {
+        shutdown()
+        false
+    }
+
     private fun remove(view: View?) {
-        if (view?.isAttachedToWindow == true) windowManager.removeView(view)
+        if (view?.isAttachedToWindow == true) runCatching { windowManager.removeView(view) }
     }
 
     private fun shutdown() {

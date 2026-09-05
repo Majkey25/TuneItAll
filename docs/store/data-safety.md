@@ -1,7 +1,7 @@
 # Google Play Data Safety record
 
-Proposed answers for release `0.3.0-alpha.8`, based on the current manifest and runtime
-dependency set:
+Proposed answers for the current release candidate, based on the merged manifest
+and runtime dependency set:
 
 - Data collected: **No**
 - Data shared: **No**
@@ -10,15 +10,21 @@ dependency set:
 - Data deletion request: **Not applicable; no server-side data exists**
 
 Microphone samples remain on-device, are processed transiently in memory, and
-are discarded immediately. Local preferences and custom tunings do not leave
-the device. A song selected through Android's system document picker is decoded
-transiently on-device; Intoniva stores only in-memory chord events and does not
-copy, upload, or retain the source audio.
+are discarded immediately. Local preferences, custom tunings, trainer scores,
+and Auto-scroll disclosure acceptance do not leave the device. A song selected
+through Android's system document picker is decoded transiently on-device;
+Intoniva stores only in-memory chord, note, tempo, and arrangement results and
+does not copy, upload, or retain the source audio.
 
 The optional Accessibility service performs only user-requested swipe gestures.
 Its metadata explicitly disables window-content retrieval. Floating controls
 use Android's overlay and foreground-service APIs. Intoniva does not read,
 store, record, or transmit screen content.
+
+The optional Buy Me a Coffee, email, and GitHub support paths open outside the
+app. Data that a user voluntarily sends through those external services is not
+collected by Intoniva. The public privacy policy separately describes that
+support correspondence and its providers.
 
 Evidence gates before submission:
 
