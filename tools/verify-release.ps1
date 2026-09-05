@@ -105,8 +105,10 @@ try {
 }
 
 $jarsigner = (Get-Command jarsigner -ErrorAction Stop).Source
-$signingResult = & $jarsigner -verify -strict -certs $aab 2>&1 | Out-String
-$signed = $LASTEXITCODE -eq 0 -and $signingResult -notmatch 'jar is unsigned'
+# Android upload certificates are self-signed, so jarsigner -strict reports a
+# PKIX error even for a valid Play bundle. Verify every entry, then pin signer.
+$signingResult = & $jarsigner -verify -certs $aab 2>&1 | Out-String
+$signed = $LASTEXITCODE -eq 0 -and $signingResult -match 'jar verified'
 if (-not $signed -and -not $AllowUnsigned) {
     throw "Release bundle is unsigned"
 }
