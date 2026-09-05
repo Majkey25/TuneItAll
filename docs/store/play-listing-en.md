@@ -24,9 +24,9 @@ Features:
 
 - Guitar support for 6, 7, 8, and 9 strings
 - Licensed 3+3 and 6-inline guitar headstock artwork
-- Four-string bass and ukulele
+- Four- and five-string bass, ukulele, violin, viola, cello, mandolin, and banjo
 - Standard, lowered, drop, open, and DADGAD presets
-- Search, favorites, and custom tunings
+- 49 built-in tunings, search, favorites, and removable custom tunings
 - Adjustable A4 reference from 410.0 to 480.0 Hz
 - Sharps or flats note naming
 - Click-free reference tone when a string is tapped
@@ -36,10 +36,14 @@ Features:
 - Offline song tempo estimation with confidence and one-tap BPM application
 - Canonical Standard E guitar and Standard C ukulele chord diagrams
 - Offline song analysis with separate Classic chords, predominant Notes, and Power chords timelines
+- Common chord qualities, inversions, and exact or simplified acoustic arrangements for Standard E guitar
 - Chord and single-note ear training with local scoring
 - Chord learning and quiz modes with generated audio and local scoring
 - Hands-free Auto-scroll with floating Start, Stop, Hide, and speed controls
 - System-default, English, Czech, German, French, and Spanish interfaces
+
+Song analysis provides estimates. Dense mixes can be ambiguous; results may
+need correction and do not reproduce every instrument or guitar tab.
 
 Intoniva has no ads, account, analytics, tracking, or internet permission.
 Microphone audio is analyzed transiently on-device and never recorded, retained,

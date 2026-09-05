@@ -24,9 +24,9 @@ Funkce:
 
 - Kytary se 6, 7, 8 a 9 strunami
 - Licencovaná grafika hlavy kytary 3+3 a 6 v řadě
-- Čtyřstrunná baskytara a ukulele
+- Čtyřstrunná a pětistrunná baskytara, ukulele, housle, viola, violoncello, mandolína a banjo
 - Standardní, snížená, drop, open a DADGAD ladění
-- Hledání, oblíbené položky a vlastní ladění
+- 49 vestavěných ladění, hledání, oblíbené položky a mazání vlastních ladění
 - Nastavitelná reference A4 od 410,0 do 480,0 Hz
 - Zápis tónů pomocí křížků nebo béček
 - Plynulý referenční tón po klepnutí na strunu
@@ -36,9 +36,13 @@ Funkce:
 - Offline zjištění tempa písničky s jistotou odhadu a použitím BPM jedním klepnutím
 - Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
 - Offline analýza písní se samostatnými režimy Klasické akordy, Tóny a Power akordy
+- Běžné typy akordů, obraty a přesná nebo zjednodušená akustická aranžmá pro kytaru ve Standard E
 - Učení akordů, kvíz akordů a rozpoznávání jednotlivých tónů sluchem
 - Automatické posouvání s plovoucím Start, Stop, Skrýt a nastavením rychlosti
 - Rozhraní podle systému, anglicky, česky, německy, francouzsky a španělsky
+
+Analýza skladby poskytuje odhady. Hutné mixy mohou být nejednoznačné; výsledky
+mohou vyžadovat opravu a nejsou úplným přepisem všech nástrojů ani tabulaturou.
 
 Intoniva neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup
 k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává,
