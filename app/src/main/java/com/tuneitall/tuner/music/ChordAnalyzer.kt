@@ -293,6 +293,10 @@ private fun stateConfidence(
 
 private fun chordEmission(frame: HarmonicFrame, chord: Chord, chroma: FloatArray = frame.chroma): Double {
     if (frame.tonalStrength < MIN_TONAL_STRENGTH) return 0.0
+    // Inferred subharmonics cannot supply a second chord note. Use the same local window as the chord evidence.
+    val observed = frame.localObservedChroma
+    val observedThreshold = observed.max() * MIN_CHORD_NOTE_RATIO
+    if (chord.pitchClasses.count { observed[it] >= observedThreshold && observed[it] > 0f } < 2) return 0.0
     val inChord = chord.pitchClasses.map { chroma[it].toDouble() }
     if (inChord.count { it >= chroma.max() * MIN_CHORD_NOTE_RATIO && it > 0.0 } < 2) return 0.0
     val outOfChord = chroma.indices.filterNot(chord.pitchClasses::contains).map { chroma[it].toDouble() }

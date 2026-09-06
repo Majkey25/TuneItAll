@@ -5,7 +5,6 @@ import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.hypot
 import kotlin.math.ln
-import kotlin.math.ln1p
 import kotlin.math.log2
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -21,11 +20,13 @@ internal data class HarmonicFrame(
     val onsetStrength: Float,
     val spectralFlatness: Float = 0f,
     val observedChroma: FloatArray = chroma,
+    val localObservedChroma: FloatArray = observedChroma,
 ) {
     init {
         require(startMillis >= 0L)
         require(chroma.size == PITCH_CLASS_COUNT)
         require(observedChroma.size == PITCH_CLASS_COUNT)
+        require(localObservedChroma.size == PITCH_CLASS_COUNT)
         require(contextChroma.size == PITCH_CLASS_COUNT)
         require(bassChroma.size == PITCH_CLASS_COUNT)
         require(noteSalience.size == NOTE_COUNT)
@@ -140,6 +141,7 @@ internal class StreamingHarmonicFeatureExtractor(
         standardized.clear()
         val chordFrames = centeredAverage(chordChromas, LOCAL_CHORD_RADIUS)
         val contextFrames = centeredAverage(chordChromas, framesForHalfWindow(CONTEXT_CHORD_WINDOW_SECONDS))
+        val localObservedFrames = centeredAverage(observedChromas, LOCAL_CHORD_RADIUS)
         val bassFrames = centeredAverage(bassChromas, LOCAL_CHORD_RADIUS)
         chordChromas.clear()
         bassChromas.clear()
@@ -159,6 +161,7 @@ internal class StreamingHarmonicFeatureExtractor(
                 onsetStrength = onsetStrengths[index],
                 spectralFlatness = rawFrames[index].spectralFlatness,
                 observedChroma = observedChromas[index],
+                localObservedChroma = localObservedFrames[index],
             )
         }
         rawFrames.clear()
@@ -213,7 +216,8 @@ internal class StreamingHarmonicFeatureExtractor(
             val midi = 69.0 + SEMITONES_PER_OCTAVE * log2(frequency / 440.0)
             val highResolutionIndex = ((midi - MIN_MIDI) * BINS_PER_SEMITONE).roundToInt()
             if (highResolutionIndex !in salience.indices) continue
-            val weight = ln1p(magnitude) / sqrt(frequency)
+            // Compression must preserve normalized pitch balance when only recording gain changes.
+            val weight = sqrt(magnitude / frequency)
             salience[highResolutionIndex] += weight.toFloat()
             val semitoneOffset = midi - kotlin.math.round(midi)
             val angle = 2.0 * PI * semitoneOffset

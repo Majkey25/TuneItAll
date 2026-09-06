@@ -23,6 +23,46 @@ import org.junit.Test
 
 class SongChordDecoderTest {
     @Test
+    fun localWavDecoderRejectsOctaveOnlyNotesAsChords() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "octave-only-chord-qa.wav")
+        val frequencies = doubleArrayOf(220.0, 440.0, 880.0)
+        try {
+            file.writeBytes(pcm16Wav { frame ->
+                frequencies.sumOf { frequency ->
+                    0.15 * sin(2.0 * PI * frequency * frame / SAMPLE_RATE)
+                }
+            })
+
+            assertTrue(SongAudioDecoder(context).analyze(Uri.fromFile(file)).events.isEmpty())
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun localWavDecoderKeepsMajorSeventhAtDifferentRecordingLevels() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "chord-level-qa.wav")
+        val frequencies = doubleArrayOf(261.6256, 329.6276, 391.9954, 493.8833)
+        try {
+            for (gain in listOf(0.005, 0.3)) {
+                file.writeBytes(pcm16Wav { frame ->
+                    frequencies.sumOf { frequency ->
+                        gain / 4 * sin(2.0 * PI * frequency * frame / SAMPLE_RATE)
+                    }
+                })
+                val events = SongAudioDecoder(context).analyze(Uri.fromFile(file)).events.filterIsInstance<ChordEvent>()
+
+                assertTrue("gain=$gain events=$events", events.isNotEmpty())
+                assertEquals(Chord(0, ChordQuality.MAJOR_SEVENTH), events.maxBy(ChordEvent::durationMillis).chord)
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
     fun localWavDecoderRecognizesDistortedEPowerChord() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.cacheDir, "distorted-e5.wav")
@@ -73,7 +113,13 @@ private fun sha256(file: File): String {
     return digest.digest().joinToString("") { "%02X".format(it) }
 }
 
-private fun distortedPowerChordWav(): ByteArray {
+private fun distortedPowerChordWav(): ByteArray = pcm16Wav { frame ->
+    val root = sin(2.0 * PI * ROOT_HERTZ * frame / SAMPLE_RATE)
+    val fifth = sin(2.0 * PI * ROOT_HERTZ * 1.5 * frame / SAMPLE_RATE)
+    0.75 * tanh(3.5 * (root + 0.8 * fifth))
+}
+
+private fun pcm16Wav(sampleAt: (Int) -> Double): ByteArray {
     val sampleCount = SAMPLE_RATE * DURATION_SECONDS
     val dataSize = sampleCount * Short.SIZE_BYTES
     return ByteBuffer.allocate(WAV_HEADER_SIZE + dataSize).order(ByteOrder.LITTLE_ENDIAN).apply {
@@ -90,9 +136,7 @@ private fun distortedPowerChordWav(): ByteArray {
         put("data".toByteArray())
         putInt(dataSize)
         repeat(sampleCount) { frame ->
-            val root = sin(2.0 * PI * ROOT_HERTZ * frame / SAMPLE_RATE)
-            val fifth = sin(2.0 * PI * ROOT_HERTZ * 1.5 * frame / SAMPLE_RATE)
-            val sample = (0.75 * tanh(3.5 * (root + 0.8 * fifth)) * Short.MAX_VALUE).roundToInt()
+            val sample = (sampleAt(frame) * Short.MAX_VALUE).roundToInt()
             putShort(sample.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
         }
     }.array()

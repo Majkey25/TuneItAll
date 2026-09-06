@@ -1,6 +1,7 @@
 package com.tuneitall.tuner.music
 
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.math.sin
@@ -9,6 +10,42 @@ import kotlin.test.assertTrue
 import org.junit.Test
 
 class ChordFeatureEvidenceTest {
+    @Test
+    fun `brief same root qualities retain continuous chord coverage`() {
+        val rate = 22_050
+        val samples = concatenate(
+            sineChord(rate, 0.2, 261.6256, 329.6276, 391.9954),
+            sineChord(rate, 0.2, 261.6256, 329.6276, 391.9954, 493.8833),
+            sineChord(rate, 0.2, 261.6256, 329.6276, 391.9954),
+        )
+        val events = StreamingChordAnalyzer(rate).apply { accept(samples) }.finish()
+
+        assertEquals(600L, events.sumOf(ChordEvent::durationMillis), events.toString())
+        assertTrue(events.all { it.chord.rootPitchClass == 0 }, events.toString())
+    }
+
+    @Test
+    fun `recording gain does not change harmonic evidence`() {
+        val rate = 22_050
+        val samples = plucked(intArrayOf(45, 48, 52, 59), rate, 2)
+        fun extract(gain: Float) = StreamingHarmonicFeatureExtractor(rate).apply {
+            accept(FloatArray(samples.size) { samples[it] * gain })
+        }.finish()
+        val reference = extract(1f)
+        val differences = listOf(0.01f, 0.1f, 4f).map { gain ->
+            val frames = extract(gain)
+            assertEquals(reference.size, frames.size)
+            val difference = reference.indices.maxOf { index ->
+                reference[index].chroma.indices.maxOf { pitch ->
+                    abs(reference[index].chroma[pitch] - frames[index].chroma[pitch])
+                }
+            }
+            println("GAIN_EVIDENCE,$gain,$difference")
+            difference
+        }
+        assertTrue(differences.all { it < 0.001f }, differences.toString())
+    }
+
     @Test
     fun `plucked minor added ninth retains its audible ninth`() {
         val rate = 22_050

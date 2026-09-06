@@ -13,8 +13,19 @@ import kotlin.test.assertEquals
 /** Optional full-recording benchmark; fixture provenance and hashes are frozen in its manifest. */
 class GuitarSetCorpusTest {
     @Test
-    fun `evaluate frozen performed chord corpus`() {
-        val directory = listOf(File(".reference/tmp/chord-benchmark"), File("../.reference/tmp/chord-benchmark"))
+    fun `evaluate frozen performed chord corpus`() = evaluateCorpus("chord-benchmark")
+
+    @Test
+    fun `evaluate frozen performed chord corpus at quiet gain`() = evaluateCorpus("chord-benchmark", 0.01f)
+
+    @Test
+    fun `evaluate unseen performed chord corpus`() = evaluateCorpus("chord-heldout")
+
+    @Test
+    fun `evaluate unseen performed chord corpus at quiet gain`() = evaluateCorpus("chord-heldout", 0.01f)
+
+    private fun evaluateCorpus(corpus: String, gain: Float = 1f) {
+        val directory = listOf(File(".reference/tmp/$corpus"), File("../.reference/tmp/$corpus"))
             .firstOrNull { File(it, "manifest.json").isFile }
         assumeTrue("Acquire the optional GuitarSet corpus before running this benchmark", directory != null)
         val root = requireNotNull(directory)
@@ -33,6 +44,7 @@ class GuitarSetCorpusTest {
             val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
             assertEquals(track.getString("wav_sha256"), hash)
             val samples = readMonoWav(bytes, track.getInt("sample_rate"))
+            samples.indices.forEach { samples[it] *= gain }
             val rate = track.getInt("sample_rate")
             val duration = samples.size * 1000L / rate
             val started = System.nanoTime()
@@ -79,7 +91,7 @@ class GuitarSetCorpusTest {
             covered += coverage
             elapsedTotal += elapsed
         }
-        println("CORPUS,TOTAL,${rootCorrect.toDouble() / referenceTotal},${qualityCorrect.toDouble() / qualityTotal}," +
+        println("CORPUS,$corpus,$gain,${rootCorrect.toDouble() / referenceTotal},${qualityCorrect.toDouble() / qualityTotal}," +
             "$qualityTotal,${covered.toDouble() / referenceTotal},${tracks.length()},$elapsedTotal")
     }
 
