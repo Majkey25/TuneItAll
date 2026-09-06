@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.stateDescription
@@ -49,8 +51,10 @@ fun CentsRail(
         }
     }
     val railColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val markerColor = MaterialTheme.colorScheme.primary
+    val markerColor = if (inTune) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
     val displayText = cents?.let { stringResource(R.string.cents_value, it) } ?: idleText
+    val labelWidth = RULER_LABEL_WIDTH * LocalDensity.current.fontScale
+    val rulerPadding = labelWidth / 2
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Column(
@@ -68,7 +72,7 @@ fun CentsRail(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(42.dp)
-                    .padding(horizontal = RULER_HORIZONTAL_PADDING)
+                    .padding(horizontal = rulerPadding)
                     .testTag("cents_rail_canvas"),
             ) {
                 val centerY = size.height * 0.55f
@@ -109,19 +113,24 @@ fun CentsRail(
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(16.dp)
-                    .padding(horizontal = RULER_HORIZONTAL_PADDING)
+                    .heightIn(min = 16.dp)
+                    .padding(horizontal = rulerPadding)
                     .testTag("cents_ruler"),
             ) {
-                (-50..50 step 10).forEach { tick ->
-                    val x = maxWidth * normalizedCentsPosition(tick.toDouble()) - RULER_LABEL_WIDTH / 2
+                val labelStep = when {
+                    maxWidth / 10 >= labelWidth * 0.75f -> 10
+                    maxWidth / 4 >= labelWidth * 0.75f -> 25
+                    else -> 50
+                }
+                (-50..50 step labelStep).forEach { tick ->
+                    val x = maxWidth * normalizedCentsPosition(tick.toDouble()) - labelWidth / 2
                     Text(
                         text = if (tick > 0) "+$tick" else "$tick",
                         fontSize = 10.sp,
                         lineHeight = 12.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
-                            .width(RULER_LABEL_WIDTH)
+                            .width(labelWidth)
                             .absoluteOffset(x = x)
                             .testTag("cents_ruler_label_$tick"),
                     )
@@ -138,5 +147,4 @@ internal fun normalizedCentsPosition(cents: Double): Float {
 
 private const val MIN_CENTS = -50.0
 private const val MAX_CENTS = 50.0
-private val RULER_HORIZONTAL_PADDING = 16.dp
 private val RULER_LABEL_WIDTH = 32.dp

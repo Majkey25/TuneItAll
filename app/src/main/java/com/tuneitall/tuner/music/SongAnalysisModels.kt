@@ -1,5 +1,11 @@
 package com.tuneitall.tuner.music
 
+import java.util.concurrent.CancellationException
+
+internal fun checkAnalysisCancellation(isCancelled: () -> Boolean) {
+    if (isCancelled()) throw CancellationException("Song analysis cancelled")
+}
+
 enum class SongAnalysisMode {
     CHORDS,
     NOTES,

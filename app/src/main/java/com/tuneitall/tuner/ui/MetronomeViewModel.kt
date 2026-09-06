@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 enum class MetronomeError {
@@ -235,22 +236,25 @@ class MetronomeViewModel internal constructor(
                 tempoError = null,
             )
         }
-        tempoJob = viewModelScope.launch(blockingDispatcher) {
+        tempoJob = viewModelScope.launch {
             val job = currentCoroutineContext()[Job]
             try {
-                val fileName = audioDisplayName(getApplication(), uri)
-                if (generation == tempoGeneration) {
-                    mutableUiState.update { it.copy(tempoFileName = fileName) }
+                val fileName = withContext(blockingDispatcher) { audioDisplayName(getApplication(), uri) }
+                if (generation != tempoGeneration) return@launch
+                mutableUiState.update { it.copy(tempoFileName = fileName) }
+                val tempo = withContext(blockingDispatcher) {
+                    songDecoder.analyzeTempo(
+                        uri = uri,
+                        isCancelled = { job?.isActive == false },
+                        onProgress = { progress ->
+                            launch(Dispatchers.Main.immediate) {
+                                if (generation == tempoGeneration) {
+                                    mutableUiState.update { it.copy(tempoProgress = progress) }
+                                }
+                            }
+                        },
+                    )
                 }
-                val tempo = songDecoder.analyzeTempo(
-                    uri = uri,
-                    isCancelled = { job?.isActive == false },
-                    onProgress = { progress ->
-                        if (generation == tempoGeneration) {
-                            mutableUiState.update { it.copy(tempoProgress = progress) }
-                        }
-                    },
-                )
                 if (generation != tempoGeneration) return@launch
                 mutableUiState.update {
                     it.copy(

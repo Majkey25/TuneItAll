@@ -87,6 +87,23 @@ class ChordAnalyzerTest {
     }
 
     @Test
+    fun `rapid chord changes are preserved at every supported input rate`() {
+        val expected = listOf(Chord(0, ChordQuality.MAJOR), Chord(7, ChordQuality.MAJOR), Chord(9, ChordQuality.MINOR))
+        val failures = mutableListOf<String>()
+        listOf(8_000, 11_025, 22_050, 44_100, 48_000, 96_000, 192_000).forEach { rate ->
+            val analyzer = StreamingChordAnalyzer(rate)
+            analyzer.accept(concatenate(
+                sineChord(rate, 0.333, 261.63, 329.63, 392.0),
+                sineChord(rate, 0.333, 196.0, 246.94, 293.66),
+                sineChord(rate, 0.334, 220.0, 261.63, 329.63),
+            ))
+            val events = analyzer.finish()
+            if (events.map(ChordEvent::chord) != expected) failures += "$rate Hz: $events"
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    @Test
     fun `streaming analyzer preserves a same root quality change`() {
         val analyzer = StreamingChordAnalyzer(48_000)
         analyzer.accept(
@@ -228,6 +245,24 @@ class ChordAnalyzerTest {
             .maxBy(ChordEvent::durationMillis)
 
         assertEquals(Chord(0, ChordQuality.MAJOR, bassPitchClass = 4), event.chord)
+    }
+
+    @Test
+    fun `a short passing bass does not relabel the entire chord as an inversion`() {
+        val frames = List(100) { index ->
+            HarmonicFrame(
+                startMillis = index * 100L,
+                chroma = FloatArray(12) { if (it in setOf(0, 4, 7)) 0.6f else 0f },
+                bassChroma = FloatArray(12) { if (it == if (index < 2) 4 else 0) 1f else 0f },
+                noteSalience = FloatArray(88),
+                tonalStrength = 0.8f,
+                onsetStrength = 0f,
+            )
+        }
+
+        val events = analyzeChords(frames, SongAnalysisMode.CHORDS, 10_000)
+
+        assertEquals(listOf(Chord(0, ChordQuality.MAJOR)), events.map(ChordEvent::chord))
     }
 
     @Test

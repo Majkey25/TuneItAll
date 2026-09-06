@@ -124,6 +124,25 @@ class YinPitchDetectorTest {
     }
 
     @Test
+    fun `quiet guitar fundamental survives stronger out of band microphone noise`() {
+        val tracker = PitchTracker()
+        val random = Random(218)
+        var estimate: PitchEstimate? = null
+        repeat(5) { frame ->
+            val samples = ShortArray(8192) { index ->
+                val time = (index + frame * 2048).toDouble() / SAMPLE_RATE
+                val guitar = 0.0003 * sin(2.0 * PI * 82.41 * time) +
+                    0.00012 * sin(2.0 * PI * 164.82 * time)
+                val noise = 0.004 * sin(2.0 * PI * 6421.0 * time) + 0.00005 * random.nextDouble(-1.0, 1.0)
+                ((guitar + noise) * Short.MAX_VALUE).toInt().toShort()
+            }
+            estimate = tracker.update(detector.analyze(samples, SAMPLE_RATE, 69.0, 420.0), TunerProfile.BALANCED.settings)
+        }
+        val detected = assertNotNull(estimate)
+        assertTrue(abs(MusicMath.cents(detected.hertz, 82.41)) < 5.0, detected.toString())
+    }
+
+    @Test
     fun `analysis retains the fundamental under strong string buzz`() {
         val expected = 82.41
         val samples = noisyString(expected, seed = 7)
@@ -209,6 +228,7 @@ class YinPitchDetectorTest {
         assertFailsWith<IllegalArgumentException> { detector.analyze(ShortArray(1), SAMPLE_RATE, 27.5, 4186.01) }
         assertFailsWith<IllegalArgumentException> { detector.analyze(samples, 0, 27.5, 4186.01) }
         assertFailsWith<IllegalArgumentException> { detector.analyze(samples, SAMPLE_RATE, 0.0, 4186.01) }
+        assertFailsWith<IllegalArgumentException> { detector.analyze(samples, SAMPLE_RATE, Double.MIN_VALUE, 4186.01) }
         assertFailsWith<IllegalArgumentException> { detector.analyze(samples, SAMPLE_RATE, 440.0, 110.0) }
         assertFailsWith<IllegalArgumentException> { detector.analyze(samples, SAMPLE_RATE, 27.5, 24_001.0) }
     }

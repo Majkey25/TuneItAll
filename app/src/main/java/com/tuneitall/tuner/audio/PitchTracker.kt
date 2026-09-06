@@ -48,7 +48,9 @@ class PitchTracker {
         previousRms = frame.rms
 
         val best = states.maxByOrNull { it.score } ?: return null
-        return best.takeIf { it.score > unvoicedScore }?.let { PitchEstimate(it.hertz, it.confidence, frame.rms) }
+        return best.takeIf { state ->
+            state.score > unvoicedScore && frame.candidates.any { samePitch(it.hertz, state.hertz) }
+        }?.let { PitchEstimate(it.hertz, it.confidence, frame.rms) }
     }
 
     fun reset() {

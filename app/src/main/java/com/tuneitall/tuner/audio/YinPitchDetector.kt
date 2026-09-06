@@ -1,26 +1,54 @@
 package com.tuneitall.tuner.audio
 
 import kotlin.math.abs
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt
+import kotlin.math.sin
 
 private val THRESHOLDS = doubleArrayOf(0.05, 0.075, 0.10, 0.125, 0.15, 0.175, 0.20, 0.25, 0.30)
 private val THRESHOLD_WEIGHTS = doubleArrayOf(0.02, 0.06, 0.12, 0.18, 0.20, 0.17, 0.12, 0.08, 0.05)
 private const val MAX_CANDIDATES = 8
 private const val MERGE_CENTS = 15.0
 
-internal fun decimate(samples: ShortArray, output: ShortArray) {
+internal fun decimate(samples: ShortArray, output: DoubleArray, sampleRate: Int, maxFrequency: Double): Int {
     require(output.isNotEmpty() && samples.size % output.size == 0) { "Decimation sizes must divide evenly" }
     val factor = samples.size / output.size
-    require(factor == 2 || factor == 4) { "Decimation factor must be two or four" }
-    for (index in output.indices) {
-        val input = index * factor
-        var sum = 0
-        for (offset in 0 until factor) sum += samples[input + offset]
-        output[index] = (sum / factor).toShort()
+    require(factor == 1 || factor == 2 || factor == 4)
+    require(sampleRate > 0 && maxFrequency.isFinite() && maxFrequency > 0.0)
+    val cutoff = minOf(0.4 / factor, maxFrequency * 2.5 / sampleRate)
+    val first = PitchLowPass(cutoff, 0.5411961001, samples.first().toDouble())
+    val second = PitchLowPass(cutoff, 1.3065629649, samples.first().toDouble())
+    samples.forEachIndexed { index, sample ->
+        val value = second.process(first.process(sample.toDouble()))
+        if (index % factor == factor - 1) output[index / factor] = value
+    }
+    return ceil(4.0 / (cutoff * factor)).toInt()
+}
+
+private class PitchLowPass(cutoff: Double, q: Double, initial: Double) {
+    private val cosine = cos(2.0 * PI * cutoff)
+    private val alpha = sin(2.0 * PI * cutoff) / (2.0 * q)
+    private val b0 = (1.0 - cosine) / (2.0 * (1.0 + alpha))
+    private val b1 = 2.0 * b0
+    private val a1 = -2.0 * cosine / (1.0 + alpha)
+    private val a2 = (1.0 - alpha) / (1.0 + alpha)
+    private var x1 = initial
+    private var x2 = initial
+    private var y1 = initial
+    private var y2 = initial
+
+    fun process(input: Double): Double {
+        val output = b0 * input + b1 * x1 + b0 * x2 - a1 * y1 - a2 * y2
+        x2 = x1
+        x1 = input
+        y2 = y1
+        y1 = output
+        return output
     }
 }
 
@@ -76,8 +104,8 @@ data class PitchEstimate(
 class YinPitchDetector {
     private var difference = DoubleArray(0)
     private var cumulativeMean = DoubleArray(0)
-    private var decimated = ShortArray(0)
-    private var recentWindow = ShortArray(0)
+    private var decimated = DoubleArray(0)
+    private var refinementSamples = DoubleArray(0)
 
     fun analyze(
         samples: ShortArray,
@@ -86,51 +114,27 @@ class YinPitchDetector {
         maxFrequency: Double,
     ): PitchFrame {
         validateArguments(samples, sampleRate, minFrequency, maxFrequency)
-        var analysisSamples = samples
-        var analysisSampleRate = sampleRate
-        if (samples.size >= LONG_WINDOW_SIZE && samples.size % 4 == 0 && maxFrequency <= LOW_RANGE_MAX_HERTZ) {
-            val outputSize = samples.size / 4
-            if (decimated.size != outputSize) decimated = ShortArray(outputSize)
-            decimate(samples, decimated)
-            analysisSamples = decimated
-            analysisSampleRate = sampleRate / 4
-        } else if (
-            samples.size >= LONG_WINDOW_SIZE &&
-            samples.size % 2 == 0 &&
-            (minFrequency >= HIGH_RANGE_MIN_HERTZ || maxFrequency > WIDE_RANGE_MAX_HERTZ) &&
-            maxFrequency <= sampleRate / 4.0
-        ) {
-            val outputSize = samples.size / 2
-            if (decimated.size != outputSize) decimated = ShortArray(outputSize)
-            decimate(samples, decimated)
-            analysisSamples = decimated
-            analysisSampleRate = sampleRate / 2
-        } else if (samples.size >= LONG_WINDOW_SIZE) {
-            if (recentWindow.size != SHORT_WINDOW_SIZE) recentWindow = ShortArray(SHORT_WINDOW_SIZE)
-            samples.copyInto(recentWindow, startIndex = samples.size - SHORT_WINDOW_SIZE)
-            analysisSamples = if (
-                samples.size % 2 == 0 &&
-                maxFrequency <= sampleRate / 4.0 &&
-                calculateRms(recentWindow) < calculateRms(samples) * DECAY_WINDOW_RATIO
-            ) {
-                val outputSize = samples.size / 2
-                if (decimated.size != outputSize) decimated = ShortArray(outputSize)
-                decimate(samples, decimated)
-                analysisSampleRate = sampleRate / 2
-                decimated
-            } else {
-                recentWindow
-            }
+        val factor = when {
+            samples.size >= LONG_WINDOW_SIZE && samples.size % 4 == 0 && maxFrequency <= LOW_RANGE_MAX_HERTZ -> 4
+            samples.size >= LONG_WINDOW_SIZE && samples.size % 2 == 0 && maxFrequency <= sampleRate / 4.0 -> 2
+            else -> 1
         }
+        val outputSize = samples.size / factor
+        if (decimated.size != outputSize) decimated = DoubleArray(outputSize)
+        val analysisStart = decimate(samples, decimated, sampleRate, maxFrequency).coerceAtMost(outputSize / 8)
+        val analysisSamples = decimated
+        val analysisSampleRate = sampleRate.toDouble() / factor
 
         val tauMin = floor(analysisSampleRate / maxFrequency).toInt().coerceAtLeast(MIN_TAU)
         val tauMax = ceil(analysisSampleRate / minFrequency).toInt()
-        require(analysisSamples.size > tauMax * 2) { "Sample frame is too short for the minimum frequency" }
+        require(tauMax in 1..((analysisSamples.size - analysisStart - 1) / 2)) {
+            "Sample frame is too short for the minimum frequency"
+        }
 
-        val rms = calculateRms(analysisSamples)
+        val rms = calculateRms(analysisSamples, analysisStart)
         val peak = calculatePeak(analysisSamples)
         ensureCapacity(tauMax + 1)
-        calculateDifference(analysisSamples, tauMax)
+        calculateDifference(analysisSamples, tauMax, analysisStart)
         calculateCumulativeMean(tauMax)
 
         val candidates = mutableListOf<PitchCandidate>()
@@ -151,12 +155,44 @@ class YinPitchDetector {
             }
         }
         val boundedCandidates = candidates.sortedByDescending { it.probability }.take(MAX_CANDIDATES)
+        val clearest = boundedCandidates.maxByOrNull(PitchCandidate::periodicity)
+        val refinedCandidates = boundedCandidates.map { candidate ->
+            if (candidate !== clearest) candidate else candidate.copy(
+                hertz = refineFrequency(samples, sampleRate, factor, candidate.hertz, minFrequency, maxFrequency),
+            )
+        }
         return PitchFrame(
-            candidates = boundedCandidates,
+            candidates = refinedCandidates,
             rms = rms,
             peak = peak,
             unvoicedProbability = (1.0 - boundedCandidates.sumOf { it.probability }).coerceIn(0.0, 1.0),
         )
+    }
+
+    private fun refineFrequency(
+        samples: ShortArray,
+        sampleRate: Int,
+        factor: Int,
+        hertz: Double,
+        minFrequency: Double,
+        maxFrequency: Double,
+    ): Double {
+        val lower = maxOf(minFrequency, hertz / REFINEMENT_RATIO)
+        val upper = minOf(maxFrequency, hertz * REFINEMENT_RATIO)
+        val rate = sampleRate.toDouble() / factor
+        val firstLag = floor(rate / upper).toInt().coerceAtLeast(MIN_TAU)
+        val lastLag = ceil(rate / lower).toInt()
+        val outputSize = samples.size / factor
+        if (refinementSamples.size != outputSize) refinementSamples = DoubleArray(outputSize)
+        val start = decimate(samples, refinementSamples, sampleRate, upper)
+        // Do not trade low-bass precision for an unsettled narrow filter or too few complete periods.
+        if (start > outputSize / 8 || lastLag + 1 > (outputSize - start - 1) / 2) return hertz
+        ensureCapacity(lastLag + 2)
+        calculateDifference(refinementSamples, lastLag + 1, start, firstLag - 1)
+        val lag = (firstLag..lastLag).minBy(difference::get)
+        if (lag == firstLag || lag == lastLag) return hertz
+        val refined = rate / parabolicInterpolation(lag, lastLag + 1)
+        return if (refined in lower..upper) refined else hertz
     }
 
     private fun mergeCandidate(
@@ -181,13 +217,13 @@ class YinPitchDetector {
         )
     }
 
-    private fun calculateDifference(samples: ShortArray, tauMax: Int) {
+    private fun calculateDifference(samples: DoubleArray, tauMax: Int, analysisStart: Int, tauStart: Int = 1) {
         difference[0] = 0.0
         val analysisLength = samples.size - tauMax
-        for (tau in 1..tauMax) {
+        for (tau in tauStart..tauMax) {
             var sum = 0.0
-            for (index in 0 until analysisLength) {
-                val delta = samples[index].toDouble() - samples[index + tau].toDouble()
+            for (index in analysisStart until analysisLength) {
+                val delta = samples[index] - samples[index + tau]
                 sum += delta * delta
             }
             difference[tau] = sum
@@ -246,17 +282,17 @@ class YinPitchDetector {
         return tau + offset
     }
 
-    private fun calculateRms(samples: ShortArray): Double {
+    private fun calculateRms(samples: DoubleArray, start: Int): Double {
         var sum = 0.0
-        for (sample in samples) {
-            val normalized = sample / PCM_SCALE
+        for (index in start until samples.size) {
+            val normalized = samples[index] / PCM_SCALE
             sum += normalized * normalized
         }
-        return sqrt(sum / samples.size)
+        return sqrt(sum / (samples.size - start))
     }
 
-    private fun calculatePeak(samples: ShortArray): Double =
-        samples.maxOf { abs(it.toDouble()) / PCM_SCALE }
+    private fun calculatePeak(samples: DoubleArray): Double =
+        samples.maxOf { abs(it) / PCM_SCALE }.coerceAtMost(1.0)
 
     private fun isWithinRange(hertz: Double, minFrequency: Double, maxFrequency: Double): Boolean {
         val boundaryRatio = 2.0.pow(MAX_BOUNDARY_ERROR_CENTS / CENTS_PER_OCTAVE)
@@ -289,11 +325,8 @@ class YinPitchDetector {
     private companion object {
         const val MIN_SAMPLE_COUNT = 4
         const val LONG_WINDOW_SIZE = 8192
-        const val SHORT_WINDOW_SIZE = 4096
         const val LOW_RANGE_MAX_HERTZ = 150.0
-        const val HIGH_RANGE_MIN_HERTZ = 150.0
-        const val WIDE_RANGE_MAX_HERTZ = 1_000.0
-        const val DECAY_WINDOW_RATIO = 0.75
+        val REFINEMENT_RATIO = 2.0.pow(1.0 / 12.0)
         const val MIN_TAU = 2
         const val PCM_SCALE = 32768.0
         const val NO_TROUGH_MIN_PERIODICITY = 0.25

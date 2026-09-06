@@ -6,15 +6,27 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
@@ -27,6 +39,7 @@ import com.tuneitall.tuner.ui.AutoScrollScreen
 import com.tuneitall.tuner.ui.TunerScreen
 import com.tuneitall.tuner.ui.TunerViewModel
 import com.tuneitall.tuner.ui.components.Headstock
+import com.tuneitall.tuner.ui.components.CentsRail
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -147,5 +160,78 @@ class QualityRegressionTest {
         assertFalse(custom.id in viewModel.uiState.value.favoriteIds)
         assertTrue(viewModel.uiState.value.customTunings.isEmpty())
         assertTrue(UserPreferences(context).customTunings.isEmpty())
+    }
+
+    @Test
+    fun rulerMarkerUsesGreenOnlyForAnInTuneReading() {
+        var inTune by mutableStateOf(false)
+        var dark by mutableStateOf(false)
+        var expected = Color.Unspecified
+        composeRule.setContent {
+            TuneItAllTheme(darkTheme = dark) {
+                expected = if (inTune) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                CentsRail(cents = 0.0, inTune = inTune, idleText = "Idle")
+            }
+        }
+        repeat(2) { theme ->
+            composeRule.runOnIdle { dark = theme == 1 }
+            listOf(false, true).forEach { confirmed ->
+                composeRule.runOnIdle { inTune = confirmed }
+                val pixels = composeRule.onNodeWithTag("cents_rail_canvas").captureToImage().toPixelMap()
+                val marker = pixels[pixels.width / 2, (pixels.height * 0.55f).toInt()]
+                assertEquals(expected.red, marker.red, 0.01f)
+                assertEquals(expected.green, marker.green, 0.01f)
+                assertEquals(expected.blue, marker.blue, 0.01f)
+            }
+        }
+    }
+
+    @Test
+    fun rulerLabelsRemainReadableAtTwoHundredPercentFontScale() {
+        composeRule.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(context.resources.displayMetrics.density, 2f)) {
+                TuneItAllTheme {
+                    Box(Modifier.requiredSize(328.dp, 180.dp)) {
+                        CentsRail(cents = 12.0, inTune = false, idleText = "Idle")
+                    }
+                }
+            }
+        }
+        val bounds = listOf(-50, -25, 0, 25, 50).map { cents ->
+            val node = composeRule.onNodeWithTag("cents_ruler_label_$cents", useUnmergedTree = true)
+                .assertIsDisplayed()
+            node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { getResults ->
+                val results = mutableListOf<TextLayoutResult>()
+                assertTrue(getResults(results))
+                assertFalse(results.single().hasVisualOverflow)
+            }
+            node.fetchSemanticsNode().boundsInRoot
+        }
+        bounds.zipWithNext().forEach { (left, right) -> assertTrue(left.right <= right.left) }
+    }
+
+    @Test
+    fun tuningChooserHintMeetsTextContrastInLightTheme() {
+        val viewModel = TunerViewModel(ApplicationProvider.getApplicationContext())
+        var background = Color.Unspecified
+        composeRule.setContent {
+            TuneItAllTheme(darkTheme = false) {
+                background = MaterialTheme.colorScheme.background
+                TunerScreen(
+                    state = viewModel.uiState.value,
+                    onModeSelected = {}, onStringSelected = {}, onToggleFavorite = {},
+                    onOpenLibrary = {}, onOpenSettings = {}, onOpenApplicationSettings = {},
+                )
+            }
+        }
+        composeRule.onNodeWithText("Choose tuning", useUnmergedTree = true)
+            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { getResults ->
+                val results = mutableListOf<TextLayoutResult>()
+                assertTrue(getResults(results))
+                val foreground = results.single().layoutInput.style.color
+                val lighter = maxOf(foreground.luminance(), background.luminance())
+                val darker = minOf(foreground.luminance(), background.luminance())
+                assertTrue((lighter + 0.05f) / (darker + 0.05f) >= 4.5f)
+            }
     }
 }

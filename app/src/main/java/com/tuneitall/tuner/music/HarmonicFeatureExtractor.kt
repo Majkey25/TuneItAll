@@ -36,11 +36,19 @@ internal data class HarmonicFrame(
 internal class StreamingHarmonicFeatureExtractor(
     private val sampleRate: Int,
     maxDurationSeconds: Int = MAX_ANALYSIS_SECONDS,
+    private val isCancelled: () -> Boolean = { false },
 ) {
-    private val window = FloatArray(FFT_SIZE)
-    private val real = DoubleArray(FFT_SIZE)
-    private val imaginary = DoubleArray(FFT_SIZE)
-    private val magnitudes = DoubleArray(FFT_SIZE / 2 + 1)
+    init {
+        require(sampleRate in 8_000..192_000)
+    }
+
+    private val fftSize = Integer.highestOneBit((sampleRate * MIN_WINDOW_SECONDS).roundToInt() - 1) shl 1
+    private val windowSize = minOf(fftSize, (sampleRate * MAX_WINDOW_SECONDS).roundToInt())
+    private val hopSize = windowSize / 2
+    private val window = FloatArray(windowSize)
+    private val real = DoubleArray(fftSize)
+    private val imaginary = DoubleArray(fftSize)
+    private val magnitudes = DoubleArray(fftSize / 2 + 1)
     private val rawFrames = mutableListOf<RawFrame>()
     private val maxSamples: Long
     private var fill = 0
@@ -51,7 +59,6 @@ internal class StreamingHarmonicFeatureExtractor(
     private var finishedFrames: List<HarmonicFrame>? = null
 
     init {
-        require(sampleRate in 8_000..192_000)
         require(maxDurationSeconds in 1..MAX_ANALYSIS_SECONDS)
         maxSamples = Math.multiplyExact(sampleRate.toLong(), maxDurationSeconds.toLong())
     }
@@ -60,32 +67,35 @@ internal class StreamingHarmonicFeatureExtractor(
         get() = totalSamples * MILLIS_PER_SECOND / sampleRate
 
     fun accept(samples: FloatArray) {
+        checkAnalysisCancellation(isCancelled)
         check(finishedFrames == null) { "Song analysis already finished" }
         require(samples.all(Float::isFinite))
         require(totalSamples + samples.size <= maxSamples) { "Song analysis exceeds the duration limit" }
         totalSamples += samples.size
         var sourceOffset = 0
         while (sourceOffset < samples.size) {
-            val count = minOf(FFT_SIZE - fill, samples.size - sourceOffset)
+            checkAnalysisCancellation(isCancelled)
+            val count = minOf(windowSize - fill, samples.size - sourceOffset)
             samples.copyInto(window, fill, sourceOffset, sourceOffset + count)
             fill += count
             sourceOffset += count
-            if (fill == FFT_SIZE) {
+            if (fill == windowSize) {
                 rawFrames += extractFrame(frameStart * MILLIS_PER_SECOND / sampleRate)
-                window.copyInto(window, 0, HOP_SIZE, FFT_SIZE)
-                fill = FFT_SIZE - HOP_SIZE
-                frameStart += HOP_SIZE
+                window.copyInto(window, 0, hopSize, windowSize)
+                fill = windowSize - hopSize
+                frameStart += hopSize
             }
         }
     }
 
     fun finish(): List<HarmonicFrame> {
+        checkAnalysisCancellation(isCancelled)
         finishedFrames?.let { return it }
-        if (rawFrames.isEmpty() && fill >= MIN_PARTIAL_WINDOW) {
+        if (fill >= windowSize / 2) {
             window.fill(0f, fill)
-            rawFrames += extractFrame(0L)
+            rawFrames += extractFrame(frameStart * MILLIS_PER_SECOND / sampleRate)
         }
-        if (rawFrames.isEmpty()) return emptyList()
+        if (rawFrames.isEmpty()) return emptyList<HarmonicFrame>().also { finishedFrames = it }
 
         val tuningCents = if (tuningSin == 0.0 && tuningCos == 0.0) {
             0.0
@@ -95,16 +105,24 @@ internal class StreamingHarmonicFeatureExtractor(
         }
         val starts = LongArray(rawFrames.size)
         val noteFrames = rawFrames.mapIndexedTo(ArrayList(rawFrames.size)) { index, frame ->
+            checkAnalysisCancellation(isCancelled)
             starts[index] = frame.startMillis
             collapseToNotes(frame.highResolution, tuningCents).also { frame.highResolution = EMPTY_FEATURES }
         }
         val standardized = standardize(noteFrames)
         noteFrames.clear()
-        val onsetStrengths = FloatArray(standardized.size) { onsetStrength(standardized, it) }
-        val harmonicFrames = standardized.mapTo(ArrayList(standardized.size), ::harmonicSalience)
+        val onsetStrengths = FloatArray(standardized.size) {
+            checkAnalysisCancellation(isCancelled)
+            onsetStrength(standardized, it)
+        }
+        val harmonicFrames = standardized.mapTo(ArrayList(standardized.size)) {
+            checkAnalysisCancellation(isCancelled)
+            harmonicSalience(it)
+        }
         val chordChromas = ArrayList<FloatArray>(standardized.size)
         val bassChromas = ArrayList<FloatArray>(standardized.size)
         standardized.indices.forEach { index ->
+            checkAnalysisCancellation(isCancelled)
             val harmonicWeight = (
                 (HARMONIC_BLEND_MAX_FLATNESS - rawFrames[index].spectralFlatness) /
                     (HARMONIC_BLEND_MAX_FLATNESS - HARMONIC_BLEND_MIN_FLATNESS)
@@ -125,6 +143,7 @@ internal class StreamingHarmonicFeatureExtractor(
         harmonicFrames.clear()
 
         val result = starts.indices.map { index ->
+            checkAnalysisCancellation(isCancelled)
             val chroma = chordFrames[index]
             HarmonicFrame(
                 startMillis = starts[index],
@@ -147,17 +166,20 @@ internal class StreamingHarmonicFeatureExtractor(
         for (index in window.indices) {
             val sample = window[index].toDouble()
             squareTotal += sample * sample
-            val hann = 0.5 - 0.5 * cos(2.0 * PI * index / (FFT_SIZE - 1))
+            val hann = 0.5 - 0.5 * cos(2.0 * PI * index / (windowSize - 1))
             real[index] = sample * hann
             imaginary[index] = 0.0
         }
         val rms = sqrt(squareTotal / window.size)
         if (rms < SILENCE_RMS) return RawFrame(startMillis, FloatArray(HIGH_RESOLUTION_BIN_COUNT), 1f)
 
+        real.fill(0.0, windowSize)
+        imaginary.fill(0.0, windowSize)
+
         fft(real, imaginary)
         val salience = FloatArray(HIGH_RESOLUTION_BIN_COUNT)
-        val firstBin = (MIN_FREQUENCY_HERTZ * FFT_SIZE / sampleRate).toInt().coerceAtLeast(1)
-        val lastBin = (MAX_FREQUENCY_HERTZ * FFT_SIZE / sampleRate).toInt().coerceAtMost(FFT_SIZE / 2 - 2)
+        val firstBin = (MIN_FREQUENCY_HERTZ * fftSize / sampleRate).toInt().coerceAtLeast(1)
+        val lastBin = (MAX_FREQUENCY_HERTZ * fftSize / sampleRate).toInt().coerceAtMost(fftSize / 2 - 2)
         for (bin in firstBin - 1..lastBin + 1) magnitudes[bin] = hypot(real[bin], imaginary[bin])
         var magnitudeTotal = 0.0
         var logMagnitudeTotal = 0.0
@@ -181,7 +203,7 @@ internal class StreamingHarmonicFeatureExtractor(
             } else {
                 (0.5 * (previous - next) / denominator).coerceIn(-0.5, 0.5)
             }
-            val frequency = (bin + offset) * sampleRate / FFT_SIZE
+            val frequency = (bin + offset) * sampleRate / fftSize
             if (frequency !in MIN_FREQUENCY_HERTZ..MAX_FREQUENCY_HERTZ) continue
             val midi = 69.0 + SEMITONES_PER_OCTAVE * log2(frequency / 440.0)
             val highResolutionIndex = ((midi - MIN_MIDI) * BINS_PER_SEMITONE).roundToInt()
@@ -219,6 +241,7 @@ internal class StreamingHarmonicFeatureExtractor(
         for (index in start..end) addFrame(frames[index], sums, squareSums, 1.0)
 
         return frames.indices.mapTo(ArrayList(frames.size)) { frameIndex ->
+            checkAnalysisCancellation(isCancelled)
             val count = end - start + 1
             val standardized = FloatArray(NOTE_COUNT) { noteIndex ->
                 val value = frames[frameIndex][noteIndex].toDouble()
@@ -250,6 +273,7 @@ internal class StreamingHarmonicFeatureExtractor(
         for (index in start..end) addFrame(frames[index], sums, 1f)
 
         return frames.indices.mapTo(ArrayList(frames.size)) { frameIndex ->
+            checkAnalysisCancellation(isCancelled)
             val count = end - start + 1
             val average = FloatArray(sums.size) { sums[it] / count }
             normalize(average)
@@ -269,7 +293,7 @@ internal class StreamingHarmonicFeatureExtractor(
     }
 
     private fun framesForHalfWindow(seconds: Double): Int =
-        (seconds * sampleRate / HOP_SIZE / 2.0).roundToInt().coerceAtLeast(1)
+        (seconds * sampleRate / hopSize / 2.0).roundToInt().coerceAtLeast(1)
 
     private data class RawFrame(
         val startMillis: Long,
@@ -385,9 +409,8 @@ internal fun fft(real: DoubleArray, imaginary: DoubleArray) {
     }
 }
 
-private const val FFT_SIZE = 8_192
-private const val HOP_SIZE = 4_096
-private const val MIN_PARTIAL_WINDOW = FFT_SIZE / 2
+private const val MIN_WINDOW_SECONDS = 8192.0 / 48000.0
+private const val MAX_WINDOW_SECONDS = 8192.0 / 44100.0
 private const val MIN_MIDI = 21
 private const val MAX_MIDI = 108
 private const val NOTE_COUNT = MAX_MIDI - MIN_MIDI + 1

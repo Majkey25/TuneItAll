@@ -52,12 +52,13 @@ class TunerEngine {
             TunerMode.CHROMATIC -> applyHysteresis(detected, hertz, referencePitch)
         }
         val cents = MusicMath.cents(hertz, MusicMath.frequency(target, referencePitch))
+        val observedCents = MusicMath.cents(estimate.hertz, MusicMath.frequency(target, referencePitch))
         return TunerReading(
             detected = detected,
             target = target,
             hertz = hertz,
             cents = cents,
-            inTune = abs(cents) <= settings.inTuneCents,
+            inTune = abs(cents) <= settings.inTuneCents && abs(observedCents) <= settings.inTuneCents,
         )
     }
 

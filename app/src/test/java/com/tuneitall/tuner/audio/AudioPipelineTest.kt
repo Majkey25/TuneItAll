@@ -147,27 +147,31 @@ class AudioPipelineTest {
     }
 
     @Test
-    fun `two sample decimation averages without PCM overflow`() {
-        val output = ShortArray(3)
+    fun `two sample filtered decimation preserves a constant without PCM overflow`() {
+        val output = DoubleArray(256)
 
         decimate(
-            shortArrayOf(Short.MAX_VALUE, Short.MAX_VALUE, 1, 3, -5, -1),
+            ShortArray(512) { Short.MAX_VALUE },
             output,
+            48_000,
+            1_000.0,
         )
 
-        assertContentEquals(shortArrayOf(Short.MAX_VALUE, 2, -3), output)
+        assertTrue(output.all { abs(it - Short.MAX_VALUE) < 0.00001 })
     }
 
     @Test
-    fun `four sample decimation averages without PCM overflow`() {
-        val output = ShortArray(2)
+    fun `four sample filtered decimation preserves sub PCM precision`() {
+        val output = DoubleArray(256)
 
         decimate(
-            shortArrayOf(Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, -8, -4, 4, 8),
+            ShortArray(1024) { if (it % 4 == 0) 1 else 0 },
             output,
+            48_000,
+            150.0,
         )
 
-        assertContentEquals(shortArrayOf(Short.MAX_VALUE, 0), output)
+        assertEquals(0.25, output.last(), 0.002)
     }
 
     @Test
