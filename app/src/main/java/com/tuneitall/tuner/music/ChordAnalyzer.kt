@@ -67,7 +67,9 @@ internal fun analyzeChords(
     frames: List<HarmonicFrame>,
     mode: SongAnalysisMode,
     songEndMillis: Long,
+    isCancelled: () -> Boolean = { false },
 ): List<ChordEvent> {
+    checkAnalysisCancellation(isCancelled)
     require(mode != SongAnalysisMode.NOTES)
     if (frames.isEmpty() || songEndMillis <= 0L) return emptyList()
     val chords = if (mode == SongAnalysisMode.POWER) {
@@ -80,6 +82,7 @@ internal fun analyzeChords(
         }
     }
     val states = viterbi(frames.size, chords.size + 1, frames) { frameIndex ->
+        checkAnalysisCancellation(isCancelled)
         emissionScores(frames, frameIndex, chords, mode)
     }
     val events = mutableListOf<ChordEvent>()
@@ -93,7 +96,7 @@ internal fun analyzeChords(
         if (activeState == 0 || endMillis <= activeStart) return
         val sourceChord = chords[activeState - 1]
         val segment = frames.subList(activeFrameStart, endFrame)
-        val bass = detectInversionBass(sourceChord, segment)
+        val bass = detectInversionBass(sourceChord, segment, endMillis)
         val chord = sourceChord.copy(bassPitchClass = bass)
         val confidence = (confidenceTotal / confidenceCount).coerceIn(0.0, 1.0)
         val spectralFlatness = segment.sumOf { it.spectralFlatness.toDouble() } / segment.size
@@ -107,11 +110,15 @@ internal fun analyzeChords(
     }
 
     for (index in 1 until states.size) {
+        checkAnalysisCancellation(isCancelled)
         val state = states[index]
         if (state != activeState) {
-            close(frames[index].startMillis, index)
+            // Half-overlapping windows represent their centers; a change lies between adjacent centers.
+            val boundary = (frames[index].startMillis +
+                (frames[index].startMillis - frames[index - 1].startMillis) / 2).coerceAtMost(songEndMillis)
+            close(boundary, index)
             activeState = state
-            activeStart = frames[index].startMillis
+            activeStart = boundary
             activeFrameStart = index
             confidenceTotal = 0.0
             confidenceCount = 0
@@ -120,7 +127,118 @@ internal fun analyzeChords(
         confidenceCount++
     }
     close(songEndMillis, frames.size)
-    return mergeChordGaps(events.filter { it.durationMillis >= MIN_EVENT_MILLIS })
+    val accepted = mergeChordGaps(events.filter { it.durationMillis >= MIN_EVENT_MILLIS })
+    return if (mode == SongAnalysisMode.CHORDS) refineChordQualities(accepted, frames, isCancelled) else accepted
+}
+
+private data class QualitySegment(var start: Int, var end: Int, val state: Int)
+
+private fun refineChordQualities(
+    events: List<ChordEvent>,
+    frames: List<HarmonicFrame>,
+    isCancelled: () -> Boolean,
+): List<ChordEvent> = buildList {
+    var eventIndex = 0
+    var frameIndex = 0
+    fun boundary(index: Int): Long = if (index == 0) frames.first().startMillis else {
+        frames[index].startMillis + (frames[index].startMillis - frames[index - 1].startMillis) / 2
+    }
+    while (eventIndex < events.size) {
+        checkAnalysisCancellation(isCancelled)
+        val firstEvent = eventIndex
+        val start = events[eventIndex].startMillis
+        val root = events[eventIndex].chord.rootPitchClass
+        var end = events[eventIndex++].endMillis
+        while (eventIndex < events.size && events[eventIndex].startMillis == end &&
+            events[eventIndex].chord.rootPitchClass == root
+        ) end = events[eventIndex++].endMillis
+        while (frameIndex < frames.size && boundary(frameIndex) < start) frameIndex++
+        val firstFrame = frameIndex
+        while (frameIndex < frames.size && boundary(frameIndex) < end) frameIndex++
+        val segmentFrames = frames.subList(firstFrame, frameIndex)
+        if (segmentFrames.isEmpty()) {
+            addAll(events.subList(firstEvent, eventIndex))
+            continue
+        }
+        val qualities = instructionalChordQualities.map { Chord(root, it) }
+        var baselineEvent = firstEvent
+        val baselineStates = IntArray(segmentFrames.size) { index ->
+            val time = boundary(firstFrame + index)
+            while (baselineEvent + 1 < eventIndex && time >= events[baselineEvent].endMillis) baselineEvent++
+            qualities.indexOfFirst { it.quality == events[baselineEvent].chord.quality } + 1
+        }
+        val states = viterbi(segmentFrames.size, qualities.size + 1, segmentFrames, qualities, baselineStates) { index ->
+            checkAnalysisCancellation(isCancelled)
+            val local = DoubleArray(qualities.size) { qualityEmission(segmentFrames, index, qualities[it]) }
+            val baseline = baselineStates[index] - 1
+            if (local[baseline] == INVALID_EMISSION) local[baseline] = chordEmission(segmentFrames[index], qualities[baseline])
+            val best = local.max()
+            DoubleArray(qualities.size + 1) { state ->
+                if (state == 0) Double.NEGATIVE_INFINITY else {
+                    val score = local[state - 1]
+                    if (best - score <= CONTEXT_TIE_MARGIN) score + CONTEXT_TIE_WEIGHT * chordEmission(
+                        segmentFrames[index], qualities[state - 1], segmentFrames[index].contextChroma,
+                    ) else score
+                }
+            }
+        }
+        fun time(index: Int): Long = when (index) {
+            0 -> start
+            states.size -> end
+            else -> boundary(firstFrame + index)
+        }
+        val segments = mutableListOf<QualitySegment>()
+        states.forEachIndexed { index, state ->
+            if (segments.lastOrNull()?.state == state) segments.last().end = index + 1
+            else segments += QualitySegment(index, index + 1, state)
+        }
+        var index = 0
+        while (index < segments.size && segments.size > 1) {
+            checkAnalysisCancellation(isCancelled)
+            val segment = segments[index]
+            if (time(segment.end) - time(segment.start) >= MIN_EVENT_MILLIS) {
+                index++
+                continue
+            }
+            val neighbor = listOf(index - 1, index + 1).filter { it in segments.indices }.maxBy { candidate ->
+                val chord = qualities[segments[candidate].state - 1]
+                (segment.start until segment.end).sumOf { qualityEmission(segmentFrames, it, chord) }
+            }
+            segments[neighbor].start = minOf(segments[neighbor].start, segment.start)
+            segments[neighbor].end = maxOf(segments[neighbor].end, segment.end)
+            segments.removeAt(index)
+            index = maxOf(0, index - 1)
+            if (index + 1 < segments.size && segments[index].state == segments[index + 1].state) {
+                segments[index].end = segments.removeAt(index + 1).end
+            }
+        }
+        for (segment in segments) {
+            val segmentStart = time(segment.start)
+            val segmentEnd = time(segment.end)
+            val confidence = events.subList(firstEvent, eventIndex).sumOf { event ->
+                val overlap = (minOf(event.endMillis, segmentEnd) - maxOf(event.startMillis, segmentStart)).coerceAtLeast(0L)
+                overlap * event.confidence
+            } / (segmentEnd - segmentStart)
+            val chord = qualities[segment.state - 1]
+            add(ChordEvent(segmentStart, segmentEnd, chord.copy(bassPitchClass = detectInversionBass(
+                chord, segmentFrames.subList(segment.start, segment.end), segmentEnd,
+            )), confidence.coerceIn(0.0, 1.0)))
+        }
+    }
+}
+
+private fun qualityEmission(frames: List<HarmonicFrame>, index: Int, chord: Chord): Double {
+    if (!hasStableDefiningIntervals(frames, index, chord)) return INVALID_EMISSION
+    val frame = frames[index]
+    val score = chordEmission(frame, chord)
+    val intervals = DEFINING_INTERVALS.getValue(chord.quality)
+    val observed = hasDefiningIntervals(frame.observedChroma, chord, intervals) &&
+        ((index > 0 && hasDefiningIntervals(frames[index - 1].observedChroma, chord, intervals)) ||
+            (index < frames.lastIndex && hasDefiningIntervals(frames[index + 1].observedChroma, chord, intervals)))
+    if (intervals.isNotEmpty() && !observed) return INVALID_EMISSION
+    return if (score > 0.0 && observed) {
+        score + QUALITY_PRIOR_PENALTY.getValue(chord.quality)
+    } else score
 }
 
 private fun emissionScores(
@@ -132,6 +250,16 @@ private fun emissionScores(
     val frame = frames[frameIndex]
     val localScores = DoubleArray(chords.size) { chordIndex ->
         stateConfidence(frames, frameIndex, chords, mode, chordIndex + 1)
+    }
+    // Resolve the root first so extension evidence cannot turn a chord into its relative chord.
+    val root = chords[localScores.indices.maxBy(localScores::get)].rootPitchClass
+    chords.forEachIndexed { index, chord ->
+        if (chord.rootPitchClass == root && localScores[index] > 0.0) {
+            val notes = chord.pitchClasses.map(frame.chroma::get)
+            val evidence = notes.min() / notes.max().coerceAtLeast(MIN_DEFINING_SALIENCE)
+            localScores[index] = (localScores[index] + QUALITY_PRIOR_PENALTY.getValue(chord.quality) * evidence)
+                .coerceAtMost(1.0)
+        }
     }
     val bestLocal = localScores.max()
     return DoubleArray(chords.size + 1).also { scores ->
@@ -166,6 +294,7 @@ private fun stateConfidence(
 private fun chordEmission(frame: HarmonicFrame, chord: Chord, chroma: FloatArray = frame.chroma): Double {
     if (frame.tonalStrength < MIN_TONAL_STRENGTH) return 0.0
     val inChord = chord.pitchClasses.map { chroma[it].toDouble() }
+    if (inChord.count { it >= chroma.max() * MIN_CHORD_NOTE_RATIO && it > 0.0 } < 2) return 0.0
     val outOfChord = chroma.indices.filterNot(chord.pitchClasses::contains).map { chroma[it].toDouble() }
     val inAverage = inChord.average()
     val minimum = inChord.min()
@@ -194,42 +323,61 @@ private fun hasDefiningIntervals(chroma: FloatArray, chord: Chord, intervals: Se
     return intervals.all { chroma[(chord.rootPitchClass + it) % PITCH_CLASS_COUNT] >= threshold }
 }
 
-private fun detectInversionBass(chord: Chord, frames: List<HarmonicFrame>): Int? {
-    var previous = -1
-    var consecutive = 0
-    frames.forEach { frame ->
+private fun detectInversionBass(chord: Chord, frames: List<HarmonicFrame>, endMillis: Long): Int? {
+    val supportedMillis = LongArray(PITCH_CLASS_COUNT)
+    val supportedFrames = IntArray(PITCH_CLASS_COUNT)
+    frames.forEachIndexed { index, frame ->
         val candidate = chord.pitchClasses.maxBy(frame.bassChroma::get)
         val value = frame.bassChroma[candidate]
         val root = frame.bassChroma[chord.rootPitchClass]
         if (candidate != chord.rootPitchClass && value >= MIN_INVERSION_SALIENCE && value >= INVERSION_ROOT_RATIO * root) {
-            consecutive = if (candidate == previous) consecutive + 1 else 1
-            previous = candidate
-            if (consecutive >= MIN_INVERSION_FRAMES) return candidate
-        } else {
-            previous = -1
-            consecutive = 0
+            supportedMillis[candidate] += (frames.getOrNull(index + 1)?.startMillis ?: endMillis) - frame.startMillis
+            supportedFrames[candidate]++
         }
     }
-    return null
+    val dominant = supportedMillis.indices.maxBy(supportedMillis::get)
+    // A passing bass must not label the entire segment as an inversion.
+    return dominant.takeIf {
+        supportedFrames[it] >= MIN_INVERSION_FRAMES &&
+            supportedMillis[it] * 2 > endMillis - frames.first().startMillis
+    }
 }
 
 internal fun viterbi(emissions: List<DoubleArray>, frames: List<HarmonicFrame>): IntArray {
     require(emissions.size == frames.size)
     val stateCount = emissions.first().size
     require(stateCount >= 2 && emissions.all { it.size == stateCount })
-    return viterbi(emissions.size, stateCount, frames, emissions::get)
+    return viterbi(emissions.size, stateCount, frames, emissionAt = emissions::get)
 }
 
 private inline fun viterbi(
     frameCount: Int,
     stateCount: Int,
     frames: List<HarmonicFrame>,
+    chords: List<Chord> = emptyList(),
+    baselineStates: IntArray = IntArray(0),
     emissionAt: (Int) -> DoubleArray,
 ): IntArray {
+    val qualityTransitions = List(stateCount) { state ->
+        if (state == 0 || chords.isEmpty()) emptyList() else {
+            val source = chords[state - 1]
+            chords.indices.filter { it != state - 1 && chords[it].rootPitchClass == source.rootPitchClass }.map { index ->
+                val from = source.pitchClasses.toSet()
+                val to = chords[index].pitchClasses.toSet()
+                val distance = ((from - to).size + (to - from).size).toDouble() / (from + to).size
+                (index + 1) to CHORD_TRANSITION * distance
+            }
+        }
+    }
     val backPointers = Array(frameCount) { ShortArray(stateCount) }
     var previous = emissionAt(0)
+    if (baselineStates.isNotEmpty()) previous.indices.forEach { state ->
+        if (state != baselineStates[0]) previous[state] -= MIN_SCORE_MARGIN
+    }
+    var previousInstantState = previous.indices.maxBy(previous::get)
     for (frameIndex in 1 until frameCount) {
         val emissions = emissionAt(frameIndex)
+        val instantState = emissions.indices.maxBy(emissions::get)
         val transitionScale = (1.0 - ONSET_TRANSITION_DISCOUNT * frames[frameIndex].onsetStrength)
             .coerceIn(MIN_TRANSITION_SCALE, 1.0)
         val current = DoubleArray(stateCount)
@@ -257,22 +405,37 @@ private inline fun viterbi(
         backPointers[frameIndex][0] = bestPrevious.toShort()
 
         for (state in 1 until stateCount) {
+            val deviation = baselineStates.isNotEmpty() && state != baselineStates[frameIndex]
+            val entryPenalty = if (deviation) MIN_SCORE_MARGIN else 0.0
+            val stayPenalty = if (deviation && state == baselineStates[frameIndex - 1]) MIN_SCORE_MARGIN else 0.0
             var bestPrevious = state
-            var bestScore = previous[state]
-            val noChordToChord = previous[0] - noChordPenalty
+            var bestScore = previous[state] - stayPenalty
+            val noChordToChord = previous[0] - noChordPenalty - entryPenalty
             if (noChordToChord > bestScore) {
                 bestPrevious = 0
                 bestScore = noChordToChord
             }
             val otherChord = if (bestChord == state) secondChord else bestChord
-            if (otherChord >= 0 && previous[otherChord] - chordPenalty > bestScore) {
+            if (otherChord >= 0 && previous[otherChord] - chordPenalty - entryPenalty > bestScore) {
                 bestPrevious = otherChord
-                bestScore = previous[otherChord] - chordPenalty
+                bestScore = previous[otherChord] - chordPenalty - entryPenalty
+            }
+            for ((candidate, cost) in qualityTransitions[state]) {
+                if (previousInstantState == 0 || instantState == 0 ||
+                    chords[state - 1].rootPitchClass != chords[previousInstantState - 1].rootPitchClass ||
+                    chords[state - 1].rootPitchClass != chords[instantState - 1].rootPitchClass
+                ) continue
+                val score = previous[candidate] - cost * transitionScale - entryPenalty
+                if (score > bestScore) {
+                    bestPrevious = candidate
+                    bestScore = score
+                }
             }
             current[state] = bestScore + emissions[state]
             backPointers[frameIndex][state] = bestPrevious.toShort()
         }
         previous = current
+        previousInstantState = instantState
     }
     val states = IntArray(frameCount)
     states[states.lastIndex] = previous.indices.maxBy(previous::get)
@@ -317,6 +480,7 @@ private const val BASS_ROOT_WEIGHT = 0.10
 private const val OUT_OF_CHORD_WEIGHT = 0.35
 private const val EXTENSION_BONUS = 0.15
 private const val MIN_DEFINING_SALIENCE = 0.18f
+private const val MIN_CHORD_NOTE_RATIO = 0.10
 private const val DEFINING_OUTSIDE_RATIO = 1.6f
 private const val MIN_INVERSION_SALIENCE = 0.10f
 private const val INVERSION_ROOT_RATIO = 1.2f

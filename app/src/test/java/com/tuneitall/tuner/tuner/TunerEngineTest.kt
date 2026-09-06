@@ -95,6 +95,27 @@ class TunerEngineTest {
     }
 
     @Test
+    fun `a smoothed crossing never confirms an out of tune measurement`() {
+        val engine = TunerEngine()
+        val confirmation = InTuneConfirmationTracker()
+        val confirmed = (0..60).any { index ->
+            val cents = if (index % 2 == 0) 10.0 else -10.0
+            val reading = engine.update(
+                estimate(440.0 * 2.0.pow(cents / 1200.0)),
+                TunerMode.CHROMATIC, standard, 0, reference, settings,
+            )
+            confirmation.update(reading.target, reading.inTune, index * 43L, 900L)
+        }
+
+        assertFalse(confirmed, "Alternating +/-10 cents never enters the tuning tolerance")
+        repeat(30) { index ->
+            val reading = engine.update(estimate(440.0), TunerMode.CHROMATIC, standard, 0, reference, settings)
+            confirmation.update(reading.target, reading.inTune, 3_000L + index * 43L, 900L)
+        }
+        assertTrue(confirmation.isConfirmed)
+    }
+
+    @Test
     fun `eighty percent needle stability damps a thirty cent jump`() {
         val engine = TunerEngine()
         val input = 440.0 * 2.0.pow(30.0 / 1200.0)

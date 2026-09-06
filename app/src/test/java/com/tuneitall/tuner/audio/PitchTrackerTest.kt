@@ -15,7 +15,8 @@ class PitchTrackerTest {
 
         val result = tracker.update(frame(880.0, rms = 0.2), settings)
 
-        assertEquals(440.0, requireNotNull(result).hertz, 1.0)
+        assertNull(result, "A retained pitch is not a fresh measurement")
+        assertEquals(440.0, requireNotNull(tracker.update(frame(440.0, rms = 0.2), settings)).hertz, 1.0)
     }
 
     @Test
@@ -25,7 +26,8 @@ class PitchTrackerTest {
 
         val result = tracker.update(frame(880.0, rms = 0.1), settings)
 
-        assertEquals(82.41, requireNotNull(result).hertz, 0.01)
+        assertNull(result, "Chime must not renew the guitar measurement")
+        assertEquals(82.41, requireNotNull(tracker.update(frame(82.41, rms = 0.0002), settings)).hertz, 0.01)
     }
 
     @Test
@@ -104,7 +106,8 @@ class PitchTrackerTest {
         repeat(5) { retained.update(frame(82.41, rms = 0.0002), settings) }
         repeat(7) { assertNull(retained.update(emptyFrame(unvoicedProbability = 1.0), settings)) }
 
-        assertEquals(82.41, requireNotNull(retained.update(frame(880.0, rms = 0.0001), settings)).hertz, 0.01)
+        assertNull(retained.update(frame(880.0, rms = 0.0001), settings))
+        assertEquals(82.41, requireNotNull(retained.update(frame(82.41, rms = 0.0001), settings)).hertz, 0.01)
 
         val released = PitchTracker()
         repeat(5) { released.update(frame(82.41, rms = 0.0002), settings) }

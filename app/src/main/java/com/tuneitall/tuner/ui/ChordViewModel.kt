@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class ChordTab {
     LIBRARY,
@@ -148,34 +149,47 @@ class ChordViewModel internal constructor(
         mutableUiState.update {
             it.copy(analyzing = true, analysisProgress = 0, events = emptyList(), analysisError = null)
         }
-        analysisJob = viewModelScope.launch(Dispatchers.IO) {
+        analysisJob = viewModelScope.launch {
             val job = currentCoroutineContext()[Job]
             try {
-                val resolvedName = audioDisplayName(getApplication(), uri)
-                if (generation == analysisGeneration) {
-                    mutableUiState.update { state -> state.copy(fileName = resolvedName) }
-                }
-                val result = decoder.analyze(
-                    uri = uri,
-                    mode = request.analysisMode,
-                    noteRange = request.noteRange,
-                    isCancelled = { job?.isActive == false },
-                    onProgress = { progress ->
-                        if (generation == analysisGeneration) {
-                            mutableUiState.update { state -> state.copy(analysisProgress = progress) }
-                        }
-                    },
-                )
+                val resolvedName = withContext(Dispatchers.IO) { audioDisplayName(getApplication(), uri) }
                 if (generation != analysisGeneration) return@launch
-                mutableUiState.update { state ->
-                    val next = state.copy(
-                        analyzing = false,
-                        analysisProgress = 100,
-                        events = result.events,
-                        durationMillis = maxOf(state.durationMillis, result.durationMillis),
-                        analysisError = if (result.events.isEmpty()) SongChordError.NO_CHORDS else null,
+                mutableUiState.update { state -> state.copy(fileName = resolvedName) }
+                val result = withContext(Dispatchers.IO) {
+                    decoder.analyze(
+                        uri = uri,
+                        mode = request.analysisMode,
+                        noteRange = request.noteRange,
+                        isCancelled = { job?.isActive == false },
+                        onProgress = { progress ->
+                            launch(Dispatchers.Main.immediate) {
+                                if (generation == analysisGeneration) {
+                                    mutableUiState.update { state -> state.copy(analysisProgress = progress) }
+                                }
+                            }
+                        },
                     )
-                    next.copy(arrangement = buildArrangement(next))
+                }
+                if (generation != analysisGeneration) return@launch
+                while (true) {
+                    val arrangementState = mutableUiState.value.copy(events = result.events)
+                    val arrangement = withContext(Dispatchers.IO) { buildArrangement(arrangementState) }
+                    if (generation != analysisGeneration) return@launch
+                    val current = mutableUiState.value
+                    if (current.transposeSemitones != arrangementState.transposeSemitones ||
+                        current.arrangementMode != arrangementState.arrangementMode
+                    ) continue
+                    mutableUiState.update { state ->
+                        state.copy(
+                            analyzing = false,
+                            analysisProgress = 100,
+                            events = result.events,
+                            durationMillis = maxOf(state.durationMillis, result.durationMillis),
+                            arrangement = arrangement,
+                            analysisError = if (result.events.isEmpty()) SongChordError.NO_CHORDS else null,
+                        )
+                    }
+                    break
                 }
             } catch (_: CancellationException) {
                 Unit

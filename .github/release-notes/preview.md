@@ -1,6 +1,13 @@
-Intoniva `v0.3.0-alpha.18` testing build.
+Intoniva `v0.3.0-alpha.19` testing build.
 
 Highlights:
+
+- More precise quiet-note tuning, with a low-bass settling safeguard.
+- Fixed plucked Amadd9 and rapid C–Cmaj7–C regression cases. Offline quality
+  decoding preserves the existing root boundaries and does not invent higher confidence.
+- Consistent song timing across sample rates, final-window analysis, safer stereo
+  downmixing and cancellation throughout processing.
+- Neutral out-of-tune indicator and readable large-font ruler labels.
 
 - More accurate offline song transcription: common chord qualities,
   inversions, Classic/Power/Notes modes, instrument ranges, transposition, and

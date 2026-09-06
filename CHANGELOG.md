@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0-alpha.19 — 2026-09-06
+
+- Improve quiet-note pitch precision without increasing confidence or forcing the selected string's frequency.
+- Preserve bass precision when narrow-filter settling would leave too little usable audio.
+- Fix plucked Amadd9 recognition and rapid same-root major/seventh changes with a separate offline quality-decoding pass.
+- Keep root boundaries, unlabelled spans and confidence from the original root analysis.
+- Use consistent song-analysis timing across sample rates and include the final partial window.
+- Avoid false tuning confirmation from smoothed crossings; improve microphone cadence and stereo phase-cancellation handling.
+- Cancel analysis throughout decoding and feature processing; prevent stale results after replacing a song.
+- Improve tuner indicator meaning, light-theme text contrast and large-font ruler labels.
+
+Song recognition remains an estimate, particularly in dense mixes and ambiguous voicings.
+
 ## 0.3.0-alpha.18 — 2026-09-05
 
 - Expand offline song transcription to full common chord qualities, inversions,

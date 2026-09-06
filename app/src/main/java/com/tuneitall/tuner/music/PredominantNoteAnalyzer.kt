@@ -6,16 +6,19 @@ internal fun analyzeNotes(
     frames: List<HarmonicFrame>,
     range: NoteRange,
     songEndMillis: Long,
+    isCancelled: () -> Boolean = { false },
 ): List<NoteEvent> {
+    checkAnalysisCancellation(isCancelled)
     if (frames.isEmpty() || songEndMillis <= 0L) return emptyList()
     val midiRange = range.midiRange
     val emissions = frames.map { frame ->
+        checkAnalysisCancellation(isCancelled)
         DoubleArray(midiRange.count() + 1).also { scores ->
             scores[0] = NO_NOTE_BASE + NO_NOTE_TONAL_WEIGHT * (1.0 - frame.tonalStrength)
             midiRange.forEachIndexed { index, midi -> scores[index + 1] = noteEmission(frame, midi, range) }
         }
     }
-    val states = decodeNoteStates(frames, emissions, midiRange)
+    val states = decodeNoteStates(frames, emissions, midiRange, isCancelled)
     val events = mutableListOf<NoteEvent>()
     var activeState = states.first()
     var activeStart = frames.first().startMillis
@@ -33,6 +36,7 @@ internal fun analyzeNotes(
     }
 
     for (index in 1 until states.size) {
+        checkAnalysisCancellation(isCancelled)
         val state = states[index]
         if (state != activeState) {
             close(frames[index].startMillis)
@@ -63,11 +67,13 @@ private fun decodeNoteStates(
     frames: List<HarmonicFrame>,
     emissions: List<DoubleArray>,
     midiRange: IntRange,
+    isCancelled: () -> Boolean,
 ): IntArray {
     val stateCount = emissions.first().size
     val backPointers = Array(emissions.size) { ByteArray(stateCount) }
     var previous = emissions.first().copyOf()
     for (frameIndex in 1 until emissions.size) {
+        checkAnalysisCancellation(isCancelled)
         val current = DoubleArray(stateCount)
         val globalBest = previous.indices.maxBy(previous::get)
         for (state in 0 until stateCount) {

@@ -16,6 +16,7 @@ data class TempoEstimate(val bpm: Int, val confidence: Double) {
 class StreamingTempoAnalyzer internal constructor(
     private val sampleRate: Int,
     maxDurationSeconds: Int = MAX_TEMPO_ANALYSIS_SECONDS,
+    private val isCancelled: () -> Boolean = { false },
 ) {
     private val frameSize: Int
     private val onsetStrengths = mutableListOf<Double>()
@@ -33,6 +34,7 @@ class StreamingTempoAnalyzer internal constructor(
     }
 
     fun accept(samples: FloatArray) {
+        checkAnalysisCancellation(isCancelled)
         require(samples.all(Float::isFinite))
         require(totalSamples + samples.size <= maxSamples) { "Song analysis exceeds the duration limit" }
         totalSamples += samples.size
@@ -44,6 +46,7 @@ class StreamingTempoAnalyzer internal constructor(
     }
 
     fun finish(): TempoEstimate? {
+        checkAnalysisCancellation(isCancelled)
         if (totalSamples < sampleRate * MIN_ANALYSIS_SECONDS.toLong()) return null
         if (frameFill > 0) closeFrame()
         val onset = normalizedOnsetEnvelope()
@@ -56,6 +59,7 @@ class StreamingTempoAnalyzer internal constructor(
         var bestCorrelation = 0.0
         var bestScore = 0.0
         for (lag in minimumLag..maximumLag) {
+            checkAnalysisCancellation(isCancelled)
             val correlation = autocorrelation(onset, lag)
             val bpm = framesPerSecond * 60.0 / lag
             val octaveDistance = ln(bpm / PREFERRED_TEMPO_BPM) / ln(2.0)

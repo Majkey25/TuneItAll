@@ -237,8 +237,9 @@ class AudioInput(context: Context) : AutoCloseable {
         onError: (AudioInputError) -> Unit,
     ) {
         val recorder = activeSession.recorder
-        val readBuffer = ShortArray(max(windowSize / 2, MIN_READ_SIZE))
-        val assembler = AudioWindowAssembler(windowSize, minOf(DEFAULT_HOP_SIZE, max(1, windowSize / 2))) { window ->
+        val hopSize = minOf(DEFAULT_HOP_SIZE, max(1, windowSize / 2))
+        val readBuffer = ShortArray(max(hopSize, MIN_READ_SIZE))
+        val assembler = AudioWindowAssembler(windowSize, hopSize) { window ->
             onWindow(window, recorder.sampleRate)
         }
         try {

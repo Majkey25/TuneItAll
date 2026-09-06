@@ -309,7 +309,7 @@ private fun TunerTopBar(
                     Text(
                         text = stringResource(R.string.choose_tuning),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
