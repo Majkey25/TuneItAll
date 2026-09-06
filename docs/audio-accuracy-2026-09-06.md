@@ -35,7 +35,7 @@ Root-locked quality decoding, direct/derived feature consensus, linear-magnitude
 
 The retained chord implementation remains at 64.99% root agreement and 56.96% exact supported-quality agreement on the twelve-recording GuitarSet comparison described in the [previous report](audio-accuracy-2026-09-05.md). Coverage is not accuracy.
 
-## Verification and delivery gate
+## Earlier verification and delivery gate
 
 - `gradlew.bat :app:testDebugUnitTest :app:lintDebug --continue --console=plain`: 269 tests, 267 passed, two chord failures, zero skips. Lint completed successfully. The combined command correctly returned failure.
 - QA APK and instrumentation APK built successfully.
@@ -52,3 +52,5 @@ The first decoding pass retains the previous root and no-chord timeline. A secon
 Short quality excursions merge into the neighboring quality with stronger evidence, without creating holes in an already accepted root span. Output confidence remains the duration-weighted confidence of the original root path. It is not presented as a calibrated probability.
 
 The final focused run passes all 70 music tests, including isolated plucked Amadd9, rapid C–Cmaj7–C and the original recorded-rock segmentation checks. Frozen recorded quality changes from 56.9578% to 57.1889%; root agreement stays 64.9858% and coverage stays 95.7660%. These are bounded improvements, not a guarantee of perfect transcription for arbitrary mixes.
+
+Final full verification: 269/269 unit tests and 95/95 Huawei instrumentation tests passed. GitHub release and Google Play submission are recorded in the [alpha19 release report](store/2026-09-06-alpha19-release.md).
