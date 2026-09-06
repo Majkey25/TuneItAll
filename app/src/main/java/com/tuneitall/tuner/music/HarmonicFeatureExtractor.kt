@@ -20,10 +20,12 @@ internal data class HarmonicFrame(
     val tonalStrength: Float,
     val onsetStrength: Float,
     val spectralFlatness: Float = 0f,
+    val observedChroma: FloatArray = chroma,
 ) {
     init {
         require(startMillis >= 0L)
         require(chroma.size == PITCH_CLASS_COUNT)
+        require(observedChroma.size == PITCH_CLASS_COUNT)
         require(contextChroma.size == PITCH_CLASS_COUNT)
         require(bassChroma.size == PITCH_CLASS_COUNT)
         require(noteSalience.size == NOTE_COUNT)
@@ -120,9 +122,11 @@ internal class StreamingHarmonicFeatureExtractor(
             harmonicSalience(it)
         }
         val chordChromas = ArrayList<FloatArray>(standardized.size)
+        val observedChromas = ArrayList<FloatArray>(standardized.size)
         val bassChromas = ArrayList<FloatArray>(standardized.size)
         standardized.indices.forEach { index ->
             checkAnalysisCancellation(isCancelled)
+            observedChromas += collapseToChroma(standardized[index])
             val harmonicWeight = (
                 (HARMONIC_BLEND_MAX_FLATNESS - rawFrames[index].spectralFlatness) /
                     (HARMONIC_BLEND_MAX_FLATNESS - HARMONIC_BLEND_MIN_FLATNESS)
@@ -154,6 +158,7 @@ internal class StreamingHarmonicFeatureExtractor(
                 tonalStrength = tonalStrength(chroma),
                 onsetStrength = onsetStrengths[index],
                 spectralFlatness = rawFrames[index].spectralFlatness,
+                observedChroma = observedChromas[index],
             )
         }
         rawFrames.clear()

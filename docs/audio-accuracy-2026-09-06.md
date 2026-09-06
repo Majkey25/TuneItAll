@@ -1,6 +1,6 @@
 # Audio accuracy and release blockers
 
-Status on 2026-09-06: work in progress. Do not merge or publish a release while the two chord reproductions below fail. Version remains 0.3.0-alpha.18; no release tag or Play upload was created.
+Earlier checks on 2026-09-06 found two release-blocking chord failures. The final root-locked temporal decoder resolves both without changing the existing test expectations. Release candidate: 0.3.0-alpha.19, version code 22. Publication evidence belongs in the release report, not this measurement record.
 
 ## Retained tuner improvement
 
@@ -26,7 +26,7 @@ At gains 1, 0.01 and 0.001, each run produced 93/93 readings and 91/93 matches w
 
 ## Chord findings
 
-Two new self-contained `ChordFeatureEvidenceTest` cases remain failing:
+Two new self-contained `ChordFeatureEvidenceTest` cases initially failed:
 
 1. A plucked Amadd9 is labelled Am even though its ninth is audible.
 2. A C-major / C-major-seventh / C-major sequence within one second collapses into C major.
@@ -43,4 +43,12 @@ The retained chord implementation remains at 64.99% root agreement and 56.96% ex
 - Native float capture produced 49,152 samples, with zero samples containing sub-PCM16 steps. Changing the whole capture path to float was therefore not justified by this device check. No captured audio was saved.
 - The separate QA package was stopped and the shared phone released. Production app data was preserved.
 
-GitHub may contain this work as a draft PR. Google Play and public release creation remain blocked by the two reproducible chord failures. Do not bypass the test gate or describe this branch as fully accurate.
+The earlier draft PR preserved these failures. No test was disabled to release the candidate.
+
+## Final chord correction
+
+The first decoding pass retains the previous root and no-chord timeline. A second pass resolves qualities only inside accepted, contiguous same-root spans. An extension must have observed spectral support rather than only inferred subharmonics. Closely related qualities use pitch-set distance for transition cost. The existing ambiguity margin is charged once when deviating from the baseline quality, not on every frame: weak but consistent evidence can accumulate over time.
+
+Short quality excursions merge into the neighboring quality with stronger evidence, without creating holes in an already accepted root span. Output confidence remains the duration-weighted confidence of the original root path. It is not presented as a calibrated probability.
+
+The final focused run passes all 70 music tests, including isolated plucked Amadd9, rapid C–Cmaj7–C and the original recorded-rock segmentation checks. Frozen recorded quality changes from 56.9578% to 57.1889%; root agreement stays 64.9858% and coverage stays 95.7660%. These are bounded improvements, not a guarantee of perfect transcription for arbitrary mixes.
