@@ -15,7 +15,7 @@ analytics, tracking, onboarding, or network permission.
 
 Release version: `0.3.0-alpha.20`. Google Play
 distribution is managed separately; see the dated
-[release record](docs/store/2026-09-06-alpha19-release.md) for the recorded submission status.
+[release record](docs/store/2026-09-08-alpha20-release.md) for the recorded submission status.
 
 ## Download
 
