@@ -185,6 +185,8 @@ and [security policy](SECURITY.md).
 
 Latest audio checks: [quiet-note tracking](docs/quiet-current-evidence-2026-09-08.md)
 and [stereo song analysis](docs/stereo-song-analysis-2026-09-08.md).
+The [offline model evaluation](docs/audio-model-evaluation-2026-09-08.md)
+records rejected alternatives and the remaining accuracy limits.
 
 ## Store assets and release documents
 
