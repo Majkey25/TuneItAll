@@ -2,99 +2,90 @@ package com.tuneitall.tuner.audio
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import kotlin.math.PI
-import kotlin.math.sin
+import android.media.AudioFormat
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class SongAudioDecoderTest {
     @Test
-    fun `decoded duration follows PCM and rejects rate changes and excess samples`() {
+    fun `decoded duration follows frames and rejects format changes and excess frames`() {
         val clock = DecodedAudioClock()
-        clock.accept(48_000, 24_000)
-        clock.accept(48_000, 24_000)
+        clock.accept(48_000, 24_000, 2)
+        clock.accept(48_000, 24_000, 2)
         assertEquals(1000L, clock.durationMillis)
         assertEquals(SongDecodeError.UNSUPPORTED_PCM,
-            assertFailsWith<SongDecodeException> { clock.accept(44_100, 1024) }.reason)
+            assertFailsWith<SongDecodeException> { clock.accept(44_100, 1024, 2) }.reason)
+        assertEquals(SongDecodeError.UNSUPPORTED_PCM,
+            assertFailsWith<SongDecodeException> { clock.accept(48_000, 1024, 1) }.reason)
         assertEquals(SongDecodeError.TOO_LONG,
-            assertFailsWith<SongDecodeException> { clock.accept(48_000, 48_000 * 1800) }.reason)
+            assertFailsWith<SongDecodeException> { clock.accept(48_000, 48_000 * 1800, 2) }.reason)
         assertEquals(1000L, clock.durationMillis)
     }
     @Test
-    fun `pcm16 decoder averages interleaved channels into bounded mono`() {
-        val buffer = ByteBuffer.allocate(8).order(ByteOrder.nativeOrder())
-        buffer.putShort(Short.MAX_VALUE)
-        buffer.putShort(Short.MIN_VALUE)
-        buffer.putShort(16_384)
-        buffer.putShort(16_384)
+    fun `pcm16 decoder preserves every channel including opposite polarity`() {
+        val source = shortArrayOf(Short.MAX_VALUE, Short.MIN_VALUE, 16_384, -16_384, 0, 8_192)
+        val buffer = ByteBuffer.allocate(source.size * Short.SIZE_BYTES).order(ByteOrder.nativeOrder())
+        source.forEach(buffer::putShort)
         buffer.flip()
 
-        assertContentEquals(floatArrayOf(-1f / 65_536f, 0.5f), PcmDownmixer().pcm16ToMono(buffer, channelCount = 2))
+        assertContentEquals(source.map { it / 32_768f }.toFloatArray(),
+            decodePcmSamples(buffer, 2, AudioFormat.ENCODING_PCM_16BIT))
+        assertEquals(0, buffer.position())
     }
 
     @Test
-    fun `pcm16 decoder rejects incomplete frames and invalid channel counts`() {
-        assertFailsWith<IllegalArgumentException> { PcmDownmixer().pcm16ToMono(ByteBuffer.allocate(2), channelCount = 0) }
-        assertFailsWith<IllegalArgumentException> { PcmDownmixer().pcm16ToMono(ByteBuffer.allocate(6), channelCount = 2) }
-    }
-
-    @Test
-    fun `pcm16 decoder preserves opposite phase stereo tone`() {
-        val tone = ShortArray(1_024) { (12_000 * sin(2.0 * PI * it / 64)).toInt().toShort() }
-        val stereo = ByteBuffer.allocate(tone.size * 4).order(ByteOrder.nativeOrder())
-        tone.forEach { sample -> stereo.putShort(sample).putShort((-sample).toShort()) }
-        stereo.flip()
-
-        val mono = PcmDownmixer().pcm16ToMono(stereo, channelCount = 2)
-
-        assertTrue(mono.drop(128).sumOf { it.toDouble() * it } > 10.0)
-        for (index in 128 until tone.size) {
-            assertEquals(tone[index] / 32_768f, mono[index], 1e-6f)
+    fun `pcm decoder rejects incomplete frames and invalid formats`() {
+        for (channels in listOf(0, 9)) {
+            assertEquals(SongDecodeError.UNSUPPORTED_PCM,
+                assertFailsWith<SongDecodeException> {
+                    decodePcmSamples(ByteBuffer.allocate(0), channels, AudioFormat.ENCODING_PCM_16BIT)
+                }.reason)
         }
-    }
-
-    @Test
-    fun `phase fallback keeps one channel across buffers then returns to normal stereo`() {
-        val downmixer = PcmDownmixer()
-        val left = FloatArray(256) { (0.4 * sin(2.0 * PI * it / 32)).toFloat() }
-        val first = downmixer.pcmFloatToMono(stereoFloats(left, left.map { -it }.toFloatArray()), 2)
-        assertContentEquals(left.drop(128).toFloatArray(), first.drop(128).toFloatArray())
-
-        val louderRight = left.map { -it * 1.1f }.toFloatArray()
-        val next = downmixer.pcmFloatToMono(stereoFloats(left, louderRight), 2)
-        left.indices.forEach { assertEquals(left[it], next[it], 1e-6f) }
-
-        val normalRight = left.map { it * 0.5f }.toFloatArray()
-        val normal = downmixer.pcmFloatToMono(stereoFloats(left, normalRight), 2)
-        for (index in 128 until left.size) assertEquals(left[index] * 0.75f, normal[index], 1e-6f)
-    }
-
-    @Test
-    fun `float PCM remains averaged and bounded and rejects malformed samples`() {
-        val downmixer = PcmDownmixer()
-        assertContentEquals(
-            floatArrayOf(0.75f, -0.75f, 1f),
-            downmixer.pcmFloatToMono(stereoFloats(floatArrayOf(1f, -1f, 2f), floatArrayOf(0.5f, -0.5f, 2f)), 2),
-        )
-        for (invalid in listOf(Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY)) {
+        for (bytes in listOf(1, 2, 6)) {
             assertFailsWith<IllegalArgumentException> {
-                downmixer.pcmFloatToMono(stereoFloats(floatArrayOf(0.5f), floatArrayOf(invalid)), 2)
+                decodePcmSamples(ByteBuffer.allocate(bytes), 2, AudioFormat.ENCODING_PCM_16BIT)
             }
         }
-        assertFailsWith<IllegalArgumentException> { downmixer.pcmFloatToMono(ByteBuffer.allocate(4), 2) }
-        assertFailsWith<IllegalArgumentException> { downmixer.pcmFloatToMono(ByteBuffer.allocate(8), 0) }
-        assertFailsWith<IllegalArgumentException> { downmixer.pcm16ToMono(ByteBuffer.allocate(1), 1) }
-        assertContentEquals(FloatArray(0), downmixer.pcmFloatToMono(ByteBuffer.allocate(0), 2))
+        assertFailsWith<IllegalArgumentException> {
+            decodePcmSamples(ByteBuffer.allocate(4), 2, AudioFormat.ENCODING_PCM_FLOAT)
+        }
+        assertEquals(SongDecodeError.UNSUPPORTED_PCM,
+            assertFailsWith<SongDecodeException> {
+                decodePcmSamples(ByteBuffer.allocate(0), 1, AudioFormat.ENCODING_PCM_8BIT)
+            }.reason)
     }
-}
 
-private fun stereoFloats(left: FloatArray, right: FloatArray): ByteBuffer {
-    require(left.size == right.size)
-    return ByteBuffer.allocate(left.size * Float.SIZE_BYTES * 2).order(ByteOrder.nativeOrder()).apply {
-        left.indices.forEach { putFloat(left[it]).putFloat(right[it]) }
-        flip()
+    @Test
+    fun `float PCM remains interleaved and bounded and rejects nonfinite samples`() {
+        assertContentEquals(floatArrayOf(1f, -1f, 0.5f, -0.5f, 1f, -1f),
+            decodePcmSamples(floats(1f, -1f, 0.5f, -0.5f, 2f, -2f), 2, AudioFormat.ENCODING_PCM_FLOAT))
+        for (invalid in listOf(Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY)) {
+            assertFailsWith<IllegalArgumentException> {
+                decodePcmSamples(floats(0.5f, invalid), 2, AudioFormat.ENCODING_PCM_FLOAT)
+            }
+        }
+        assertContentEquals(FloatArray(0),
+            decodePcmSamples(ByteBuffer.allocate(0), 8, AudioFormat.ENCODING_PCM_FLOAT))
     }
+
+    @Test
+    fun `mono and multichannel conversion honor the buffer slice without consuming it`() {
+        val buffer = floats(0.9f, 0.25f, -0.5f, 0.8f)
+        buffer.position(4)
+        buffer.limit(12)
+        assertContentEquals(floatArrayOf(0.25f, -0.5f),
+            decodePcmSamples(buffer, 1, AudioFormat.ENCODING_PCM_FLOAT))
+        assertEquals(4, buffer.position())
+        assertEquals(12, buffer.limit())
+        val surround = FloatArray(8) { it / 8f }
+        assertContentEquals(surround, decodePcmSamples(floats(*surround), 8, AudioFormat.ENCODING_PCM_FLOAT))
+    }
+
+    private fun floats(vararg samples: Float): ByteBuffer =
+        ByteBuffer.allocate(samples.size * Float.SIZE_BYTES).order(ByteOrder.nativeOrder()).apply {
+            samples.forEach(::putFloat)
+            flip()
+        }
 }

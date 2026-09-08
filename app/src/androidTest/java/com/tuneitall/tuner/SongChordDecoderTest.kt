@@ -23,6 +23,52 @@ import org.junit.Test
 
 class SongChordDecoderTest {
     @Test
+    fun stereoWavKeepsChordTonesThatCancelBeneathCenteredBass() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "stereo-phase-chord.wav")
+        try {
+            file.writeBytes(pcm16Wav(channels = 2, seconds = 4) { frame, channel ->
+                val time = frame.toDouble() / SAMPLE_RATE
+                val bass = 0.3 * sin(2.0 * PI * 130.81 * time)
+                val chord = 0.16 * (sin(2.0 * PI * 261.63 * time) +
+                    sin(2.0 * PI * 329.63 * time) + sin(2.0 * PI * 392.0 * time))
+                bass + if (channel == 0) chord else -chord
+            })
+
+            val result = SongAudioDecoder(context).analyze(Uri.fromFile(file))
+            val events = result.events.filterIsInstance<ChordEvent>()
+            assertEquals(4_000L, result.durationMillis)
+            assertTrue("Expected C major, got $events", events.isNotEmpty())
+            assertEquals(Chord(0, ChordQuality.MAJOR), events.maxBy(ChordEvent::durationMillis).chord)
+            assertTrue(events.filter { it.chord == Chord(0, ChordQuality.MAJOR) }.sumOf(ChordEvent::durationMillis) >= 3_400L)
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun stereoWavKeepsTempoWhenCenteredToneMasksOppositePhaseBeats() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "stereo-phase-tempo.wav")
+        try {
+            file.writeBytes(pcm16Wav(channels = 2, seconds = 12) { frame, channel ->
+                val background = 0.3 * sin(2.0 * PI * 220.0 * frame / SAMPLE_RATE)
+                val withinBeat = frame % (SAMPLE_RATE / 2)
+                val beat = if (withinBeat < SAMPLE_RATE / 50) {
+                    0.3 * (1.0 - withinBeat.toDouble() / (SAMPLE_RATE / 50)) *
+                        sin(2.0 * PI * 1_000.0 * frame / SAMPLE_RATE)
+                } else 0.0
+                background + if (channel == 0) beat else -beat
+            })
+
+            val estimate = SongAudioDecoder(context).analyzeTempo(Uri.fromFile(file))
+            assertTrue("Expected 120 BPM, got $estimate", estimate != null && kotlin.math.abs(estimate.bpm - 120) <= 2)
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
     fun localWavDecoderRecognizesDistortedEPowerChord() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.cacheDir, "distorted-e5.wav")
@@ -74,26 +120,35 @@ private fun sha256(file: File): String {
 }
 
 private fun distortedPowerChordWav(): ByteArray {
-    val sampleCount = SAMPLE_RATE * DURATION_SECONDS
-    val dataSize = sampleCount * Short.SIZE_BYTES
+    return pcm16Wav(channels = 1, seconds = DURATION_SECONDS) { frame, _ ->
+        val root = sin(2.0 * PI * ROOT_HERTZ * frame / SAMPLE_RATE)
+        val fifth = sin(2.0 * PI * ROOT_HERTZ * 1.5 * frame / SAMPLE_RATE)
+        0.75 * tanh(3.5 * (root + 0.8 * fifth))
+    }
+}
+
+private fun pcm16Wav(channels: Int, seconds: Int, sample: (Int, Int) -> Double): ByteArray {
+    val sampleCount = SAMPLE_RATE * seconds
+    val frameBytes = channels * Short.SIZE_BYTES
+    val dataSize = sampleCount * frameBytes
     return ByteBuffer.allocate(WAV_HEADER_SIZE + dataSize).order(ByteOrder.LITTLE_ENDIAN).apply {
         put("RIFF".toByteArray())
         putInt(36 + dataSize)
         put("WAVEfmt ".toByteArray())
         putInt(16)
         putShort(1.toShort())
-        putShort(1.toShort())
+        putShort(channels.toShort())
         putInt(SAMPLE_RATE)
-        putInt(SAMPLE_RATE * Short.SIZE_BYTES)
-        putShort(Short.SIZE_BYTES.toShort())
+        putInt(SAMPLE_RATE * frameBytes)
+        putShort(frameBytes.toShort())
         putShort(Short.SIZE_BITS.toShort())
         put("data".toByteArray())
         putInt(dataSize)
         repeat(sampleCount) { frame ->
-            val root = sin(2.0 * PI * ROOT_HERTZ * frame / SAMPLE_RATE)
-            val fifth = sin(2.0 * PI * ROOT_HERTZ * 1.5 * frame / SAMPLE_RATE)
-            val sample = (0.75 * tanh(3.5 * (root + 0.8 * fifth)) * Short.MAX_VALUE).roundToInt()
-            putShort(sample.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
+            repeat(channels) { channel ->
+                val value = (sample(frame, channel) * Short.MAX_VALUE).roundToInt()
+                putShort(value.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
+            }
         }
     }.array()
 }

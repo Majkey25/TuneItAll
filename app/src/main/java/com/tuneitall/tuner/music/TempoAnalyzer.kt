@@ -17,37 +17,55 @@ class StreamingTempoAnalyzer internal constructor(
     private val sampleRate: Int,
     maxDurationSeconds: Int = MAX_TEMPO_ANALYSIS_SECONDS,
     private val isCancelled: () -> Boolean = { false },
+    private val channelCount: Int = 1,
 ) {
     private val frameSize: Int
     private val onsetStrengths = mutableListOf<Double>()
-    private val maxSamples: Long
+    private val maxFrames: Long
     private var frameEnergy = 0.0
     private var frameFill = 0
     private var previousLevel = 0.0
-    private var totalSamples = 0L
+    private var totalFrames = 0L
 
     init {
         require(sampleRate in 8_000..192_000)
         require(maxDurationSeconds in 1..MAX_TEMPO_ANALYSIS_SECONDS)
+        require(channelCount in 1..8)
         frameSize = (sampleRate / ONSET_FRAMES_PER_SECOND).coerceAtLeast(1)
-        maxSamples = Math.multiplyExact(sampleRate.toLong(), maxDurationSeconds.toLong())
+        maxFrames = Math.multiplyExact(sampleRate.toLong(), maxDurationSeconds.toLong())
     }
 
     fun accept(samples: FloatArray) {
         checkAnalysisCancellation(isCancelled)
+        require(samples.size % channelCount == 0) { "Audio input must contain complete sample frames" }
         require(samples.all(Float::isFinite))
-        require(totalSamples + samples.size <= maxSamples) { "Song analysis exceeds the duration limit" }
-        totalSamples += samples.size
-        samples.forEach { sample ->
-            frameEnergy += sample * sample
-            frameFill++
-            if (frameFill == frameSize) closeFrame()
+        val sampleFrames = samples.size / channelCount
+        require(totalFrames + sampleFrames <= maxFrames) { "Song analysis exceeds the duration limit" }
+        totalFrames += sampleFrames
+        if (channelCount == 1) {
+            samples.forEach { sample ->
+                frameEnergy += sample * sample
+                frameFill++
+                if (frameFill == frameSize) closeFrame()
+            }
+        } else {
+            repeat(sampleFrames) { frame ->
+                var energy = 0.0
+                val offset = frame * channelCount
+                for (channel in 0 until channelCount) {
+                    val sample = samples[offset + channel]
+                    energy += sample * sample
+                }
+                frameEnergy += energy / channelCount
+                frameFill++
+                if (frameFill == frameSize) closeFrame()
+            }
         }
     }
 
     fun finish(): TempoEstimate? {
         checkAnalysisCancellation(isCancelled)
-        if (totalSamples < sampleRate * MIN_ANALYSIS_SECONDS.toLong()) return null
+        if (totalFrames < sampleRate * MIN_ANALYSIS_SECONDS.toLong()) return null
         if (frameFill > 0) closeFrame()
         val onset = normalizedOnsetEnvelope()
         if (onset.sumOf { it * it } < MIN_ONSET_ENERGY) return null
