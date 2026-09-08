@@ -13,18 +13,18 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Source version: `0.3.0-alpha.21`; latest downloadable release: `0.3.0-alpha.20`. Google Play
+Release version: `0.3.0-alpha.21`. Google Play
 distribution is managed separately; see the dated
-[release record](docs/store/2026-09-08-alpha20-release.md) for the recorded submission status.
+[release record](docs/store/2026-09-08-alpha21-release.md) for the recorded submission status.
 
 ## Download
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.20/Intoniva-v0.3.0-alpha.20-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.21/Intoniva-v0.3.0-alpha.21-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.20).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.21).
 
 ## Features
 
