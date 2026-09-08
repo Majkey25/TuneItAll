@@ -1,7 +1,7 @@
 # Intoniva Privacy Policy
 
-Effective date: 4 September 2026
-Last updated: 4 September 2026
+Effective date: 8 September 2026
+Last updated: 8 September 2026
 
 Intoniva is published by MajkeyLab. Privacy contact:
 `majkeylab@gmail.com`.
@@ -41,15 +41,40 @@ The support button asks Android to open Buy Me a Coffee in an external browser.
 The app sends no identifier and unlocks no feature. The browser and destination
 apply their own privacy terms.
 
+If you make an optional support payment, the service may make your chosen name,
+contact details, message, transaction reference, date, or amount available to
+MajkeyLab. These records are used for payment enquiries and required legal
+recordkeeping, based on the requested transaction, legitimate interests, or the
+relevant legal obligation. Payment records are retained for the time needed to
+resolve an enquiry and any applicable legal retention period. Full card details
+are processed by the payment provider, not Intoniva. See the
+[Buy Me a Coffee Privacy Policy](https://buymeacoffee.com/privacy-policy).
+
 If you voluntarily email MajkeyLab or open a GitHub issue, MajkeyLab and the
 email or GitHub provider may receive the address or account name, message, and
 attachments you choose to send. Do not attach recordings or sensitive data.
 MajkeyLab uses correspondence only to provide requested support, prevent abuse,
 or meet legal obligations. The legal basis is steps requested by you or
-MajkeyLab's legitimate interests. Correspondence is normally deleted within 12
-months after the request closes, unless you request earlier deletion or a legal
-duty requires longer retention. Provider processing and international transfers
-are governed by that provider's terms and safeguards.
+MajkeyLab's legitimate interests. Private support correspondence is normally
+deleted within 12 months after the request closes, unless you request earlier
+deletion or a legal duty requires longer retention. Provider processing and
+international transfers are governed by that provider's terms and safeguards.
+
+GitHub issues are public. Use email for private requests. Public issues may
+remain in the project's history until edited or removed; the private-support
+retention period does not apply to them. Copies held by other people or services
+are outside MajkeyLab's control and cannot be erased by MajkeyLab.
+
+## This website and hosting
+
+The project website has no contact form, analytics, advertising pixels, embedded
+third-party content, cookies, or browser-storage identifiers set by Intoniva.
+No marketing consent is requested. See the [cookies policy](../cookies/).
+
+GitHub Pages hosts the website and [logs visitors' IP addresses for security](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages#data-collection).
+Its [Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement)
+describes hosting-data processing, retention, and international transfers.
+MajkeyLab does not receive a visitor analytics dashboard or use this data for advertising.
 
 ## European Union and EEA rights
 
@@ -64,8 +89,8 @@ to optional support correspondence.
 
 Intoniva does not sell or share personal information, use targeted advertising,
 offer a financial incentive, or discriminate after a privacy request. Optional
-support identifiers and correspondence are the only personal information
-MajkeyLab may receive. Contact `majkeylab@gmail.com` to exercise rights that
+support and payment information described above may be received by MajkeyLab.
+Contact `majkeylab@gmail.com` to exercise rights that
 apply in your state.
 
 ## Children

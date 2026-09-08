@@ -236,8 +236,8 @@ private fun <T> ChoiceRow(
                 onClick = { onSelected(choice) },
                 label = { Text(label(choice)) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 ),
                 modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(tag(choice)),
             )

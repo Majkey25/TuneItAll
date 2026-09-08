@@ -1,0 +1,1 @@
+Added legal-policy and contact links in App details. Improved light-theme contrast while keeping green selected controls. Privacy notices clarify website hosting and optional support. Improved screen-reader states and website keyboard navigation. Audio recognition is unchanged in this update.

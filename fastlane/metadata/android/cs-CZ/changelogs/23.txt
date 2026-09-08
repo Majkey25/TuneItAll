@@ -1,0 +1,1 @@
+Nové odkazy na právní zásady a kontakt v podrobnostech aplikace. Lepší kontrast světlého režimu při zachování zelených ovládacích prvků. Upřesněné informace o hostingu webu a volitelné podpoře. Lepší stavy pro čtečku obrazovky a ovládání webu klávesnicí. Rozpoznávání zvuku se v této aktualizaci nemění.

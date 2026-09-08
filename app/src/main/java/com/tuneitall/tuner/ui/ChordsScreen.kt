@@ -129,8 +129,8 @@ fun ChordsScreen(
                             Text(stringResource(if (tab == ChordTab.LIBRARY) R.string.chords_library else R.string.song_chords))
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         ),
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("chord_tab_${tab.name.lowercase()}"),
                     )
@@ -246,8 +246,8 @@ private fun CurrentSongEventBar(
                         onCheckedChange = onShowDiagramChanged,
                         enabled = chord != null,
                         colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
-                            checkedContainerColor = MaterialTheme.colorScheme.primary,
-                            checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                            checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         ),
                         modifier = Modifier.align(Alignment.CenterEnd).size(48.dp)
                             .semantics { contentDescription = diagramDescription }

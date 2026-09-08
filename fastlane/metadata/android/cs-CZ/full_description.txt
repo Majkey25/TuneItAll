@@ -1,22 +1,21 @@
-Intoniva se otevře rovnou do přesné ladičky bez zbytečného rušení.
+Intoniva se otevře rovnou do ladičky.
 
-Kytaru, baskytaru nebo ukulele naladíš automaticky, vybereš konkrétní strunu ručně, nebo použiješ chromatickou ladičku pro libovolný tónový nástroj. Přehledná centová stupnice ukáže, jestli je tón níž, výš, nebo přesně naladěný.
+Kytaru, baskytaru nebo ukulele naladíš automaticky, vybereš konkrétní strunu ručně, nebo rozpoznáš tóny v chromatickém režimu. Centová stupnice ukáže, jestli je rozpoznaný tón níž, výš, nebo naladěný. Výsledek závisí na nástroji, mikrofonu a okolním zvuku.
 
 Funkce:
 • Kytary se 6, 7, 8 a 9 strunami
 • Licencovaná grafika hlavy kytary 3+3 a 6 v řadě, plus 7 až 9 strun
-• Čtyřstrunná a pětistrunná baskytara, ukulele, housle, viola, violoncello, mandolína a banjo
+• Baskytary se 4, 5 a 6 strunami, ukulele, housle, viola, violoncello, mandolína a banjo
 • Standardní, snížená, drop, open a DADGAD ladění
-• 49 vestavěných ladění, hledání, oblíbené položky a mazání vlastních ladění
+• Vestavěná ladění, hledání, oblíbené položky a mazání vlastních ladění
 • Nastavitelná reference A4 od 410,0 do 480,0 Hz
 • Zápis tónů pomocí křížků nebo béček
 • Plynulý referenční tón po klepnutí na strunu
 • Zvukové potvrzení stabilního naladění se zelenou animací
-• Univerzální citlivý vstup s časovým rozlišením bzučící struny a širokopásmového šumu
-• Čistý Auto vstup: RAW, pokud je dostupný, jinak kompatibilní snímání bez efektů
+• Automatický výběr zdroje mikrofonu s informacemi o možnostech zařízení
 • Profily Univerzální, Elektrická bez zesilovače, Tichá místnost, Hlučná místnost a Rychlá odezva
 • Nezávislé nastavení citlivosti mikrofonu a stability ukazatele
-• Mechanický metronom od 20 do 400 BPM s nastavením taktu, dělení, přízvuku, pěti čistými zvuky, hlasitosti, ztlumení a odpočtu
+• Mechanický metronom od 20 do 400 BPM s nastavením taktu, dělení, přízvuků, výběru zvuku, hlasitosti, ztlumení a odpočtu
 • Offline zjištění tempa vybrané písničky s jistotou odhadu a použitím BPM jedním klepnutím
 • Ověřené diagramy akordů pro kytaru Standard E a ukulele Standard C
 • Offline analýza písní se samostatnými režimy Klasické akordy, Tóny a Power akordy, rozsahy nástrojů, přehráváním a transpozicí

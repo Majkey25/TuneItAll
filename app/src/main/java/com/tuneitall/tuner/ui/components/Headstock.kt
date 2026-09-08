@@ -231,8 +231,8 @@ private fun Peg(
     val description = stringResource(R.string.string_button_description, stringNumber, note)
     val colors = if (selected) {
         ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         )
     } else {
         ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)

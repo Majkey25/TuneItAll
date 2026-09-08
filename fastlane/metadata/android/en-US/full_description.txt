@@ -1,22 +1,21 @@
-Intoniva opens straight into accurate, distraction-free tuning.
+Intoniva opens straight into the tuner.
 
-Tune guitar, bass, or ukulele automatically, select a string manually, or use the chromatic tuner for any pitched instrument. The clear cents rail shows whether the note is flat, sharp, or in tune.
+Tune guitar, bass, or ukulele automatically, select a string manually, or identify notes in chromatic mode. The cents rail shows whether a detected note is flat, sharp, or in tune. Results depend on the instrument, microphone, and background sound.
 
 Features:
 • Guitar support for 6, 7, 8, and 9 strings
 • Licensed 3+3 and 6-inline guitar headstock artwork, plus 7 to 9 strings
-• Four- and five-string bass, ukulele, violin, viola, cello, mandolin, and banjo
+• Four-, five-, and six-string bass, ukulele, violin, viola, cello, mandolin, and banjo
 • Standard, lowered, drop, open, and DADGAD presets
-• 49 built-in tunings, search, favorites, and removable custom tunings
+• Built-in tunings, search, favorites, and removable custom tunings
 • Adjustable A4 reference from 410.0 to 480.0 Hz
 • Sharps or flats note naming
-• Click-free reference tone when a string is tapped
+• Reference tone when a string is tapped
 • Stable in-tune confirmation sound with animated green feedback
-• Universal quiet-input engine with temporal buzz and broadband-noise separation
-• Clean Auto input: Raw when supported, otherwise effect-free compatible capture
+• Automatic microphone-source selection with device capability information
 • Universal, unplugged-electric, quiet-room, noisy-room, and fast-response tuner profiles
 • Independent microphone sensitivity and needle stability controls
-• Mechanical metronome from 20 to 400 BPM with meter, subdivision, accent, five clean sound styles, volume, mute, and count-in controls
+• Mechanical metronome from 20 to 400 BPM with meter, subdivision, accents, selectable sounds, volume, mute, and count-in controls
 • Offline tempo estimation for a selected song, with confidence and one-tap BPM application
 • Canonical Standard E guitar and Standard C ukulele chord diagrams
 • Offline song analysis with separate Classic chords, predominant Notes, and Power chords timelines, instrument ranges, playback, and transposition
