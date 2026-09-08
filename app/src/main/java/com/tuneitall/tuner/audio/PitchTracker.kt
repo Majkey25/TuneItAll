@@ -10,7 +10,14 @@ class PitchTracker {
     private var missingFrames = 0
 
     fun update(frame: PitchFrame, settings: TunerAudioSettings): PitchEstimate? {
-        if (frame.candidates.isEmpty()) {
+        // Weak alternatives can continue an observed pitch, not revive an unobserved retained state.
+        val currentCandidates = frame.candidates.filter { candidate ->
+            candidate.probability > 0.0 || states.any {
+                it.observed && it.score > unvoicedScore &&
+                    centsDistance(it.hertz, candidate.hertz) <= CONTINUATION_CENTS
+            }
+        }
+        if (currentCandidates.isEmpty()) {
             missingFrames = (missingFrames + 1).coerceAtMost(MAX_MISSING_FRAMES)
             if (missingFrames == MAX_MISSING_FRAMES) {
                 states.clear()
@@ -22,8 +29,8 @@ class PitchTracker {
 
         missingFrames = 0
         val onset = previousRms > 0.0 && frame.rms >= previousRms * ONSET_RATIO
-        val strongestPeriodicity = frame.candidates.maxOf(PitchCandidate::periodicity)
-        val candidates = frame.candidates.map { candidate ->
+        val strongestPeriodicity = currentCandidates.maxOf(PitchCandidate::periodicity)
+        val candidates = currentCandidates.map { candidate ->
             VoicedState(
                 hertz = candidate.hertz,
                 confidence = maxOf(candidate.probability, candidate.periodicity),
@@ -32,10 +39,11 @@ class PitchTracker {
                     settings,
                     onset,
                 ),
+                observed = true,
             )
         }
         val retained = states.filter { state -> candidates.none { samePitch(state.hertz, it.hertz) } }
-            .map { it.copy(score = it.score - STALE_STATE_COST) }
+            .map { it.copy(score = it.score - STALE_STATE_COST, observed = false) }
         val unvoicedProbability = minOf(frame.unvoicedProbability, 1.0 - strongestPeriodicity)
         val previousUnvoiced = unvoicedScore
         val previousVoiced = states.maxOfOrNull(VoicedState::score) ?: Double.NEGATIVE_INFINITY
@@ -49,7 +57,7 @@ class PitchTracker {
 
         val best = states.maxByOrNull { it.score } ?: return null
         return best.takeIf { state ->
-            state.score > unvoicedScore && frame.candidates.any { samePitch(it.hertz, state.hertz) }
+            state.observed && state.score > unvoicedScore
         }?.let { PitchEstimate(it.hertz, it.confidence, frame.rms) }
     }
 
@@ -110,6 +118,7 @@ class PitchTracker {
         val hertz: Double,
         val confidence: Double,
         val score: Double,
+        val observed: Boolean,
     )
 
     private companion object {
@@ -127,6 +136,7 @@ class PitchTracker {
         const val ONSET_RATIO = 1.8
         const val ONSET_COST_SCALE = 0.25
         const val SAME_PITCH_CENTS = 15.0
+        const val CONTINUATION_CENTS = 100.0
         const val MAX_MISSING_FRAMES = 8
     }
 }

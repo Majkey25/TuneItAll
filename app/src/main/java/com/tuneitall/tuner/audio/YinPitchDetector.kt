@@ -154,10 +154,28 @@ class YinPitchDetector {
                 mergeCandidate(candidates, hertz, periodicity, periodicity)
             }
         }
+        if (candidates.isNotEmpty() && candidates.sumOf(PitchCandidate::probability) < 1.0) {
+            val minimum = (tauMin..tauMax).minOf(cumulativeMean::get)
+            val periodicity = (1.0 - minimum).coerceIn(0.0, 1.0)
+            if (periodicity >= NO_TROUGH_MIN_PERIODICITY) {
+                // Zero-probability alternatives can continue an observed pitch, never start a new one.
+                val troughs = (tauMin..tauMax).filter { tau ->
+                    cumulativeMean[tau] <= minimum + NO_TROUGH_MARGIN &&
+                        (tau == tauMin || cumulativeMean[tau] <= cumulativeMean[tau - 1]) &&
+                        (tau == tauMax || cumulativeMean[tau] < cumulativeMean[tau + 1])
+                }
+                for (tau in troughs) {
+                    val hertz = analysisSampleRate / parabolicInterpolation(tau, tauMax)
+                    if (isWithinRange(hertz, minFrequency, maxFrequency)) {
+                        mergeCandidate(candidates, hertz, 1.0 - cumulativeMean[tau], 0.0)
+                    }
+                }
+            }
+        }
         val boundedCandidates = candidates.sortedByDescending { it.probability }.take(MAX_CANDIDATES)
-        val clearest = boundedCandidates.maxByOrNull(PitchCandidate::periodicity)
+        val clearestPeriodicity = boundedCandidates.maxOfOrNull(PitchCandidate::periodicity) ?: 0.0
         val refinedCandidates = boundedCandidates.map { candidate ->
-            if (candidate !== clearest) candidate else candidate.copy(
+            if (candidate.periodicity + NO_TROUGH_MARGIN < clearestPeriodicity) candidate else candidate.copy(
                 hertz = refineFrequency(samples, sampleRate, factor, candidate.hertz, minFrequency, maxFrequency),
             )
         }

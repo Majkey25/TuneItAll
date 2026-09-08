@@ -1,0 +1,1 @@
+Improved tracking of weak decaying notes while preventing stale pitch readings. Song analysis now preserves stereo guitar notes and beats that could cancel during channel mixing. Optimized FFT processing reduces analysis work. Mono behavior, display settings and offline privacy remain unchanged.

@@ -46,10 +46,11 @@ class SongAudioDecoder(context: Context) {
         onProgress: (Int) -> Unit = {},
     ): SongAnalysisResult {
         var extractor: StreamingHarmonicFeatureExtractor? = null
-        val durationMillis = decode(uri, isCancelled, onProgress) { sampleRate, mono ->
-            val activeExtractor = extractor ?: StreamingHarmonicFeatureExtractor(sampleRate, isCancelled = isCancelled)
-                .also { extractor = it }
-            activeExtractor.accept(mono)
+        val durationMillis = decode(uri, isCancelled, onProgress) { sampleRate, channels, samples ->
+            val activeExtractor = extractor ?: StreamingHarmonicFeatureExtractor(
+                sampleRate, isCancelled = isCancelled, channelCount = channels,
+            ).also { extractor = it }
+            activeExtractor.accept(samples)
         }
         val frames = extractor?.finish().orEmpty()
         onProgress(95)
@@ -68,9 +69,11 @@ class SongAudioDecoder(context: Context) {
         onProgress: (Int) -> Unit = {},
     ): TempoEstimate? {
         var analyzer: StreamingTempoAnalyzer? = null
-        decode(uri, isCancelled, onProgress) { sampleRate, mono ->
-            val activeAnalyzer = analyzer ?: StreamingTempoAnalyzer(sampleRate, isCancelled = isCancelled).also { analyzer = it }
-            activeAnalyzer.accept(mono)
+        decode(uri, isCancelled, onProgress) { sampleRate, channels, samples ->
+            val activeAnalyzer = analyzer ?: StreamingTempoAnalyzer(
+                sampleRate, isCancelled = isCancelled, channelCount = channels,
+            ).also { analyzer = it }
+            activeAnalyzer.accept(samples)
         }
         val result = analyzer?.finish()
         checkAnalysisCancellation(isCancelled)
@@ -82,7 +85,7 @@ class SongAudioDecoder(context: Context) {
         uri: Uri,
         isCancelled: () -> Boolean,
         onProgress: (Int) -> Unit,
-        onSamples: (Int, FloatArray) -> Unit,
+        onSamples: (Int, Int, FloatArray) -> Unit,
     ): Long {
         val extractor = MediaExtractor()
         var codec: MediaCodec? = null
@@ -107,7 +110,6 @@ class SongAudioDecoder(context: Context) {
             var outputEnded = false
             var outputFormat = inputFormat
             val decodedClock = DecodedAudioClock()
-            val downmixer = PcmDownmixer()
             var lastProgress = -1
 
             while (!outputEnded) {
@@ -148,13 +150,9 @@ class SongAudioDecoder(context: Context) {
                                 MediaFormat.KEY_PCM_ENCODING,
                                 AudioFormat.ENCODING_PCM_16BIT,
                             )
-                            val mono = when (encoding) {
-                                AudioFormat.ENCODING_PCM_16BIT -> downmixer.pcm16ToMono(pcm, channels)
-                                AudioFormat.ENCODING_PCM_FLOAT -> downmixer.pcmFloatToMono(pcm, channels)
-                                else -> throw SongDecodeException(SongDecodeError.UNSUPPORTED_PCM)
-                            }
-                            decodedClock.accept(sampleRate, mono.size)
-                            onSamples(sampleRate, mono)
+                            val samples = decodePcmSamples(pcm, channels, encoding)
+                            decodedClock.accept(sampleRate, samples.size / channels, channels)
+                            onSamples(sampleRate, channels, samples)
                             if (durationMicros > 0L) {
                                 val progress = (bufferInfo.presentationTimeUs * 90L / durationMicros).toInt().coerceIn(0, 89)
                                 if (progress != lastProgress) {
@@ -189,19 +187,23 @@ class SongAudioDecoder(context: Context) {
 
 internal class DecodedAudioClock {
     private var sampleRate = 0
+    private var channelCount = 0
     private var sampleCount = 0L
 
     val durationMillis: Long
         get() = if (sampleRate == 0) 0L else sampleCount * MILLIS_PER_SECOND / sampleRate
 
-    fun accept(rate: Int, count: Int) {
-        if (rate !in 8_000..192_000 || count < 0 || (sampleRate != 0 && rate != sampleRate)) {
+    fun accept(rate: Int, count: Int, channels: Int) {
+        if (rate !in 8_000..192_000 || channels !in 1..8 || count < 0 ||
+            (sampleRate != 0 && rate != sampleRate) || (channelCount != 0 && channels != channelCount)
+        ) {
             throw SongDecodeException(SongDecodeError.UNSUPPORTED_PCM)
         }
         if (sampleCount + count > rate * MAX_DURATION_SECONDS) {
             throw SongDecodeException(SongDecodeError.TOO_LONG)
         }
         sampleRate = rate
+        channelCount = channels
         sampleCount += count
     }
 }
@@ -218,69 +220,25 @@ internal fun audioDisplayName(context: Context, uri: Uri): String {
     }.ifBlank { "Audio" }
 }
 
-internal class PcmDownmixer {
-    private var selectedChannel = 0
-    private var useChannel = false
-    private var channelWeight = 0f
-
-    fun pcm16ToMono(buffer: ByteBuffer, channelCount: Int): FloatArray =
-        toMono(buffer, channelCount, Short.SIZE_BYTES)
-
-    fun pcmFloatToMono(buffer: ByteBuffer, channelCount: Int): FloatArray =
-        toMono(buffer, channelCount, Float.SIZE_BYTES)
-
-    private fun toMono(buffer: ByteBuffer, channelCount: Int, sampleBytes: Int): FloatArray {
-        require(channelCount > 0)
-        require(buffer.remaining() % sampleBytes == 0 && buffer.remaining() / sampleBytes % channelCount == 0) {
-            "PCM buffer must contain complete frames"
-        }
-        val samples = buffer.slice().order(ByteOrder.nativeOrder())
-        val frames = samples.remaining() / sampleBytes / channelCount
-        if (frames == 0) return FloatArray(0)
-        val mono = FloatArray(frames)
-        var leftEnergy = 0.0
-        var rightEnergy = 0.0
-        var monoEnergy = 0.0
-        for (frame in 0 until frames) {
-            var sum = 0f
-            for (channel in 0 until channelCount) {
-                val sample = sampleAt(samples, (frame * channelCount + channel) * sampleBytes, sampleBytes)
-                sum += sample
-                if (channelCount == 2) {
-                    val energy = sample.toDouble() * sample
-                    if (channel == 0) leftEnergy += energy else rightEnergy += energy
-                }
-            }
-            mono[frame] = sum / channelCount
-            monoEnergy += mono[frame].toDouble() * mono[frame]
-        }
-        if (channelCount != 2) {
-            useChannel = false
-            channelWeight = 0f
-            return mono
-        }
-        val strongestEnergy = maxOf(leftEnergy, rightEnergy)
-        if (!useChannel && monoEnergy < strongestEnergy * PHASE_CANCELLATION_ENTER) {
-            if (channelWeight == 0f) selectedChannel = if (leftEnergy >= rightEnergy) 0 else 1
-            useChannel = true
-        } else if (useChannel && monoEnergy >= strongestEnergy * PHASE_CANCELLATION_EXIT) {
-            useChannel = false
-        }
-        if (!useChannel && channelWeight == 0f) return mono
-        // ponytail: one channel during cancellation; combine channel spectra if independent parts must survive.
-        for (frame in mono.indices) {
-            channelWeight = (channelWeight + if (useChannel) CHANNEL_FADE_STEP else -CHANNEL_FADE_STEP).coerceIn(0f, 1f)
-            val selected = sampleAt(samples, (frame * 2 + selectedChannel) * sampleBytes, sampleBytes)
-            mono[frame] += channelWeight * (selected - mono[frame])
-        }
-        return mono
+internal fun decodePcmSamples(buffer: ByteBuffer, channelCount: Int, encoding: Int): FloatArray {
+    if (channelCount !in 1..8) throw SongDecodeException(SongDecodeError.UNSUPPORTED_PCM)
+    val sampleBytes = when (encoding) {
+        AudioFormat.ENCODING_PCM_16BIT -> Short.SIZE_BYTES
+        AudioFormat.ENCODING_PCM_FLOAT -> Float.SIZE_BYTES
+        else -> throw SongDecodeException(SongDecodeError.UNSUPPORTED_PCM)
     }
-
-    private fun sampleAt(buffer: ByteBuffer, offset: Int, sampleBytes: Int): Float {
-        if (sampleBytes == Short.SIZE_BYTES) return buffer.getShort(offset) / 32_768f
-        val sample = buffer.getFloat(offset)
-        require(sample.isFinite()) { "PCM float samples must be finite" }
-        return sample.coerceIn(-1f, 1f)
+    require(buffer.remaining() % (sampleBytes * channelCount) == 0) {
+        "PCM buffer must contain complete frames"
+    }
+    val samples = buffer.slice().order(ByteOrder.nativeOrder())
+    return FloatArray(samples.remaining() / sampleBytes) {
+        if (encoding == AudioFormat.ENCODING_PCM_16BIT) {
+            samples.short / 32_768f
+        } else {
+            val sample = samples.float
+            require(sample.isFinite()) { "PCM float samples must be finite" }
+            sample.coerceIn(-1f, 1f)
+        }
     }
 }
 
@@ -292,6 +250,3 @@ private const val CODEC_TIMEOUT_MICROS = 10_000L
 private const val MAX_DURATION_SECONDS = 30L * 60L
 private const val MAX_DURATION_MICROS = MAX_DURATION_SECONDS * 1_000_000L
 private const val MILLIS_PER_SECOND = 1_000L
-private const val PHASE_CANCELLATION_ENTER = 0.10
-private const val PHASE_CANCELLATION_EXIT = 0.25
-private const val CHANNEL_FADE_STEP = 1f / 128f

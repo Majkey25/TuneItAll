@@ -1,5 +1,6 @@
 package com.tuneitall.tuner.audio
 
+import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -77,6 +78,106 @@ class PitchTrackerTest {
         val result = List(3) { tracker.update(stringBuzz, settings) }.last()
 
         assertEquals(82.41, requireNotNull(result).hertz, 0.01)
+    }
+
+    @Test
+    fun `zero probability alternatives cannot acquire a new pitch`() {
+        val tracker = PitchTracker()
+        val alternative = PitchFrame(listOf(PitchCandidate(110.0, 0.0, 0.99)), 0.0001, 0.0002, 1.0)
+
+        repeat(12) { assertNull(tracker.update(alternative, settings)) }
+        repeat(5) { tracker.update(frame(220.0, rms = 0.0002), settings) }
+        assertNull(tracker.update(alternative, settings), "An octave alternative cannot introduce a new note")
+    }
+
+    @Test
+    fun `current continuation evidence follows tuning movement without returning the old pitch`() {
+        val tracker = PitchTracker()
+        repeat(5) { tracker.update(frame(110.0, rms = 0.0002), settings) }
+        val alternative = PitchFrame(listOf(PitchCandidate(112.0, 0.0, 0.70)), 0.0001, 0.0002, 1.0)
+
+        val results = List(3) { tracker.update(alternative, settings) }
+
+        assertEquals(112.0, requireNotNull(results.last()).hertz, 0.0)
+        assertTrue(results.all { it == null || it.hertz == 112.0 })
+    }
+
+    @Test
+    fun `continuation evidence cannot resurrect an obsolete pitch through the unvoiced path`() {
+        val tracker = PitchTracker()
+        repeat(5) { tracker.update(frame(110.0, rms = 0.0002), settings) }
+        repeat(30) { tracker.update(frame(220.0, rms = 0.0002), settings) }
+        val obsolete = PitchFrame(
+            listOf(PitchCandidate(110.0, 0.0, 0.99), PitchCandidate(440.0, 0.01, 0.01)),
+            0.0001,
+            0.0002,
+            0.99,
+        )
+
+        repeat(5) {
+            assertTrue(tracker.update(obsolete, settings)?.hertz != 110.0)
+        }
+    }
+
+    @Test
+    fun `rejected continuation cannot outlast competing observations and become fresh again`() {
+        val tracker = PitchTracker()
+        repeat(5) { tracker.update(frame(110.0, rms = 0.0002), settings) }
+        repeat(7) { tracker.update(frame(220.0, rms = 0.0002), settings) }
+        tracker.update(
+            PitchFrame(listOf(PitchCandidate(220.0, 0.97, 0.97)), 0.0002, 0.0002, 0.03),
+            settings,
+        )
+        val mixture = PitchFrame(
+            listOf(
+                PitchCandidate(110.0, 0.0, 0.999),
+                PitchCandidate(220.0, 0.000001, 0.000001),
+                PitchCandidate(880.0, 0.02, 0.999),
+            ),
+            0.0002,
+            0.0002,
+            0.979999,
+        )
+
+        val results = List(12) { tracker.update(mixture, settings)?.hertz }
+
+        assertTrue(results.none { it == 110.0 }, "Rejected historical tone must stay rejected: $results")
+    }
+
+    @Test
+    fun `continuation survives seven empty frames but cannot acquire after eight`() {
+        for (missingFrames in listOf(7, 8)) {
+            val tracker = PitchTracker()
+            repeat(5) { tracker.update(frame(110.0, rms = 0.0002), settings) }
+            repeat(missingFrames) { assertNull(tracker.update(emptyFrame(1.0), settings)) }
+            val alternative = PitchFrame(listOf(PitchCandidate(110.0, 0.0, 0.70)), 0.0001, 0.0002, 1.0)
+
+            val results = List(3) { tracker.update(alternative, settings)?.hertz }
+
+            if (missingFrames == 7) {
+                assertEquals(110.0, results.last())
+            } else {
+                assertTrue(results.all { it == null }, "A cleared state cannot seed continuation: $results")
+            }
+        }
+    }
+
+    @Test
+    fun `zero probability continuation is limited to a semitone in either direction`() {
+        for (cents in listOf(-100.001, -99.999, 99.999, 100.001)) {
+            val tracker = PitchTracker()
+            repeat(5) { tracker.update(frame(110.0, rms = 0.0002), settings) }
+            val hertz = 110.0 * 2.0.pow(cents / 1_200.0)
+            val alternative = PitchFrame(listOf(PitchCandidate(hertz, 0.0, 0.70)), 0.0001, 0.0002, 1.0)
+
+            val results = List(3) { tracker.update(alternative, settings)?.hertz }
+
+            if (cents in -100.0..100.0) {
+                assertEquals(hertz, results.last(), "Current evidence within one semitone must follow retuning")
+            } else {
+                assertTrue(results.all { it == null }, "Out-of-range continuation ($cents cents): $results")
+            }
+        }
     }
 
     @Test
