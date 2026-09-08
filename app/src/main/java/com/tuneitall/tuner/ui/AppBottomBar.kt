@@ -47,8 +47,8 @@ internal data class ResolvedNavigationColors(
 
 @Composable
 internal fun bottomNavigationSelectedColors(): ResolvedNavigationColors = ResolvedNavigationColors(
-    indicator = MaterialTheme.colorScheme.primary,
-    icon = MaterialTheme.colorScheme.onPrimary,
+    indicator = MaterialTheme.colorScheme.primaryContainer,
+    icon = MaterialTheme.colorScheme.onPrimaryContainer,
     text = MaterialTheme.colorScheme.onBackground,
 )
 

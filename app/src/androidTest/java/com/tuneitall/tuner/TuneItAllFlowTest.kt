@@ -412,6 +412,7 @@ class TuneItAllFlowTest {
         val screenState = MetronomeUiState(playing = true)
         var background = Color.Unspecified
         var primary = Color.Unspecified
+        var actionContainer = Color.Unspecified
         var safeDrawingTop = 0
         composeRule.setContent {
             CompositionLocalProvider(
@@ -424,6 +425,7 @@ class TuneItAllFlowTest {
                     SideEffect {
                         background = colors.background
                         primary = colors.primary
+                        actionContainer = colors.primaryContainer
                         safeDrawingTop = safeTop
                     }
                     Box(Modifier.requiredSize(width = 360.dp, height = 720.dp)) {
@@ -481,7 +483,8 @@ class TuneItAllFlowTest {
             val actionColor = textColor("metronome_start_stop_label")
             composeRule.runOnIdle {
                 assertTrue(contrastRatio(statusColor, background) >= 4.5f)
-                assertTrue(contrastRatio(actionColor, primary) >= 4.5f)
+                assertEquals(Color(0xFF63D17A), actionContainer)
+                assertTrue(contrastRatio(actionColor, actionContainer) >= 4.5f)
                 assertFalse(statusColor == primary)
             }
         }
@@ -741,7 +744,7 @@ class TuneItAllFlowTest {
 
         composeRule.runOnIdle {
             assertEquals(Color(0xFFFAF9F6), background)
-            assertEquals(Color(0xFF63D17A), accent)
+            assertEquals(Color(0xFF166534), accent)
             assertEquals(Color(0xFF63D17A), selectedContainer)
             assertEquals(Color(0xFF63D17A), primaryFixed)
         }
@@ -761,8 +764,8 @@ class TuneItAllFlowTest {
         var darkTheme by mutableStateOf(false)
         var modeColors: ResolvedChipColors? = null
         var navigationColors: ResolvedNavigationColors? = null
-        var primary = Color.Unspecified
-        var onPrimary = Color.Unspecified
+        var primaryContainer = Color.Unspecified
+        var onPrimaryContainer = Color.Unspecified
         var background = Color.Unspecified
         var onBackground = Color.Unspecified
         composeRule.setContent {
@@ -773,8 +776,8 @@ class TuneItAllFlowTest {
                 SideEffect {
                     modeColors = resolvedModeColors
                     navigationColors = resolvedNavigationColors
-                    primary = colorScheme.primary
-                    onPrimary = colorScheme.onPrimary
+                    primaryContainer = colorScheme.primaryContainer
+                    onPrimaryContainer = colorScheme.onPrimaryContainer
                     background = colorScheme.background
                     onBackground = colorScheme.onBackground
                 }
@@ -784,10 +787,11 @@ class TuneItAllFlowTest {
         fun assertResolvedColors() {
             val mode = requireNotNull(modeColors)
             val navigation = requireNotNull(navigationColors)
-            assertEquals(primary, mode.container)
-            assertEquals(onPrimary, mode.content)
-            assertEquals(primary, navigation.indicator)
-            assertEquals(onPrimary, navigation.icon)
+            assertEquals(primaryContainer, mode.container)
+            assertEquals(onPrimaryContainer, mode.content)
+            assertEquals(primaryContainer, navigation.indicator)
+            assertEquals(onPrimaryContainer, navigation.icon)
+            assertEquals(Color(0xFF63D17A), primaryContainer)
             assertEquals(onBackground, navigation.text)
             assertTrue(contrastRatio(navigation.text, background) >= 4.5f)
             assertTrue(contrastRatio(navigation.icon, navigation.indicator) >= 4.5f)
@@ -832,6 +836,7 @@ class TuneItAllFlowTest {
         var onBackground = Color.Unspecified
         var primary = Color.Unspecified
         var onPrimary = Color.Unspecified
+        var primaryContainer = Color.Unspecified
         composeRule.setContent {
             TuneItAllTheme(darkTheme = false) {
                 val colors = MaterialTheme.colorScheme
@@ -840,6 +845,7 @@ class TuneItAllFlowTest {
                     onBackground = colors.onBackground
                     primary = colors.primary
                     onPrimary = colors.onPrimary
+                    primaryContainer = colors.primaryContainer
                 }
                 TunerScreen(
                     state = state().copy(
@@ -891,7 +897,9 @@ class TuneItAllFlowTest {
                 assertEquals(onBackground, color)
                 assertTrue(contrastRatio(color, background) >= 4.5f)
             }
-            assertEquals(Color(0xFF63D17A), primary)
+            assertEquals(Color(0xFF166534), primary)
+            assertEquals(Color(0xFF63D17A), primaryContainer)
+            assertTrue(contrastRatio(primary, background) >= 4.5f)
             assertTrue(contrastRatio(onPrimary, primary) >= 4.5f)
         }
     }

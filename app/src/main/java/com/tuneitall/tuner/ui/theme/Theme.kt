@@ -15,8 +15,9 @@ private val DarkForeground = Color(0xFFF4F1EA)
 private val LightBackground = Color(0xFFFAF9F6)
 private val LightForeground = Color(0xFF111111)
 private val AccentGreen = Color(0xFF63D17A)
+private val LightAccentGreen = Color(0xFF166534)
 
-private val TuneItAllDarkColors = darkColorScheme(
+internal val TuneItAllDarkColors = darkColorScheme(
     primary = AccentGreen,
     onPrimary = DarkBackground,
     primaryContainer = AccentGreen,
@@ -63,9 +64,9 @@ private val TuneItAllDarkColors = darkColorScheme(
     surfaceDim = DarkBackground,
 )
 
-private val TuneItAllLightColors = lightColorScheme(
-    primary = AccentGreen,
-    onPrimary = LightForeground,
+internal val TuneItAllLightColors = lightColorScheme(
+    primary = LightAccentGreen,
+    onPrimary = LightBackground,
     primaryContainer = AccentGreen,
     onPrimaryContainer = LightForeground,
     inversePrimary = AccentGreen,
@@ -81,8 +82,8 @@ private val TuneItAllLightColors = lightColorScheme(
     secondaryFixedDim = AccentGreen,
     onSecondaryFixed = LightForeground,
     onSecondaryFixedVariant = LightForeground,
-    tertiary = AccentGreen,
-    onTertiary = LightForeground,
+    tertiary = LightAccentGreen,
+    onTertiary = LightBackground,
     tertiaryContainer = AccentGreen,
     onTertiaryContainer = LightForeground,
     tertiaryFixed = AccentGreen,

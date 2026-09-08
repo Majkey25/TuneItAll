@@ -567,8 +567,8 @@ private fun PlaybackControls(state: MetronomeUiState, onTap: () -> Unit, onStart
             onClick = if (state.playing) onStop else onStart,
             enabled = !busy,
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ),
             modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("metronome_start_stop"),
         ) {
@@ -579,7 +579,6 @@ private fun PlaybackControls(state: MetronomeUiState, onTap: () -> Unit, onStart
                     state.playing -> stringResource(R.string.metronome_stop)
                     else -> stringResource(R.string.metronome_start)
                 },
-                color = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.testTag("metronome_start_stop_label"),
             )
         }

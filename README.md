@@ -13,17 +13,18 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Status: public testing prerelease `0.3.0-alpha.19`. Intoniva is in Google Play
-closed-testing review and is not available in production.
+Release version: `0.3.0-alpha.20`. Google Play
+distribution is managed separately; see the dated
+[release record](docs/store/2026-09-06-alpha19-release.md) for the recorded submission status.
 
 ## Download
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.19/Intoniva-v0.3.0-alpha.19-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.20/Intoniva-v0.3.0-alpha.20-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.19).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.20).
 
 ## Features
 
@@ -33,7 +34,7 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
   temporal tracking.
 - Live frequency, signed cents, flat/sharp direction, and a −50…+50 cent rail.
 - A foreground-only mechanical metronome from 20 to 400 BPM with meter,
-  subdivision, accent, five clean sound styles, volume, mute, and count-in.
+  subdivision, accents, selectable sound styles, volume, mute, and count-in.
 - Offline tempo estimation for a user-selected song, with confidence and one-tap
   application to the metronome.
 - Canonical major, minor, and dominant-seventh chord diagrams from a pinned
@@ -45,8 +46,8 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
 - Chord learning, hidden-answer chord quiz, and 12-note ear training with
   generated audio and local scoring.
 - Guitar: 6, 7, 8, and 9 strings with inline and split headstocks.
-- Four-string bass and ukulele.
-- 49 built-in tunings, including lowered standard, Drop D through Drop F,
+- Four-, five-, and six-string bass, ukulele, and other instrument presets.
+- Built-in tunings, including lowered standard, Drop D through Drop F,
   DADGAD, open tunings, extended-range guitar, bass, and ukulele presets.
 - Searchable library, favorites, last-used state, and up to 100 custom tunings.
 - Adjustable A4 reference from 410.0 to 480.0 Hz in 0.1 Hz steps; 440.0 Hz is
@@ -74,7 +75,7 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
 
 ## Screenshots
 
-| Precise tuner | Chromatic mode |
+| Preset tuner | Chromatic mode |
 | --- | --- |
 | ![Intoniva preset tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/1_tuner.png) | ![Intoniva chromatic tuner](fastlane/metadata/android/en-US/images/phoneScreenshots/2_chromatic.png) |
 
@@ -197,6 +198,21 @@ and [security policy](SECURITY.md).
 - Public privacy policy: `https://majkey25.github.io/TuneItAll/privacy/`
 - Data Safety record and release checklist: `docs/store/`
 - Deterministic SVG sources: `assets/source/`
+
+## Legal policies and contact
+
+Published on this application's GitHub Pages:
+
+- [All policies and publisher contact](https://majkey25.github.io/TuneItAll/legal/)
+- [Privacy policy](https://majkey25.github.io/TuneItAll/privacy/)
+- [Terms of use](https://majkey25.github.io/TuneItAll/terms/)
+- [Refund policy](https://majkey25.github.io/TuneItAll/refunds/)
+- [Cookies policy](https://majkey25.github.io/TuneItAll/cookies/)
+- [Support](https://majkey25.github.io/TuneItAll/support/) · [Email MajkeyLab](mailto:majkeylab@gmail.com)
+
+The app is free. This website has no analytics, contact forms, or optional
+tracking cookies. GitHub Pages processes technical hosting data as described
+in the privacy policy. GitHub issues are public; send private requests by email.
 
 ## Licence
 

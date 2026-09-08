@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0-alpha.20 — 2026-09-08
+
+- Add linked privacy, terms, refund, and cookies pages with publisher contact and image credits.
+- Add an online-policy link in App details and screen-reader states for its expandable sections.
+- Improve light-theme text and focus contrast while retaining bright green selected controls.
+- Clarify website hosting, optional support payments, and private versus public support records.
+- Permit ordinary use of official app builds while keeping source code and original assets proprietary.
+- Remove outdated feature counts and unsupported marketing promises.
+
+The audio-recognition engine is unchanged in this release. Publisher legal identification still requires owner confirmation.
+
 ## 0.3.0-alpha.19 — 2026-09-06
 
 - Improve quiet-note pitch precision without increasing confidence or forcing the selected string's frequency.

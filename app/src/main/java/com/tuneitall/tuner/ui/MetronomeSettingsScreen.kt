@@ -217,8 +217,8 @@ private fun ChoiceChip(label: String, selected: Boolean, tag: String, onClick: (
         label = { Text(label) },
         colors = FilterChipDefaults.filterChipColors(
             labelColor = MaterialTheme.colorScheme.onBackground,
-            selectedContainerColor = MaterialTheme.colorScheme.primary,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ),
         modifier = Modifier
             .height(52.dp)

@@ -23,15 +23,20 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.BuildConfig
+import com.tuneitall.tuner.POLICIES_URL
 import com.tuneitall.tuner.R
 
 @Composable
@@ -40,9 +45,12 @@ fun AboutScreen(
     onSupport: () -> Unit,
 ) {
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     val supportNotice = stringResource(R.string.support_app_notice)
-    var showPrivacy by remember { mutableStateOf(false) }
-    var showLicense by remember { mutableStateOf(false) }
+    val expanded = stringResource(R.string.section_expanded)
+    val collapsed = stringResource(R.string.section_collapsed)
+    var showPrivacy by rememberSaveable { mutableStateOf(false) }
+    var showLicense by rememberSaveable { mutableStateOf(false) }
     val textButtonColors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
 
     Column(
@@ -63,19 +71,40 @@ fun AboutScreen(
         TextButton(
             onClick = { showPrivacy = !showPrivacy },
             colors = textButtonColors,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("about_privacy").semantics {
+                stateDescription = if (showPrivacy) expanded else collapsed
+            },
         ) {
             Text(stringResource(R.string.privacy_policy))
         }
-        if (showPrivacy) Text(stringResource(R.string.privacy_policy_full))
+        if (showPrivacy) {
+            Text(stringResource(R.string.privacy_policy_full))
+            Text(stringResource(R.string.support_payment_privacy))
+        }
         TextButton(
             onClick = { showLicense = !showLicense },
             colors = textButtonColors,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("about_license").semantics {
+                stateDescription = if (showLicense) expanded else collapsed
+            },
         ) {
             Text(stringResource(R.string.license))
         }
         if (showLicense) Text(stringResource(R.string.license_summary))
+        TextButton(
+            onClick = {
+                try {
+                    uriHandler.openUri(POLICIES_URL)
+                } catch (_: IllegalArgumentException) {
+                    Toast.makeText(context, R.string.support_unavailable, Toast.LENGTH_SHORT).show()
+                }
+            },
+            colors = textButtonColors,
+            modifier = Modifier.fillMaxWidth().testTag("about_legal_policies"),
+        ) {
+            Text(stringResource(R.string.legal_policies))
+        }
+        Text(stringResource(R.string.website_privacy_summary), style = MaterialTheme.typography.bodySmall)
         Button(
             onClick = {
                 Toast.makeText(context, supportNotice, Toast.LENGTH_SHORT).show()

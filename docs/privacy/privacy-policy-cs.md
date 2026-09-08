@@ -1,7 +1,7 @@
 # Zásady ochrany soukromí Intoniva
 
-Platnost od: 4. září 2026
-Poslední aktualizace: 4. září 2026
+Platnost od: 8. září 2026
+Poslední aktualizace: 8. září 2026
 
 Vydavatelem Intoniva je MajkeyLab. Kontakt pro ochranu soukromí:
 `majkeylab@gmail.com`.
@@ -41,15 +41,40 @@ Tlačítko podpory požádá Android o otevření Buy Me a Coffee v externím
 prohlížeči. Aplikace neposílá identifikátor ani neodemyká funkce. Platí zásady
 prohlížeče a cílové služby.
 
+Při volitelném příspěvku může služba zpřístupnit MajkeyLab vámi zvolené jméno,
+kontaktní údaje, zprávu a číslo, datum či částku transakce. Údaje slouží k řešení
+dotazů k příspěvku a povinné zákonné evidenci na základě vyžádané transakce,
+oprávněného zájmu nebo příslušné právní povinnosti. Platební záznamy se uchovávají
+po dobu potřebnou k vyřešení dotazu a po případnou zákonnou dobu. Úplné údaje
+karty zpracovává platební poskytovatel, ne Intoniva. Platí
+[zásady Buy Me a Coffee](https://buymeacoffee.com/privacy-policy).
+
 Pokud dobrovolně pošlete e-mail MajkeyLab nebo založíte GitHub issue, MajkeyLab
 a poskytovatel e-mailu či GitHubu mohou obdržet adresu nebo název účtu, zprávu a
 přílohy, které odešlete. Nepřikládejte nahrávky ani citlivé údaje. MajkeyLab je
 použije pouze pro vyžádanou podporu, prevenci zneužití nebo právní povinnosti.
 Právním základem jsou vámi vyžádané kroky nebo oprávněný zájem MajkeyLab.
-Korespondence se běžně smaže do 12 měsíců od uzavření požadavku, pokud
-nepožádáte o dřívější výmaz nebo právní povinnost nevyžaduje delší uchování.
+Soukromá korespondence s podporou se běžně smaže do 12 měsíců od uzavření
+požadavku, pokud nepožádáte o dřívější výmaz nebo právní povinnost nevyžaduje
+delší uchování.
 Zpracování a mezinárodní přenosy poskytovatele se řídí jeho podmínkami a
 zárukami.
+
+GitHub issues jsou veřejné. Soukromé žádosti posílejte e-mailem. Veřejná hlášení
+mohou zůstat v historii projektu do úpravy nebo odstranění; doba uchování
+soukromé podpory se na ně nevztahuje. Kopie u dalších osob nebo služeb nejsou
+pod kontrolou MajkeyLab a MajkeyLab je nemůže vymazat.
+
+## Tento web a hosting
+
+Web projektu nemá kontaktní formulář, analytiku, reklamní pixely, vložený obsah
+třetích stran ani cookies či identifikátory úložiště nastavené aplikací Intoniva.
+Nevyžaduje marketingový souhlas. Podrobnosti uvádějí [zásady cookies](../cookies/#cestina).
+
+Web hostuje GitHub Pages. GitHub ukládá IP adresy návštěvníků kvůli zabezpečení.
+Technické požadavky, uchování a mezinárodní přenosy se řídí
+[zásadami GitHubu](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+MajkeyLab nemá analytický přehled návštěvníků a údaje nepoužívá k reklamě.
 
 ## Práva v Evropské unii a EHP
 
@@ -63,8 +88,8 @@ podpory.
 ## Práva na ochranu soukromí v USA
 
 Intoniva osobní údaje neprodává ani nesdílí, nepoužívá cílenou reklamu, nenabízí
-finanční pobídku a po žádosti nediskriminuje. Volitelné identifikátory a
-korespondence podpory jsou jediné osobní údaje, které MajkeyLab může obdržet.
+finanční pobídku a po žádosti nediskriminuje. MajkeyLab může obdržet výše
+popsané údaje volitelné podpory a plateb.
 Práva platná ve vašem státě uplatníte na `majkeylab@gmail.com`.
 
 ## Děti

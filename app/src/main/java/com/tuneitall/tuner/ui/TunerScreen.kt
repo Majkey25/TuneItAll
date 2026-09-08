@@ -341,8 +341,8 @@ internal data class ResolvedChipColors(
 
 @Composable
 internal fun modeSelectorSelectedColors(): ResolvedChipColors = ResolvedChipColors(
-    container = MaterialTheme.colorScheme.primary,
-    content = MaterialTheme.colorScheme.onPrimary,
+    container = MaterialTheme.colorScheme.primaryContainer,
+    content = MaterialTheme.colorScheme.onPrimaryContainer,
 )
 
 @Composable
