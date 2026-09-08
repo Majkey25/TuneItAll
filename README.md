@@ -13,7 +13,7 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Release version: `0.3.0-alpha.20`. Google Play
+Source version: `0.3.0-alpha.21`; latest downloadable release: `0.3.0-alpha.20`. Google Play
 distribution is managed separately; see the dated
 [release record](docs/store/2026-09-08-alpha20-release.md) for the recorded submission status.
 
@@ -103,7 +103,7 @@ One native Kotlin application module:
   smoothing.
 - One continuous mono PCM16 `AudioTrack` for foreground-only metronome playback.
 - Native `MediaExtractor`/`MediaCodec` decoding for user-selected local audio,
-  followed by bounded STFT chroma extraction, template matching, and temporal
+  preserving channel powers before bounded STFT chroma extraction, template matching, and temporal
   smoothing. No audio file is copied, uploaded, or retained by Intoniva.
 - Harmonic-rich one-shot reference tones with click-free switching.
 - Pinned MIT `chords-db` data for canonical guitar and ukulele fingerings.
@@ -182,6 +182,9 @@ signed release workflow only when all four keystore secrets are configured. It
 creates a draft GitHub release; Play upload remains a deliberate manual step.
 See [release process](docs/releasing.md), [architecture](docs/architecture.md),
 and [security policy](SECURITY.md).
+
+Latest audio checks: [quiet-note tracking](docs/quiet-current-evidence-2026-09-08.md)
+and [stereo song analysis](docs/stereo-song-analysis-2026-09-08.md).
 
 ## Store assets and release documents
 

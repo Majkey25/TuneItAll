@@ -1,0 +1,1 @@
+Lepší sledování slabých doznívajících tónů bez vracení zastaralých hodnot. Analýza skladeb zachovává stereo tóny kytary a rytmus, které se mohly při míchání kanálů vzájemně vyrušit. Optimalizované zpracování FFT snižuje náročnost analýzy. Chování mono nahrávek, nastavení ukazatele a soukromí offline zůstávají stejné.

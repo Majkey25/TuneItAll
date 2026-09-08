@@ -13,8 +13,17 @@ import androidx.test.core.app.ApplicationProvider
 import com.tuneitall.tuner.audio.AudioInput
 import com.tuneitall.tuner.audio.AudioInputSource
 import com.tuneitall.tuner.audio.YinPitchDetector
+import com.tuneitall.tuner.model.ReferencePitch
+import com.tuneitall.tuner.model.TuningCatalog
+import com.tuneitall.tuner.tuner.MusicMath
+import com.tuneitall.tuner.tuner.TunerMode
+import com.tuneitall.tuner.tuner.pitchSearchRange
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.security.MessageDigest
+import java.util.Base64
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ln
@@ -110,9 +119,49 @@ class TunerAudioRegressionTest {
 
     @Test
     fun quietLowNotesRemainAccurateWithinAudioHopBudget() {
+        checkQuietRange(listOf(30.8677, 41.2034, 82.4069, 110.0), 25.0, 150.0)
+    }
+
+    @Test
+    fun quietGuitarNotesRemainAccurateWithinDefaultAutoHopBudget() {
+        val tuning = requireNotNull(TuningCatalog.byId("guitar-6-standard"))
+        val reference = ReferencePitch(440.0)
+        val range = pitchSearchRange(TunerMode.AUTO, tuning, 0, reference)
+        checkQuietRange(tuning.notesLowToHigh.map { MusicMath.frequency(it, reference) }, range.minHertz, range.maxHertz)
+    }
+
+    @Test
+    fun ambiguousDecayRetainsCurrentFundamentalWithinAudioHopBudget() {
+        val encoded = requireNotNull(javaClass.getResourceAsStream("/audio/quiet-d3-decay.s16le.b64"))
+            .bufferedReader().use { it.readText() }
+        val bytes = Base64.getDecoder().decode(encoded.trim())
+        assertEquals(16_384, bytes.size)
+        assertEquals("d27fc8f5fd3c04276591da234f9875600a50e58b320ecce28733765a95f29aea",
+            MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) })
+        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+        val samples = ShortArray(8192).also { buffer.get(it) }
+        val tuning = requireNotNull(TuningCatalog.byId("guitar-6-standard"))
+        val range = pitchSearchRange(TunerMode.AUTO, tuning, 0, ReferencePitch(440.0))
         val detector = YinPitchDetector()
         val timings = mutableListOf<Double>()
-        listOf(30.8677, 41.2034, 82.4069, 110.0).forEach { frequency ->
+        repeat(55) { iteration ->
+            val started = SystemClock.elapsedRealtimeNanos()
+            val frame = detector.analyze(samples, 48_000, range.minHertz, range.maxHertz)
+            val elapsed = (SystemClock.elapsedRealtimeNanos() - started) / 1_000_000.0
+            if (iteration >= 5) timings += elapsed
+            assertTrue("Missing continuation-only D3: $frame", frame.candidates.any {
+                it.probability == 0.0 && abs(MusicMath.cents(it.hertz, 146.8324)) <= 25.0
+            })
+        }
+        val p95 = timings.sorted()[(timings.size * 0.95).toInt()]
+        Log.i("TunerAudioQA", "ambiguous D3 refinement p95Ms=$p95 averageMs=${timings.average()}")
+        assertTrue("Ambiguous refinement exceeds the 42.7 ms audio hop: $p95", p95 < 42.7)
+    }
+
+    private fun checkQuietRange(frequencies: List<Double>, minimum: Double, maximum: Double) {
+        val detector = YinPitchDetector()
+        val timings = mutableListOf<Double>()
+        frequencies.forEach { frequency ->
             repeat(12) { frame ->
                 val samples = ShortArray(8192) { index ->
                     val time = (index + frame * 2048) / 48_000.0
@@ -121,7 +170,7 @@ class TunerAudioRegressionTest {
                         0.004 * sin(2 * PI * 6421.0 * time)) * 32767).toInt().toShort()
                 }
                 val start = SystemClock.elapsedRealtimeNanos()
-                val result = detector.analyze(samples, 48_000, 25.0, 150.0)
+                val result = detector.analyze(samples, 48_000, minimum, maximum)
                 val elapsed = (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000.0
                 if (frame > 1) timings += elapsed
                 val candidate = result.candidates.maxByOrNull { it.probability }
@@ -131,7 +180,7 @@ class TunerAudioRegressionTest {
             }
         }
         val p95 = timings.sorted()[(timings.size * 0.95).toInt().coerceAtMost(timings.lastIndex)]
-        Log.i("TunerAudioQA", "quiet low-note DSP p95Ms=$p95 averageMs=${timings.average()}")
+        Log.i("TunerAudioQA", "quiet DSP range=$minimum..$maximum p95Ms=$p95 averageMs=${timings.average()}")
         assertTrue("DSP exceeds the 42.7 ms microphone hop: $p95", p95 < 42.7)
     }
 }

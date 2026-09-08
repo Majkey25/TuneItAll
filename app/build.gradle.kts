@@ -28,8 +28,8 @@ android {
         applicationId = "com.tuneitall.tuner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 23
-        versionName = "0.3.0-alpha.20"
+        versionCode = 24
+        versionName = "0.3.0-alpha.21"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -69,6 +69,7 @@ android {
         }
     }
     testBuildType = "qa"
+    sourceSets.getByName("androidTest").resources.srcDir("src/test/resources")
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

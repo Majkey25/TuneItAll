@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0-alpha.21 — 2026-09-08
+
+- Preserve weak current-note candidates during guitar decay without increasing new-note acquisition probabilities.
+- Prevent unobserved historical pitch states from returning as fresh measurements.
+- Preserve stereo guitar and rhythm evidence that waveform averaging could cancel beneath centered instruments.
+- Pack channel pairs into one FFT and reuse the Hann window to reduce song-analysis work.
+- Keep mono behavior, timing limits, display smoothing, permissions, and offline processing unchanged.
+
+The hardest low-SNR decay target remains unmet. Song chord labels are not guaranteed transcriptions.
+See the [quiet-note evidence](docs/quiet-current-evidence-2026-09-08.md) and
+[stereo decoder evidence](docs/stereo-song-analysis-2026-09-08.md).
+
 ## 0.3.0-alpha.20 — 2026-09-08
 
 - Add linked privacy, terms, refund, and cookies pages with publisher contact and image credits.

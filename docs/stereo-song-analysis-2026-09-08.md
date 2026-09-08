@@ -84,8 +84,10 @@ Shared test APK SHA-256:
 Baseline QA APK SHA-256:
 `f220a30a92fecfcd342401fc94a0b4f197ffd9318f05a3f82f933109db633b2f`.
 
-No new release has been published from this change yet. A full optimized
-device rerun is still planned before the next release.
+The combined optimized build subsequently passed the full 100-test phone suite,
+nine repeated audio checks, and the final 101-test suite in 105.774 seconds.
+The repeated private-song check took 8,922 ms, with the same 286 events and
+90.39% coverage. No new release has been published from this change yet.
 
 The unchanged mono benchmark on 12 performed GuitarSet recordings reports
 64.99% root accuracy, 57.19% supported chord-quality accuracy, and 95.77% label
