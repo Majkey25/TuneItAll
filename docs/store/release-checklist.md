@@ -1,11 +1,13 @@
 # Intoniva release checklist
 
+Reusable checklist. Dated release records contain the verified results for
+each version; unchecked items here do not describe the current release status.
+
 ## Product and legal
 
 - [ ] Complete formal trademark clearance for `Intoniva` in target markets.
-- [ ] Replace placeholder publisher contact details and host the privacy policy
-      at a stable public HTTPS URL.
-- [ ] Confirm proprietary copyright owner wording.
+- [ ] Confirm the publisher's legal identity and proprietary copyright owner wording.
+- [ ] Verify the published policy URLs and support contact remain current.
 - [ ] Regenerate and review third-party licence notices from the release bundle.
 
 ## Android and Play
