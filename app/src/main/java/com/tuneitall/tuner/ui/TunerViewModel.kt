@@ -14,6 +14,7 @@ import com.tuneitall.tuner.audio.AudioInputError
 import com.tuneitall.tuner.audio.AudioInputSource
 import com.tuneitall.tuner.audio.AdaptiveNoiseFloor
 import com.tuneitall.tuner.audio.ConfirmationChimePlayer
+import com.tuneitall.tuner.audio.CONFIRMATION_CHIME_HERTZ
 import com.tuneitall.tuner.audio.DetectionSensitivity
 import com.tuneitall.tuner.audio.FeedbackInputGate
 import com.tuneitall.tuner.audio.PitchFrame
@@ -393,11 +394,14 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                 val pipelineResult = synchronized(pitchPipelineLock) {
                     if (!isCurrentDetectionContextLocked(captured)) return@synchronized null
                     val settings = captured.state.audioSettings
+                    val feedbackActive = !feedbackInputGate.accepts(SystemClock.elapsedRealtime())
+                    if (feedbackActive && range.maxHertz >= CONFIRMATION_CHIME_HERTZ / 2.0) return@synchronized null
                     val frame = detector.analyze(
                         samples,
                         sampleRate,
                         range.minHertz,
                         range.maxHertz,
+                        rejectConfirmation = feedbackActive,
                     )
                     noiseFloor.observe(frame.rms, frame.isDetectorVoiced)
                     val tracked = if (
@@ -466,14 +470,13 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                             }
                             if (playConfirmation && confirmationTracker.isConfirmed) {
                                 try {
+                                    feedbackInputGate.suppress(
+                                        nowMillis = SystemClock.elapsedRealtime(),
+                                        durationMillis = CONFIRMATION_FEEDBACK_MILLIS,
+                                    )
                                     confirmationPlayer.play()
-                                    if (current.mode == TunerMode.CHROMATIC) {
-                                        feedbackInputGate.suppress(
-                                            nowMillis = SystemClock.elapsedRealtime(),
-                                            durationMillis = CHROMATIC_FEEDBACK_SUPPRESSION_MILLIS,
-                                        )
-                                    }
                                 } catch (error: RuntimeException) {
+                                    feedbackInputGate.reset()
                                     failure = error
                                 }
                             }
@@ -534,8 +537,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         return foreground &&
             tunerActive &&
             current.listening &&
-            !current.referenceTonePlaying &&
-            feedbackInputGate.accepts(SystemClock.elapsedRealtime())
+            !current.referenceTonePlaying
     }
 
     private fun updateDetectionContext(transform: (TunerUiState) -> TunerUiState) = synchronized(pitchPipelineLock) {
@@ -582,7 +584,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         engine.reset()
         readingRetainer.reset()
         confirmationTracker.reset()
-        feedbackInputGate.reset()
+        // The speaker/room tail outlives a mode, tuning, or settings change.
     }
 
     private fun stopTunerAudio() {
@@ -598,6 +600,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         const val DEFAULT_TUNING_ID = "guitar-6-standard"
         const val ANALYSIS_WINDOW_SIZE = 8_192
         const val REFERENCE_PREVIEW_MILLIS = 1_050L
-        const val CHROMATIC_FEEDBACK_SUPPRESSION_MILLIS = 300L
+        // ponytail: bounded to short output/room tails; measure longer routes before widening.
+        const val CONFIRMATION_FEEDBACK_MILLIS = 400L
     }
 }

@@ -99,9 +99,9 @@ internal fun createConfirmationChime(
         val release = (sampleCount - 1 - index).toDouble() / (sampleCount - 1)
         val envelope = attack * release * release * exp(-CHIME_DECAY * seconds)
         val wave =
-            0.70 * sin(2.0 * PI * CHIME_HERTZ * seconds) +
-                0.22 * sin(4.01 * PI * CHIME_HERTZ * seconds) +
-                0.08 * sin(7.98 * PI * CHIME_HERTZ * seconds)
+            0.70 * sin(2.0 * PI * CONFIRMATION_CHIME_HERTZ * seconds) +
+                0.22 * sin(2.0 * PI * CONFIRMATION_CHIME_SECOND_HERTZ * seconds) +
+                0.08 * sin(2.0 * PI * CONFIRMATION_CHIME_THIRD_HERTZ * seconds)
         (wave * envelope * CHIME_AMPLITUDE * Short.MAX_VALUE)
             .roundToInt()
             .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())
@@ -112,7 +112,9 @@ internal fun createConfirmationChime(
 private const val CHIME_SAMPLE_RATE = 48_000
 internal const val CONFIRMATION_CHIME_DURATION_MILLIS = 90
 private const val CHIME_ATTACK_MILLIS = 6
-private const val CHIME_HERTZ = 880.0
+internal const val CONFIRMATION_CHIME_HERTZ = 880.0
+internal const val CONFIRMATION_CHIME_SECOND_HERTZ = CONFIRMATION_CHIME_HERTZ * 2.005
+internal const val CONFIRMATION_CHIME_THIRD_HERTZ = CONFIRMATION_CHIME_HERTZ * 3.99
 private const val CHIME_DECAY = 5.5
 private const val CHIME_AMPLITUDE = 0.72
 private const val MIN_SAMPLE_RATE = 8_000

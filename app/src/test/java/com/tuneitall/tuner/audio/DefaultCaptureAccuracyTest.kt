@@ -175,7 +175,7 @@ class DefaultCaptureAccuracyTest {
         }
     }
 
-    private fun pluck(frequency: Double, seed: Int, buzz: Boolean = false, amplitude: Double = 0.00035): ShortArray {
+    internal fun pluck(frequency: Double, seed: Int, buzz: Boolean = false, amplitude: Double = 0.00035): ShortArray {
         val random = Random(seed)
         var phase = 0.0
         return ShortArray((DURATION_SECONDS * SAMPLE_RATE).toInt()) { index ->

@@ -1,6 +1,7 @@
 package com.tuneitall.tuner
 
 import android.Manifest
+import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioFormat
@@ -12,6 +13,12 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.test.core.app.ApplicationProvider
 import com.tuneitall.tuner.audio.AudioInput
 import com.tuneitall.tuner.audio.AudioInputSource
+import com.tuneitall.tuner.audio.AdaptiveNoiseFloor
+import com.tuneitall.tuner.audio.PitchFrame
+import com.tuneitall.tuner.audio.FeedbackInputGate
+import com.tuneitall.tuner.audio.ResponseMode
+import com.tuneitall.tuner.audio.createConfirmationChime
+import com.tuneitall.tuner.audio.isDetectorVoiced
 import com.tuneitall.tuner.audio.PitchTracker
 import com.tuneitall.tuner.audio.TunerAudioSettings
 import com.tuneitall.tuner.audio.YinPitchDetector
@@ -20,6 +27,7 @@ import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.tuner.MusicMath
 import com.tuneitall.tuner.tuner.TunerMode
 import com.tuneitall.tuner.tuner.pitchSearchRange
+import com.tuneitall.tuner.ui.TunerViewModel
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.nio.ByteBuffer
@@ -35,6 +43,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -43,6 +52,31 @@ import org.junit.Test
 class TunerAudioRegressionTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun changingDetectionContextPreservesPendingSpeakerFeedback() {
+        val viewModel = TunerViewModel(ApplicationProvider.getApplicationContext<Application>())
+        val original = viewModel.uiState.value
+        // Exercise the real reset path without adding a production-only test hook or playing sound.
+        val field = TunerViewModel::class.java.getDeclaredField("feedbackInputGate").apply { isAccessible = true }
+        val gate = field.get(viewModel) as FeedbackInputGate
+        gate.suppress(1_000L, 400L)
+        try {
+            viewModel.selectMode(if (original.mode == TunerMode.CHROMATIC) TunerMode.AUTO else TunerMode.CHROMATIC)
+            assertFalse("Mode change cleared the speaker tail", gate.accepts(1_100L))
+            val response = if (original.audioSettings.response == ResponseMode.FAST) ResponseMode.STABLE else ResponseMode.FAST
+            viewModel.setTunerAudioSettings(original.audioSettings.copy(response = response))
+            assertFalse("Settings change cleared the speaker tail", gate.accepts(1_200L))
+            viewModel.selectTuning(requireNotNull(TuningCatalog.byId("bass-5-standard")))
+            assertFalse("Tuning change cleared the speaker tail", gate.accepts(1_399L))
+            assertTrue("Speaker protection did not expire", gate.accepts(1_400L))
+        } finally {
+            viewModel.selectMode(original.mode)
+            viewModel.setTunerAudioSettings(original.audioSettings)
+            viewModel.selectTuning(original.tuning)
+            viewModel.setHeadstockLayout(original.headstockLayout)
+        }
+    }
 
     @Test
     fun reportFloatMicrophonePrecisionWithoutSavingAudio() {
@@ -177,6 +211,69 @@ class TunerAudioRegressionTest {
         val reference = ReferencePitch(440.0)
         val range = pitchSearchRange(TunerMode.AUTO, tuning, 0, reference)
         checkQuietRange(tuning.notesLowToHigh.map { MusicMath.frequency(it, reference) }, range.minHertz, range.maxHertz)
+    }
+
+    @Test
+    fun quietGuitarStaysFreshDuringConfirmationEcho() {
+        val rate = 48_000
+        val tuning = requireNotNull(TuningCatalog.byId("guitar-6-standard"))
+        val range = pitchSearchRange(TunerMode.AUTO, tuning, 0, ReferencePitch(440.0))
+        val chime = createConfirmationChime(sampleRate = rate)
+        val timings = mutableListOf<Double>()
+        for (note in tuning.notesLowToHigh) {
+            val hertz = MusicMath.frequency(note, ReferencePitch(440.0))
+            val random = Random(note.value)
+            val samples = ShortArray(2 * rate) { index ->
+                val phase = 2 * PI * hertz * index / rate
+                val guitar = 0.00035 * (sin(phase) + 0.4 * sin(2 * phase) + 0.2 * sin(3 * phase))
+                val direct = chime.getOrNull(index - rate - rate / 50)?.toDouble() ?: 0.0
+                val echo = chime.getOrNull(index - rate - rate * 3 / 50)?.toDouble() ?: 0.0
+                ((guitar + 0.00016 * random.nextDouble(-1.0, 1.0)) * Short.MAX_VALUE +
+                    (direct + 0.4 * echo) * 0.1).roundToInt().toShort()
+            }
+            val detector = YinPitchDetector()
+            val tracker = PitchTracker()
+            val floor = AdaptiveNoiseFloor()
+            val settings = TunerAudioSettings()
+            var measured = 0
+            var primed = 0
+            var maxCents = 0.0
+            for (end in 8192..samples.size step 2048) {
+                val nowMillis = end * 1000L / rate
+                val window = samples.copyOfRange(end - 8192, end)
+                val started = SystemClock.elapsedRealtimeNanos()
+                val frame = detector.analyze(
+                    window, rate, range.minHertz, range.maxHertz,
+                    rejectConfirmation = nowMillis in 1000L until 1400L,
+                )
+                floor.observe(frame.rms, frame.isDetectorVoiced)
+                val estimate = tracker.update(
+                    if (floor.accepts(frame.rms, settings.sensitivity, settings.noiseRejection)) frame
+                    else PitchFrame(emptyList(), frame.rms, frame.peak, 1.0),
+                    settings,
+                )
+                val elapsed = (SystemClock.elapsedRealtimeNanos() - started) / 1_000_000.0
+                if (nowMillis in 700L..1000L) {
+                    assertTrue("Quiet control missing: ${note.value}", estimate != null)
+                    assertTrue(abs(MusicMath.cents(requireNotNull(estimate).hertz, hertz)) <= 3.0)
+                    primed++
+                }
+                if (nowMillis in 1000L..1300L) {
+                    timings += elapsed
+                    assertTrue("Chime interrupted ${note.value}", estimate != null)
+                    val error = abs(MusicMath.cents(requireNotNull(estimate).hertz, hertz))
+                    assertTrue("Chime changed ${note.value} by $error cents", error <= 3.0)
+                    maxCents = maxOf(maxCents, error)
+                    measured++
+                }
+            }
+            assertEquals(7, primed)
+            assertEquals(7, measured)
+            Log.i("TunerAudioQA", "confirmation echo midi=${note.value} fresh=$measured/7 maxCents=$maxCents")
+        }
+        val p95 = timings.sorted()[(timings.size * 0.95).toInt()]
+        Log.i("TunerAudioQA", "confirmation rejection p95Ms=$p95")
+        assertTrue("Feedback rejection exceeds audio hop: $p95", p95 < 42.7)
     }
 
     @Test

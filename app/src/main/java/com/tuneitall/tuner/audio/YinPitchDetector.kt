@@ -14,8 +14,17 @@ private val THRESHOLDS = doubleArrayOf(0.05, 0.075, 0.10, 0.125, 0.15, 0.175, 0.
 private val THRESHOLD_WEIGHTS = doubleArrayOf(0.02, 0.06, 0.12, 0.18, 0.20, 0.17, 0.12, 0.08, 0.05)
 private const val MAX_CANDIDATES = 8
 private const val MERGE_CENTS = 15.0
+private val CHIME_FREQUENCIES = doubleArrayOf(
+    CONFIRMATION_CHIME_HERTZ, CONFIRMATION_CHIME_SECOND_HERTZ, CONFIRMATION_CHIME_THIRD_HERTZ,
+)
 
-internal fun decimate(samples: ShortArray, output: DoubleArray, sampleRate: Int, maxFrequency: Double): Int {
+internal fun decimate(
+    samples: ShortArray,
+    output: DoubleArray,
+    sampleRate: Int,
+    maxFrequency: Double,
+    rejectConfirmation: Boolean = false,
+): Int {
     require(output.isNotEmpty() && samples.size % output.size == 0) { "Decimation sizes must divide evenly" }
     val factor = samples.size / output.size
     require(factor == 1 || factor == 2 || factor == 4)
@@ -23,11 +32,40 @@ internal fun decimate(samples: ShortArray, output: DoubleArray, sampleRate: Int,
     val cutoff = minOf(0.4 / factor, maxFrequency * 2.5 / sampleRate)
     val first = PitchLowPass(cutoff, 0.5411961001, samples.first().toDouble())
     val second = PitchLowPass(cutoff, 1.3065629649, samples.first().toDouble())
+    val notches = if (rejectConfirmation) {
+        Array(CHIME_FREQUENCIES.size * 2) {
+            ChimeNotch(CHIME_FREQUENCIES[it / 2], sampleRate, samples.first().toDouble())
+        }
+    } else emptyArray()
     samples.forEachIndexed { index, sample ->
-        val value = second.process(first.process(sample.toDouble()))
+        var filtered = sample.toDouble()
+        notches.forEach { notch -> filtered = notch.process(filtered) }
+        val value = second.process(first.process(filtered))
         if (index % factor == factor - 1) output[index / factor] = value
     }
     return ceil(4.0 / (cutoff * factor)).toInt()
+}
+
+private class ChimeNotch(frequency: Double, sampleRate: Int, initial: Double) {
+    // RBJ notch, Q=1: https://www.w3.org/TR/audio-eq-cookbook/#notch
+    private val omega = 2.0 * PI * frequency / sampleRate
+    private val alpha = sin(omega) / 2.0
+    private val b0 = 1.0 / (1.0 + alpha)
+    private val b1 = -2.0 * cos(omega) / (1.0 + alpha)
+    private val a2 = (1.0 - alpha) / (1.0 + alpha)
+    private var x1 = initial
+    private var x2 = initial
+    private var y1 = initial
+    private var y2 = initial
+
+    fun process(sample: Double): Double {
+        val output = b0 * (sample + x2) + b1 * (x1 - y1) - a2 * y2
+        x2 = x1
+        x1 = sample
+        y2 = y1
+        y1 = output
+        return output
+    }
 }
 
 private class PitchLowPass(cutoff: Double, q: Double, initial: Double) {
@@ -112,8 +150,13 @@ class YinPitchDetector {
         sampleRate: Int,
         minFrequency: Double,
         maxFrequency: Double,
+        rejectConfirmation: Boolean = false,
     ): PitchFrame {
         validateArguments(samples, sampleRate, minFrequency, maxFrequency)
+        require(!rejectConfirmation || (maxFrequency < CONFIRMATION_CHIME_HERTZ / 2.0 && sampleRate >= 8_000)) {
+            "Confirmation rejection is only safe below the chime band"
+        }
+        val filterChime = rejectConfirmation && containsConfirmationTone(samples, sampleRate)
         val factor = when {
             samples.size >= LONG_WINDOW_SIZE && samples.size % 4 == 0 && maxFrequency <= LOW_RANGE_MAX_HERTZ -> 4
             samples.size >= LONG_WINDOW_SIZE && samples.size % 2 == 0 && maxFrequency <= sampleRate / 4.0 -> 2
@@ -121,7 +164,8 @@ class YinPitchDetector {
         }
         val outputSize = samples.size / factor
         if (decimated.size != outputSize) decimated = DoubleArray(outputSize)
-        val analysisStart = decimate(samples, decimated, sampleRate, maxFrequency).coerceAtMost(outputSize / 8)
+        val analysisStart = decimate(samples, decimated, sampleRate, maxFrequency, filterChime)
+            .coerceAtMost(outputSize / 8)
         val analysisSamples = decimated
         val analysisSampleRate = sampleRate.toDouble() / factor
 
@@ -176,7 +220,9 @@ class YinPitchDetector {
         val clearestPeriodicity = boundedCandidates.maxOfOrNull(PitchCandidate::periodicity) ?: 0.0
         val refinedCandidates = boundedCandidates.map { candidate ->
             if (candidate.periodicity + NO_TROUGH_MARGIN < clearestPeriodicity) candidate else candidate.copy(
-                hertz = refineFrequency(samples, sampleRate, factor, candidate.hertz, minFrequency, maxFrequency),
+                hertz = refineFrequency(
+                    samples, sampleRate, factor, candidate.hertz, minFrequency, maxFrequency, filterChime,
+                ),
             )
         }
         return PitchFrame(
@@ -187,6 +233,30 @@ class YinPitchDetector {
         )
     }
 
+    private fun containsConfirmationTone(samples: ShortArray, sampleRate: Int): Boolean {
+        val blockSize = sampleRate / 50
+        for (frequency in CHIME_FREQUENCIES) {
+            val coefficient = 2.0 * cos(2.0 * PI * frequency / sampleRate)
+            for (start in samples.indices step blockSize) {
+                val end = minOf(samples.size, start + blockSize)
+                var previous = 0.0
+                var beforePrevious = 0.0
+                var energy = 0.0
+                for (index in start until end) {
+                    val value = samples[index].toDouble()
+                    val current = value + coefficient * previous - beforePrevious
+                    beforePrevious = previous
+                    previous = current
+                    energy += value * value
+                }
+                val toneEnergy = previous * previous + beforePrevious * beforePrevious -
+                    coefficient * previous * beforePrevious
+                if (energy > 0.0 && 2.0 * toneEnergy > MIN_CHIME_ENERGY_RATIO * (end - start) * energy) return true
+            }
+        }
+        return false
+    }
+
     private fun refineFrequency(
         samples: ShortArray,
         sampleRate: Int,
@@ -194,6 +264,7 @@ class YinPitchDetector {
         hertz: Double,
         minFrequency: Double,
         maxFrequency: Double,
+        rejectConfirmation: Boolean,
     ): Double {
         val lower = maxOf(minFrequency, hertz / REFINEMENT_RATIO)
         val upper = minOf(maxFrequency, hertz * REFINEMENT_RATIO)
@@ -202,7 +273,7 @@ class YinPitchDetector {
         val lastLag = ceil(rate / lower).toInt()
         val outputSize = samples.size / factor
         if (refinementSamples.size != outputSize) refinementSamples = DoubleArray(outputSize)
-        val start = decimate(samples, refinementSamples, sampleRate, upper)
+        val start = decimate(samples, refinementSamples, sampleRate, upper, rejectConfirmation)
         // Do not trade low-bass precision for an unsettled narrow filter or too few complete periods.
         if (start > outputSize / 8 || lastLag + 1 > (outputSize - start - 1) / 2) return hertz
         ensureCapacity(lastLag + 2)
@@ -342,6 +413,8 @@ class YinPitchDetector {
 
     private companion object {
         const val MIN_SAMPLE_COUNT = 4
+        // Only during our playback window: bypass rejection when the chime is absent or negligible.
+        const val MIN_CHIME_ENERGY_RATIO = 0.05
         const val LONG_WINDOW_SIZE = 8192
         const val LOW_RANGE_MAX_HERTZ = 150.0
         val REFINEMENT_RATIO = 2.0.pow(1.0 / 12.0)

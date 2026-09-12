@@ -1,0 +1,1 @@
+Fixed confirmation chime interference in low-range guitar and bass tuning. Capture continues while the known chime frequencies are rejected. Clean windows use normal detection. Protection now survives mode and settings changes. Wider instrument and chromatic ranges retain a brief feedback gate. Song analysis and offline privacy are unchanged.
