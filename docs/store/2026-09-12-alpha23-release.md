@@ -94,6 +94,11 @@ confirmed **Probíhá kontrola změn** for exactly one change: code 26 / alpha23
 on the existing Alpha track. Quick checks were still running. Submission is
 confirmed; approval and tester availability are not yet confirmed.
 
+Follow-up on 12 September, before preparing alpha24: the Alpha track
+confirmed code 26 / alpha23 **available to selected testers**. Play displayed
+its publication as 12 September at 12:45. This supersedes the pending status
+recorded above.
+
 The rollout uses 100% of the existing Alpha track, with managed publishing
 off. English and Czech notes match the committed metadata. Testers, 177
 countries/regions, prices, and store artwork were unchanged. Play reports

@@ -45,11 +45,11 @@ dwell, or song-analysis algorithm changes.
   3 cents. Quiet no-chime decay, strong instrument partials near 880 Hz,
   stopped tones, eight retune/new-string cases, and high-range rejection
   controls also pass.
-- Huawei YAL-L21 / Android 10: 103 integration tests, then 104 after the
-  context-change regression. The final alpha24/code27 build subsequently
-  passed all eight focused native audio/lifecycle tests after upper-partial
-  activation was added. The full 104-test run precedes that last activation
-  extension and version bump; it is not presented as a final-artifact run.
+- Huawei YAL-L21 / Android 10: the final alpha24/code27 build passed all
+  104/104 integration tests in 108.321 seconds, zero skipped/failed statuses,
+  plus eight focused native audio/lifecycle checks. This final run followed
+  earlier 103- and 104-test candidate runs. The installed APK hash matched
+  the local build below; all three chime partials were enabled.
 - Final native echo mixture: 7/7 fresh readings per string, maximum error
   2.6863 cents; complete detector/refinement/tracker P95 3.46875 ms against
   the 42.7 ms hop. Normal guitar DSP P95 2.244792 ms.
@@ -61,7 +61,7 @@ Final QA APK SHA-256:
 Instrumentation APK SHA-256:
 `bef757b486b13388a1d85e2e753593ff3071df96392fb3324745e44d136872f7`.
 
-The device window ended at 14:34 CEST. Only QA was updated. Temporary private
+Device windows ended at 14:34 and 14:46 CEST. Only QA was updated. Temporary private
 song copies were removed; the original recording and production app remain.
 
 These acoustic mixtures are synthetic PCM, not recordings of the user's

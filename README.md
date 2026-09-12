@@ -13,18 +13,18 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Release version: `0.3.0-alpha.23`. Google Play
+Release version: `0.3.0-alpha.24`. Google Play
 distribution is managed separately; see the dated
-[release record](docs/store/2026-09-12-alpha23-release.md) for the recorded submission status.
+[release record](docs/store/2026-09-12-alpha24-release.md) for the recorded submission status.
 
 ## Download
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.23/Intoniva-v0.3.0-alpha.23-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.24/Intoniva-v0.3.0-alpha.24-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.23).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.24).
 
 ## Features
 
@@ -58,7 +58,8 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
 - Tap any string to switch to Manual mode and hear its generated reference tone.
 - One confirmation chime and animated green glow after the note stays in tune
   for 900 ms. Brief detector gaps do not cancel progress; Silent/DND is respected
-  while Chromatic mode briefly gates feedback input and instrument modes keep tracking.
+  while low-range capture rejects the chime and keeps tracking. Wider instrument
+  ranges and Chromatic mode briefly gate feedback input.
 - Sharps or flats notation and generated reference audio with no bundled samples.
 - System-default, English, Czech, German, French, and Spanish interfaces. The
   complete translations ship offline on Android 8.0 and newer.
@@ -183,7 +184,8 @@ creates a draft GitHub release; Play upload remains a deliberate manual step.
 See [release process](docs/releasing.md), [architecture](docs/architecture.md),
 and [security policy](SECURITY.md).
 
-Latest audio checks: [bounded quiet-note recovery](docs/quiet-gap-recovery-2026-09-12.md),
+Latest audio checks: [confirmation feedback](docs/confirmation-feedback-2026-09-12.md),
+[bounded quiet-note recovery](docs/quiet-gap-recovery-2026-09-12.md),
 [quiet-retune tracking](docs/quiet-retune-evidence-2026-09-12.md),
 [quiet-note decay](docs/quiet-current-evidence-2026-09-08.md), and
 [stereo song analysis](docs/stereo-song-analysis-2026-09-08.md).

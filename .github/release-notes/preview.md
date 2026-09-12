@@ -6,8 +6,8 @@ Intoniva `v0.3.0-alpha.24` testing build.
 - Keep a bounded 400 ms input gate for wider instrument and chromatic ranges.
 - Keep microphone input, display smoothing, confirmation dwell, and song analysis unchanged.
 
-Checks: 302 local tests; a 104-test Huawei integration run followed by eight
-focused audio checks on the final build. The six-string echo mixture keeps
+Checks: 302 local tests; 104/104 Huawei integration tests on the final build,
+plus eight focused audio checks. The six-string echo mixture keeps
 all seven fresh readings per string within three cents. Full DSP P95 is
 3.47 ms against a 42.7 ms capture hop. See `docs/confirmation-feedback-2026-09-12.md`
 for the test scope and limitations.
