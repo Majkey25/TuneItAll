@@ -1,0 +1,1 @@
+Improved recovery of quiet notes after short detection gaps, including two octave-lock cases left in the previous update. Weak continuation expires after eight missed readings and cannot return an old pitch by itself. Added stopped-tone and false-confirmation regression checks. Microphone input, display settings, song analysis and offline privacy are unchanged.

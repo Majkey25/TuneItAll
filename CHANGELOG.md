@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-alpha.23 — 2026-09-12
+
+- Recover a quiet note when its current fundamental candidate returns after a short detection gap.
+- Expire continuation after eight updates without a fresh reading, including ambiguous nonempty frames.
+- Extend retune, stopped-tone, new-string, and false-confirmation regression coverage.
+- Keep microphone input, detector thresholds, display smoothing, confirmation timing, and song analysis unchanged.
+
 ## 0.3.0-alpha.22 — 2026-09-12
 
 - Prevent a quiet retune from latching onto the octave below after a brief loss of the fundamental candidate.
