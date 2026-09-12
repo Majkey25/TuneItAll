@@ -1,7 +1,10 @@
 # Alpha26 release evidence
 
 Version `0.3.0-alpha.26`, code `29`, package `com.tuneitall.tuner`.
-Release preparation is in progress. Alpha25 remains the last confirmed Play release.
+[GitHub release](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.26)
+is public. Google Play accepted the Alpha submission at 18:48 CEST on
+12 September. Review remains pending; alpha25 is the last confirmed
+tester-available Play release.
 
 ## Cause and change
 
@@ -49,3 +52,56 @@ removed, original data preserved, and the phone released at 18:31 CEST with
 QA stopped and Home foreground. The complete playback/UI suite was not run.
 This corrects the decoder; it does not establish perfect acoustic transcription
 or improved quiet-tuner capture.
+
+## Final versioned device check
+
+The final QA APK reports code 29 / `0.3.0-alpha.26-qa`. Its SHA-256 is
+`d94955e78dc9a4516109c1f6001a049e4bed33f89d28b67b1911be8c6b0af728`.
+The instrumentation APK hash is unchanged. All four focused checks passed
+again in 3.287 seconds, including actual WAV Notes analysis and silence.
+The full-length decoder measured 2852 ms again. These are repeats of four
+tests from the 16-test suite, not four additional independent scenarios.
+The Huawei was released at 18:50 CEST, QA stopped, Home foreground, no audio
+or shared settings changes, and no ADB work left running.
+
+## Artifacts and gates
+
+[PR #15](https://github.com/Majkey25/TuneItAll/pull/15) merged reviewed head
+`e247b647a78f15b29b61ac97e9c34cc1ee5db0e9` as
+`4793595a97711c5268bc1895d41fb114e1e98c51`. Their trees are identical.
+Tag `v0.3.0-alpha.26` points to the merge. The signed Play build used the
+reviewed head; the GitHub APK build used the tag.
+
+- APK SHA-256: `bab2c0bb2690368962f51646d667a5366cf30fdc62d94cc396157bc2b41e97c2`.
+- AAB SHA-256: `ca1da6918dfe5e434692ec491147018a1e3687f7e4245bf1092faae192a2612b`.
+- Preview signer: `768843c2e67e38838c8bd7751443a4cfa5b21dbfe6db077f93677100dbcccda6`.
+- Upload signer: `DE46935ECA9035EEDA463E1E68FA5881396282D3E1F38546A41A352B5C3ED096`.
+
+Downloaded APK bytes match both the companion checksum and GitHub asset
+digest. Apksigner, jarsigner and bundletool validation passed. Jarsigner
+reported the existing self-signed-certificate and JarInputStream ordering
+warnings. Actual APK/AAB manifests confirm code 29, API 26+, target 36,
+unchanged package, and no Internet/advertising-ID permission. The AAB contains
+no experimental model, private song, test audio or keystore.
+
+Local 305-test execution, lint, all APK/AAB builds and package verification
+passed. One initial lint invocation crashed inside UElementAsPsiDetector on
+unchanged Theme.kt; the unchanged single-worker retry passed. No lint rules
+were disabled. The local unsigned AAB was not uploaded.
+
+Passed: [PR CI](https://github.com/Majkey25/TuneItAll/actions/runs/34705750652),
+[main CI](https://github.com/Majkey25/TuneItAll/actions/runs/34706116824),
+[Pages](https://github.com/Majkey25/TuneItAll/actions/runs/34706115866),
+[preview release](https://github.com/Majkey25/TuneItAll/actions/runs/34706133781),
+[signed Play build](https://github.com/Majkey25/TuneItAll/actions/runs/34705823684).
+
+## Google Play submission
+
+Publishing overview confirmed **Probíhá kontrola změn** for exactly one
+change, Alpha code 29 / alpha26. Quick checks were still running. Submission
+is confirmed, not approval or tester availability.
+
+The rollout remains 100% of the existing Alpha group. Testers, countries,
+prices, artwork and managed-publishing settings were not changed. Play
+reported zero lost devices and only the optional deobfuscation/native-symbol
+warnings. No terms or unrelated account prompts were accepted.
