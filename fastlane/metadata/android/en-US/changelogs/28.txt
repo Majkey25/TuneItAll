@@ -1,0 +1,1 @@
+Fixed a numerical error that could produce sustained notes during silent passages or after a song ended. Quiet audio remains supported without a higher detection threshold. Recorded chord labels and timing remain unchanged in the regression corpus. Includes new silence and Notes-timeline checks. Tuner behavior, permissions and offline privacy are unchanged.

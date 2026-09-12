@@ -1,16 +1,14 @@
-Intoniva `v0.3.0-alpha.24` testing build.
+Intoniva `v0.3.0-alpha.25` testing build.
 
-- Prevent the confirmation chime from becoming a false guitar note in low-range tuning.
-- Keep low-range capture running, with double-precision rejection in both pitch-analysis passes only when chime energy is present.
-- Preserve feedback protection across mode, tuning, and settings changes.
-- Keep a bounded 400 ms input gate for wider instrument and chromatic ranges.
-- Keep microphone input, display smoothing, confirmation dwell, and song analysis unchanged.
+- Stop numerical averaging residue from producing sustained notes after song audio becomes silent.
+- Sum each short feature window directly in Double precision, with no new input threshold.
+- Preserve recorded chord labels and timing across all 48 frozen recording/gain cases.
+- Keep the tuner, feedback rejection, UI, microphone input, permissions, and dependencies unchanged.
 
-Checks: 302 local tests; 104/104 Huawei integration tests on the final build,
-plus eight focused audio checks. The six-string echo mixture keeps
-all seven fresh readings per string within three cents. Full DSP P95 is
-3.47 ms against a 42.7 ms capture hop. See `docs/confirmation-feedback-2026-09-12.md`
-for the test scope and limitations.
+Checks: 304 local tests, lint, APK/bundle builds, and package/manifest verification.
+The new regressions fail on the preceding implementation, which invents an
+eight-second C2 note at confidence 0.82 during digital silence.
+See `docs/song-feature-stability-2026-09-12.md` for the cause and evidence.
 
 The hardest low-SNR decay test is still below target. Song recognition can still
 misidentify dense or ambiguous music. Experimental neural models and rejected

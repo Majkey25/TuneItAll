@@ -1,0 +1,1 @@
+Opravena numerická chyba, která mohla během tichých pasáží nebo po konci skladby vytvářet dlouhé neexistující tóny. Podpora tichého zvuku zůstává bez zvýšení prahu detekce. Názvy a časování akordů zůstaly v testovaných nahrávkách stejné. Přidány kontroly ticha a časové osy tónů. Chování ladičky, oprávnění a offline ochrana soukromí se nemění.

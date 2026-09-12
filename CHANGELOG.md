@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-alpha.25 — 2026-09-12
+
+- Stop spectral averaging residue from turning silent song passages into sustained notes.
+- Preserve exact silence without raising an input threshold or changing chord scoring.
+- Add regression checks for feature values and the visible Notes timeline after music stops.
+- Keep the 48 frozen recording/gain chord timelines unchanged.
+
+This fixes a numerical error. It does not make arbitrary-song transcription or extremely quiet tuning complete.
+
 ## 0.3.0-alpha.24 — 2026-09-12
 
 - Prevent the confirmation chime from appearing as a different guitar note in low-range tuning.
