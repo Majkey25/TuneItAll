@@ -1,0 +1,1 @@
+Oprava režimu Tóny, který mohl při změně tónu vybrat nesprávný předchozí tón. Tiché pasáže zůstávají bez vymyšlených tónů. Detekce akordů, vstup ladičky a oprávnění se nemění.

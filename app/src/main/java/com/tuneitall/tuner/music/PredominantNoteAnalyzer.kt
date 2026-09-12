@@ -75,23 +75,11 @@ private fun decodeNoteStates(
     for (frameIndex in 1 until emissions.size) {
         checkAnalysisCancellation(isCancelled)
         val current = DoubleArray(stateCount)
-        val globalBest = previous.indices.maxBy(previous::get)
         for (state in 0 until stateCount) {
-            val candidates = intArrayOf(
-                state,
-                0,
-                globalBest,
-                state - 12,
-                state + 12,
-                state - 2,
-                state - 1,
-                state + 1,
-                state + 2,
-            )
             var bestPrevious = state
-            var bestScore = Double.NEGATIVE_INFINITY
-            candidates.forEach { candidate ->
-                if (candidate !in 0 until stateCount) return@forEach
+            var bestScore = previous[state]
+            // ponytail: exact search over at most 89 states; optimize only if long-song profiling needs it.
+            for (candidate in 0 until stateCount) {
                 val score = previous[candidate] - noteTransitionPenalty(
                     fromState = candidate,
                     toState = state,
