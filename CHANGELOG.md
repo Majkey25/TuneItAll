@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-alpha.22 — 2026-09-12
+
+- Prevent a quiet retune from latching onto the octave below after a brief loss of the fundamental candidate.
+- Restrict continuation-only evidence to the last emitted pitch while preserving genuine note changes and short dropouts.
+- Keep microphone input, detector thresholds, display smoothing, confirmation timing, and song analysis unchanged.
+
+The hardest low-SNR decay target remains unmet. This fixes a reproduced tracker error, not every quiet-guitar failure.
+
 ## 0.3.0-alpha.21 — 2026-09-08
 
 - Preserve weak current-note candidates during guitar decay without increasing new-note acquisition probabilities.

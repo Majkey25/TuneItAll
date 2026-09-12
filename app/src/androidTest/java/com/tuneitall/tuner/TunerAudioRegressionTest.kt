@@ -12,6 +12,8 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.test.core.app.ApplicationProvider
 import com.tuneitall.tuner.audio.AudioInput
 import com.tuneitall.tuner.audio.AudioInputSource
+import com.tuneitall.tuner.audio.PitchTracker
+import com.tuneitall.tuner.audio.TunerAudioSettings
 import com.tuneitall.tuner.audio.YinPitchDetector
 import com.tuneitall.tuner.model.ReferencePitch
 import com.tuneitall.tuner.model.TuningCatalog
@@ -27,8 +29,11 @@ import java.util.Base64
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ln
+import kotlin.math.pow
 import kotlin.math.round
+import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.random.Random
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
@@ -115,6 +120,44 @@ class TunerAudioRegressionTest {
         } finally {
             input.close()
         }
+    }
+
+    @Test
+    fun quietRetuneKeepsTheFundamentalAfterCandidateDropout() {
+        val rate = 48_000
+        val expected = 329.6276 * 2.0.pow(30.0 / 1200.0)
+        val random = Random(81)
+        var phase = 0.0
+        val samples = ShortArray(rate * 3) { index ->
+            val hertz = if (index < rate / 2) 329.6276 else expected
+            val amplitude = if (index < rate / 2) 0.01 else 0.0001
+            phase += 2 * PI * hertz / rate
+            val signal = amplitude * (sin(phase) + 0.45 * sin(2 * phase))
+            ((signal + 0.0004 * random.nextDouble(-1.0, 1.0)) * 32768.0).roundToInt().toShort()
+        }
+        val tuning = requireNotNull(TuningCatalog.byId("guitar-6-standard"))
+        val range = pitchSearchRange(TunerMode.AUTO, tuning, 0, ReferencePitch(440.0))
+        val detector = YinPitchDetector()
+        val tracker = PitchTracker()
+        val settings = TunerAudioSettings()
+        val timings = mutableListOf<Double>()
+        val settled = mutableListOf<Double?>()
+        for (end in 8192..samples.size step 2048) {
+            val window = samples.copyOfRange(end - 8192, end)
+            val start = SystemClock.elapsedRealtimeNanos()
+            val frame = detector.analyze(window, rate, range.minHertz, range.maxHertz)
+            val estimate = tracker.update(frame, settings)
+            val elapsed = (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000.0
+            if (end * 1000L / rate in 1500L..2500L) {
+                timings += elapsed
+                settled += estimate?.hertz
+            }
+        }
+        val correct = settled.count { it != null && abs(MusicMath.cents(it, expected)) <= 10.0 }
+        val p95 = timings.sorted()[(timings.size * 0.95).toInt()]
+        Log.i("TunerAudioQA", "quiet retune correct=$correct/${settled.size} p95Ms=$p95")
+        assertTrue("Quiet retune latched a wrong pitch: $settled", correct >= settled.size * 0.9)
+        assertTrue("Retune DSP exceeds the audio hop: $p95", p95 < 42.7)
     }
 
     @Test
