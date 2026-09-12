@@ -9,14 +9,16 @@ class PitchTracker {
     private var previousRms = 0.0
     private var missingFrames = 0
     private var lastTrackedHertz: Double? = null
+    private var framesSinceTracked = 0
 
     fun update(frame: PitchFrame, settings: TunerAudioSettings): PitchEstimate? {
-        val continuedPitch = lastTrackedHertz
-        // Zero-weight alternatives continue an emitted pitch, not an unrelated latent hypothesis.
+        val continuedPitch = lastTrackedHertz.takeIf { framesSinceTracked < MAX_MISSING_FRAMES }
+        framesSinceTracked = (framesSinceTracked + 1).coerceAtMost(MAX_MISSING_FRAMES)
+        // Fresh evidence may resume the last emitted pitch through a bounded observation gap.
         val currentCandidates = frame.candidates.filter { candidate ->
             candidate.probability > 0.0 || (continuedPitch != null &&
                 centsDistance(continuedPitch, candidate.hertz) <= CONTINUATION_CENTS && states.any {
-                    it.observed && it.score > unvoicedScore &&
+                    it.score > unvoicedScore &&
                         centsDistance(it.hertz, candidate.hertz) <= CONTINUATION_CENTS
                 })
         }
@@ -63,8 +65,10 @@ class PitchTracker {
         val estimate = best.takeIf { state ->
             state.observed && state.score > unvoicedScore
         }?.let { PitchEstimate(it.hertz, it.confidence, frame.rms) }
-        if (estimate != null) lastTrackedHertz = estimate.hertz
-        else if (best.score <= unvoicedScore) lastTrackedHertz = null
+        if (estimate != null) {
+            lastTrackedHertz = estimate.hertz
+            framesSinceTracked = 0
+        } else if (best.score <= unvoicedScore) lastTrackedHertz = null
         return estimate
     }
 
@@ -74,6 +78,7 @@ class PitchTracker {
         previousRms = 0.0
         missingFrames = 0
         lastTrackedHertz = null
+        framesSinceTracked = 0
     }
 
     private fun bestPreviousScore(hertz: Double, settings: TunerAudioSettings, onset: Boolean): Double = maxOf(

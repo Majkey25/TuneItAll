@@ -124,12 +124,18 @@ class TunerAudioRegressionTest {
 
     @Test
     fun quietRetuneKeepsTheFundamentalAfterCandidateDropout() {
+        for ((initialHertz, seed) in listOf(329.6276 to 81, 146.8324 to 31, 195.9977 to 31)) {
+            checkQuietRetune(initialHertz, seed)
+        }
+    }
+
+    private fun checkQuietRetune(initialHertz: Double, seed: Int) {
         val rate = 48_000
-        val expected = 329.6276 * 2.0.pow(30.0 / 1200.0)
-        val random = Random(81)
+        val expected = initialHertz * 2.0.pow(30.0 / 1200.0)
+        val random = Random(seed)
         var phase = 0.0
         val samples = ShortArray(rate * 3) { index ->
-            val hertz = if (index < rate / 2) 329.6276 else expected
+            val hertz = if (index < rate / 2) initialHertz else expected
             val amplitude = if (index < rate / 2) 0.01 else 0.0001
             phase += 2 * PI * hertz / rate
             val signal = amplitude * (sin(phase) + 0.45 * sin(2 * phase))
@@ -155,7 +161,7 @@ class TunerAudioRegressionTest {
         }
         val correct = settled.count { it != null && abs(MusicMath.cents(it, expected)) <= 10.0 }
         val p95 = timings.sorted()[(timings.size * 0.95).toInt()]
-        Log.i("TunerAudioQA", "quiet retune correct=$correct/${settled.size} p95Ms=$p95")
+        Log.i("TunerAudioQA", "quiet retune initial=$initialHertz seed=$seed correct=$correct/${settled.size} p95Ms=$p95")
         assertTrue("Quiet retune latched a wrong pitch: $settled", correct >= settled.size * 0.9)
         assertTrue("Retune DSP exceeds the audio hop: $p95", p95 < 42.7)
     }

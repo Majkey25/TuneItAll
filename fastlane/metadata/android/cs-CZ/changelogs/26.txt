@@ -1,0 +1,1 @@
+Lepší obnovení tichého tónu po krátkém výpadku detekce, včetně dvou případů záměny oktávy z předchozí verze. Slabé průběžné měření po osmi chybějících odečtech vyprší a samo nevrací starý tón. Přidány testy doznívání a falešného potvrzení naladění. Mikrofonní vstup, nastavení zobrazení, analýza skladeb a soukromí beze změn.
