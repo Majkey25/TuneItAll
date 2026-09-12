@@ -181,6 +181,17 @@ class PitchTrackerTest {
     }
 
     @Test
+    fun `a newly acquired octave becomes the continuation reference`() {
+        val tracker = PitchTracker()
+        repeat(5) { tracker.update(frame(110.0, rms = 0.0002), settings) }
+        val acquired = List(5) { tracker.update(frame(220.0, rms = 0.0002), settings) }
+        assertEquals(220.0, requireNotNull(acquired.last()).hertz, 0.0)
+
+        val continuation = PitchFrame(listOf(PitchCandidate(220.0, 0.0, 0.70)), 0.0001, 0.0002, 1.0)
+        repeat(3) { assertEquals(220.0, requireNotNull(tracker.update(continuation, settings)).hertz, 0.0) }
+    }
+
+    @Test
     fun `reset removes prior pitch state`() {
         val tracker = PitchTracker()
         repeat(5) { tracker.update(frame(440.0, rms = 0.2), settings) }

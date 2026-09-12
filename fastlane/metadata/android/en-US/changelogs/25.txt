@@ -1,0 +1,1 @@
+Fixed an octave-lock error when adjusting a quiet note after a brief detection gap. Weak continuation evidence now follows the last tracked pitch without preventing genuine note changes. Microphone input, display smoothing, tuning confirmation, song analysis and offline privacy remain unchanged.

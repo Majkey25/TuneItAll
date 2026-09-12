@@ -1,0 +1,1 @@
+Opravena chyba, kdy se při dolaďování tichého tónu po krátkém výpadku detekce ladička zasekla o oktávu níže. Slabé průběžné měření nyní navazuje na poslední sledovaný tón a nebrání skutečným změnám tónu. Mikrofonní vstup, vyhlazování ukazatele, potvrzení naladění, analýza skladeb a soukromí beze změn.

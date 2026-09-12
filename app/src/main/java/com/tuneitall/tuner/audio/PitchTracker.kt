@@ -8,20 +8,24 @@ class PitchTracker {
     private var unvoicedScore = 0.0
     private var previousRms = 0.0
     private var missingFrames = 0
+    private var lastTrackedHertz: Double? = null
 
     fun update(frame: PitchFrame, settings: TunerAudioSettings): PitchEstimate? {
-        // Weak alternatives can continue an observed pitch, not revive an unobserved retained state.
+        val continuedPitch = lastTrackedHertz
+        // Zero-weight alternatives continue an emitted pitch, not an unrelated latent hypothesis.
         val currentCandidates = frame.candidates.filter { candidate ->
-            candidate.probability > 0.0 || states.any {
-                it.observed && it.score > unvoicedScore &&
-                    centsDistance(it.hertz, candidate.hertz) <= CONTINUATION_CENTS
-            }
+            candidate.probability > 0.0 || (continuedPitch != null &&
+                centsDistance(continuedPitch, candidate.hertz) <= CONTINUATION_CENTS && states.any {
+                    it.observed && it.score > unvoicedScore &&
+                        centsDistance(it.hertz, candidate.hertz) <= CONTINUATION_CENTS
+                })
         }
         if (currentCandidates.isEmpty()) {
             missingFrames = (missingFrames + 1).coerceAtMost(MAX_MISSING_FRAMES)
             if (missingFrames == MAX_MISSING_FRAMES) {
                 states.clear()
                 unvoicedScore = 0.0
+                lastTrackedHertz = null
             }
             previousRms = frame.rms
             return null
@@ -56,9 +60,12 @@ class PitchTracker {
         previousRms = frame.rms
 
         val best = states.maxByOrNull { it.score } ?: return null
-        return best.takeIf { state ->
+        val estimate = best.takeIf { state ->
             state.observed && state.score > unvoicedScore
         }?.let { PitchEstimate(it.hertz, it.confidence, frame.rms) }
+        if (estimate != null) lastTrackedHertz = estimate.hertz
+        else if (best.score <= unvoicedScore) lastTrackedHertz = null
+        return estimate
     }
 
     fun reset() {
@@ -66,6 +73,7 @@ class PitchTracker {
         unvoicedScore = 0.0
         previousRms = 0.0
         missingFrames = 0
+        lastTrackedHertz = null
     }
 
     private fun bestPreviousScore(hertz: Double, settings: TunerAudioSettings, onset: Boolean): Double = maxOf(
