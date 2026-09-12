@@ -70,3 +70,7 @@ store artwork were unchanged. English/Czech notes match the committed files.
 Play reports zero loss of supported devices. Its only two warnings concern
 optional deobfuscation files and native debug symbols. No new agreement or
 security-sensitive permission was accepted during submission.
+
+Before preparing alpha25, the Alpha track confirmed code 27 / alpha24
+available to the selected testers. Play displayed publication on
+12 September at 15:24, superseding the earlier pending status above.

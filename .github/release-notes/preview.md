@@ -6,6 +6,8 @@ Intoniva `v0.3.0-alpha.25` testing build.
 - Keep the tuner, feedback rejection, UI, microphone input, permissions, and dependencies unchanged.
 
 Checks: 304 local tests, lint, APK/bundle builds, and package/manifest verification.
+Huawei passed 13 silent analysis/audio checks, plus an isolated repeat of the
+new regression. No playback tests ran while the user was using Focusrite.
 The new regressions fail on the preceding implementation, which invents an
 eight-second C2 note at confidence 0.82 during digital silence.
 See `docs/song-feature-stability-2026-09-12.md` for the cause and evidence.

@@ -33,8 +33,13 @@ Both new regressions pass. The release branch passes 304 local tests,
 zero failures/skips, lint, debug/QA/test APK builds, and release-bundle
 verification. The local AAB is unsigned and is not the Play upload artifact.
 
-The planned device check analyzes generated PCM without playback. Broader
-playback tests must not run while the user's Focusrite is in use.
+Huawei YAL-L21 reproduced the same false C2 on alpha24. Alpha25 passed all
+13 selected device checks in 26.731 seconds with zero failures or skips.
+These cover the new regression, stereo/file/tempo decoding, the private song
+fixture, and tuner audio behavior. An isolated repeat processed the ten-second
+clip in 149 ms, returned no note after 2133 ms, and kept all 81 silent frames zero.
+No audio was played. The full playback/UI suite was deliberately not run
+while the user was using Focusrite. The phone was released at 17:08 CEST.
 
 ## Rejected experiments
 
