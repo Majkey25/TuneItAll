@@ -28,6 +28,7 @@ class TunerContinuationSafetyTest {
             ((tone + 0.00016 * random.nextDouble(-1.0, 1.0)) * 32768.0).roundToInt().toShort()
         }
         val observations = observe(samples)
+        assertTrue(observations.any { it.millis < 500L && it.reading?.inTune == true && it.reading.target.value == 45 })
         assertTrue(observations.none { it.triggered })
         assertTrue(observations.filter { it.millis >= 900L }.all { it.estimate == null })
         assertNull(observations.last().display)
@@ -46,6 +47,7 @@ class TunerContinuationSafetyTest {
                 ((tone + 0.0004 * random.nextDouble(-1.0, 1.0)) * 32768.0).roundToInt().toShort()
             }
             val observations = observe(samples)
+            assertTrue(observations.any { it.millis < 500L && it.reading?.inTune == true && it.reading.target.value == 64 })
             assertTrue(observations.filter { it.millis >= 900L }.none {
                 it.estimate != null && abs(MusicMath.cents(it.estimate.hertz, 329.6276)) < 100.0
             }, "$successor Hz renewed the older E4")
