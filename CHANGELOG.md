@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0-alpha.24 — 2026-09-12
+
+- Prevent the confirmation chime from appearing as a different guitar note in low-range tuning.
+- Keep low-range capture running through the chime, with rejection in both pitch-analysis passes.
+- Leave clean input unchanged when the chime is not detected; preserve protection across mode/settings changes.
+- Keep a bounded 400 ms feedback gate for wider instrument and chromatic ranges.
+- Add mixed-audio, quiet-decay, retuning, echo, and device lifecycle regressions.
+
+This addresses speaker feedback, not every low-SNR failure. Song chord recognition is unchanged.
+
 ## 0.3.0-alpha.23 — 2026-09-12
 
 - Recover a quiet note when its current fundamental candidate returns after a short detection gap.

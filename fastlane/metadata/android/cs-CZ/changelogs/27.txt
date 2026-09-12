@@ -1,0 +1,1 @@
+Opraveno rušení potvrzovacím cinknutím při ladění kytary a basy v nízkém rozsahu. Snímání pokračuje a známé frekvence cinknutí se odfiltrují. Čistý vstup používá běžnou detekci. Ochrana nově přetrvá i při změně režimu a nastavení. Širší rozsahy a chromatická ladička zachovávají krátké vynechání rušeného vstupu. Analýza skladeb a offline ochrana soukromí se nemění.
