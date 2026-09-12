@@ -68,3 +68,7 @@ The rollout remains 100% of the existing Alpha test group. Testers, 177
 countries/regions, prices, store artwork and managed-publishing settings
 were unchanged. Play reported no lost supported devices. Only the usual
 optional deobfuscation and native-symbol warnings appeared.
+
+Follow-up on 12 September: the Alpha track confirmed code 28 / alpha25
+**available to the selected testers**. Play displays publication at 17:49
+CEST. This supersedes the earlier pending-review status.
