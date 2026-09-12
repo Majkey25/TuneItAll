@@ -1,10 +1,41 @@
 package com.tuneitall.tuner.music
 
+import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class PredominantNoteAnalyzerTest {
+    @Test
+    fun `an ambiguous note considers transitions beyond neighboring semitones`() {
+        for (direction in listOf(-1, 1)) for (transpose in -3..8) {
+            val destination = 60 + transpose
+            val first = FloatArray(88).apply {
+                this[destination + direction - 21] = 0.30f
+                this[destination + 3 * direction - 21] = 0.45f
+                this[destination + 36 * direction - 21] = 0.50f
+                val norm = sqrt(sumOf { it.toDouble() * it })
+                indices.forEach { this[it] = (this[it] / norm).toFloat() }
+            }
+            val second = FloatArray(88).apply { this[destination - 21] = 1f }
+            val frames = listOf(first, second).mapIndexed { index, salience ->
+                HarmonicFrame(
+                    startMillis = index * 200L,
+                    chroma = FloatArray(12),
+                    bassChroma = FloatArray(12),
+                    noteSalience = salience,
+                    tonalStrength = 1f,
+                    onsetStrength = 0f,
+                )
+            }
+
+            val events = analyzeNotes(frames, NoteRange.ANY, 400L)
+
+            assertEquals(listOf(destination + 3 * direction, destination), events.map(NoteEvent::midiNote))
+            assertEquals(listOf(0L, 200L), events.map(NoteEvent::startMillis))
+        }
+    }
+
     @Test
     fun `note mode follows an annotated A4 C5 E5 melody`() {
         val samples = sine(SAMPLE_RATE, 2, 440.0) +

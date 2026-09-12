@@ -7,6 +7,7 @@ import com.tuneitall.tuner.audio.SongAudioDecoder
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
+import com.tuneitall.tuner.music.NoteEvent
 import com.tuneitall.tuner.music.SongAnalysisMode
 import java.io.File
 import java.nio.ByteBuffer
@@ -22,6 +23,26 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class SongChordDecoderTest {
+    @Test
+    fun localWavNoteModeKeepsMelodyAndEndsAtSilence() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "note-melody.wav")
+        val frequencies = doubleArrayOf(440.0, 523.25, 659.25)
+        try {
+            file.writeBytes(pcm16Wav(channels = 1, seconds = 8) { frame, _ ->
+                val frequency = frequencies.getOrNull(frame / (SAMPLE_RATE * 2))
+                if (frequency == null) 0.0 else 0.6 * sin(2.0 * PI * frequency * frame / SAMPLE_RATE)
+            })
+            val result = SongAudioDecoder(context).analyze(Uri.fromFile(file), SongAnalysisMode.NOTES)
+            val notes = result.events.filterIsInstance<NoteEvent>()
+            assertEquals(8_000L, result.durationMillis)
+            assertEquals(listOf(69, 72, 76), notes.map { it.midiNote })
+            assertTrue(notes.all { it.durationMillis >= 1_500L && it.endMillis <= 6_300L })
+        } finally {
+            file.delete()
+        }
+    }
+
     @Test
     fun stereoWavKeepsChordTonesThatCancelBeneathCenteredBass() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext

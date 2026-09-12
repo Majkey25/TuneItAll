@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-alpha.26 — 2026-09-12
+
+- Fix Notes-mode decoding that skipped a better preceding pitch outside its neighbor shortlist.
+- Consider every possible prior note using the existing transition costs and acoustic scores.
+- Verify transposed transitions, imported WAV melody/silence, and full-length decoding on Android.
+- Keep chord recognition, tuner capture, permissions, UI, and dependencies unchanged.
+
+This corrects a decoding shortcut. Acoustic note and chord estimates can still be wrong.
+
 ## 0.3.0-alpha.25 — 2026-09-12
 
 - Stop spectral averaging residue from turning silent song passages into sustained notes.

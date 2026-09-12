@@ -1,0 +1,1 @@
+Fix Notes-mode decoding that could skip a better preceding pitch. Preserve silent song passages without invented notes. Chord detection, tuner input and permissions are unchanged.
