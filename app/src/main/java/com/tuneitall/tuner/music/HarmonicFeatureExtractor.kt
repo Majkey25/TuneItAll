@@ -322,27 +322,18 @@ internal class StreamingHarmonicFeatureExtractor(
     }
 
     private fun centeredAverage(frames: List<FloatArray>, radius: Int): MutableList<FloatArray> {
-        val sums = FloatArray(frames.first().size)
-        var start = 0
-        var end = minOf(frames.lastIndex, radius)
-        for (index in start..end) addFrame(frames[index], sums, 1f)
-
         return frames.indices.mapTo(ArrayList(frames.size)) { frameIndex ->
             checkAnalysisCancellation(isCancelled)
+            val start = maxOf(0, frameIndex - radius)
+            val end = minOf(frames.lastIndex, frameIndex + radius)
             val count = end - start + 1
-            val average = FloatArray(sums.size) { sums[it] / count }
+            // Sum the bounded window directly: subtractive Float drift becomes a fake note after normalization.
+            val average = FloatArray(frames[frameIndex].size) { note ->
+                var sum = 0.0
+                for (index in start..end) sum += frames[index][note]
+                (sum / count).toFloat()
+            }
             normalize(average)
-
-            val nextStart = maxOf(0, frameIndex + 1 - radius)
-            val nextEnd = minOf(frames.lastIndex, frameIndex + 1 + radius)
-            while (start < nextStart) {
-                addFrame(frames[start], sums, -1f)
-                start++
-            }
-            while (end < nextEnd) {
-                end++
-                addFrame(frames[end], sums, 1f)
-            }
             average
         }
     }
@@ -379,10 +370,6 @@ private fun addFrame(frame: FloatArray, sums: DoubleArray, squareSums: DoubleArr
         sums[index] += direction * value
         squareSums[index] += direction * value * value
     }
-}
-
-private fun addFrame(frame: FloatArray, sums: FloatArray, direction: Float) {
-    frame.indices.forEach { index -> sums[index] += direction * frame[index] }
 }
 
 private fun normalize(values: FloatArray) {

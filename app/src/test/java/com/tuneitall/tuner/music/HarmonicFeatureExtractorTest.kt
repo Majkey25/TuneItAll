@@ -36,6 +36,36 @@ class HarmonicFeatureExtractorTest {
     }
 
     @Test
+    fun `silence after music does not normalize rounding residue into new notes`() {
+        for (signal in listOf(
+            sineChord(SAMPLE_RATE, 2, 130.81, 164.81, 196.0),
+            noisyPowerRiff(SAMPLE_RATE, seconds = 2, rootHertz = 82.41),
+        )) {
+            val frames = extract(signal.copyOf(signal.size + SAMPLE_RATE * 8))
+            assertTrue(frames.any { it.startMillis < 1_000L && it.tonalStrength > 0f })
+            val silence = frames.filter { it.startMillis >= 3_000L }
+            assertTrue(silence.isNotEmpty())
+            val leaked = silence.filter { frame ->
+                listOf(frame.chroma, frame.contextChroma, frame.noteSalience, frame.bassChroma, frame.observedChroma)
+                    .any { values -> values.any { it != 0f } }
+            }
+            assertTrue(leaked.isEmpty(), leaked.take(3).joinToString { frame ->
+                "${frame.startMillis}: chord=${frame.chroma.contentToString()} context=${frame.contextChroma.contentToString()}"
+            })
+        }
+    }
+
+    @Test
+    fun `predominant note timeline ends when music is followed by silence`() {
+        val signal = sineChord(SAMPLE_RATE, 2, 130.81, 164.81, 196.0)
+        val frames = extract(signal.copyOf(SAMPLE_RATE * 10))
+        val notes = analyzeNotes(frames, NoteRange.ANY, 10_000L)
+
+        assertTrue(notes.any { it.startMillis < 2_000L }, "The initial music must produce notes")
+        assertTrue(notes.all { it.endMillis <= 3_000L }, "Invented notes in silence: $notes")
+    }
+
+    @Test
     fun `repeated mono matches mono features for even and odd channel counts`() {
         val mono = sineChord(SAMPLE_RATE, 3, 130.81, 164.81, 196.0)
 
