@@ -1,0 +1,1 @@
+Lepší rozpoznání tichých tónů a stabilnější měření při doznívání strun. Oprava ověřených oktávových chyb při jemném rozeznění. Sdílené harmonické výpočty snižují náročnost zpracování zvuku. Nastavení mikrofonu a rozpoznávání akordů ve skladbách zůstávají beze změny.

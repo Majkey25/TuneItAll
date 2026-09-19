@@ -295,9 +295,9 @@ class TunerAudioRegressionTest {
             val frame = detector.analyze(samples, 48_000, range.minHertz, range.maxHertz)
             val elapsed = (SystemClock.elapsedRealtimeNanos() - started) / 1_000_000.0
             if (iteration >= 5) timings += elapsed
-            assertTrue("Missing continuation-only D3: $frame", frame.candidates.any {
-                it.probability == 0.0 && abs(MusicMath.cents(it.hertz, 146.8324)) <= 25.0
-            })
+            val estimate = PitchTracker().update(frame, TunerAudioSettings())
+            assertTrue("Harmonic evidence did not acquire D3: $frame", estimate != null &&
+                abs(MusicMath.cents(estimate.hertz, 146.8324)) <= 10.0)
         }
         val p95 = timings.sorted()[(timings.size * 0.95).toInt()]
         Log.i("TunerAudioQA", "ambiguous D3 refinement p95Ms=$p95 averageMs=${timings.average()}")
