@@ -1,13 +1,36 @@
 package com.tuneitall.tuner.music
 
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.roundToInt
+import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class PredominantNoteAnalyzerTest {
+    @Test
+    fun `melody remains audible over bass in PCM16 song audio`() {
+        for (lastNote in listOf(64, 76, 88)) {
+            val frequencies = doubleArrayOf(440.0, 523.25, midiToHertz(lastNote))
+            val samples = FloatArray(SAMPLE_RATE * 3) { frame ->
+                val value = 0.6 * sin(2 * PI * frequencies[frame / SAMPLE_RATE] * frame / SAMPLE_RATE) +
+                    0.15 * sin(2 * PI * 82.40689 * frame / SAMPLE_RATE)
+                (value * Short.MAX_VALUE).roundToInt().toShort() / 32768f
+            }
+            val events = analyze(samples, NoteRange.VIOLIN)
+            assertEquals(listOf(69, 72, lastNote), events.map(NoteEvent::midiNote), events.toString())
+            assertEquals(0L, events.first().startMillis)
+            assertEquals(3000L, events.last().endMillis)
+            events.drop(1).forEachIndexed { index, event ->
+                assertTrue(abs(event.startMillis - (index + 1) * 1000L) <= 50L, events.toString())
+                assertEquals(events[index].endMillis, event.startMillis)
+            }
+        }
+    }
+
     @Test
     fun `note changes follow the audio timing across sample rates`() {
         for (sampleRate in listOf(44_100, 48_000, 96_000)) for (range in listOf(NoteRange.ANY, NoteRange.VIOLIN)) {

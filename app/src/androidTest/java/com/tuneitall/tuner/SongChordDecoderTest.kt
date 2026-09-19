@@ -71,20 +71,22 @@ class SongChordDecoderTest {
     fun localWavViolinMelodySurvivesBassWithoutEarlyChangesOrBlankGaps() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.cacheDir, "melody-with-bass.wav")
-        val frequencies = doubleArrayOf(440.0, 523.25, 659.25)
         try {
-            file.writeBytes(pcm16Wav(channels = 1, seconds = 3) { frame, _ ->
-                0.6 * sin(2 * PI * frequencies[frame / SAMPLE_RATE] * frame / SAMPLE_RATE) +
-                    0.15 * sin(2 * PI * 82.40689 * frame / SAMPLE_RATE)
-            })
-            val notes = SongAudioDecoder(context).analyze(Uri.fromFile(file), SongAnalysisMode.NOTES, NoteRange.VIOLIN)
-                .events.filterIsInstance<NoteEvent>()
-            assertEquals(listOf(69, 72, 76), notes.map { it.midiNote })
-            assertEquals(0L, notes.first().startMillis)
-            assertEquals(3000L, notes.last().endMillis)
-            notes.drop(1).forEachIndexed { index, note ->
-                assertTrue(notes.toString(), abs(note.startMillis - (index + 1) * 1000L) <= 50L)
-                assertEquals(notes[index].endMillis, note.startMillis)
+            for (lastNote in listOf(64, 76, 88)) {
+                val frequencies = doubleArrayOf(440.0, 523.25, 440.0 * 2.0.pow((lastNote - 69) / 12.0))
+                file.writeBytes(pcm16Wav(channels = 1, seconds = 3) { frame, _ ->
+                    0.6 * sin(2 * PI * frequencies[frame / SAMPLE_RATE] * frame / SAMPLE_RATE) +
+                        0.15 * sin(2 * PI * 82.40689 * frame / SAMPLE_RATE)
+                })
+                val notes = SongAudioDecoder(context).analyze(Uri.fromFile(file), SongAnalysisMode.NOTES, NoteRange.VIOLIN)
+                    .events.filterIsInstance<NoteEvent>()
+                assertEquals(notes.toString(), listOf(69, 72, lastNote), notes.map { it.midiNote })
+                assertEquals(0L, notes.first().startMillis)
+                assertEquals(3000L, notes.last().endMillis)
+                notes.drop(1).forEachIndexed { index, note ->
+                    assertTrue(notes.toString(), abs(note.startMillis - (index + 1) * 1000L) <= 50L)
+                    assertEquals(notes[index].endMillis, note.startMillis)
+                }
             }
         } finally {
             file.delete()

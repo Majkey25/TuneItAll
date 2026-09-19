@@ -21,6 +21,14 @@
   support checks do not require harmonics above the extractor's frequency range.
   Accompanied candidates still need direct or independently observed harmonic
   support, preventing weak virtual pitches from becoming melody notes.
+- A bass overtone penalty requires an observed harmonic family and follows the
+  extractor's harmonic decay. A lone bass peak does not erase an independently
+  observed melody. The first Android run exposed this distinction: E5 above E2
+  disappeared. The regression now includes E4, E5, and E6 endings, with exact
+  PCM16 audio, contiguous events, and 50 ms boundary limits.
+- The bounded 88-note harmonic relationship table is computed once rather than
+  recalculating powers and logarithms for each frame. An exhaustive note-pair
+  test checks it against the original frequency calculation.
 
 No new runtime dependency, permission, network service, playback, or tuner change.
 

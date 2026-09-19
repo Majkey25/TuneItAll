@@ -1,13 +1,28 @@
 package com.tuneitall.tuner.music
 
 import kotlin.math.PI
+import kotlin.math.log2
+import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class HarmonicFeatureExtractorTest {
+    @Test
+    fun `cached harmonic weights match frequency ratios across the note range`() {
+        for (fundamental in 21..108) for (note in 21..108) {
+            val harmonic = 2.0.pow((note - fundamental) / 12.0).roundToInt()
+            val expected = if (harmonic > 1 && fundamental + (12.0 * log2(harmonic.toDouble())).roundToInt() == note) {
+                1f / sqrt(harmonic.toFloat())
+            } else 0f
+            assertEquals(expected, harmonicNoteWeight(fundamental, note), "$fundamental -> $note")
+        }
+    }
+
     @Test
     fun `extractor keeps a detuned A peak in A chroma`() {
         val frames = extract(sine(SAMPLE_RATE, seconds = 3, hertz = 445.0))

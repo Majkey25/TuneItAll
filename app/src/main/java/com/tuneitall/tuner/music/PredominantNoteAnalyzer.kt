@@ -18,9 +18,14 @@ internal fun analyzeNotes(
                 hasObservedNoteSupport(frame, midi - NoteRange.ANY.midiRange.first)
             }
         } else emptyList()
+        val harmonicSources = belowRange.filter { midi ->
+            observedHarmonicCount(frame, midi - NoteRange.ANY.midiRange.first) >= 2
+        }
         DoubleArray(midiRange.count() + 1).also { scores ->
             scores[0] = NO_NOTE_BASE + NO_NOTE_TONAL_WEIGHT * (1.0 - frame.tonalStrength)
-            midiRange.forEachIndexed { index, midi -> scores[index + 1] = noteEmission(frame, midi, belowRange) }
+            midiRange.forEachIndexed { index, midi ->
+                scores[index + 1] = noteEmission(frame, midi, belowRange, harmonicSources)
+            }
         }
     }
     val states = decodeNoteStates(frames, emissions, midiRange, isCancelled)
@@ -60,16 +65,20 @@ internal fun analyzeNotes(
     return mergeNoteGaps(events.filter { it.durationMillis >= MIN_NOTE_MILLIS })
 }
 
-private fun noteEmission(frame: HarmonicFrame, midi: Int, belowRange: List<Int>): Double {
+private fun noteEmission(frame: HarmonicFrame, midi: Int, belowRange: List<Int>, harmonicSources: List<Int>): Double {
     if (frame.tonalStrength < MIN_TONAL_STRENGTH) return 0.0
     val index = midi - NoteRange.ANY.midiRange.first
     if (belowRange.isNotEmpty() && !hasObservedNoteSupport(frame, index)) return 0.0
-    val salience = frame.noteSalience.getOrElse(index) { 0f }
-    // A lower source can explain its integer harmonics, not an unrelated melody.
-    val harmonicSource = belowRange.maxOfOrNull { fundamental ->
-        if (isHarmonicNote(fundamental, midi)) frame.noteSalience[fundamental - NoteRange.ANY.midiRange.first] else 0f
+    val projected = frame.noteSalience.getOrElse(index) { 0f }
+    // Isolated bass peaks do not establish an overtone family that can erase observed melody notes.
+    val salience = if (belowRange.isNotEmpty() && harmonicSources.isEmpty()) {
+        maxOf(projected, frame.observedNoteSalience[index])
+    } else projected
+    // Use the extractor's harmonic decay, not the entire bass score, to explain an upper note.
+    val rangePenalty = harmonicSources.maxOfOrNull { fundamental ->
+        val source = frame.noteSalience[fundamental - NoteRange.ANY.midiRange.first]
+        if (source > salience) BELOW_RANGE_PENALTY * harmonicNoteWeight(fundamental, midi) * source else 0f
     } ?: 0f
-    val rangePenalty = if (harmonicSource > salience) BELOW_RANGE_PENALTY * harmonicSource else 0f
     val independent = (salience - rangePenalty).coerceAtLeast(0f)
     return if (independent < MIN_NOTE_SALIENCE) 0.0 else independent.toDouble()
 }
@@ -77,11 +86,12 @@ private fun noteEmission(frame: HarmonicFrame, midi: Int, belowRange: List<Int>)
 private fun hasObservedNoteSupport(frame: HarmonicFrame, index: Int): Boolean {
     if (frame.observedNoteSalience[index] >= MIN_NOTE_SALIENCE) return true
     val available = HARMONIC_OFFSETS.count { it > 0 && index + it < frame.observedNoteSalience.size }
-    val observed = HARMONIC_OFFSETS.count {
-        it > 0 && frame.observedNoteSalience.getOrElse(index + it) { 0f } >= MIN_NOTE_SALIENCE
-    }
     // Do not require a second overtone above the extractor's frequency range.
-    return available > 0 && observed >= minOf(2, available)
+    return available > 0 && observedHarmonicCount(frame, index) >= minOf(2, available)
+}
+
+private fun observedHarmonicCount(frame: HarmonicFrame, index: Int): Int = HARMONIC_OFFSETS.count {
+    it > 0 && frame.observedNoteSalience.getOrElse(index + it) { 0f } >= MIN_NOTE_SALIENCE
 }
 
 private fun decodeNoteStates(

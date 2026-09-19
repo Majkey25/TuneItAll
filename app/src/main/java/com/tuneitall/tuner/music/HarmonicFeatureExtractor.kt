@@ -366,16 +366,14 @@ internal class StreamingHarmonicFeatureExtractor(
     )
 }
 
-internal fun isHarmonicNote(fundamental: Int, note: Int): Boolean {
-    val harmonic = 2.0.pow((note - fundamental) / SEMITONES_PER_OCTAVE).roundToInt()
-    return harmonic > 1 && fundamental + (SEMITONES_PER_OCTAVE * log2(harmonic.toDouble())).roundToInt() == note
-}
+internal fun harmonicNoteWeight(fundamental: Int, note: Int): Float =
+    HARMONIC_NOTE_WEIGHTS.getOrElse(note - fundamental) { 0f }
 
 private fun independentPitchClasses(notes: FloatArray, observedChroma: FloatArray): FloatArray {
     val independent = FloatArray(PITCH_CLASS_COUNT)
     notes.indices.forEach { note ->
         if (notes[note] >= MIN_SUPPORTING_HARMONIC &&
-            (0 until note).none { lower -> notes[lower] >= MIN_SUPPORTING_HARMONIC && isHarmonicNote(lower, note) }
+            (0 until note).none { lower -> notes[lower] >= MIN_SUPPORTING_HARMONIC && harmonicNoteWeight(lower, note) > 0f }
         ) {
             val pitchClass = (note + MIN_MIDI) % PITCH_CLASS_COUNT
             independent[pitchClass] = observedChroma[pitchClass]
@@ -515,6 +513,12 @@ private const val LOCAL_CHORD_RADIUS = 1
 private const val CONTEXT_CHORD_WINDOW_SECONDS = 1.5
 private const val NOTE_SMOOTH_RADIUS = 1
 internal val HARMONIC_OFFSETS = intArrayOf(0, 12, 19, 24, 28, 31)
+private val HARMONIC_NOTE_WEIGHTS = FloatArray(NOTE_COUNT) { semitones ->
+    val harmonic = 2.0.pow(semitones / SEMITONES_PER_OCTAVE).roundToInt()
+    if (harmonic > 1 && (SEMITONES_PER_OCTAVE * log2(harmonic.toDouble())).roundToInt() == semitones) {
+        1f / sqrt(harmonic.toFloat())
+    } else 0f
+}
 private val HARMONIC_WEIGHTS = floatArrayOf(1f, 0.707f, 0.577f, 0.5f, 0.447f, 0.408f)
 private const val MIN_SUPPORTING_HARMONIC = 0.04f
 private const val HARMONIC_COUNT_BONUS = 0.12f
