@@ -13,9 +13,14 @@ internal fun analyzeNotes(
     val midiRange = range.midiRange
     val emissions = frames.map { frame ->
         checkAnalysisCancellation(isCancelled)
+        val belowRange = if (range == NoteRange.VIOLIN) {
+            (NoteRange.ANY.midiRange.first until midiRange.first).filter { midi ->
+                hasObservedNoteSupport(frame, midi - NoteRange.ANY.midiRange.first)
+            }
+        } else emptyList()
         DoubleArray(midiRange.count() + 1).also { scores ->
             scores[0] = NO_NOTE_BASE + NO_NOTE_TONAL_WEIGHT * (1.0 - frame.tonalStrength)
-            midiRange.forEachIndexed { index, midi -> scores[index + 1] = noteEmission(frame, midi, range) }
+            midiRange.forEachIndexed { index, midi -> scores[index + 1] = noteEmission(frame, midi, belowRange) }
         }
     }
     val states = decodeNoteStates(frames, emissions, midiRange, isCancelled)
@@ -39,9 +44,12 @@ internal fun analyzeNotes(
         checkAnalysisCancellation(isCancelled)
         val state = states[index]
         if (state != activeState) {
-            close(frames[index].startMillis)
+            // Half-overlapping windows represent their centers; a change lies between adjacent centers.
+            val boundary = (frames[index].startMillis +
+                (frames[index].startMillis - frames[index - 1].startMillis) / 2).coerceAtMost(songEndMillis)
+            close(boundary)
             activeState = state
-            activeStart = frames[index].startMillis
+            activeStart = boundary
             confidenceTotal = 0.0
             confidenceCount = 0
         }
@@ -52,15 +60,28 @@ internal fun analyzeNotes(
     return mergeNoteGaps(events.filter { it.durationMillis >= MIN_NOTE_MILLIS })
 }
 
-private fun noteEmission(frame: HarmonicFrame, midi: Int, range: NoteRange): Double {
+private fun noteEmission(frame: HarmonicFrame, midi: Int, belowRange: List<Int>): Double {
     if (frame.tonalStrength < MIN_TONAL_STRENGTH) return 0.0
     val index = midi - NoteRange.ANY.midiRange.first
+    if (belowRange.isNotEmpty() && !hasObservedNoteSupport(frame, index)) return 0.0
     val salience = frame.noteSalience.getOrElse(index) { 0f }
-    val belowRangeEnd = (range.midiRange.first - NoteRange.ANY.midiRange.first).coerceAtLeast(0)
-    val belowRange = frame.noteSalience.take(belowRangeEnd).maxOrNull() ?: 0f
-    val rangePenalty = if (range == NoteRange.VIOLIN) BELOW_RANGE_PENALTY * belowRange else 0f
+    // A lower source can explain its integer harmonics, not an unrelated melody.
+    val harmonicSource = belowRange.maxOfOrNull { fundamental ->
+        if (isHarmonicNote(fundamental, midi)) frame.noteSalience[fundamental - NoteRange.ANY.midiRange.first] else 0f
+    } ?: 0f
+    val rangePenalty = if (harmonicSource > salience) BELOW_RANGE_PENALTY * harmonicSource else 0f
     val independent = (salience - rangePenalty).coerceAtLeast(0f)
     return if (independent < MIN_NOTE_SALIENCE) 0.0 else independent.toDouble()
+}
+
+private fun hasObservedNoteSupport(frame: HarmonicFrame, index: Int): Boolean {
+    if (frame.observedNoteSalience[index] >= MIN_NOTE_SALIENCE) return true
+    val available = HARMONIC_OFFSETS.count { it > 0 && index + it < frame.observedNoteSalience.size }
+    val observed = HARMONIC_OFFSETS.count {
+        it > 0 && frame.observedNoteSalience.getOrElse(index + it) { 0f } >= MIN_NOTE_SALIENCE
+    }
+    // Do not require a second overtone above the extractor's frequency range.
+    return available > 0 && observed >= minOf(2, available)
 }
 
 private fun decodeNoteStates(

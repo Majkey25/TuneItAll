@@ -46,7 +46,8 @@ class HarmonicFeatureExtractorTest {
             val silence = frames.filter { it.startMillis >= 3_000L }
             assertTrue(silence.isNotEmpty())
             val leaked = silence.filter { frame ->
-                listOf(frame.chroma, frame.contextChroma, frame.noteSalience, frame.bassChroma, frame.observedChroma)
+                listOf(frame.chroma, frame.contextChroma, frame.noteSalience, frame.bassChroma, frame.observedChroma,
+                    frame.observedChordChroma, frame.observedNoteSalience, frame.observedBassChroma, frame.independentChroma)
                     .any { values -> values.any { it != 0f } }
             }
             assertTrue(leaked.isEmpty(), leaked.take(3).joinToString { frame ->
@@ -183,6 +184,10 @@ class HarmonicFeatureExtractorTest {
                 left.bassChroma to right.bassChroma,
                 left.noteSalience to right.noteSalience,
                 left.observedChroma to right.observedChroma,
+                left.observedChordChroma to right.observedChordChroma,
+                left.observedNoteSalience to right.observedNoteSalience,
+                left.observedBassChroma to right.observedBassChroma,
+                left.independentChroma to right.independentChroma,
             ).forEach { (leftValues, rightValues) ->
                 leftValues.indices.forEach { index ->
                     assertEquals(leftValues[index], rightValues[index], 1e-5f)

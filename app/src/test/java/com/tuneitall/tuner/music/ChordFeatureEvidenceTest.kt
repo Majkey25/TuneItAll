@@ -10,6 +10,22 @@ import org.junit.Test
 
 class ChordFeatureEvidenceTest {
     @Test
+    fun `sustained ninths remain audible in major and minor voicings`() {
+        val failures = mutableListOf<String>()
+        for ((quality, third) in listOf(ChordQuality.ADD_NINTH to 4, ChordQuality.MINOR_ADD_NINTH to 3)) {
+            for (transpose in listOf(-5, 0, 4)) for (gain in listOf(1f, 0.01f)) {
+                val root = 45 + transpose
+                val frequencies = intArrayOf(0, third, 7, 14).map { midiToHertz(root + it) }.toDoubleArray()
+                val samples = sineChord(22_050, 2, *frequencies).apply { indices.forEach { this[it] *= gain } }
+                val events = StreamingChordAnalyzer(22_050).apply { accept(samples) }.finish()
+                val expected = Chord(Math.floorMod(root, 12), quality)
+                if (chordEventAt(events, 1_000)?.chord != expected) failures += "$expected gain=$gain: $events"
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    @Test
     fun `plucked minor added ninth retains its audible ninth`() {
         val rate = 22_050
         val events = StreamingChordAnalyzer(rate).apply { accept(plucked(intArrayOf(45, 48, 52, 59), rate, 2)) }.finish()

@@ -1,0 +1,53 @@
+name: Android song decoding
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: song-decoder-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  decode:
+    name: Song files on Android 10
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+        with:
+          cache-provider: basic
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          chmod +x gradlew
+      - name: Decode generated WAV files without playback
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
+        with:
+          api-level: 29
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          # The private song stays local. These methods generate their own PCM and do not create a player.
+          script: ./gradlew :app:connectedQaAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.tuneitall.tuner.SongFeatureRegressionTest,com.tuneitall.tuner.SongChordDecoderTest#localWavNoteModeKeepsMelodyAndEndsAtSilence,com.tuneitall.tuner.SongChordDecoderTest#stereoWavKeepsChordTonesThatCancelBeneathCenteredBass,com.tuneitall.tuner.SongChordDecoderTest#stereoWavKeepsTempoWhenCenteredToneMasksOppositePhaseBeats,com.tuneitall.tuner.SongChordDecoderTest#localWavDecoderRecognizesDistortedEPowerChord,com.tuneitall.tuner.SongChordDecoderTest#localWavDoesNotInventChordsAroundAShortRealChord,com.tuneitall.tuner.SongChordDecoderTest#localWavRetainsMajorAndMinorNinthsWithoutVirtualBassInversions,com.tuneitall.tuner.SongChordDecoderTest#localWavViolinMelodySurvivesBassWithoutEarlyChangesOrBlankGaps --no-daemon --max-workers=2
+      - name: Save device test results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: song-decoder-android10-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
