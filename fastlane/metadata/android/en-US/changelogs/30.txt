@@ -1,0 +1,1 @@
+Better quiet-note acquisition and steadier pitch estimates as strings decay. Fixes reproduced octave errors on soft first strikes. Reuses harmonic calculations to reduce audio processing work. Microphone settings and song chord recognition are unchanged.

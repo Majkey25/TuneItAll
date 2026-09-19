@@ -13,18 +13,18 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Release version: `0.3.0-alpha.26`. Google Play
+Release version: `0.3.0-alpha.27`. Google Play
 distribution is managed separately; see the dated
-[release record](docs/store/2026-09-12-alpha26-release.md) for the recorded submission status.
+[release record](docs/store/2026-09-19-alpha27-release.md) for the recorded submission status.
 
 ## Download
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.26/Intoniva-v0.3.0-alpha.26-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.27/Intoniva-v0.3.0-alpha.27-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.26).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.27).
 
 ## Features
 
@@ -184,7 +184,8 @@ creates a draft GitHub release; Play upload remains a deliberate manual step.
 See [release process](docs/releasing.md), [architecture](docs/architecture.md),
 and [security policy](SECURITY.md).
 
-Latest audio checks: [song-feature stability](docs/song-feature-stability-2026-09-12.md),
+Latest audio checks: [quiet harmonic fit](docs/quiet-harmonic-fit-2026-09-12.md),
+[song-feature stability](docs/song-feature-stability-2026-09-12.md),
 [confirmation feedback](docs/confirmation-feedback-2026-09-12.md),
 [bounded quiet-note recovery](docs/quiet-gap-recovery-2026-09-12.md),
 [quiet-retune tracking](docs/quiet-retune-evidence-2026-09-12.md),

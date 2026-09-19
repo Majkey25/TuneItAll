@@ -36,11 +36,16 @@ class PitchTracker {
         missingFrames = 0
         val onset = previousRms > 0.0 && frame.rms >= previousRms * ONSET_RATIO
         val strongestPeriodicity = currentCandidates.maxOf(PitchCandidate::periodicity)
+        val unvoicedProbability = minOf(frame.unvoicedProbability, 1.0 - strongestPeriodicity)
+        val positiveMass = currentCandidates.sumOf(PitchCandidate::probability)
         val candidates = currentCandidates.map { candidate ->
+            val observation = if (candidate.probability > 0.0) {
+                candidate.probability / positiveMass * (1.0 - unvoicedProbability)
+            } else candidate.periodicity
             VoicedState(
                 hertz = candidate.hertz,
                 confidence = maxOf(candidate.probability, candidate.periodicity),
-                score = ln(maxOf(candidate.probability, candidate.periodicity, MIN_PROBABILITY)) + bestPreviousScore(
+                score = ln(observation.coerceAtLeast(MIN_PROBABILITY)) + bestPreviousScore(
                     candidate.hertz,
                     settings,
                     onset,
@@ -50,7 +55,6 @@ class PitchTracker {
         }
         val retained = states.filter { state -> candidates.none { samePitch(state.hertz, it.hertz) } }
             .map { it.copy(score = it.score - STALE_STATE_COST, observed = false) }
-        val unvoicedProbability = minOf(frame.unvoicedProbability, 1.0 - strongestPeriodicity)
         val previousUnvoiced = unvoicedScore
         val previousVoiced = states.maxOfOrNull(VoicedState::score) ?: Double.NEGATIVE_INFINITY
         unvoicedScore = ln(unvoicedProbability.coerceAtLeast(MIN_PROBABILITY)) +

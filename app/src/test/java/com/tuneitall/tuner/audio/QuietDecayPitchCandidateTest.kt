@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 
 class QuietDecayPitchCandidateTest {
     @Test
-    fun `weak current fundamental is retained without acquisition weight`() {
+    fun `harmonic evidence can acquire a weak fundamental without an earlier note`() {
         // Canonical D3 decay, seed 51, 48 kHz PCM16: samples [118784, 126976).
         // Source PCM SHA-256: 6c087a792b2182330bf280b4b58649694681bcb7d08aad06e68dc07bd125e24c.
         val encoded = requireNotNull(javaClass.getResourceAsStream("/audio/quiet-d3-decay.s16le.b64"))
@@ -32,12 +32,12 @@ class QuietDecayPitchCandidateTest {
         val range = pitchSearchRange(TunerMode.AUTO, tuning, 0, ReferencePitch(440.0))
 
         val frame = YinPitchDetector().analyze(samples, 48_000, range.minHertz, range.maxHertz)
-        // This checks candidate identity, not the final tuner accuracy target.
-        val fundamental = assertNotNull(frame.candidates.firstOrNull {
+        assertNotNull(frame.candidates.firstOrNull {
             abs(MusicMath.cents(it.hertz, 146.8324)) <= 25.0
         }, frame.toString())
 
-        assertEquals(0.0, fundamental.probability)
+        val estimate = assertNotNull(PitchTracker().update(frame, TunerAudioSettings()), frame.toString())
+        assertTrue(abs(MusicMath.cents(estimate.hertz, 146.8324)) <= 10.0, estimate.toString())
         assertTrue(frame.candidates.sumOf(PitchCandidate::probability) <= 1.000001)
     }
 }

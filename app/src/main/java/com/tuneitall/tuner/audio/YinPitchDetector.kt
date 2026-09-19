@@ -199,16 +199,13 @@ class YinPitchDetector {
             }
         }
         if (candidates.isNotEmpty() && candidates.sumOf(PitchCandidate::probability) < 1.0) {
-            val minimum = (tauMin..tauMax).minOf(cumulativeMean::get)
-            val periodicity = (1.0 - minimum).coerceIn(0.0, 1.0)
-            if (periodicity >= NO_TROUGH_MIN_PERIODICITY) {
-                // Zero-probability alternatives can continue an observed pitch, never start a new one.
-                val troughs = (tauMin..tauMax).filter { tau ->
-                    cumulativeMean[tau] <= minimum + NO_TROUGH_MARGIN &&
-                        (tau == tauMin || cumulativeMean[tau] <= cumulativeMean[tau - 1]) &&
-                        (tau == tauMax || cumulativeMean[tau] < cumulativeMean[tau + 1])
-                }
-                for (tau in troughs) {
+            // A valid current trough need not be as deep as a noisy multi-period trough.
+            // YIN gives these no acquisition weight; the shared harmonic fit can independently support them.
+            for (tau in tauMin..tauMax) {
+                if (1.0 - cumulativeMean[tau] >= NO_TROUGH_MIN_PERIODICITY &&
+                    (tau == tauMin || cumulativeMean[tau] <= cumulativeMean[tau - 1]) &&
+                    (tau == tauMax || cumulativeMean[tau] < cumulativeMean[tau + 1])
+                ) {
                     val hertz = analysisSampleRate / parabolicInterpolation(tau, tauMax)
                     if (isWithinRange(hertz, minFrequency, maxFrequency)) {
                         mergeCandidate(candidates, hertz, 1.0 - cumulativeMean[tau], 0.0)
@@ -217,19 +214,31 @@ class YinPitchDetector {
             }
         }
         val boundedCandidates = candidates.sortedByDescending { it.probability }.take(MAX_CANDIDATES)
-        val clearestPeriodicity = boundedCandidates.maxOfOrNull(PitchCandidate::periodicity) ?: 0.0
         val refinedCandidates = boundedCandidates.map { candidate ->
-            if (candidate.periodicity + NO_TROUGH_MARGIN < clearestPeriodicity) candidate else candidate.copy(
+            candidate.copy(
                 hertz = refineFrequency(
                     samples, sampleRate, factor, candidate.hertz, minFrequency, maxFrequency, filterChime,
                 ),
             )
         }
+        val weights = harmonicCandidateWeights(
+            analysisSamples, analysisStart, analysisSampleRate, maxFrequency, refinedCandidates,
+        )
+        val voicedProbability = maxOf(
+            boundedCandidates.sumOf(PitchCandidate::probability).coerceAtMost(1.0),
+            boundedCandidates.maxOfOrNull(PitchCandidate::periodicity) ?: 0.0,
+        )
+        val modeledCandidates = if (weights == null) refinedCandidates else refinedCandidates.mapIndexedNotNull { index, candidate ->
+            val probability = voicedProbability * weights[index]
+            if (probability > 0.0) candidate.copy(probability = probability) else null
+        }
         return PitchFrame(
-            candidates = refinedCandidates,
+            candidates = modeledCandidates,
             rms = rms,
             peak = peak,
-            unvoicedProbability = (1.0 - boundedCandidates.sumOf { it.probability }).coerceIn(0.0, 1.0),
+            unvoicedProbability = if (weights == null) {
+                (1.0 - boundedCandidates.sumOf { it.probability }).coerceIn(0.0, 1.0)
+            } else 1.0 - voicedProbability,
         )
     }
 
@@ -269,19 +278,13 @@ class YinPitchDetector {
         val lower = maxOf(minFrequency, hertz / REFINEMENT_RATIO)
         val upper = minOf(maxFrequency, hertz * REFINEMENT_RATIO)
         val rate = sampleRate.toDouble() / factor
-        val firstLag = floor(rate / upper).toInt().coerceAtLeast(MIN_TAU)
         val lastLag = ceil(rate / lower).toInt()
         val outputSize = samples.size / factor
         if (refinementSamples.size != outputSize) refinementSamples = DoubleArray(outputSize)
         val start = decimate(samples, refinementSamples, sampleRate, upper, rejectConfirmation)
         // Do not trade low-bass precision for an unsettled narrow filter or too few complete periods.
         if (start > outputSize / 8 || lastLag + 1 > (outputSize - start - 1) / 2) return hertz
-        ensureCapacity(lastLag + 2)
-        calculateDifference(refinementSamples, lastLag + 1, start, firstLag - 1)
-        val lag = (firstLag..lastLag).minBy(difference::get)
-        if (lag == firstLag || lag == lastLag) return hertz
-        val refined = rate / parabolicInterpolation(lag, lastLag + 1)
-        return if (refined in lower..upper) refined else hertz
+        return fitHarmonicFrequency(refinementSamples, start, rate, lower, upper) ?: hertz
     }
 
     private fun mergeCandidate(
@@ -306,10 +309,10 @@ class YinPitchDetector {
         )
     }
 
-    private fun calculateDifference(samples: DoubleArray, tauMax: Int, analysisStart: Int, tauStart: Int = 1) {
+    private fun calculateDifference(samples: DoubleArray, tauMax: Int, analysisStart: Int) {
         difference[0] = 0.0
         val analysisLength = samples.size - tauMax
-        for (tau in tauStart..tauMax) {
+        for (tau in 1..tauMax) {
             var sum = 0.0
             for (index in analysisStart until analysisLength) {
                 val delta = samples[index] - samples[index + tau]

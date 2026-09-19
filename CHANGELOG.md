@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0-alpha.27 — 2026-09-19
+
+- Refine quiet pitches from the current audio using a bounded real-harmonic fit.
+- Retain weak fundamental candidates that a deeper multi-period trough previously hid.
+- Rank candidate evidence consistently to prevent reproduced quiet-start octave errors.
+- Verify decay, retuning, noise rejection, bass, upper partials and confirmation echoes.
+- Keep microphone capture, settings, UI, dependencies and song recognition unchanged.
+
+The frozen quiet-decay and cold-start tests improve. Actual acoustic results still
+depend on the instrument, microphone and noise; recorded-corpus errors remain.
+
 ## 0.3.0-alpha.26 — 2026-09-12
 
 - Fix Notes-mode decoding that skipped a better preceding pitch outside its neighbor shortlist.
