@@ -27,6 +27,51 @@ import org.junit.Test
 
 class SongChordDecoderTest {
     @Test
+    fun localWavAmbiguousWeakSeventhKeepsItsBassRoot() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "ambiguous-weak-seventh.wav")
+        val frequencies = intArrayOf(45, 48, 52, 55).map { 440.0 * 2.0.pow((it - 69) / 12.0) }
+        try {
+            for (seventh in listOf(0.04, 0.08)) {
+                val amplitudes = doubleArrayOf(0.70, 0.48, 0.30, seventh)
+                file.writeBytes(pcm16Wav(channels = 1, seconds = 2) { frame, _ ->
+                    0.0055 * frequencies.indices.sumOf { note ->
+                        amplitudes[note] * sin(2 * PI * frequencies[note] * frame / SAMPLE_RATE)
+                    }
+                })
+                val events = SongAudioDecoder(context).analyze(Uri.fromFile(file)).events.filterIsInstance<ChordEvent>()
+                assertEquals(events.toString(), listOf(Chord(9, ChordQuality.MINOR)), events.map { it.chord })
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun localWavSpreadMajorVoicingsKeepTheirRoot() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "spread-major-chord.wav")
+        val intervals = intArrayOf(0, 7, 12, 16)
+        val amplitudes = doubleArrayOf(0.70, 0.48, 0.30, 0.18)
+        try {
+            for (root in 52..63) for (gain in listOf(1.0, 0.01)) {
+                val frequencies = intervals.map { 440.0 * 2.0.pow((root + it - 69) / 12.0) }
+                file.writeBytes(pcm16Wav(channels = 1, seconds = 2) { frame, _ ->
+                    0.55 * gain * frequencies.indices.sumOf { note ->
+                        amplitudes[note] * sin(2 * PI * frequencies[note] * frame / SAMPLE_RATE)
+                    }
+                })
+                val events = SongAudioDecoder(context).analyze(Uri.fromFile(file)).events.filterIsInstance<ChordEvent>()
+                assertEquals("root=$root gain=$gain: $events", listOf(Chord(root % 12, ChordQuality.MAJOR)), events.map { it.chord })
+                assertEquals(0L, events.single().startMillis)
+                assertEquals(2000L, events.single().endMillis)
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
     fun localWavDoesNotInventChordsAroundAShortRealChord() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.cacheDir, "single-note-chord.wav")

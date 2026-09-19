@@ -13,6 +13,12 @@
   This prevents clear ninths from losing to a three-note subset. An independent
   voicing alone is insufficient: additional observed pitch classes disqualify
   this stronger evidence path.
+- Root ranking uses that evidence too, before it locks the root for quality
+  refinement. Previously, 20 of 24 known spread-major voicings became a sus2
+  chord with a different root. All 24 now retain the expected major chord.
+  Presence uses the existing relative note threshold, avoiding a separate
+  absolute cutoff for a quiet third. When multiple chord names share the same
+  observed pitch set, the existing bass and context scores still decide.
 - Inversion bass uses observed low notes, not virtual subharmonics. Its duration
   vote uses the same window-center boundaries as the displayed chord segment.
 - Notes use window-center boundaries too. Violin-range suppression now applies
@@ -42,7 +48,7 @@ excludes reference qualities outside the supported comparison vocabulary.
 | Subset / gain | Correct root | Correct supported quality | Labeled duration |
 | --- | ---: | ---: | ---: |
 | Original / 1 | 205255 -> 205255 | 123730 -> 123730 | 302473 -> 302473 |
-| Original / 0.01 | 197148 -> 197271 | 120048 -> 120875 | 294858 -> 294301 |
+| Original / 0.01 | 197148 -> 197643 | 120048 -> 120938 | 294858 -> 294301 |
 | Additional / 1 | 183574 -> 183574 | 77448 -> 77448 | 270522 -> 270522 |
 | Additional / 0.01 | 157641 -> 157641 | 68043 -> 68043 | 264413 -> 263856 |
 
@@ -57,6 +63,7 @@ substantial recognition errors.
 
 - 216 single-note / octave-doubling controls no longer emit phantom chords.
 - Twelve sustained major/minor added-ninth cases span three roots and two gains.
+- Twenty-four spread-major cases span all twelve pitch classes and two gains.
 - Existing plucked Amadd9 and rapid C-Cmaj7-C fixtures retain their labels,
   including three chords in one second.
 - A4 / Dm / A4 emits only the middle Dm rather than a three-second chord.
@@ -77,3 +84,18 @@ chord. Dense mixes and ambiguous voicings remain imperfect. This change fixes
 specific demonstrated failures, not arbitrary-song transcription. Earlier
 quality bonuses improved synthetic fixtures while worsening recorded music;
 those variants were rejected.
+
+Replacing the minimum-note reward with observed evidence globally fixed the
+spread-major controls but lost 3768 ms of supported-quality agreement on the
+normal-level original recordings. Restricting that replacement to root scores
+still lost 1318 ms. Both variants were removed. The accepted root change only
+prioritizes a unique, persistently observed voicing; the original continuous
+scores and reported event confidence remain unchanged.
+
+Independent review compared 102 generated cases, including 72 controls with a
+specific expected result and 30 ambiguous or rootless cases. The 72 strict
+controls pass. Two additional weak Am7/C6 aliases preserve the earlier A-minor
+ranking: eligibility cannot make a shared pitch set appear unique. In one
+rootless transition, a 172 ms intermediate event is filtered, but the existing
+display hold keeps the current chord visible. Both versions show the next
+G-sharp-minor event at 1067 ms. Event coverage is not display continuity.

@@ -238,10 +238,7 @@ private fun qualityEmission(frames: List<HarmonicFrame>, index: Int, chord: Chor
             (index < frames.lastIndex && hasDefiningIntervals(frames[index + 1].observedChroma, chord, intervals)))
     if (intervals.isNotEmpty() && !observed) return INVALID_EMISSION
     // An exact independently observed voicing must not lose to a subset favored by harmonic averaging.
-    if (observed && matchesObservedVoicing(frame, chord) &&
-        ((index > 0 && matchesObservedVoicing(frames[index - 1], chord)) ||
-            (index < frames.lastIndex && matchesObservedVoicing(frames[index + 1], chord)))
-    ) return 1.0
+    if (observed && hasStableObservedVoicing(frames, index, chord)) return 1.0
     return if (score > 0.0 && observed) {
         score + QUALITY_PRIOR_PENALTY.getValue(chord.quality)
     } else score
@@ -256,6 +253,13 @@ private fun emissionScores(
     val frame = frames[frameIndex]
     val localScores = DoubleArray(chords.size) { chordIndex ->
         stateConfidence(frames, frameIndex, chords, mode, chordIndex + 1)
+    }
+    if (mode == SongAnalysisMode.CHORDS) {
+        val observed = chords.indices.filter {
+            hasStableObservedVoicing(frames, frameIndex, chords[it])
+        }.singleOrNull()
+        // Keep bass/context ranking when the same pitch set has several valid chord names.
+        if (observed != null && localScores[observed] > 0.0) localScores[observed] = 1.0
     }
     // Resolve the root first so extension evidence cannot turn a chord into its relative chord.
     val root = chords[localScores.indices.maxBy(localScores::get)].rootPitchClass
@@ -317,11 +321,19 @@ private fun chordEmission(frame: HarmonicFrame, chord: Chord, chroma: FloatArray
     ).coerceIn(0.0, 1.0)
 }
 
-private fun matchesObservedVoicing(frame: HarmonicFrame, chord: Chord): Boolean =
-    frame.independentChroma.indices.all {
-        (it in chord.pitchClasses) == (frame.independentChroma[it] >= MIN_DEFINING_SALIENCE) &&
-            (it in chord.pitchClasses) == (frame.observedChroma[it] >= MIN_DEFINING_SALIENCE)
+private fun hasStableObservedVoicing(frames: List<HarmonicFrame>, index: Int, chord: Chord): Boolean =
+    matchesObservedVoicing(frames[index], chord) &&
+        ((index > 0 && matchesObservedVoicing(frames[index - 1], chord)) ||
+            (index < frames.lastIndex && matchesObservedVoicing(frames[index + 1], chord)))
+
+private fun matchesObservedVoicing(frame: HarmonicFrame, chord: Chord): Boolean {
+    val independentMinimum = frame.independentChroma.max() * MIN_CHORD_NOTE_RATIO
+    val observedMinimum = frame.observedChroma.max() * MIN_CHORD_NOTE_RATIO
+    return frame.independentChroma.indices.all {
+        (it in chord.pitchClasses) == (frame.independentChroma[it] >= independentMinimum && frame.independentChroma[it] > 0f) &&
+            (it in chord.pitchClasses) == (frame.observedChroma[it] >= observedMinimum && frame.observedChroma[it] > 0f)
     }
+}
 
 private fun hasMultiplePitchClasses(chroma: FloatArray): Boolean {
     val minimum = chroma.max() * MIN_CHORD_NOTE_RATIO

@@ -10,6 +10,42 @@ import org.junit.Test
 
 class ChordFeatureEvidenceTest {
     @Test
+    fun `an ambiguous weak seventh does not force a different bass root`() {
+        val rate = 48_000
+        val frequencies = intArrayOf(45, 48, 52, 55).map(::midiToHertz)
+        for (seventh in listOf(0.04, 0.08)) {
+            val amplitudes = doubleArrayOf(0.70, 0.48, 0.30, seventh)
+            val samples = FloatArray(rate * 2) { frame ->
+                (0.0055 * frequencies.indices.sumOf { note ->
+                    amplitudes[note] * sin(2 * PI * frequencies[note] * frame / rate)
+                }).toFloat()
+            }
+            val events = StreamingChordAnalyzer(rate).apply { accept(samples) }.finish()
+            assertEquals(Chord(9, ChordQuality.MINOR), chordEventAt(events, 1000L)?.chord, events.toString())
+        }
+    }
+
+    @Test
+    fun `spread major voicings retain their observed root across all pitch classes`() {
+        val rate = 48_000
+        val intervals = intArrayOf(0, 7, 12, 16)
+        val amplitudes = doubleArrayOf(0.70, 0.48, 0.30, 0.18)
+        val failures = mutableListOf<String>()
+        for (root in 52..63) for (gain in listOf(1.0, 0.01)) {
+            val frequencies = intervals.map { midiToHertz(root + it) }
+            val samples = FloatArray(rate * 2) { frame ->
+                (0.55 * gain * frequencies.indices.sumOf { note ->
+                    amplitudes[note] * sin(2 * PI * frequencies[note] * frame / rate)
+                }).toFloat()
+            }
+            val events = StreamingChordAnalyzer(rate).apply { accept(samples) }.finish()
+            val expected = Chord(root % 12, ChordQuality.MAJOR)
+            if (chordEventAt(events, 1000L)?.chord != expected) failures += "$expected gain=$gain: $events"
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    @Test
     fun `sustained ninths remain audible in major and minor voicings`() {
         val failures = mutableListOf<String>()
         for ((quality, third) in listOf(ChordQuality.ADD_NINTH to 4, ChordQuality.MINOR_ADD_NINTH to 3)) {

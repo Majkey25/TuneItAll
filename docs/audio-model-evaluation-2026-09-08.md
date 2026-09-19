@@ -231,6 +231,22 @@ on some amplified-guitar recordings did not establish cent-level accuracy.
 SwiftF0 source: [pinned official model and MIT repository](https://github.com/lars76/swift-f0/tree/64700fce8ef39c2970814bf427ac1d75a2f20d72).
 Model SHA-256: `7e2390db8379cd9e1e2b22828e55b45b57c8559e4c8335678c717dc245c18176`.
 
+## Additional model screening on 19 September
+
+[ChordMini](https://github.com/ptnghia-j/ChordMini/tree/aa6e3a8d7b017f082fd2aaff9329d5c26af49c03)
+was inspected as a newer learned alternative. Its 170-class dictionary has no
+add9, minor add9, or power-chord output. The maintained frontend has a 92.88 ms
+output grid and about ten seconds of context. The recommended half-second
+minimum segment duration drops short chords, so its stock example cannot
+validate the application's three-changes-per-second requirement.
+
+The code is MIT-licensed, but checkpoint redistribution rights were not
+established from the published terms. No checkpoint was downloaded, executed,
+or bundled. A future benchmark must retain unsupported reference labels, use
+strict checkpoint loading, and report timing rather than silently simplifying
+the evaluation vocabulary. The [paper](https://arxiv.org/abs/2602.19778) is a
+reason to evaluate the model, not evidence that it improves this app.
+
 ## Reproducibility
 
 Local research artifacts remain outside distributed app assets under

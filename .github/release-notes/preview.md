@@ -2,12 +2,14 @@ Intoniva `v0.3.0-alpha.28` testing build.
 
 - Remove reproduced phantom chords around single-note passages.
 - Retain clear added ninths and avoid virtual bass inversion labels.
+- Correct the root of spread major voicings while preserving ambiguous chord-name ranking.
 - Correct note-change timing and melody suppression by bass accompaniment.
 - Keep live tuning, settings, permissions, and offline operation unchanged.
 
-Checks pass 323 local tests, 10 Android 10 emulator tests, and 11 physical Huawei
-song-decoder tests. The Huawei processed the private 210535 ms problem recording
-in 16638 ms, within the unchanged runtime limit. Coverage is not chord accuracy.
+The song checks cover real Android file decoding, spread major voicings, added
+ninths, melody octaves, ambiguity, silence, and stereo cancellation. The dated
+release record lists exact local, emulator, and Huawei results. Coverage is not
+chord accuracy.
 
 The 48 frozen recording/gain cases show no root or supported-quality regression.
 See `docs/song-evidence-2026-09-19.md` and `docs/store/2026-09-19-alpha28-release.md`
