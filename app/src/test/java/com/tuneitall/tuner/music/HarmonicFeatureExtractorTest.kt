@@ -1,13 +1,28 @@
 package com.tuneitall.tuner.music
 
 import kotlin.math.PI
+import kotlin.math.log2
+import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class HarmonicFeatureExtractorTest {
+    @Test
+    fun `cached harmonic weights match frequency ratios across the note range`() {
+        for (fundamental in 21..108) for (note in 21..108) {
+            val harmonic = 2.0.pow((note - fundamental) / 12.0).roundToInt()
+            val expected = if (harmonic > 1 && fundamental + (12.0 * log2(harmonic.toDouble())).roundToInt() == note) {
+                1f / sqrt(harmonic.toFloat())
+            } else 0f
+            assertEquals(expected, harmonicNoteWeight(fundamental, note), "$fundamental -> $note")
+        }
+    }
+
     @Test
     fun `extractor keeps a detuned A peak in A chroma`() {
         val frames = extract(sine(SAMPLE_RATE, seconds = 3, hertz = 445.0))
@@ -46,7 +61,8 @@ class HarmonicFeatureExtractorTest {
             val silence = frames.filter { it.startMillis >= 3_000L }
             assertTrue(silence.isNotEmpty())
             val leaked = silence.filter { frame ->
-                listOf(frame.chroma, frame.contextChroma, frame.noteSalience, frame.bassChroma, frame.observedChroma)
+                listOf(frame.chroma, frame.contextChroma, frame.noteSalience, frame.bassChroma, frame.observedChroma,
+                    frame.observedChordChroma, frame.observedNoteSalience, frame.observedBassChroma, frame.independentChroma)
                     .any { values -> values.any { it != 0f } }
             }
             assertTrue(leaked.isEmpty(), leaked.take(3).joinToString { frame ->
@@ -183,6 +199,10 @@ class HarmonicFeatureExtractorTest {
                 left.bassChroma to right.bassChroma,
                 left.noteSalience to right.noteSalience,
                 left.observedChroma to right.observedChroma,
+                left.observedChordChroma to right.observedChordChroma,
+                left.observedNoteSalience to right.observedNoteSalience,
+                left.observedBassChroma to right.observedBassChroma,
+                left.independentChroma to right.independentChroma,
             ).forEach { (leftValues, rightValues) ->
                 leftValues.indices.forEach { index ->
                     assertEquals(leftValues[index], rightValues[index], 1e-5f)

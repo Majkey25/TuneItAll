@@ -1,23 +1,23 @@
-Intoniva `v0.3.0-alpha.27` testing build.
+Intoniva `v0.3.0-alpha.28` testing build.
 
-- Refine quiet frequencies from the current PCM with a bounded harmonic model.
-- Retain weak fundamental candidates previously hidden by deeper multi-period troughs.
-- Correct candidate ranking that could latch onto the octave below a quiet first strike.
-- Preserve microphone capture, settings, feedback rejection, UI and offline operation.
+- Remove reproduced phantom chords around single-note passages.
+- Retain clear added ninths and avoid virtual bass inversion labels.
+- Correct the root of spread major voicings while preserving ambiguous chord-name ranking.
+- Correct note-change timing and melody suppression by bass accompaniment.
+- Keep live tuning, settings, permissions, and offline operation unchanged.
 
-The frozen hard-decay comparison improves from 743/846 to 837/846 correct fresh
-windows within 10 cents. The separate 48-case quiet-start comparison improves
-from 1088/1368 to 1368/1368. These are generated noisy signals, not recordings
-of an unplugged guitar through a phone. Real-recording nominal-note results
-remain unchanged, including an unresolved octave error.
+The song checks cover real Android file decoding, spread major voicings, added
+ninths, melody octaves, ambiguity, silence, and stereo cancellation. The dated
+release record lists exact local, emulator, and Huawei results. Coverage is not
+chord accuracy.
 
-Checks cover quiet acquisition, decay, stopped tones, new strings, noise, bass,
-upper partials and confirmation echoes. See `docs/quiet-harmonic-fit-2026-09-12.md`
-and `docs/store/2026-09-19-alpha27-release.md` for evidence and delivery status.
-No playback tests ran while the user used Focusrite.
+The 48 frozen recording/gain cases show no root or supported-quality regression.
+See `docs/song-evidence-2026-09-19.md` and `docs/store/2026-09-19-alpha28-release.md`
+for evidence and delivery status. All current song checks were silent.
 
-Song chord recognition is unchanged. Rejected chord experiments and neural
-models are not included; arbitrary-song transcription is not guaranteed.
+Recognition work remains open. Dense mixes, ambiguous voicings, and some
+single-note harmonic stacks still produce errors. Experimental neural models
+are not included. This build does not claim universally accurate transcription.
 
 The APK is debug-signed for direct testing and is not the Google Play bundle.
 Use the attached SHA-256 file to verify the download. The app has no ads,

@@ -28,26 +28,31 @@ class SongFeatureRegressionTest {
             HarmonicFrame(index * 200L, FloatArray(12), bassChroma = FloatArray(12),
                 noteSalience = salience, tonalStrength = 1f, onsetStrength = 0f)
         }
-        val notes = analyzeNotes(frames, NoteRange.ANY, 400L)
+        val notes = analyzeNotes(frames, NoteRange.ANY, 500L)
         assertEquals(listOf(63, 60), notes.map { it.midiNote })
-        assertEquals(listOf(0L, 200L), notes.map { it.startMillis })
+        assertEquals(listOf(0L, 300L), notes.map { it.startMillis })
     }
 
     @Test
     fun fullLengthNoteDecodingHasBoundedCost() {
-        val salience = FloatArray(88).apply { this[60 - 21] = 1f }
-        val frames = List(21_177) { index ->
-            HarmonicFrame(index * 85L, FloatArray(12), bassChroma = FloatArray(12),
-                noteSalience = salience, tonalStrength = 1f, onsetStrength = 0f)
+        for (range in listOf(NoteRange.ANY, NoteRange.VIOLIN)) {
+            val salience = FloatArray(88).apply {
+                this[60 - 21] = 1f
+                if (range == NoteRange.VIOLIN) this[40 - 21] = 0.25f
+            }
+            val frames = List(21_177) { index ->
+                HarmonicFrame(index * 85L, FloatArray(12), bassChroma = FloatArray(12),
+                    noteSalience = salience, tonalStrength = 1f, onsetStrength = 0f)
+            }
+            val started = SystemClock.elapsedRealtime()
+            val notes = analyzeNotes(frames, range, 1_800_000L)
+            val elapsed = SystemClock.elapsedRealtime() - started
+            assertEquals(1, notes.size)
+            assertEquals(60, notes.single().midiNote)
+            assertEquals(1_800_000L, notes.single().endMillis)
+            assertTrue("Thirty-minute $range note decoding took $elapsed ms", elapsed < 10_000L)
+            Log.i("SongFeatureQA", "note decode range=$range frames=${frames.size} elapsedMs=$elapsed")
         }
-        val started = SystemClock.elapsedRealtime()
-        val notes = analyzeNotes(frames, NoteRange.ANY, 1_800_000L)
-        val elapsed = SystemClock.elapsedRealtime() - started
-        assertEquals(1, notes.size)
-        assertEquals(60, notes.single().midiNote)
-        assertEquals(1_800_000L, notes.single().endMillis)
-        assertTrue("Thirty-minute note decoding took $elapsed ms", elapsed < 10_000L)
-        Log.i("SongFeatureQA", "note decode frames=${frames.size} elapsedMs=$elapsed")
     }
 
     @Test
@@ -70,7 +75,8 @@ class SongFeatureRegressionTest {
         assertTrue("Invented notes in silence: $notes", notes.all { it.endMillis <= 3_000L })
         assertTrue(silence.isNotEmpty())
         assertTrue("Silent features contain residual notes", silence.all { frame ->
-            listOf(frame.chroma, frame.contextChroma, frame.noteSalience, frame.bassChroma, frame.observedChroma)
+            listOf(frame.chroma, frame.contextChroma, frame.noteSalience, frame.bassChroma, frame.observedChroma,
+                frame.observedChordChroma, frame.observedNoteSalience, frame.observedBassChroma, frame.independentChroma)
                 .all { values -> values.all { it == 0f } }
         })
         assertTrue("Ten-second analysis exceeded real time: $elapsed ms", elapsed < 10_000L)

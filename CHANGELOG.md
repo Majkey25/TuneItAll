@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0-alpha.28 — 2026-09-19
+
+- Stop single-note passages from creating reproduced phantom chords.
+- Preserve clear major and minor added ninths and reject virtual bass inversions.
+- Keep the observed root of spread major voicings instead of forcing an unrelated sus2 chord.
+- Align note changes and inversion votes with audio-window timing.
+- Keep melody notes audible above bass accompaniment, including E4/E5/E6 octave cases.
+- Verify the song decoder on Android 10 and a physical Huawei without playback.
+
+Recorded-song checks show no root or supported-quality regression across 48 cases.
+Dense and ambiguous recordings still contain recognition errors. This is an
+incremental fix, not a claim of universal transcription accuracy.
+
 ## 0.3.0-alpha.27 — 2026-09-19
 
 - Refine quiet pitches from the current audio using a bounded real-harmonic fit.

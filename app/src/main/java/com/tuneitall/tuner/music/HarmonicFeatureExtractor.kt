@@ -7,6 +7,7 @@ import kotlin.math.hypot
 import kotlin.math.ln
 import kotlin.math.ln1p
 import kotlin.math.log2
+import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -21,11 +22,19 @@ internal data class HarmonicFrame(
     val onsetStrength: Float,
     val spectralFlatness: Float = 0f,
     val observedChroma: FloatArray = chroma,
+    val observedChordChroma: FloatArray = observedChroma,
+    val observedNoteSalience: FloatArray = noteSalience,
+    val observedBassChroma: FloatArray = bassChroma,
+    val independentChroma: FloatArray = observedChroma,
 ) {
     init {
         require(startMillis >= 0L)
         require(chroma.size == PITCH_CLASS_COUNT)
         require(observedChroma.size == PITCH_CLASS_COUNT)
+        require(observedChordChroma.size == PITCH_CLASS_COUNT)
+        require(observedNoteSalience.size == NOTE_COUNT)
+        require(observedBassChroma.size == PITCH_CLASS_COUNT)
+        require(independentChroma.size == PITCH_CLASS_COUNT)
         require(contextChroma.size == PITCH_CLASS_COUNT)
         require(bassChroma.size == PITCH_CLASS_COUNT)
         require(noteSalience.size == NOTE_COUNT)
@@ -124,6 +133,10 @@ internal class StreamingHarmonicFeatureExtractor(
             starts[index] = frame.startMillis
             collapseToNotes(frame.highResolution, tuningCents).also { frame.highResolution = EMPTY_FEATURES }
         }
+        val independentFrames = noteFrames.map { notes ->
+            checkAnalysisCancellation(isCancelled)
+            independentPitchClasses(notes, collapseToChroma(notes))
+        }
         val standardized = standardize(noteFrames)
         noteFrames.clear()
         val onsetStrengths = FloatArray(standardized.size) {
@@ -150,8 +163,8 @@ internal class StreamingHarmonicFeatureExtractor(
             chordChromas += collapseToChroma(features, normalizeOutput = false)
             bassChromas += collapseToChroma(features, bassOnly = true, normalizeOutput = false)
         }
-        standardized.clear()
         val chordFrames = centeredAverage(chordChromas, LOCAL_CHORD_RADIUS)
+        val observedChordFrames = centeredAverage(observedChromas, LOCAL_CHORD_RADIUS)
         val contextFrames = centeredAverage(chordChromas, framesForHalfWindow(CONTEXT_CHORD_WINDOW_SECONDS))
         val bassFrames = centeredAverage(bassChromas, LOCAL_CHORD_RADIUS)
         chordChromas.clear()
@@ -172,8 +185,13 @@ internal class StreamingHarmonicFeatureExtractor(
                 onsetStrength = onsetStrengths[index],
                 spectralFlatness = rawFrames[index].spectralFlatness,
                 observedChroma = observedChromas[index],
+                observedChordChroma = observedChordFrames[index],
+                observedNoteSalience = standardized[index],
+                observedBassChroma = collapseToChroma(standardized[index], bassOnly = true),
+                independentChroma = independentFrames[index],
             )
         }
+        standardized.clear()
         rawFrames.clear()
         finishedFrames = result
         return result
@@ -348,6 +366,22 @@ internal class StreamingHarmonicFeatureExtractor(
     )
 }
 
+internal fun harmonicNoteWeight(fundamental: Int, note: Int): Float =
+    HARMONIC_NOTE_WEIGHTS.getOrElse(note - fundamental) { 0f }
+
+private fun independentPitchClasses(notes: FloatArray, observedChroma: FloatArray): FloatArray {
+    val independent = FloatArray(PITCH_CLASS_COUNT)
+    notes.indices.forEach { note ->
+        if (notes[note] >= MIN_SUPPORTING_HARMONIC &&
+            (0 until note).none { lower -> notes[lower] >= MIN_SUPPORTING_HARMONIC && harmonicNoteWeight(lower, note) > 0f }
+        ) {
+            val pitchClass = (note + MIN_MIDI) % PITCH_CLASS_COUNT
+            independent[pitchClass] = observedChroma[pitchClass]
+        }
+    }
+    return independent
+}
+
 private fun collapseToChroma(
     notes: FloatArray,
     bassOnly: Boolean = false,
@@ -478,7 +512,13 @@ private const val STANDARDIZATION_WINDOW_SECONDS = 6.0
 private const val LOCAL_CHORD_RADIUS = 1
 private const val CONTEXT_CHORD_WINDOW_SECONDS = 1.5
 private const val NOTE_SMOOTH_RADIUS = 1
-private val HARMONIC_OFFSETS = intArrayOf(0, 12, 19, 24, 28, 31)
+internal val HARMONIC_OFFSETS = intArrayOf(0, 12, 19, 24, 28, 31)
+private val HARMONIC_NOTE_WEIGHTS = FloatArray(NOTE_COUNT) { semitones ->
+    val harmonic = 2.0.pow(semitones / SEMITONES_PER_OCTAVE).roundToInt()
+    if (harmonic > 1 && (SEMITONES_PER_OCTAVE * log2(harmonic.toDouble())).roundToInt() == semitones) {
+        1f / sqrt(harmonic.toFloat())
+    } else 0f
+}
 private val HARMONIC_WEIGHTS = floatArrayOf(1f, 0.707f, 0.577f, 0.5f, 0.447f, 0.408f)
 private const val MIN_SUPPORTING_HARMONIC = 0.04f
 private const val HARMONIC_COUNT_BONUS = 0.12f

@@ -81,7 +81,8 @@ internal fun analyzeChords(
             }
         }
     }
-    val states = viterbi(frames.size, chords.size + 1, frames) { frameIndex ->
+    val chordStarts = BooleanArray(frames.size) { hasMultiplePitchClasses(frames[it].observedChroma) }
+    val states = viterbi(frames.size, chords.size + 1, frames, chordStarts = chordStarts) { frameIndex ->
         checkAnalysisCancellation(isCancelled)
         emissionScores(frames, frameIndex, chords, mode)
     }
@@ -96,7 +97,7 @@ internal fun analyzeChords(
         if (activeState == 0 || endMillis <= activeStart) return
         val sourceChord = chords[activeState - 1]
         val segment = frames.subList(activeFrameStart, endFrame)
-        val bass = detectInversionBass(sourceChord, segment, endMillis)
+        val bass = detectInversionBass(sourceChord, segment, activeStart, endMillis)
         val chord = sourceChord.copy(bassPitchClass = bass)
         val confidence = (confidenceTotal / confidenceCount).coerceIn(0.0, 1.0)
         val spectralFlatness = segment.sumOf { it.spectralFlatness.toDouble() } / segment.size
@@ -221,7 +222,7 @@ private fun refineChordQualities(
             } / (segmentEnd - segmentStart)
             val chord = qualities[segment.state - 1]
             add(ChordEvent(segmentStart, segmentEnd, chord.copy(bassPitchClass = detectInversionBass(
-                chord, segmentFrames.subList(segment.start, segment.end), segmentEnd,
+                chord, segmentFrames.subList(segment.start, segment.end), segmentStart, segmentEnd,
             )), confidence.coerceIn(0.0, 1.0)))
         }
     }
@@ -236,6 +237,8 @@ private fun qualityEmission(frames: List<HarmonicFrame>, index: Int, chord: Chor
         ((index > 0 && hasDefiningIntervals(frames[index - 1].observedChroma, chord, intervals)) ||
             (index < frames.lastIndex && hasDefiningIntervals(frames[index + 1].observedChroma, chord, intervals)))
     if (intervals.isNotEmpty() && !observed) return INVALID_EMISSION
+    // An exact independently observed voicing must not lose to a subset favored by harmonic averaging.
+    if (observed && hasStableObservedVoicing(frames, index, chord)) return 1.0
     return if (score > 0.0 && observed) {
         score + QUALITY_PRIOR_PENALTY.getValue(chord.quality)
     } else score
@@ -250,6 +253,13 @@ private fun emissionScores(
     val frame = frames[frameIndex]
     val localScores = DoubleArray(chords.size) { chordIndex ->
         stateConfidence(frames, frameIndex, chords, mode, chordIndex + 1)
+    }
+    if (mode == SongAnalysisMode.CHORDS) {
+        val observed = chords.indices.filter {
+            hasStableObservedVoicing(frames, frameIndex, chords[it])
+        }.singleOrNull()
+        // Keep bass/context ranking when the same pitch set has several valid chord names.
+        if (observed != null && localScores[observed] > 0.0) localScores[observed] = 1.0
     }
     // Resolve the root first so extension evidence cannot turn a chord into its relative chord.
     val root = chords[localScores.indices.maxBy(localScores::get)].rootPitchClass
@@ -293,6 +303,8 @@ private fun stateConfidence(
 
 private fun chordEmission(frame: HarmonicFrame, chord: Chord, chroma: FloatArray = frame.chroma): Double {
     if (frame.tonalStrength < MIN_TONAL_STRENGTH) return 0.0
+    // Alternative fundamentals inferred from one spectral note are not simultaneous chord notes.
+    if (!hasMultiplePitchClasses(frame.observedChordChroma)) return 0.0
     val inChord = chord.pitchClasses.map { chroma[it].toDouble() }
     if (inChord.count { it >= chroma.max() * MIN_CHORD_NOTE_RATIO && it > 0.0 } < 2) return 0.0
     val outOfChord = chroma.indices.filterNot(chord.pitchClasses::contains).map { chroma[it].toDouble() }
@@ -309,6 +321,25 @@ private fun chordEmission(frame: HarmonicFrame, chord: Chord, chroma: FloatArray
     ).coerceIn(0.0, 1.0)
 }
 
+private fun hasStableObservedVoicing(frames: List<HarmonicFrame>, index: Int, chord: Chord): Boolean =
+    matchesObservedVoicing(frames[index], chord) &&
+        ((index > 0 && matchesObservedVoicing(frames[index - 1], chord)) ||
+            (index < frames.lastIndex && matchesObservedVoicing(frames[index + 1], chord)))
+
+private fun matchesObservedVoicing(frame: HarmonicFrame, chord: Chord): Boolean {
+    val independentMinimum = frame.independentChroma.max() * MIN_CHORD_NOTE_RATIO
+    val observedMinimum = frame.observedChroma.max() * MIN_CHORD_NOTE_RATIO
+    return frame.independentChroma.indices.all {
+        (it in chord.pitchClasses) == (frame.independentChroma[it] >= independentMinimum && frame.independentChroma[it] > 0f) &&
+            (it in chord.pitchClasses) == (frame.observedChroma[it] >= observedMinimum && frame.observedChroma[it] > 0f)
+    }
+}
+
+private fun hasMultiplePitchClasses(chroma: FloatArray): Boolean {
+    val minimum = chroma.max() * MIN_CHORD_NOTE_RATIO
+    return chroma.count { it >= minimum && it > 0f } >= 2
+}
+
 private fun hasStableDefiningIntervals(frames: List<HarmonicFrame>, index: Int, chord: Chord): Boolean {
     val intervals = DEFINING_INTERVALS.getValue(chord.quality)
     if (intervals.isEmpty()) return true
@@ -323,15 +354,20 @@ private fun hasDefiningIntervals(chroma: FloatArray, chord: Chord, intervals: Se
     return intervals.all { chroma[(chord.rootPitchClass + it) % PITCH_CLASS_COUNT] >= threshold }
 }
 
-private fun detectInversionBass(chord: Chord, frames: List<HarmonicFrame>, endMillis: Long): Int? {
+private fun detectInversionBass(chord: Chord, frames: List<HarmonicFrame>, startMillis: Long, endMillis: Long): Int? {
     val supportedMillis = LongArray(PITCH_CLASS_COUNT)
     val supportedFrames = IntArray(PITCH_CLASS_COUNT)
     frames.forEachIndexed { index, frame ->
-        val candidate = chord.pitchClasses.maxBy(frame.bassChroma::get)
-        val value = frame.bassChroma[candidate]
-        val root = frame.bassChroma[chord.rootPitchClass]
+        val candidate = chord.pitchClasses.maxBy(frame.observedBassChroma::get)
+        val value = frame.observedBassChroma[candidate]
+        val root = frame.observedBassChroma[chord.rootPitchClass]
         if (candidate != chord.rootPitchClass && value >= MIN_INVERSION_SALIENCE && value >= INVERSION_ROOT_RATIO * root) {
-            supportedMillis[candidate] += (frames.getOrNull(index + 1)?.startMillis ?: endMillis) - frame.startMillis
+            val start = if (index == 0) startMillis else
+                frame.startMillis + (frame.startMillis - frames[index - 1].startMillis) / 2
+            val end = frames.getOrNull(index + 1)?.let {
+                it.startMillis + (it.startMillis - frame.startMillis) / 2
+            } ?: endMillis
+            supportedMillis[candidate] += (minOf(end, endMillis) - maxOf(start, startMillis)).coerceAtLeast(0L)
             supportedFrames[candidate]++
         }
     }
@@ -339,7 +375,7 @@ private fun detectInversionBass(chord: Chord, frames: List<HarmonicFrame>, endMi
     // A passing bass must not label the entire segment as an inversion.
     return dominant.takeIf {
         supportedFrames[it] >= MIN_INVERSION_FRAMES &&
-            supportedMillis[it] * 2 > endMillis - frames.first().startMillis
+            supportedMillis[it] * 2 > endMillis - startMillis
     }
 }
 
@@ -356,6 +392,7 @@ private inline fun viterbi(
     frames: List<HarmonicFrame>,
     chords: List<Chord> = emptyList(),
     baselineStates: IntArray = IntArray(0),
+    chordStarts: BooleanArray = BooleanArray(0),
     emissionAt: (Int) -> DoubleArray,
 ): IntArray {
     val qualityTransitions = List(stateCount) { state ->
@@ -371,6 +408,9 @@ private inline fun viterbi(
     }
     val backPointers = Array(frameCount) { ShortArray(stateCount) }
     var previous = emissionAt(0)
+    if (chordStarts.isNotEmpty() && !chordStarts[0]) {
+        for (state in 1 until stateCount) previous[state] = Double.NEGATIVE_INFINITY
+    }
     if (baselineStates.isNotEmpty()) previous.indices.forEach { state ->
         if (state != baselineStates[0]) previous[state] -= MIN_SCORE_MARGIN
     }
@@ -410,7 +450,9 @@ private inline fun viterbi(
             val stayPenalty = if (deviation && state == baselineStates[frameIndex - 1]) MIN_SCORE_MARGIN else 0.0
             var bestPrevious = state
             var bestScore = previous[state] - stayPenalty
-            val noChordToChord = previous[0] - noChordPenalty - entryPenalty
+            val noChordToChord = if (chordStarts.isNotEmpty() && !chordStarts[frameIndex]) {
+                Double.NEGATIVE_INFINITY
+            } else previous[0] - noChordPenalty - entryPenalty
             if (noChordToChord > bestScore) {
                 bestPrevious = 0
                 bestScore = noChordToChord

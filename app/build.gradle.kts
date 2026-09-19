@@ -28,8 +28,8 @@ android {
         applicationId = "com.tuneitall.tuner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 30
-        versionName = "0.3.0-alpha.27"
+        versionCode = 31
+        versionName = "0.3.0-alpha.28"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

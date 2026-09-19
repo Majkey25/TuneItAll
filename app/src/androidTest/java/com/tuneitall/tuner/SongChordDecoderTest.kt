@@ -8,12 +8,15 @@ import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordEvent
 import com.tuneitall.tuner.music.ChordQuality
 import com.tuneitall.tuner.music.NoteEvent
+import com.tuneitall.tuner.music.NoteRange
 import com.tuneitall.tuner.music.SongAnalysisMode
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.MessageDigest
 import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.tanh
@@ -23,6 +26,118 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class SongChordDecoderTest {
+    @Test
+    fun localWavAmbiguousWeakSeventhKeepsItsBassRoot() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "ambiguous-weak-seventh.wav")
+        val frequencies = intArrayOf(45, 48, 52, 55).map { 440.0 * 2.0.pow((it - 69) / 12.0) }
+        try {
+            for (seventh in listOf(0.04, 0.08)) {
+                val amplitudes = doubleArrayOf(0.70, 0.48, 0.30, seventh)
+                file.writeBytes(pcm16Wav(channels = 1, seconds = 2) { frame, _ ->
+                    0.0055 * frequencies.indices.sumOf { note ->
+                        amplitudes[note] * sin(2 * PI * frequencies[note] * frame / SAMPLE_RATE)
+                    }
+                })
+                val events = SongAudioDecoder(context).analyze(Uri.fromFile(file)).events.filterIsInstance<ChordEvent>()
+                assertEquals(events.toString(), listOf(Chord(9, ChordQuality.MINOR)), events.map { it.chord })
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun localWavSpreadMajorVoicingsKeepTheirRoot() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "spread-major-chord.wav")
+        val intervals = intArrayOf(0, 7, 12, 16)
+        val amplitudes = doubleArrayOf(0.70, 0.48, 0.30, 0.18)
+        try {
+            for (root in 52..63) for (gain in listOf(1.0, 0.01)) {
+                val frequencies = intervals.map { 440.0 * 2.0.pow((root + it - 69) / 12.0) }
+                file.writeBytes(pcm16Wav(channels = 1, seconds = 2) { frame, _ ->
+                    0.55 * gain * frequencies.indices.sumOf { note ->
+                        amplitudes[note] * sin(2 * PI * frequencies[note] * frame / SAMPLE_RATE)
+                    }
+                })
+                val events = SongAudioDecoder(context).analyze(Uri.fromFile(file)).events.filterIsInstance<ChordEvent>()
+                assertEquals("root=$root gain=$gain: $events", listOf(Chord(root % 12, ChordQuality.MAJOR)), events.map { it.chord })
+                assertEquals(0L, events.single().startMillis)
+                assertEquals(2000L, events.single().endMillis)
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun localWavDoesNotInventChordsAroundAShortRealChord() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "single-note-chord.wav")
+        try {
+            file.writeBytes(pcm16Wav(channels = 1, seconds = 3) { frame, _ ->
+                val frequencies = if (frame / SAMPLE_RATE == 1) doubleArrayOf(293.6648, 349.2282, 440.0)
+                    else doubleArrayOf(440.0)
+                0.6 * frequencies.sumOf { sin(2 * PI * it * frame / SAMPLE_RATE) } / frequencies.size
+            })
+            val events = SongAudioDecoder(context).analyze(Uri.fromFile(file)).events.filterIsInstance<ChordEvent>()
+            assertEquals(listOf(Chord(2, ChordQuality.MINOR)), events.map { it.chord })
+            assertTrue(events.toString(), events.single().startMillis in 800L..1200L)
+            assertTrue(events.toString(), events.single().endMillis in 1800L..2200L)
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun localWavRetainsMajorAndMinorNinthsWithoutVirtualBassInversions() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "ninth-chord.wav")
+        try {
+            for (root in listOf(40, 45, 49)) for ((quality, third) in listOf(
+                ChordQuality.ADD_NINTH to 4, ChordQuality.MINOR_ADD_NINTH to 3,
+            )) {
+                val frequencies = intArrayOf(0, third, 7, 14).map { 440.0 * 2.0.pow((root + it - 69) / 12.0) }
+                file.writeBytes(pcm16Wav(channels = 1, seconds = 2) { frame, _ ->
+                    0.6 * frequencies.sumOf { sin(2 * PI * it * frame / SAMPLE_RATE) } / frequencies.size
+                })
+                val events = SongAudioDecoder(context).analyze(Uri.fromFile(file)).events.filterIsInstance<ChordEvent>()
+                assertEquals(events.toString(), listOf(Chord(root % 12, quality)), events.map { it.chord })
+                assertEquals(0L, events.single().startMillis)
+                assertEquals(2000L, events.single().endMillis)
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun localWavViolinMelodySurvivesBassWithoutEarlyChangesOrBlankGaps() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "melody-with-bass.wav")
+        try {
+            for (lastNote in listOf(64, 76, 88)) {
+                val frequencies = doubleArrayOf(440.0, 523.25, 440.0 * 2.0.pow((lastNote - 69) / 12.0))
+                file.writeBytes(pcm16Wav(channels = 1, seconds = 3) { frame, _ ->
+                    0.6 * sin(2 * PI * frequencies[frame / SAMPLE_RATE] * frame / SAMPLE_RATE) +
+                        0.15 * sin(2 * PI * 82.40689 * frame / SAMPLE_RATE)
+                })
+                val notes = SongAudioDecoder(context).analyze(Uri.fromFile(file), SongAnalysisMode.NOTES, NoteRange.VIOLIN)
+                    .events.filterIsInstance<NoteEvent>()
+                assertEquals(notes.toString(), listOf(69, 72, lastNote), notes.map { it.midiNote })
+                assertEquals(0L, notes.first().startMillis)
+                assertEquals(3000L, notes.last().endMillis)
+                notes.drop(1).forEachIndexed { index, note ->
+                    assertTrue(notes.toString(), abs(note.startMillis - (index + 1) * 1000L) <= 50L)
+                    assertEquals(notes[index].endMillis, note.startMillis)
+                }
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
     @Test
     fun localWavNoteModeKeepsMelodyAndEndsAtSilence() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
