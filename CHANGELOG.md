@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0-alpha.29, 2026-09-22
+
+- Include B0 extended-range guitar and A0 bass notes in imported-song Notes mode.
+- Retain the lowest note through frequency interpolation and tuning correction.
+- Reject reproduced false notes and chords caused by out-of-range PCM16 residue.
+- Preserve quiet in-band audio with combined absolute and relative peak checks.
+- Add native file-decoder regressions for low strings and reference offsets.
+
+All 1,665 predictions in 48 frozen recording/gain cases match alpha28 exactly.
+Song recognition remains experimental. Google Play production access was
+requested on 22 September and is awaiting approval.
+
 ## 0.3.0-alpha.28 — 2026-09-19
 
 - Stop single-note passages from creating reproduced phantom chords.

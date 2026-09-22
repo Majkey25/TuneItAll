@@ -1,0 +1,1 @@
+Song Notes now includes low bass and extended-range guitar strings. Fixed dropped A0 notes and reproduced false notes/chords from PCM16 residue. Added checks for quiet audio and reference-pitch offsets.

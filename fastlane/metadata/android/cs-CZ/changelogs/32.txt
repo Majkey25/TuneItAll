@@ -1,0 +1,1 @@
+Rozpoznávání tónů ve skladbách nyní zahrnuje hluboké struny baskytar a vícestrunných kytar. Opraveno vynechávání A0 a zjištěné falešné tóny či akordy z kvantizačních chyb PCM16. Přidány testy tichých nahrávek a různých referenčních frekvencí.
