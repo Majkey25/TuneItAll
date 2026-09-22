@@ -14,8 +14,8 @@ enum class SongAnalysisMode {
 
 enum class NoteRange(val midiRange: IntRange) {
     ANY(21..108),
-    GUITAR(40..88),
-    BASS(28..72),
+    GUITAR(23..88),
+    BASS(21..72),
     VIOLIN(55..100),
     PIANO(21..108),
 }

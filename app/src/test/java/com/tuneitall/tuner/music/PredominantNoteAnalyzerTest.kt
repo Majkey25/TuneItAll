@@ -12,6 +12,37 @@ import kotlin.test.assertTrue
 
 class PredominantNoteAnalyzerTest {
     @Test
+    fun `lowest bass note survives normal reference tuning offsets`() {
+        val failures = mutableListOf<String>()
+        for (reference in listOf(432.0, 440.0, 444.0)) for (rate in listOf(44_100, 48_000)) {
+            val events = analyze(sine(rate, 2, reference / 16.0), NoteRange.BASS, rate)
+            if (events.map(NoteEvent::midiNote) != listOf(21) || events.singleOrNull()?.durationMillis != 2000L) {
+                failures += "A4=$reference rate=$rate: $events"
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    @Test
+    fun `instrument note modes recognize low strings from supported tunings`() {
+        val failures = mutableListOf<String>()
+        val cases = mapOf(
+            NoteRange.BASS to listOf(21, 22, 23, 24, 25, 26, 27, 28),
+            NoteRange.GUITAR to listOf(23, 25, 28, 29, 30, 33, 35, 38, 40),
+        )
+        for ((range, notes) in cases) for (midi in notes) for (rate in listOf(44_100, 48_000)) {
+            for (gain in listOf(0.01f, 0.3f)) {
+                val samples = sine(rate, 2, midiToHertz(midi)).apply { indices.forEach { this[it] *= gain } }
+                val events = analyze(samples, range, rate)
+                if (events.map(NoteEvent::midiNote) != listOf(midi) || events.singleOrNull()?.durationMillis != 2000L) {
+                    failures += "$range MIDI=$midi rate=$rate gain=$gain: $events"
+                }
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    @Test
     fun `melody remains audible over bass in PCM16 song audio`() {
         for (lastNote in listOf(64, 76, 88)) {
             val frequencies = doubleArrayOf(440.0, 523.25, midiToHertz(lastNote))
@@ -190,7 +221,7 @@ class PredominantNoteAnalyzerTest {
     }
 
     private fun analyze(samples: FloatArray, range: NoteRange, sampleRate: Int = SAMPLE_RATE): List<NoteEvent> {
-        val extractor = StreamingHarmonicFeatureExtractor(sampleRate)
+        val extractor = StreamingHarmonicFeatureExtractor(sampleRate, includeLowestNoteMargin = true)
         extractor.accept(samples)
         return analyzeNotes(extractor.finish(), range, extractor.durationMillis)
     }

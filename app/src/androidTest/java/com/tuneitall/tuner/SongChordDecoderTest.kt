@@ -27,6 +27,52 @@ import org.junit.Test
 
 class SongChordDecoderTest {
     @Test
+    fun localWavLowStringsSurviveSampleRateAndReferenceOffsets() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "low-string.wav")
+        try {
+            for ((range, midi) in listOf(NoteRange.BASS to 21, NoteRange.BASS to 23, NoteRange.GUITAR to 23)) {
+                for (rate in listOf(44_100, 48_000)) for (reference in listOf(432.0, 440.0, 444.0)) {
+                    for (gain in listOf(0.01, 0.3)) {
+                        val frequency = reference * 2.0.pow((midi - 69) / 12.0)
+                        file.writeBytes(pcm16Wav(channels = 1, seconds = 2, sampleRate = rate) { frame, _ ->
+                            gain * sin(2 * PI * frequency * frame / rate)
+                        })
+                        val events = SongAudioDecoder(context).analyze(Uri.fromFile(file), SongAnalysisMode.NOTES, range)
+                            .events.filterIsInstance<NoteEvent>()
+                        assertEquals("$range/$rate/$reference/$gain: $events", listOf(midi), events.map { it.midiNote })
+                        assertEquals(0L, events.single().startMillis)
+                        assertEquals(2000L, events.single().endMillis)
+                    }
+                }
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun localWavOutOfBandTonesDoNotInventMusic() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "out-of-band.wav")
+        try {
+            for (frequency in listOf(20.0, 24.0, 26.0)) for (rate in listOf(44_100, 48_000)) {
+                for (gain in listOf(0.006, 0.6)) {
+                    file.writeBytes(pcm16Wav(channels = 1, seconds = 2, sampleRate = rate) { frame, _ ->
+                        gain * sin(2 * PI * frequency * frame / rate)
+                    })
+                    for (mode in listOf(SongAnalysisMode.NOTES, SongAnalysisMode.CHORDS)) {
+                        val events = SongAudioDecoder(context).analyze(Uri.fromFile(file), mode).events
+                        assertTrue("$frequency Hz/$rate/$mode/$gain: $events", events.isEmpty())
+                    }
+                }
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
     fun localWavAmbiguousWeakSeventhKeepsItsBassRoot() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.cacheDir, "ambiguous-weak-seventh.wav")
@@ -263,8 +309,8 @@ private fun distortedPowerChordWav(): ByteArray {
     }
 }
 
-private fun pcm16Wav(channels: Int, seconds: Int, sample: (Int, Int) -> Double): ByteArray {
-    val sampleCount = SAMPLE_RATE * seconds
+private fun pcm16Wav(channels: Int, seconds: Int, sampleRate: Int = SAMPLE_RATE, sample: (Int, Int) -> Double): ByteArray {
+    val sampleCount = sampleRate * seconds
     val frameBytes = channels * Short.SIZE_BYTES
     val dataSize = sampleCount * frameBytes
     return ByteBuffer.allocate(WAV_HEADER_SIZE + dataSize).order(ByteOrder.LITTLE_ENDIAN).apply {
@@ -274,8 +320,8 @@ private fun pcm16Wav(channels: Int, seconds: Int, sample: (Int, Int) -> Double):
         putInt(16)
         putShort(1.toShort())
         putShort(channels.toShort())
-        putInt(SAMPLE_RATE)
-        putInt(SAMPLE_RATE * frameBytes)
+        putInt(sampleRate)
+        putInt(sampleRate * frameBytes)
         putShort(frameBytes.toShort())
         putShort(Short.SIZE_BITS.toShort())
         put("data".toByteArray())
