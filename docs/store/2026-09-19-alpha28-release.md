@@ -3,9 +3,9 @@
 Version `0.3.0-alpha.28`, code `31`, package `com.tuneitall.tuner`.
 The [GitHub release](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.28)
 is public with a downloadable testing APK. Google Play received the Alpha
-submission at 15:55 CEST on 19 September. Quick checks and review are pending,
-not confirmed tester availability. Alpha27 was confirmed available to testers
-at 12:07 CEST that day. Recognition work remains open.
+submission at 15:55 CEST on 19 September. The Alpha track subsequently confirmed
+code 31 available to selected testers, published at 16:29 CEST that day.
+Recognition work remains open.
 
 ## Initial verified song changes
 
@@ -107,3 +107,7 @@ The two optional warnings concern a deobfuscation file and native debugging
 symbols. The build is not obfuscated and adds no app-authored native code.
 No new account terms were accepted. Google review, not the upload or this
 verification record, determines when testers receive the update.
+
+At 16:54 CEST, the Alpha track showed `K dispozici pro vybrané testery` for
+code 31 / alpha28, with publication time 19 September 16:29. Publishing overview
+showed no unpublished changes.

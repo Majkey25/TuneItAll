@@ -49,6 +49,7 @@ class SongAudioDecoder(context: Context) {
         val durationMillis = decode(uri, isCancelled, onProgress) { sampleRate, channels, samples ->
             val activeExtractor = extractor ?: StreamingHarmonicFeatureExtractor(
                 sampleRate, isCancelled = isCancelled, channelCount = channels,
+                includeLowestNoteMargin = mode == SongAnalysisMode.NOTES,
             ).also { extractor = it }
             activeExtractor.accept(samples)
         }

@@ -1,19 +1,18 @@
-Intoniva `v0.3.0-alpha.28` testing build.
+Intoniva `v0.3.0-alpha.29` testing build.
 
-- Remove reproduced phantom chords around single-note passages.
-- Retain clear added ninths and avoid virtual bass inversion labels.
-- Correct the root of spread major voicings while preserving ambiguous chord-name ranking.
-- Correct note-change timing and melody suppression by bass accompaniment.
+- Detect low extended-range guitar and bass notes in imported songs.
+- Retain A0 at 44.1 kHz and with common reference-pitch offsets.
+- Reject reproduced false notes and chords caused by out-of-range PCM16 residue.
+- Preserve quiet melody detection and the existing recorded-song predictions.
 - Keep live tuning, settings, permissions, and offline operation unchanged.
 
-The song checks cover real Android file decoding, spread major voicings, added
-ninths, melody octaves, ambiguity, silence, and stereo cancellation. The dated
-release record lists exact local, emulator, and Huawei results. Coverage is not
-chord accuracy.
+The 48 frozen recording/gain cases retain exactly the same 1,665 predictions.
+There are also 216 low-note controls, 240 negative controls and 288 quiet-melody
+comparisons. See `docs/song-low-notes-2026-09-22.md` for scope and evidence.
+All current song checks were silent. Coverage is not chord accuracy.
 
-The 48 frozen recording/gain cases show no root or supported-quality regression.
-See `docs/song-evidence-2026-09-19.md` and `docs/store/2026-09-19-alpha28-release.md`
-for evidence and delivery status. All current song checks were silent.
+Google Play production access was requested on 22 September. Google's approval
+is pending; this release does not imply a production rollout.
 
 Recognition work remains open. Dense mixes, ambiguous voicings, and some
 single-note harmonic stacks still produce errors. Experimental neural models

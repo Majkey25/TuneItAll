@@ -8,8 +8,8 @@ class SongAnalysisModelsTest {
     @Test
     fun `note ranges enforce exact supported instruments`() {
         assertEquals(21..108, NoteRange.ANY.midiRange)
-        assertEquals(40..88, NoteRange.GUITAR.midiRange)
-        assertEquals(28..72, NoteRange.BASS.midiRange)
+        assertEquals(23..88, NoteRange.GUITAR.midiRange)
+        assertEquals(21..72, NoteRange.BASS.midiRange)
         assertEquals(55..100, NoteRange.VIOLIN.midiRange)
         assertEquals(21..108, NoteRange.PIANO.midiRange)
     }

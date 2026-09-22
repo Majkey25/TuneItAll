@@ -66,7 +66,7 @@ class SongFeatureRegressionTest {
         }
         // Deliberately no AudioTrack/player: this test analyzes PCM without playback.
         val started = SystemClock.elapsedRealtime()
-        val frames = StreamingHarmonicFeatureExtractor(rate).apply { accept(samples) }.finish()
+        val frames = StreamingHarmonicFeatureExtractor(rate, includeLowestNoteMargin = true).apply { accept(samples) }.finish()
         val notes = analyzeNotes(frames, NoteRange.ANY, 10_000L)
         val elapsed = SystemClock.elapsedRealtime() - started
         val silence = frames.filter { it.startMillis >= 3_000L }

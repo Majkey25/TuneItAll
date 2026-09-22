@@ -49,6 +49,7 @@ internal class StreamingHarmonicFeatureExtractor(
     maxDurationSeconds: Int = MAX_ANALYSIS_SECONDS,
     private val isCancelled: () -> Boolean = { false },
     private val channelCount: Int = 1,
+    includeLowestNoteMargin: Boolean = false,
 ) {
     init {
         require(sampleRate in 8_000..192_000)
@@ -59,6 +60,9 @@ internal class StreamingHarmonicFeatureExtractor(
     private val windowSize = minOf(fftSize, (sampleRate * MAX_WINDOW_SECONDS).roundToInt())
     private val hopSize = windowSize / 2
     private val hannWindow = DoubleArray(windowSize) { 0.5 - 0.5 * cos(2.0 * PI * it / (windowSize - 1)) }
+    private val windowGain = hannWindow.sum()
+    private val minFrequencyHertz = midiToHertz(MIN_MIDI) *
+        if (includeLowestNoteMargin) 2.0.pow(-0.5 / SEMITONES_PER_OCTAVE) else 1.0
     private val windows = Array(channelCount) { FloatArray(windowSize) }
     private val real = DoubleArray(fftSize)
     private val imaginary = DoubleArray(fftSize)
@@ -206,7 +210,7 @@ internal class StreamingHarmonicFeatureExtractor(
         val rms = sqrt(squareTotal / (windowSize * channelCount))
         if (rms < SILENCE_RMS) return RawFrame(startMillis, FloatArray(HIGH_RESOLUTION_BIN_COUNT), 1f)
 
-        val firstBin = (MIN_FREQUENCY_HERTZ * fftSize / sampleRate).toInt().coerceAtLeast(1)
+        val firstBin = (minFrequencyHertz * fftSize / sampleRate).toInt().coerceAtLeast(1)
         val lastBin = (MAX_FREQUENCY_HERTZ * fftSize / sampleRate).toInt().coerceAtMost(fftSize / 2 - 2)
         magnitudes.fill(0.0, firstBin - 1, lastBin + 2)
         for (channel in windows.indices step 2) {
@@ -228,7 +232,7 @@ internal class StreamingHarmonicFeatureExtractor(
             }
         }
         for (bin in firstBin - 1..lastBin + 1) magnitudes[bin] = sqrt(magnitudes[bin] / channelCount)
-        return extractFeatures(startMillis, firstBin, lastBin)
+        return extractFeatures(startMillis, firstBin, lastBin, rms)
     }
 
     private fun extractMonoFrame(startMillis: Long): RawFrame {
@@ -246,14 +250,17 @@ internal class StreamingHarmonicFeatureExtractor(
         real.fill(0.0, windowSize)
         imaginary.fill(0.0, windowSize)
         fft(real, imaginary)
-        val firstBin = (MIN_FREQUENCY_HERTZ * fftSize / sampleRate).toInt().coerceAtLeast(1)
+        val firstBin = (minFrequencyHertz * fftSize / sampleRate).toInt().coerceAtLeast(1)
         val lastBin = (MAX_FREQUENCY_HERTZ * fftSize / sampleRate).toInt().coerceAtMost(fftSize / 2 - 2)
         for (bin in firstBin - 1..lastBin + 1) magnitudes[bin] = hypot(real[bin], imaginary[bin])
-        return extractFeatures(startMillis, firstBin, lastBin)
+        return extractFeatures(startMillis, firstBin, lastBin, rms)
     }
 
-    private fun extractFeatures(startMillis: Long, firstBin: Int, lastBin: Int): RawFrame {
+    private fun extractFeatures(startMillis: Long, firstBin: Int, lastBin: Int, inputRms: Double): RawFrame {
         val salience = FloatArray(HIGH_RESOLUTION_BIN_COUNT)
+        var strongestProminence = 0.0
+        var frameTuningSin = 0.0
+        var frameTuningCos = 0.0
         var magnitudeTotal = 0.0
         var logMagnitudeTotal = 0.0
         for (bin in firstBin..lastBin) {
@@ -277,17 +284,26 @@ internal class StreamingHarmonicFeatureExtractor(
                 (0.5 * (previous - next) / denominator).coerceIn(-0.5, 0.5)
             }
             val frequency = (bin + offset) * sampleRate / fftSize
-            if (frequency !in MIN_FREQUENCY_HERTZ..MAX_FREQUENCY_HERTZ) continue
+            if (frequency !in minFrequencyHertz..MAX_FREQUENCY_HERTZ) continue
             val midi = 69.0 + SEMITONES_PER_OCTAVE * log2(frequency / 440.0)
-            val highResolutionIndex = ((midi - MIN_MIDI) * BINS_PER_SEMITONE).roundToInt()
+            val highResolutionIndex = ((midi - RAW_MIN_MIDI) * BINS_PER_SEMITONE).roundToInt()
             if (highResolutionIndex !in salience.indices) continue
             val weight = ln1p(magnitude) / sqrt(frequency)
             salience[highResolutionIndex] += weight.toFloat()
+            strongestProminence = maxOf(strongestProminence, magnitude - (previous + next) / 2.0)
             val semitoneOffset = midi - kotlin.math.round(midi)
             val angle = 2.0 * PI * semitoneOffset
-            tuningSin += weight * sin(angle)
-            tuningCos += weight * cos(angle)
+            frameTuningSin += weight * sin(angle)
+            frameTuningCos += weight * cos(angle)
         }
+        // Use peak prominence: quantization ripples on spectral leakage are not independent tones.
+        val prominence = sqrt(2.0) * strongestProminence / windowGain
+        if (prominence < MIN_PEAK_PROMINENCE && prominence < inputRms * MIN_RELATIVE_PROMINENCE) {
+            salience.fill(0f)
+            return RawFrame(startMillis, salience, spectralFlatness)
+        }
+        tuningSin += frameTuningSin
+        tuningCos += frameTuningCos
         normalize(salience)
         return RawFrame(startMillis, salience, spectralFlatness)
     }
@@ -296,7 +312,7 @@ internal class StreamingHarmonicFeatureExtractor(
         val notes = FloatArray(NOTE_COUNT)
         highResolution.forEachIndexed { index, value ->
             if (value <= 0f) return@forEachIndexed
-            val rawMidi = MIN_MIDI + index.toDouble() / BINS_PER_SEMITONE
+            val rawMidi = RAW_MIN_MIDI + index.toDouble() / BINS_PER_SEMITONE
             val correctedMidi = rawMidi - tuningCents / CENTS_PER_SEMITONE
             val noteIndex = correctedMidi.roundToInt() - MIN_MIDI
             if (noteIndex in notes.indices) notes[noteIndex] += value
@@ -488,12 +504,13 @@ internal fun fft(real: DoubleArray, imaginary: DoubleArray) {
 private const val MIN_WINDOW_SECONDS = 8192.0 / 48000.0
 private const val MAX_WINDOW_SECONDS = 8192.0 / 44100.0
 private const val MIN_MIDI = 21
+// Preserve a flat or slightly underestimated lowest note until tuning correction.
+private const val RAW_MIN_MIDI = MIN_MIDI - 1
 private const val MAX_MIDI = 108
 private const val NOTE_COUNT = MAX_MIDI - MIN_MIDI + 1
 private const val PITCH_CLASS_COUNT = 12
 private const val BINS_PER_SEMITONE = 3
-private const val HIGH_RESOLUTION_BIN_COUNT = NOTE_COUNT * BINS_PER_SEMITONE
-private const val MIN_FREQUENCY_HERTZ = 27.5
+private const val HIGH_RESOLUTION_BIN_COUNT = (MAX_MIDI - RAW_MIN_MIDI + 1) * BINS_PER_SEMITONE
 private const val MAX_FREQUENCY_HERTZ = 4_200.0
 private const val BASS_MAX_MIDI = 60
 private const val BASS_ROLLOFF = 0.08f
@@ -501,6 +518,8 @@ private const val CENTS_PER_SEMITONE = 100.0
 private const val MAX_TUNING_CENTS = 50.0
 private const val SEMITONES_PER_OCTAVE = 12.0
 private const val SILENCE_RMS = 1e-5
+private const val MIN_PEAK_PROMINENCE = SILENCE_RMS / 10.0
+private const val MIN_RELATIVE_PROMINENCE = 0.001
 private const val PEAK_EPSILON = 1e-12
 private const val SPECTRAL_EPSILON = 1e-12
 private const val STANDARDIZATION_EPSILON = 0.08

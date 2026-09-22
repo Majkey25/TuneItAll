@@ -13,6 +13,57 @@ import kotlin.test.assertTrue
 
 class HarmonicFeatureExtractorTest {
     @Test
+    fun `out of band tones do not normalize numeric residue into notes or chords`() {
+        val failures = mutableListOf<String>()
+        for (frequency in listOf(20.0, 24.0, 26.0)) for (margin in listOf(false, true)) {
+            for (pcm16 in listOf(false, true)) for (gain in listOf(0.006, 0.6)) {
+                val samples = FloatArray(SAMPLE_RATE * 2) { frame ->
+                    val value = gain * sin(2 * PI * frequency * frame / SAMPLE_RATE)
+                    if (pcm16) (value * Short.MAX_VALUE).roundToInt().toShort() / 32768f else value.toFloat()
+                }
+                val frames = StreamingHarmonicFeatureExtractor(SAMPLE_RATE, includeLowestNoteMargin = margin)
+                    .apply { accept(samples) }.finish()
+                val notes = analyzeNotes(frames, NoteRange.ANY, 2000L)
+                val chords = analyzeChords(frames, SongAnalysisMode.CHORDS, 2000L)
+                if (notes.isNotEmpty() || chords.isNotEmpty()) {
+                    failures += "$frequency Hz/PCM16=$pcm16/margin=$margin/gain=$gain: $notes $chords"
+                }
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    @Test
+    fun `quiet in band melody remains detectable above low frequency interference`() {
+        for (rate in listOf(44_100, 48_000)) for (margin in listOf(false, true)) for (pcm16 in listOf(false, true)) {
+            val samples = FloatArray(rate * 2) { frame ->
+                val value = 0.3 * sin(2 * PI * 20.0 * frame / rate) +
+                    0.0001 * sin(2 * PI * 261.6256 * frame / rate)
+                if (pcm16) (value * Short.MAX_VALUE).roundToInt().toShort() / 32768f else value.toFloat()
+            }
+            val frames = StreamingHarmonicFeatureExtractor(rate, includeLowestNoteMargin = margin)
+                .apply { accept(samples) }.finish()
+            val notes = analyzeNotes(frames, NoteRange.ANY, 2000L)
+            assertEquals(listOf(60), notes.map { it.midiNote }, "$rate/PCM16=$pcm16/margin=$margin: $notes")
+            assertEquals(2000L, notes.single().durationMillis)
+        }
+    }
+
+    @Test
+    fun `quiet float melody remains detectable with a DC offset`() {
+        for (rate in listOf(44_100, 48_000)) for (margin in listOf(false, true)) {
+            val samples = FloatArray(rate * 2) { frame ->
+                (3e-5 + 2e-6 * sin(2 * PI * 440.0 * frame / rate)).toFloat()
+            }
+            val frames = StreamingHarmonicFeatureExtractor(rate, includeLowestNoteMargin = margin)
+                .apply { accept(samples) }.finish()
+            val notes = analyzeNotes(frames, NoteRange.ANY, 2000L)
+            assertEquals(listOf(69), notes.map { it.midiNote }, "$rate/margin=$margin: $notes")
+            assertEquals(2000L, notes.single().durationMillis)
+        }
+    }
+
+    @Test
     fun `cached harmonic weights match frequency ratios across the note range`() {
         for (fundamental in 21..108) for (note in 21..108) {
             val harmonic = 2.0.pow((note - fundamental) / 12.0).roundToInt()
