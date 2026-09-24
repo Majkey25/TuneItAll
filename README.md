@@ -13,19 +13,19 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Release version: `0.3.0-alpha.30`. Google Play
+Release version: `0.3.0-alpha.31`. Google Play
 distribution is managed separately; see the dated
-[release record](docs/store/2026-09-24-alpha30-release.md) for the recorded submission status.
+[release record](docs/store/2026-09-24-alpha31-release.md) for the recorded submission status.
 [Production access](docs/store/2026-09-22-production-access.md) was requested on 22 September and awaits Google approval.
 
 ## Download
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.30/Intoniva-v0.3.0-alpha.30-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.31/Intoniva-v0.3.0-alpha.31-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.30).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.31).
 
 ## Features
 
@@ -40,6 +40,7 @@ the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alp
 - Offline tempo estimation for a user-selected song, with a rhythm-match score
   and one-tap application to the metronome. The score measures repetition, not
   certainty about the musical tempo; half/double-time readings remain possible.
+  File selection and results stay in the collapsed **Get tempo from a song** section until opened.
 - Canonical major, minor, and dominant-seventh chord diagrams from a pinned
   offline catalog for Standard E guitar and Standard C ukulele. Other tunings
   never receive a guessed fingering.
