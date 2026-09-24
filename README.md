@@ -13,31 +13,33 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Release version: `0.3.0-alpha.29`. Google Play
+Release version: `0.3.0-alpha.30`. Google Play
 distribution is managed separately; see the dated
-[release record](docs/store/2026-09-22-alpha29-release.md) for the recorded submission status.
+[release record](docs/store/2026-09-24-alpha30-release.md) for the recorded submission status.
 [Production access](docs/store/2026-09-22-production-access.md) was requested on 22 September and awaits Google approval.
 
 ## Download
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.29/Intoniva-v0.3.0-alpha.29-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.30/Intoniva-v0.3.0-alpha.30-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.29).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.30).
 
 ## Features
 
 - Auto, Manual, and Chromatic modes.
+- The screen stays on while tuning, including silence between notes.
 - A clean-room, pYIN-derived streaming tracker with multi-candidate YIN frames,
   a no-trough buzz fallback, multi-resolution windows, and bounded online
   temporal tracking.
 - Live frequency, signed cents, flat/sharp direction, and a −50…+50 cent rail.
 - A foreground-only mechanical metronome from 20 to 400 BPM with meter,
   subdivision, accents, selectable sound styles, volume, mute, and count-in.
-- Offline tempo estimation for a user-selected song, with confidence and one-tap
-  application to the metronome.
+- Offline tempo estimation for a user-selected song, with a rhythm-match score
+  and one-tap application to the metronome. The score measures repetition, not
+  certainty about the musical tempo; half/double-time readings remain possible.
 - Canonical major, minor, and dominant-seventh chord diagrams from a pinned
   offline catalog for Standard E guitar and Standard C ukulele. Other tunings
   never receive a guessed fingering.
@@ -185,7 +187,8 @@ creates a draft GitHub release; Play upload remains a deliberate manual step.
 See [release process](docs/releasing.md), [architecture](docs/architecture.md),
 and [security policy](SECURITY.md).
 
-Latest audio checks: [song chord and note evidence](docs/song-evidence-2026-09-19.md),
+Latest audio checks: [song tempo and screen-on evidence](docs/tempo-awake-2026-09-24.md),
+[song chord and note evidence](docs/song-evidence-2026-09-19.md),
 [quiet harmonic fit](docs/quiet-harmonic-fit-2026-09-12.md),
 [song-feature stability](docs/song-feature-stability-2026-09-12.md),
 [confirmation feedback](docs/confirmation-feedback-2026-09-12.md),
