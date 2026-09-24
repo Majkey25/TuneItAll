@@ -1,15 +1,13 @@
-Intoniva `v0.3.0-alpha.30` testing build.
+Intoniva `v0.3.0-alpha.31` testing build.
 
-- Keep the screen on while the tuner listens, including pauses between notes. Normal screen timeout returns when tuning stops or you leave the tuner.
-- Detect tempo from changes across frequency bands, with filtering that prevents steady and fading tones from masquerading as beats.
-- Refine BPM between analysis frames instead of rounding to coarse lag steps.
-- Show the score as rhythm match, not a probability that the BPM is correct.
-- Use clearer song-analysis actions and descriptions in all five app languages.
+- Hide song-tempo analysis by default under **Get tempo from a song**.
+- Expand the section to select a file, view progress and apply detected BPM.
+- Collapse it without clearing the analysis result. Expansion survives configuration changes.
+- Use translated labels and accessible expanded/collapsed state in all five languages.
 
-The change uses native Android screen-on behavior without a wake-lock permission,
-global display changes or a new dependency. Pitch and chord recognition are
-unchanged. Tempo checks include clear rhythms, timbre changes, noise, fading
-tones, syncopation, drift and half-time ambiguity. All checks were silent.
+This is a focused UI update. Audio analysis, metronome playback, permissions
+and dependencies are unchanged. The screen-on and tempo improvements from
+alpha30 remain included.
 
 Google Play production access was requested on 22 September. Google's approval
 is pending; this release does not imply a production rollout.

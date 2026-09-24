@@ -108,7 +108,7 @@
     <string name="song_error_no_chords">No se encontraron acordes mayores, menores, de séptima dominante o power estables.</string>
     <string name="song_error_no_notes">No se encontraron notas melódicas estables dentro del rango elegido.</string>
     <string name="song_error_playback">No se pudo reproducir el archivo de audio.</string>
-    <string name="get_tempo_from_song">Tempo de la canción</string>
+    <string name="get_tempo_from_song">Detectar el tempo de una canción</string>
     <string name="tempo_song_description">Elige una canción. El análisis rítmico estima su tempo en BPM directamente en tu dispositivo.</string>
     <string name="tempo_detected">Tempo detectado: %1$d BPM</string>
     <string name="tempo_confidence">Coincidencia rítmica: %1$d%%</string>

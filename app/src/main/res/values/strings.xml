@@ -106,7 +106,7 @@
     <string name="song_error_no_chords">No stable major, minor, dominant seventh, or power chords were found.</string>
     <string name="song_error_no_notes">No stable melody notes were found in the selected range.</string>
     <string name="song_error_playback">The audio file could not be played.</string>
-    <string name="get_tempo_from_song">Song tempo</string>
+    <string name="get_tempo_from_song">Get tempo from a song</string>
     <string name="tempo_song_description">Choose a song. On-device rhythm analysis estimates its tempo in BPM.</string>
     <string name="tempo_detected">Detected tempo: %1$d BPM</string>
     <string name="tempo_confidence">Rhythm match: %1$d%%</string>

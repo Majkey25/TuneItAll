@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -70,6 +71,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -101,6 +103,8 @@ fun MetronomeScreen(
     onOpenSettings: () -> Unit,
 ) {
     var showQuickSettings by rememberSaveable { mutableStateOf(false) }
+    var showTempoSong by rememberSaveable { mutableStateOf(false) }
+    val tempoSectionState = stringResource(if (showTempoSong) R.string.section_expanded else R.string.section_collapsed)
     val scrollState = rememberScrollState()
     val songLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(onLoadTempoSong)
@@ -120,11 +124,26 @@ fun MetronomeScreen(
         PhysicalMetronome(state.playing, phaseProvider)
         PlaybackControls(state, onTap, onStart, onStop)
         RhythmSummary(state, onClick = { showQuickSettings = true })
-        TempoSongPanel(
-            state = state,
-            onChooseAudio = { songLauncher.launch(arrayOf("audio/*")) },
-            onApplyDetectedTempo = onApplyDetectedTempo,
-        )
+        OutlinedButton(
+            onClick = { showTempoSong = !showTempoSong },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                .semantics { stateDescription = tempoSectionState }
+                .testTag("tempo_song_toggle"),
+        ) {
+            Text(stringResource(R.string.get_tempo_from_song), modifier = Modifier.weight(1f))
+            Icon(
+                painter = painterResource(R.drawable.ic_expand_more),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp).rotate(if (showTempoSong) 180f else 0f),
+            )
+        }
+        if (showTempoSong) {
+            TempoSongPanel(
+                state = state,
+                onChooseAudio = { songLauncher.launch(arrayOf("audio/*")) },
+                onApplyDetectedTempo = onApplyDetectedTempo,
+            )
+        }
         Spacer(Modifier.height(4.dp))
     }
     if (showQuickSettings) {
@@ -149,11 +168,6 @@ private fun TempoSongPanel(
     onChooseAudio: () -> Unit,
     onApplyDetectedTempo: () -> Unit,
 ) {
-    Text(
-        text = stringResource(R.string.get_tempo_from_song),
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-    )
     Text(
         text = stringResource(R.string.tempo_song_description),
         style = MaterialTheme.typography.bodyMedium,
