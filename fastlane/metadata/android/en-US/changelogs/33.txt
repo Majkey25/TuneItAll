@@ -1,0 +1,1 @@
+The screen stays on while tuning, including pauses between notes. Improved song-tempo analysis and BPM precision. Clearer Analyze a song actions for tempo and chords. Rhythm match now explains the strength of the detected pattern, including half/double-time ambiguity.

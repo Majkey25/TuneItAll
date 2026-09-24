@@ -1,22 +1,22 @@
-Intoniva `v0.3.0-alpha.29` testing build.
+Intoniva `v0.3.0-alpha.30` testing build.
 
-- Detect low extended-range guitar and bass notes in imported songs.
-- Retain A0 at 44.1 kHz and with common reference-pitch offsets.
-- Reject reproduced false notes and chords caused by out-of-range PCM16 residue.
-- Preserve quiet melody detection and the existing recorded-song predictions.
-- Keep live tuning, settings, permissions, and offline operation unchanged.
+- Keep the screen on while the tuner listens, including pauses between notes. Normal screen timeout returns when tuning stops or you leave the tuner.
+- Detect tempo from changes across frequency bands, with filtering that prevents steady and fading tones from masquerading as beats.
+- Refine BPM between analysis frames instead of rounding to coarse lag steps.
+- Show the score as rhythm match, not a probability that the BPM is correct.
+- Use clearer song-analysis actions and descriptions in all five app languages.
 
-The 48 frozen recording/gain cases retain exactly the same 1,665 predictions.
-There are also 216 low-note controls, 240 negative controls and 288 quiet-melody
-comparisons. See `docs/song-low-notes-2026-09-22.md` for scope and evidence.
-All current song checks were silent. Coverage is not chord accuracy.
+The change uses native Android screen-on behavior without a wake-lock permission,
+global display changes or a new dependency. Pitch and chord recognition are
+unchanged. Tempo checks include clear rhythms, timbre changes, noise, fading
+tones, syncopation, drift and half-time ambiguity. All checks were silent.
 
 Google Play production access was requested on 22 September. Google's approval
 is pending; this release does not imply a production rollout.
 
-Recognition work remains open. Dense mixes, ambiguous voicings, and some
-single-note harmonic stacks still produce errors. Experimental neural models
-are not included. This build does not claim universally accurate transcription.
+Half/double-time interpretations can remain ambiguous even with a strong rhythm
+match. Song chord recognition remains experimental; this is not a claim of
+universally accurate transcription.
 
 The APK is debug-signed for direct testing and is not the Google Play bundle.
 Use the attached SHA-256 file to verify the download. The app has no ads,

@@ -47,7 +47,8 @@
     <string name="destination_auto_scroll">Auto-scroll</string>
     <string name="destination_trainer">Trainer</string>
     <string name="chords_library">Chord library</string>
-    <string name="song_chords">Get Chords for Song</string>
+    <string name="song_chords">Song analysis</string>
+    <string name="song_analysis_description">Choose a song to estimate its chords, melody notes or power chords. Audio analysis runs entirely on your device.</string>
     <string name="choose_tuning">Choose tuning</string>
     <string name="choose_tuning_current">Choose tuning. Current: %1$s</string>
     <string name="chord_major">Major</string>
@@ -70,8 +71,8 @@
     <string name="chord_diagram_description">Chord diagram. Frets from low to high: %1$s</string>
     <string name="chord_shape_standard_only">Canonical diagrams are available for Standard E guitar and Standard C ukulele.</string>
     <string name="fret_number">Fret %1$d</string>
-    <string name="import_audio">Choose audio file</string>
-    <string name="replace_audio">Choose another file</string>
+    <string name="import_audio">Analyze a song</string>
+    <string name="replace_audio">Analyze another song</string>
     <string name="remove_song">Remove song</string>
     <string name="song_analysis_progress">Analyzing locally: %1$d%%</string>
     <string name="song_mode_chords">Classic</string>
@@ -105,12 +106,12 @@
     <string name="song_error_no_chords">No stable major, minor, dominant seventh, or power chords were found.</string>
     <string name="song_error_no_notes">No stable melody notes were found in the selected range.</string>
     <string name="song_error_playback">The audio file could not be played.</string>
-    <string name="get_tempo_from_song">Get Tempo from Song</string>
-    <string name="tempo_song_description">Choose an audio file to estimate its tempo locally on this device.</string>
+    <string name="get_tempo_from_song">Song tempo</string>
+    <string name="tempo_song_description">Choose a song. On-device rhythm analysis estimates its tempo in BPM.</string>
     <string name="tempo_detected">Detected tempo: %1$d BPM</string>
-    <string name="tempo_confidence">Estimate confidence: %1$d%%</string>
+    <string name="tempo_confidence">Rhythm match: %1$d%%</string>
     <string name="tempo_use">Use %1$d BPM</string>
-    <string name="tempo_octave_note">Some songs can feel correct at half or double this tempo. Adjust the BPM if needed.</string>
+    <string name="tempo_octave_note">Rhythm match measures repetition, not certainty. Some songs fit half or double this BPM.</string>
     <string name="tempo_error_no_stable_beat">No stable beat was found in this audio.</string>
     <string name="trainer_learn">Learn</string>
     <string name="trainer_quiz">Quiz</string>

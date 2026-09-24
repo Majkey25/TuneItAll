@@ -375,6 +375,13 @@ private fun SongChordPanel(
 ) {
     val transposeDownDescription = stringResource(R.string.transpose_decrease)
     val transposeUpDescription = stringResource(R.string.transpose_increase)
+    if (state.fileName == null) {
+        Text(
+            stringResource(R.string.song_analysis_description),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
     SongModeSelector(state.analysisMode, onAnalysisModeSelected)
     if (state.analysisMode == SongAnalysisMode.NOTES) {
         NoteRangeSelector(state.noteRange, onNoteRangeSelected)
@@ -410,7 +417,7 @@ private fun SongChordPanel(
         style = MaterialTheme.typography.bodySmall,
     )
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = onChooseAudio, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("choose_song")) {
+        Button(onClick = onChooseAudio, modifier = Modifier.weight(1f).heightIn(min = 56.dp).testTag("choose_song")) {
             Text(stringResource(if (state.fileName == null) R.string.import_audio else R.string.replace_audio))
         }
         if (state.fileName != null) {

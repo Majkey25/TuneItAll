@@ -49,7 +49,8 @@
     <string name="destination_auto_scroll">Défilement</string>
     <string name="destination_trainer">Entraînement</string>
     <string name="chords_library">Bibliothèque d’accords</string>
-    <string name="song_chords">Trouver les accords d’un morceau</string>
+    <string name="song_chords">Analyse de morceau</string>
+    <string name="song_analysis_description">Choisissez un morceau pour estimer ses accords, sa mélodie ou ses power chords. L’analyse audio se déroule entièrement sur votre appareil.</string>
     <string name="choose_tuning">Choisir l’accordage</string>
     <string name="choose_tuning_current">Choisir l’accordage. Actuel : %1$s</string>
     <string name="chord_major">Majeur</string>
@@ -72,8 +73,8 @@
     <string name="chord_diagram_description">Diagramme d’accord. Frettes de la corde grave à la corde aiguë : %1$s</string>
     <string name="chord_shape_standard_only">Des diagrammes fiables sont disponibles pour la guitare en Standard E et le ukulélé en Standard C.</string>
     <string name="fret_number">Frette %1$d</string>
-    <string name="import_audio">Choisir un fichier audio</string>
-    <string name="replace_audio">Choisir un autre fichier</string>
+    <string name="import_audio">Analyser un morceau</string>
+    <string name="replace_audio">Analyser un autre morceau</string>
     <string name="remove_song">Retirer le morceau</string>
     <string name="song_analysis_progress">Analyse locale : %1$d%%</string>
     <string name="song_mode_chords">Classiques</string>
@@ -107,12 +108,12 @@
     <string name="song_error_no_chords">Aucun accord majeur, mineur, de septième de dominante ou power chord stable n’a été trouvé.</string>
     <string name="song_error_no_notes">Aucune note mélodique stable n’a été trouvée dans la tessiture choisie.</string>
     <string name="song_error_playback">Le fichier audio n’a pas pu être lu.</string>
-    <string name="get_tempo_from_song">Trouver le tempo d’un morceau</string>
-    <string name="tempo_song_description">Choisissez un fichier audio pour estimer son tempo localement sur cet appareil.</string>
+    <string name="get_tempo_from_song">Tempo du morceau</string>
+    <string name="tempo_song_description">Choisissez un morceau. L’analyse rythmique estime son tempo en BPM directement sur votre appareil.</string>
     <string name="tempo_detected">Tempo détecté : %1$d BPM</string>
-    <string name="tempo_confidence">Fiabilité de l’estimation : %1$d%%</string>
+    <string name="tempo_confidence">Concordance rythmique : %1$d%%</string>
     <string name="tempo_use">Utiliser %1$d BPM</string>
-    <string name="tempo_octave_note">Certains morceaux peuvent sembler justes à la moitié ou au double de ce tempo. Ajustez le BPM si nécessaire.</string>
+    <string name="tempo_octave_note">Le score mesure la régularité, pas la certitude. Le morceau peut correspondre à la moitié ou au double du tempo.</string>
     <string name="tempo_error_no_stable_beat">Aucun rythme stable n’a été détecté dans cet audio.</string>
     <string name="trainer_learn">Apprendre</string>
     <string name="trainer_quiz">Quiz</string>

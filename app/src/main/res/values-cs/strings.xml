@@ -51,7 +51,8 @@
     <string name="destination_auto_scroll">Posouvání</string>
     <string name="destination_trainer">Trénink</string>
     <string name="chords_library">Knihovna akordů</string>
-    <string name="song_chords">Zjistit akordy písničky</string>
+    <string name="song_chords">Analýza skladby</string>
+    <string name="song_analysis_description">Vyberte skladbu a zobrazte odhad jejích akordů, melodie nebo power akordů. Analýza zvuku probíhá přímo v zařízení.</string>
     <string name="choose_tuning">Vybrat ladění</string>
     <string name="choose_tuning_current">Vybrat ladění. Aktuální: %1$s</string>
     <string name="chord_major">Dur</string>
@@ -74,8 +75,8 @@
     <string name="chord_diagram_description">Diagram akordu. Pražce od nejnižší struny: %1$s</string>
     <string name="chord_shape_standard_only">Ověřené diagramy jsou dostupné pro kytaru Standard E a ukulele Standard C.</string>
     <string name="fret_number">Pražec %1$d</string>
-    <string name="import_audio">Vybrat zvukový soubor</string>
-    <string name="replace_audio">Vybrat jiný soubor</string>
+    <string name="import_audio">Analyzovat skladbu</string>
+    <string name="replace_audio">Analyzovat další skladbu</string>
     <string name="remove_song">Odebrat písničku</string>
     <string name="song_analysis_progress">Lokální analýza: %1$d %%</string>
     <string name="song_mode_chords">Klasické</string>
@@ -109,12 +110,12 @@
     <string name="song_error_no_chords">Nebyly nalezeny stabilní durové, mollové, dominantní ani power akordy.</string>
     <string name="song_error_no_notes">Ve zvoleném rozsahu nebyly nalezeny stabilní tóny melodie.</string>
     <string name="song_error_playback">Zvukový soubor se nepodařilo přehrát.</string>
-    <string name="get_tempo_from_song">Zjistit tempo písničky</string>
-    <string name="tempo_song_description">Vyberte zvukový soubor. Intoniva odhadne jeho tempo lokálně v tomto zařízení.</string>
+    <string name="get_tempo_from_song">Tempo skladby</string>
+    <string name="tempo_song_description">Vyberte skladbu. Analýza rytmu odhadne její tempo v BPM přímo v zařízení.</string>
     <string name="tempo_detected">Zjištěné tempo: %1$d BPM</string>
-    <string name="tempo_confidence">Jistota odhadu: %1$d%%</string>
+    <string name="tempo_confidence">Shoda rytmu: %1$d%%</string>
     <string name="tempo_use">Použít %1$d BPM</string>
-    <string name="tempo_octave_note">Některé skladby mohou znít správně v polovičním nebo dvojnásobném tempu. BPM lze ručně upravit.</string>
+    <string name="tempo_octave_note">Shoda rytmu měří pravidelnost, ne jistotu výsledku. U některých skladeb sedí poloviční nebo dvojnásobné BPM.</string>
     <string name="tempo_error_no_stable_beat">V tomto zvuku nebyl nalezen stabilní rytmus.</string>
     <string name="trainer_learn">Učení</string>
     <string name="trainer_quiz">Kvíz</string>

@@ -47,7 +47,8 @@
     <string name="destination_auto_scroll">Auto-Scroll</string>
     <string name="destination_trainer">Trainer</string>
     <string name="chords_library">Akkordbibliothek</string>
-    <string name="song_chords">Akkorde aus Song erkennen</string>
+    <string name="song_chords">Songanalyse</string>
+    <string name="song_analysis_description">Wähle einen Song, um Akkorde, Melodietöne oder Powerchords zu schätzen. Die Audioanalyse erfolgt vollständig auf deinem Gerät.</string>
     <string name="choose_tuning">Stimmung auswählen</string>
     <string name="choose_tuning_current">Stimmung auswählen. Aktuell: %1$s</string>
     <string name="chord_major">Dur</string>
@@ -70,8 +71,8 @@
     <string name="chord_diagram_description">Akkorddiagramm. Bünde von der tiefsten zur höchsten Saite: %1$s</string>
     <string name="chord_shape_standard_only">Verlässliche Diagramme sind für Gitarre in Standard-E und Ukulele in Standard-C verfügbar.</string>
     <string name="fret_number">Bund %1$d</string>
-    <string name="import_audio">Audiodatei auswählen</string>
-    <string name="replace_audio">Andere Datei auswählen</string>
+    <string name="import_audio">Song analysieren</string>
+    <string name="replace_audio">Anderen Song analysieren</string>
     <string name="remove_song">Song entfernen</string>
     <string name="song_analysis_progress">Lokale Analyse: %1$d%%</string>
     <string name="song_mode_chords">Klassisch</string>
@@ -105,12 +106,12 @@
     <string name="song_error_no_chords">Es wurden keine stabilen Dur-, Moll-, Dominantsept- oder Powerchords gefunden.</string>
     <string name="song_error_no_notes">Im gewählten Bereich wurden keine stabilen Melodienoten gefunden.</string>
     <string name="song_error_playback">Die Audiodatei konnte nicht abgespielt werden.</string>
-    <string name="get_tempo_from_song">Tempo aus Song erkennen</string>
-    <string name="tempo_song_description">Wähle eine Audiodatei aus, um ihr Tempo lokal auf diesem Gerät zu schätzen.</string>
+    <string name="get_tempo_from_song">Songtempo</string>
+    <string name="tempo_song_description">Wähle einen Song. Die Rhythmusanalyse schätzt sein Tempo in BPM direkt auf deinem Gerät.</string>
     <string name="tempo_detected">Erkanntes Tempo: %1$d BPM</string>
-    <string name="tempo_confidence">Schätzsicherheit: %1$d%%</string>
+    <string name="tempo_confidence">Rhythmusübereinstimmung: %1$d%%</string>
     <string name="tempo_use">%1$d BPM verwenden</string>
-    <string name="tempo_octave_note">Manche Songs wirken auch im halben oder doppelten Tempo richtig. Passe die BPM bei Bedarf an.</string>
+    <string name="tempo_octave_note">Der Wert misst die Regelmäßigkeit, nicht die Gewissheit. Manchmal passt das halbe oder doppelte Tempo.</string>
     <string name="tempo_error_no_stable_beat">In diesem Audio wurde kein stabiler Takt gefunden.</string>
     <string name="trainer_learn">Lernen</string>
     <string name="trainer_quiz">Quiz</string>
