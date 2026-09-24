@@ -191,7 +191,8 @@ class MusicToolsScreenTest {
         }
 
         compose.onNodeWithTag("current_song_chord").assertTextEquals("C")
-        compose.onNodeWithTag("transpose_up").performClick()
+        compose.onNodeWithTag("choose_song").performScrollTo().assertTextEquals("Analyze another song")
+        compose.onNodeWithTag("transpose_up").performScrollTo().assertIsDisplayed().performClick()
 
         compose.onNodeWithTag("current_song_chord").assertTextEquals("C♯")
         compose.runOnIdle { assertEquals(listOf(original), state.events) }

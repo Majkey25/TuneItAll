@@ -1,6 +1,7 @@
 package com.tuneitall.tuner
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performImeAction
@@ -87,7 +88,9 @@ class MetronomeScreenTest {
         }
 
         compose.onNodeWithTag("tempo_detected").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithTag("tempo_apply").performClick()
+        compose.onNodeWithTag("tempo_rhythm_match").assertTextEquals("Rhythm match: 88%")
+        compose.onNodeWithTag("tempo_choose_audio").performScrollTo().assertTextEquals("Analyze a song")
+        compose.onNodeWithTag("tempo_apply").performScrollTo().assertIsDisplayed().performClick()
         compose.runOnIdle { assertEquals(1, applyCount) }
     }
 }

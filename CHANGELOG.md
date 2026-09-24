@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0-alpha.30, 2026-09-24
+
+- Keep the screen awake during active Auto, Manual and Chromatic tuning, including silence between notes.
+- Release the screen-on request when tuning stops or the tuner screen is removed.
+- Improve tempo onsets across frequency bands and suppress carrier ripple before downsampling.
+- Reject non-recurring fades and refine BPM between correlation samples.
+- Label rhythmic consistency honestly as Rhythm match and retain the half/double-time explanation.
+- Refresh song-analysis actions and local-processing descriptions in five languages.
+
+No new dependency, permission or global display setting. Pitch and chord
+recognition are unchanged.
+
 ## 0.3.0-alpha.29, 2026-09-22
 
 - Include B0 extended-range guitar and A0 bass notes in imported-song Notes mode.

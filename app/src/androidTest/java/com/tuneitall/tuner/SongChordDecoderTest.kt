@@ -27,6 +27,40 @@ import org.junit.Test
 
 class SongChordDecoderTest {
     @Test
+    fun localWavTempoRecognizesEqualLoudnessTimbreChanges() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "timbre-tempo.wav")
+        try {
+            for (rate in listOf(44_100, 48_000)) for (channels in listOf(1, 2)) {
+                file.writeBytes(pcm16Wav(channels = channels, seconds = 16, sampleRate = rate) { frame, channel ->
+                    val frequency = if (frame / (rate / 2) % 2 == 0) 100.0 else 2_000.0
+                    val value = 0.5 * sin(2 * PI * frequency * frame / rate)
+                    if (channel == 0) value else -value
+                })
+                val result = SongAudioDecoder(context).analyzeTempo(Uri.fromFile(file))
+                assertTrue("$rate Hz/$channels channels: $result", result != null && abs(result.bpm - 120) <= 2)
+                assertTrue("Weak match: $result", requireNotNull(result).confidence > 0.7)
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun localWavNoiseDoesNotClaimAStrongTempo() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "noise-tempo.wav")
+        val random = kotlin.random.Random(42)
+        try {
+            file.writeBytes(pcm16Wav(channels = 1, seconds = 24) { _, _ -> random.nextDouble() * 0.5 - 0.25 })
+            val result = SongAudioDecoder(context).analyzeTempo(Uri.fromFile(file))
+            assertTrue("Noise reported a strong rhythm: $result", result == null || result.confidence < 0.2)
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
     fun localWavLowStringsSurviveSampleRateAndReferenceOffsets() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.cacheDir, "low-string.wav")

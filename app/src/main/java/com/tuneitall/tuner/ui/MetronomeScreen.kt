@@ -159,10 +159,10 @@ private fun TempoSongPanel(
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    OutlinedButton(
+    Button(
         onClick = onChooseAudio,
         enabled = !state.tempoAnalyzing,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("tempo_choose_audio"),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).testTag("tempo_choose_audio"),
     ) {
         Text(stringResource(if (state.tempoFileName == null) R.string.import_audio else R.string.replace_audio))
     }
@@ -184,7 +184,10 @@ private fun TempoSongPanel(
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag("tempo_detected"),
         )
         state.tempoConfidence?.let { confidence ->
-            Text(stringResource(R.string.tempo_confidence, (confidence * 100).toInt().coerceIn(0, 100)))
+            Text(
+                stringResource(R.string.tempo_confidence, (confidence * 100).toInt().coerceIn(0, 100)),
+                modifier = Modifier.testTag("tempo_rhythm_match"),
+            )
         }
         Button(
             onClick = onApplyDetectedTempo,

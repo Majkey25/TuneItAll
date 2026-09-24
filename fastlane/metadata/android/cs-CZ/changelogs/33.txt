@@ -1,0 +1,1 @@
+Při ladění displej nezhasíná ani mezi zahranými tóny. Vylepšená analýza tempa skladeb a přesnost BPM. Přehlednější tlačítka Analyzovat skladbu pro tempo i akordy. Shoda rytmu nyní jasněji vyjadřuje sílu nalezeného rytmu a upozorňuje na možné poloviční či dvojnásobné tempo.
