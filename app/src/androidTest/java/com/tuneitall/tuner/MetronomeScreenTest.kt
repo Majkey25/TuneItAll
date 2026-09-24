@@ -2,6 +2,10 @@ package com.tuneitall.tuner
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performImeAction
@@ -72,7 +76,8 @@ class MetronomeScreenTest {
     @Test
     fun detectedSongTempoCanBeApplied() {
         var applyCount = 0
-        compose.setContent {
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent {
             TuneItAllTheme(darkTheme = false) {
                 MetronomeScreen(
                     state = MetronomeUiState(detectedBpm = 132, tempoConfidence = 0.88),
@@ -87,10 +92,26 @@ class MetronomeScreenTest {
             }
         }
 
+        compose.onNodeWithTag("tempo_choose_audio").assertDoesNotExist()
+        compose.onNodeWithTag("tempo_detected").assertDoesNotExist()
+        compose.onNodeWithTag("tempo_song_toggle").performScrollTo()
+            .assertTextEquals("Get tempo from a song")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Collapsed"))
+            .performClick()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Expanded"))
         compose.onNodeWithTag("tempo_detected").performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag("tempo_rhythm_match").assertTextEquals("Rhythm match: 88%")
         compose.onNodeWithTag("tempo_choose_audio").performScrollTo().assertTextEquals("Analyze a song")
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithTag("tempo_song_toggle")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Expanded"))
         compose.onNodeWithTag("tempo_apply").performScrollTo().assertIsDisplayed().performClick()
         compose.runOnIdle { assertEquals(1, applyCount) }
+        compose.onNodeWithTag("tempo_song_toggle").performScrollTo().performClick()
+        compose.onNodeWithTag("tempo_choose_audio").assertDoesNotExist()
+        compose.onNodeWithTag("tempo_detected").assertDoesNotExist()
+        compose.onNodeWithTag("metronome_bpm_input").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("tempo_song_toggle").performScrollTo().performClick()
+        compose.onNodeWithTag("tempo_detected").performScrollTo().assertTextEquals("Detected tempo: 132 BPM")
     }
 }

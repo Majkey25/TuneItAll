@@ -106,7 +106,7 @@
     <string name="song_error_no_chords">Es wurden keine stabilen Dur-, Moll-, Dominantsept- oder Powerchords gefunden.</string>
     <string name="song_error_no_notes">Im gewählten Bereich wurden keine stabilen Melodienoten gefunden.</string>
     <string name="song_error_playback">Die Audiodatei konnte nicht abgespielt werden.</string>
-    <string name="get_tempo_from_song">Songtempo</string>
+    <string name="get_tempo_from_song">Tempo eines Songs erkennen</string>
     <string name="tempo_song_description">Wähle einen Song. Die Rhythmusanalyse schätzt sein Tempo in BPM direkt auf deinem Gerät.</string>
     <string name="tempo_detected">Erkanntes Tempo: %1$d BPM</string>
     <string name="tempo_confidence">Rhythmusübereinstimmung: %1$d%%</string>

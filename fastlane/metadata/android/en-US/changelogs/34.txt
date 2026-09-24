@@ -1,0 +1,1 @@
+Song-tempo analysis now stays out of the way in a collapsed Get tempo from a song section. Expand it to select an audio file, follow analysis and apply the detected BPM. Collapse it again without losing your result. Clear labels and accessible expand/collapse controls in all five languages.

@@ -110,7 +110,7 @@
     <string name="song_error_no_chords">Nebyly nalezeny stabilní durové, mollové, dominantní ani power akordy.</string>
     <string name="song_error_no_notes">Ve zvoleném rozsahu nebyly nalezeny stabilní tóny melodie.</string>
     <string name="song_error_playback">Zvukový soubor se nepodařilo přehrát.</string>
-    <string name="get_tempo_from_song">Tempo skladby</string>
+    <string name="get_tempo_from_song">Zjistit tempo skladby</string>
     <string name="tempo_song_description">Vyberte skladbu. Analýza rytmu odhadne její tempo v BPM přímo v zařízení.</string>
     <string name="tempo_detected">Zjištěné tempo: %1$d BPM</string>
     <string name="tempo_confidence">Shoda rytmu: %1$d%%</string>

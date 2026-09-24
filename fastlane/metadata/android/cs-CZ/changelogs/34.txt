@@ -1,0 +1,1 @@
+Analýza tempa už nezabírá místo v metronomu. Najdete ji v rozbalovací sekci Zjistit tempo skladby. Po rozbalení vyberete soubor, uvidíte průběh analýzy a můžete použít zjištěné BPM. Sbalením o výsledek nepřijdete. Přehledné a přístupné ovládání ve všech pěti jazycích.

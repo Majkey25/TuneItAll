@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-alpha.31, 2026-09-24
+
+- Collapse song-tempo analysis by default under "Get tempo from a song".
+- Keep file selection, progress and results inside the expandable section.
+- Preserve results when collapsed and restore expansion after configuration changes.
+- Translate the label into all five app languages and announce expanded/collapsed state to screen readers.
+
 ## 0.3.0-alpha.30, 2026-09-24
 
 - Keep the screen awake during active Auto, Manual and Chromatic tuning, including silence between notes.

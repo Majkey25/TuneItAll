@@ -108,7 +108,7 @@
     <string name="song_error_no_chords">Aucun accord majeur, mineur, de septième de dominante ou power chord stable n’a été trouvé.</string>
     <string name="song_error_no_notes">Aucune note mélodique stable n’a été trouvée dans la tessiture choisie.</string>
     <string name="song_error_playback">Le fichier audio n’a pas pu être lu.</string>
-    <string name="get_tempo_from_song">Tempo du morceau</string>
+    <string name="get_tempo_from_song">Détecter le tempo d’un morceau</string>
     <string name="tempo_song_description">Choisissez un morceau. L’analyse rythmique estime son tempo en BPM directement sur votre appareil.</string>
     <string name="tempo_detected">Tempo détecté : %1$d BPM</string>
     <string name="tempo_confidence">Concordance rythmique : %1$d%%</string>
