@@ -20,3 +20,9 @@ days or less, occasionally longer, and will email the account owner.
 This is an access application, not a production rollout. Production remains
 inactive until Google grants access and a verified release is submitted to
 that track. Existing Alpha testing and GitHub releases are separate.
+
+## Status confirmed on 26 September
+
+The dashboard now confirms that Google granted production access. The
+[first production release](2026-09-26-production-release.md) has been submitted.
+Its review is separate from the approved production-access application.

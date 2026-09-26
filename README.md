@@ -16,7 +16,8 @@ analytics, tracking, onboarding, or network permission.
 Release version: `0.3.0-alpha.31`. Google Play
 distribution is managed separately; see the dated
 [release record](docs/store/2026-09-24-alpha31-release.md) for the recorded submission status.
-[Production access](docs/store/2026-09-22-production-access.md) was requested on 22 September and awaits Google approval.
+Google has granted production access. The [first production release](docs/store/2026-09-26-production-release.md)
+was submitted on 26 September and awaits review. Public Play availability is not yet confirmed.
 
 ## Download
 
