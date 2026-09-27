@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-alpha.32, 2026-09-27
+
+- Add a Support me section at the bottom of General settings.
+- Reuse the yellow Buy Me a Coffee button from About Intoniva, matching ScanIt and Selia Weather.
+- Keep the existing support link and About access. Support is optional and unlocks no features.
+- Translate the section into all five app languages. No new permissions, SDKs or audio changes.
+
 ## 0.3.0-alpha.31, 2026-09-24
 
 - Collapse song-tempo analysis by default under "Get tempo from a song".

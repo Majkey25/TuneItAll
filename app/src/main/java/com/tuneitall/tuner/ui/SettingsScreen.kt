@@ -82,6 +82,7 @@ fun SettingsScreen(
     onMetronomeMutedChanged: (Boolean) -> Unit = {},
     onMetronomeCountInChanged: (Int) -> Unit = {},
     onOpenAbout: () -> Unit,
+    onSupport: () -> Unit,
     onBack: () -> Unit,
 ) {
     var section by rememberSaveable(initialSection) { mutableStateOf(initialSection) }
@@ -128,6 +129,7 @@ fun SettingsScreen(
                 onNotationChanged = onNotationChanged,
                 onLayoutChanged = onLayoutChanged,
                 onOpenAbout = onOpenAbout,
+                onSupport = onSupport,
             )
 
             SettingsSection.TUNER -> AudioSettings(state, onAudioSettingsChanged)
@@ -156,6 +158,7 @@ private fun GeneralSettings(
     onNotationChanged: (NoteNotation) -> Unit,
     onLayoutChanged: (HeadstockLayout) -> Unit,
     onOpenAbout: () -> Unit,
+    onSupport: () -> Unit,
 ) {
     var languageDialogOpen by rememberSaveable { mutableStateOf(false) }
     var input by remember { mutableStateOf(formatPitch(state.referencePitch.hertz)) }
@@ -327,6 +330,9 @@ private fun GeneralSettings(
         OutlinedButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.app_details))
         }
+        Text(stringResource(R.string.support_me), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.support_description), style = MaterialTheme.typography.bodyMedium)
+        SupportButton(onSupport)
     }
 }
 
