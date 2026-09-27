@@ -280,6 +280,8 @@
     <string name="section_expanded">Expanded</string>
     <string name="section_collapsed">Collapsed</string>
     <string name="support_app">Support this app → Buy Me a Coffee</string>
+    <string name="support_me">Support me</string>
+    <string name="support_description">Enjoying Intoniva? Buy me a coffee to support development. All app features remain free.</string>
     <string name="support_app_notice">Thank you for supporting this app. This opens Buy Me a Coffee.</string>
     <string name="support_unavailable">No web browser is available.</string>
     <string name="auto_scroll_accessibility_label">Intoniva auto-scroll</string>

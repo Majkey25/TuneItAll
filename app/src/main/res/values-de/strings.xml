@@ -280,6 +280,8 @@
     <string name="section_expanded">Ausgeklappt</string>
     <string name="section_collapsed">Eingeklappt</string>
     <string name="support_app">Diese App unterstützen → Buy Me a Coffee</string>
+    <string name="support_me">Unterstütze mich</string>
+    <string name="support_description">Gefällt dir Intoniva? Unterstütze die Entwicklung mit einem Kaffee. Alle Funktionen sind kostenlos.</string>
     <string name="support_app_notice">Danke für deine Unterstützung dieser App. Buy Me a Coffee wird geöffnet.</string>
     <string name="support_unavailable">Kein Webbrowser ist verfügbar.</string>
     <string name="auto_scroll_accessibility_label">Intoniva Auto-Scroll</string>

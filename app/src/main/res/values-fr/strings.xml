@@ -285,6 +285,8 @@
     <string name="section_expanded">Développé</string>
     <string name="section_collapsed">Réduit</string>
     <string name="support_app">Soutenir cette application → Buy Me a Coffee</string>
+    <string name="support_me">Me soutenir</string>
+    <string name="support_description">Vous aimez Intoniva ? Offrez-moi un café pour soutenir le développement. Toutes les fonctions restent gratuites.</string>
     <string name="support_app_notice">Merci de soutenir cette application. Buy Me a Coffee va s’ouvrir.</string>
     <string name="support_unavailable">Aucun navigateur web n’est disponible.</string>
     <string name="auto_scroll_accessibility_label">Défilement automatique Intoniva</string>

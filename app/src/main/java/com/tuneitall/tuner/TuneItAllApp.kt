@@ -246,6 +246,7 @@ fun TuneItAllApp(
                     onMetronomeMutedChanged = metronomeViewModel::setMuted,
                     onMetronomeCountInChanged = metronomeViewModel::setCountIn,
                     onOpenAbout = { screen = AppScreen.About },
+                    onSupport = openSupportPage,
                     onBack = { screen = settingsReturnScreen },
                 )
 

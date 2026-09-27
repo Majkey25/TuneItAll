@@ -737,6 +737,7 @@ class TuneItAllFlowTest {
                     onLayoutChanged = {},
                     onAudioSettingsChanged = {},
                     onOpenAbout = {},
+                    onSupport = {},
                     onBack = {},
                 )
             }
@@ -1156,6 +1157,7 @@ class TuneItAllFlowTest {
                     onLayoutChanged = {},
                     onAudioSettingsChanged = {},
                     onOpenAbout = {},
+                    onSupport = {},
                     onBack = {},
                 )
             }
@@ -1203,6 +1205,7 @@ class TuneItAllFlowTest {
                     onLayoutChanged = {},
                     onAudioSettingsChanged = { currentState = currentState.copy(audioSettings = it) },
                     onOpenAbout = {},
+                    onSupport = {},
                     onBack = {},
                 )
             }
@@ -1255,6 +1258,7 @@ class TuneItAllFlowTest {
                     onLayoutChanged = {},
                     onAudioSettingsChanged = { applied = it },
                     onOpenAbout = {},
+                    onSupport = {},
                     onBack = {},
                 )
             }
@@ -1322,6 +1326,7 @@ class TuneItAllFlowTest {
                     onLayoutChanged = {},
                     onAudioSettingsChanged = {},
                     onOpenAbout = {},
+                    onSupport = {},
                     onBack = {},
                 )
             }
@@ -1347,6 +1352,7 @@ class TuneItAllFlowTest {
                     onLayoutChanged = {},
                     onAudioSettingsChanged = {},
                     onOpenAbout = {},
+                    onSupport = {},
                     onBack = {},
                 )
             }
@@ -1377,6 +1383,43 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithText("Privacy policy").performClick()
         composeRule.onNodeWithContentDescription("Back").performClick()
         assertTrue(back)
+    }
+
+    @Test
+    fun settingsSupportIsDirectAndKeepsAboutAccess() {
+        val viewModel = TunerViewModel(ApplicationProvider.getApplicationContext())
+        var supportCount = 0
+        var darkTheme by mutableStateOf(false)
+        composeRule.setContent {
+            TuneItAllTheme(darkTheme = darkTheme) {
+                TuneItAllApp(
+                    state = state(),
+                    viewModel = viewModel,
+                    openApplicationSettings = {},
+                    openSupportPage = { supportCount++ },
+                    appLanguage = AppLanguage.SYSTEM,
+                    onAppLanguageChanged = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("tuner_settings").performClick()
+        composeRule.onNodeWithTag("settings_section_general").performClick()
+        composeRule.onNodeWithText("Support me").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Support this app → Buy Me a Coffee")
+            .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.runOnIdle {
+            assertEquals(1, supportCount)
+            darkTheme = true
+        }
+        composeRule.onNodeWithText("Support this app → Buy Me a Coffee")
+            .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.runOnIdle { assertEquals(2, supportCount) }
+
+        composeRule.onNodeWithText(context.getString(R.string.app_details)).performScrollTo().performClick()
+        composeRule.onNodeWithText("Support this app → Buy Me a Coffee")
+            .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.runOnIdle { assertEquals(3, supportCount) }
     }
 
     @Test

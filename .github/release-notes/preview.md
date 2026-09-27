@@ -1,16 +1,16 @@
-Intoniva `v0.3.0-alpha.31` testing build.
+Intoniva `v0.3.0-alpha.32` testing build.
 
-- Hide song-tempo analysis by default under **Get tempo from a song**.
-- Expand the section to select a file, view progress and apply detected BPM.
-- Collapse it without clearing the analysis result. Expansion survives configuration changes.
-- Use translated labels and accessible expanded/collapsed state in all five languages.
+- Find **Support me** directly at the bottom of General settings.
+- Use the same yellow Buy Me a Coffee button as ScanIt and Selia Weather.
+- Keep the existing support link and the button in About Intoniva.
+- Read the section in any of the five supported app languages.
 
-This is a focused UI update. Audio analysis, metronome playback, permissions
-and dependencies are unchanged. The screen-on and tempo improvements from
-alpha30 remain included.
+Support is optional, opens in your external browser and does not unlock features.
+All app features remain free. Audio analysis, metronome playback, permissions
+and dependencies are unchanged.
 
-Google Play production access was requested on 22 September. Google's approval
-is pending; this release does not imply a production rollout.
+Google Play production access has been granted. Play release review and public
+availability are separate from this GitHub testing release.
 
 Half/double-time interpretations can remain ambiguous even with a strong rhythm
 match. Song chord recognition remains experimental; this is not a claim of
