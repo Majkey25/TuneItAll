@@ -13,71 +13,168 @@ Intoniva is a fast, offline Android tuner for guitar, bass, ukulele, and
 chromatic use. It opens directly on the tuner surface. No account, ads,
 analytics, tracking, onboarding, or network permission.
 
-Release version: `0.3.0-alpha.31`. Google Play
-distribution is managed separately; see the dated
-[release record](docs/store/2026-09-24-alpha31-release.md) for the recorded submission status.
-Google has granted production access. The [first production release](docs/store/2026-09-26-production-release.md)
-was submitted on 26 September and awaits review. Public Play availability is not yet confirmed.
+Intoniva is free on [Google Play](https://play.google.com/store/apps/details?id=com.tuneitall.tuner).
+All features are free. There are no subscriptions or paid feature unlocks.
+Latest GitHub version: `0.3.0-alpha.32`. The Play version can lag behind while
+Google reviews an update. See the dated [release record](docs/store/2026-09-27-alpha32-release.md).
 
 ## Download
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.31/Intoniva-v0.3.0-alpha.31-debug.apk)
+[Google Play: free download](https://play.google.com/store/apps/details?id=com.tuneitall.tuner)
+
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.32/Intoniva-v0.3.0-alpha.32-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.31).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.32).
 
 ## Features
 
-- Auto, Manual, and Chromatic modes.
-- The screen stays on while tuning, including silence between notes.
-- A clean-room, pYIN-derived streaming tracker with multi-candidate YIN frames,
-  a no-trough buzz fallback, multi-resolution windows, and bounded online
-  temporal tracking.
-- Live frequency, signed cents, flat/sharp direction, and a −50…+50 cent rail.
-- A foreground-only mechanical metronome from 20 to 400 BPM with meter,
-  subdivision, accents, selectable sound styles, volume, mute, and count-in.
-- Offline tempo estimation for a user-selected song, with a rhythm-match score
-  and one-tap application to the metronome. The score measures repetition, not
-  certainty about the musical tempo; half/double-time readings remain possible.
-  File selection and results stay in the collapsed **Get tempo from a song** section until opened.
-- Canonical major, minor, and dominant-seventh chord diagrams from a pinned
-  offline catalog for Standard E guitar and Standard C ukulele. Other tunings
-  never receive a guessed fingering.
-- Local audio-file analysis with separate Classic chords, predominant Notes,
-  and Power chords modes; instrument ranges, synchronized playback, stable
-  timelines, optional reviewed diagrams, and ±12-semitone transposition.
-- Chord learning, hidden-answer chord quiz, and 12-note ear training with
-  generated audio and local scoring.
-- Guitar: 6, 7, 8, and 9 strings with inline and split headstocks.
-- Four-, five-, and six-string bass, ukulele, and other instrument presets.
-- Built-in tunings, including lowered standard, Drop D through Drop F,
-  DADGAD, open tunings, extended-range guitar, bass, and ukulele presets.
-- Searchable library, favorites, last-used state, and up to 100 custom tunings.
-- Adjustable A4 reference from 410.0 to 480.0 Hz in 0.1 Hz steps; 440.0 Hz is
-  the safe default.
-- Adjustable microphone sensitivity from 0 to 100; 100 is the quiet-instrument
-  Universal default, with optional quiet-room, unplugged-electric, noisy-room,
-  and fast-response profiles.
-- Tap any string to switch to Manual mode and hear its generated reference tone.
-- One confirmation chime and animated green glow after the note stays in tune
-  for 900 ms. Brief detector gaps do not cancel progress; Silent/DND is respected
-  while low-range capture rejects the chime and keeps tracking. Wider instrument
-  ranges and Chromatic mode briefly gate feedback input.
-- Sharps or flats notation and generated reference audio with no bundled samples.
-- System-default, English, Czech, German, French, and Spanish interfaces. The
-  complete translations ship offline on Android 8.0 and newer.
-- Attributed 3+3 and 6-inline guitar headstock artwork with functional string
-  controls and typed note order. Extended instruments retain their
-  data-driven layouts.
-- A simple Light/Dark Compose interface, one global Settings destination, an
-  exact CC0-based animated metronome, and a quick rhythm panel.
-- An optional ScanIt-style Buy Me a Coffee button in App details. It opens an
-  external browser and does not unlock features or change support priority.
-- Optional hands-free Auto-scroll with compact floating Start/Stop and speed
-  controls. It works in Chords and other Android apps through a gesture-only
-  Accessibility service, with no Shizuku and no screen-content access.
+### Tuner
+
+- Opens directly to tuning, without an account, onboarding flow or ads.
+- **Auto** selects a target string from your tuning. **Manual** lets you choose
+  the string. **Chromatic** identifies notes without a guitar-headstock layout.
+- Displays the note and octave, frequency in Hz, signed cents and flat/sharp
+  direction on a moving −50 to +50 cent scale.
+- Keeps the display awake while listening, including pauses between notes.
+  Leaving the tuner releases the screen-on request.
+- Tap a string to select it and hear its generated reference tone.
+- Green feedback and a confirmation chime after a stable in-tune reading.
+  Silent/DND is respected. Feedback rejection limits the chime feeding back
+  into detection; wider ranges and Chromatic mode briefly gate microphone input.
+- Choose sharps or flats and split or inline headstocks where supported.
+  Six-string guitar offers 3+3 and 6-inline layouts, with numbered strings.
+- Set the A4 reference from **410.0 to 480.0 Hz** in 0.1 Hz steps, including
+  444 Hz. Reset to the standard 440 Hz. Out-of-range values are rejected and
+  unusually low or high references require confirmation.
+
+### Instruments and tuning library
+
+Open the tuning selector at the top of the tuner to search presets, use
+favorites, or create custom tunings. Intoniva remembers the last selection
+and supports up to 100 saved custom tunings.
+
+| Instrument | Included presets |
+| --- | --- |
+| 6-string guitar | Standard E and lowered standards through A; Drop D through F; DADGAD; Open D, E, G and A |
+| 7-string guitar | Standard B; Drop A, G and F |
+| 8-string guitar | Standard F♯ and Drop E |
+| 9-string guitar | Standard C♯ and Drop B |
+| 4-string bass | Standard E, E♭, D and C; Drop D; BEAD |
+| 5-string bass | Standard B and B♭; Drop A; high C |
+| 6-string bass | Standard B |
+| Ukulele | Standard C with high G, low G and baritone |
+| Violin, viola, cello and mandolin | Standard tuning presets |
+
+Chromatic mode is also available for other instruments. A preset defines target
+notes; it does not guarantee a phone microphone can capture every instrument
+or room equally well.
+
+### Tuner controls
+
+- Universal default plus Unplugged electric, Quiet room, Noisy room and
+  Fast response profiles.
+- Microphone sensitivity from 0 to 100, separate from visual needle stability.
+- Fast, Balanced or Stable response.
+- Advanced noise rejection, harmonic protection, in-tune tolerance,
+  confirmation time and reading hold.
+- Automatic, raw/unprocessed or compatible microphone input. Raw input is
+  selectable only when supported; the active input is shown.
+- Reset to the Universal audio defaults.
+
+### Metronome
+
+- **20 to 400 BPM**, direct numeric entry, increment/decrement controls and tap tempo.
+- Animated mechanical pendulum driven by playback timing.
+- Time signatures with 1–12 beats and denominators 2, 4, 8 or 16.
+- One to four subdivisions per beat, accents off or every 2–12 beats,
+  and optional count-in of 1, 2 or 4 bars.
+- Five generated sounds: Deep, Wood, Click, Rim and Bright.
+- Volume, mute, start/stop and a quick rhythm-settings panel.
+- Foreground-only playback. Leaving the app stops the metronome.
+
+### Get tempo from a song
+
+Expand this section in the metronome, choose a local audio file and analyze
+its rhythm on the device. View the estimated BPM and rhythm-match score,
+then apply the tempo to the metronome with one tap. Collapsing the section
+keeps the result and leaves the main metronome controls uncluttered.
+
+The score measures repetition, not the probability that the musical tempo is
+correct. Half/double-time readings can occur, especially with ambiguous rhythms.
+
+### Chord library
+
+- Browse all 12 roots with major, minor, sus2, sus4, diminished, augmented,
+  major/minor sixth, dominant/major/minor seventh, half-diminished seventh,
+  add9 and minor add9 chord types.
+- View verified finger positions, open/muted strings, barres and fret positions
+  from the bundled `chords-db` catalog.
+- Diagram support is for **Standard E guitar and Standard C ukulele**.
+  If the selected tuning or chord has no verified shape, Intoniva does not
+  invent a fingering.
+
+### Song chords, melody notes and acoustic shapes
+
+Use **Chords → Song analysis** to select a local audio file. Supported formats
+depend on the Android device's decoder; files can be up to 30 minutes long.
+
+- **Classic:** estimate chord names, including supported extended chord types.
+- **Notes:** follow the strongest stable melody note, with Any melody, Guitar,
+  Bass, Violin and Piano ranges. This is not a full polyphonic score.
+- **Power:** estimate root-and-fifth power chords without forcing major/minor thirds.
+- Play/pause the source file, seek through the timeline, or tap an event to jump
+  to it. A fixed bottom panel keeps the current chord or note visible.
+- Show or hide chord diagrams in the current-event panel.
+- Transpose displayed chords/notes by up to 12 semitones in either direction.
+  This does not pitch-shift the recording.
+- **Exact** and **Easy acoustic** arrangements suggest Standard E guitar shapes
+  and a capo position from 0 to 8. Easy acoustic simplifies some extended chords;
+  Exact refers to the arrangement, not guaranteed recognition accuracy.
+- Replace or remove the selected song. Analysis runs locally without uploading
+  the recording or building a cloud library.
+
+Song recognition is experimental. Dense rock/metal mixes, distortion, inversions,
+overlapping instruments and extended harmonies can produce wrong or missing
+labels. Use the result as a practice aid and check it by ear, not as a guaranteed
+transcription of any song. YouTube-link import and instrument-stem separation
+are not included.
+
+### Trainer
+
+- **Learn chords:** choose supported guitar/ukulele tuning, browse chord names
+  and diagrams, and listen to the chord.
+- **Chord quiz:** hear a chord, choose an answer, then see feedback and its diagram.
+- **Note quiz:** hear a generated note and identify its pitch class.
+- Replay questions, advance to the next exercise, track correct answers and
+  attempts locally, or reset the score.
+
+### Hands-free auto-scroll
+
+- Scroll chord sheets in Intoniva or content in other Android apps.
+- Floating Start/Stop and speed controls, a draggable overlay, and a compact
+  hidden-control bubble that can be reopened.
+- Requires user-enabled overlay and Accessibility permissions. No Shizuku or root.
+- The Accessibility service sends swipe gestures only. It cannot retrieve
+  window contents and does not read, store or transmit screen text.
+- Stop or close the overlay when finished.
+
+### Appearance, language, privacy and support
+
+- System, Light and Dark themes with green accents.
+- System-default language or English, Czech, German, French and Spanish.
+- One Settings destination, with General, Tuner and Metronome sections.
+- About Intoniva includes the version, attribution, licence information,
+  privacy notice, legal-policy links and publisher contact.
+- **Support me** at the bottom of General settings, with the same yellow
+  Buy Me a Coffee button also available in About Intoniva.
+- Support is optional. It opens an external browser, unlocks no features
+  and does not change support priority. External websites have their own
+  privacy practices; in-app payment information is not collected by Intoniva.
+- Musical tools run offline. The app has no Internet or advertising-ID
+  permission, ads, accounts, analytics or tracking SDKs.
 
 ## Screenshots
 
