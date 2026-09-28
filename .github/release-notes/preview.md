@@ -4,7 +4,7 @@ Intoniva `v0.3.0-alpha.33` testing build.
 - Build separate Learning and Learned note sets, saved locally.
 - Compare two notes with A/B buttons or continuous alternating playback.
 - Quiz only the notes in your selected set.
-- Get randomized chord and note questions without immediate repeats.
+- Get randomized chord and note questions. Two-note quizzes can repeat either note so the answer is not predictable.
 - Choose chord roots and qualities from grids instead of horizontal strips.
 
 All app features remain free. Pitch/song analysis, metronome playback,

@@ -22,6 +22,12 @@ class TrainerTest {
     }
 
     @Test
+    fun `two note practice is random rather than predictable alternation`() {
+        val answers = (0..100).map { noteQuestion(it, setOf(0, 2), previous = 0).answerPitchClass }
+        assertEquals(setOf(0, 2), answers.toSet())
+    }
+
+    @Test
     fun `chord questions use random order without repeating the previous chord`() {
         val chords = (0..11).flatMap { root -> instructionalChordQualities.map { Chord(root, it) } }
         val random = Random(712)

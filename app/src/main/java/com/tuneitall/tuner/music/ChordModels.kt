@@ -91,7 +91,8 @@ fun trainerChoices(answer: Chord, seed: Int): List<Chord> {
 
 fun noteQuestion(seed: Int, notes: Set<Int> = (0..11).toSet(), previous: Int? = null): NoteQuestion {
     require(notes.isNotEmpty() && notes.all { it in 0..11 })
-    val answer = nextTrainerItem(notes.sorted(), previous, Random(seed))
+    // With two notes, excluding the previous answer would reveal the next one.
+    val answer = nextTrainerItem(notes.sorted(), previous.takeIf { notes.size > 2 }, Random(seed))
     val distractors = notes.sorted().filter { it != answer }.shuffled(Random(seed)).take(NOTE_CHOICE_COUNT - 1)
     return NoteQuestion(
         answerPitchClass = answer,

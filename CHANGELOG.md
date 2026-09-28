@@ -5,7 +5,7 @@
 - Keep trainer playback and Next controls visible without scrolling.
 - Add editable Learning and Learned note banks, saved on the device.
 - Listen to individual notes, choose two notes to compare, or repeat A/B with a silent gap.
-- Restrict note quizzes to the selected bank. Randomize note and chord questions without immediate repeats.
+- Restrict note quizzes to the selected bank. Randomize questions across the full set; two-note quizzes allow repeats to avoid predictable alternation.
 - Show chord roots and qualities in grids. Add direct chord selection to the trainer.
 - Stop comparison playback on navigation or when the app goes into the background.
 - Translate the new controls into all five app languages.

@@ -352,6 +352,8 @@ class MusicToolsScreenTest {
             }
         }
 
+        // Reveal the timeline vertically without moving its horizontal position.
+        compose.onNodeWithTag("chord_timeline").performScrollTo()
         compose.onNodeWithTag("song_chord_18").assertIsDisplayed()
     }
 
