@@ -322,4 +322,21 @@
     <string name="auto_scroll_disclosure_title">Fonctionnement du défilement automatique</string>
     <string name="auto_scroll_disclosure_body">Il utilise l’accessibilité Android pour effectuer des balayages déterministes lorsque vous le démarrez. Il ne peut pas récupérer le contenu des fenêtres et ne lit, collecte, stocke ou partage aucune donnée d’écran.</string>
     <string name="auto_scroll_disclosure_continue">J’ai compris, continuer</string>
+    <string name="trainer_choose_chord">Choisir un accord</string>
+    <string name="trainer_learning_bank">En apprentissage</string>
+    <string name="trainer_learned_bank">Acquis</string>
+    <string name="trainer_set_count">%1$d notes · octave 4</string>
+    <string name="trainer_edit_notes">Modifier les notes</string>
+    <string name="trainer_empty_bank">Ce groupe est vide. Ajoutez des notes avec Modifier les notes.</string>
+    <string name="trainer_two_notes">Choisissez au moins deux notes pour un quiz. Une seule note peut être jouée dans Écouter.</string>
+    <string name="trainer_tap_note">Touchez une note pour écouter.</string>
+    <string name="trainer_compare">Comparer deux notes</string>
+    <string name="trainer_hear_slot">Écouter %1$s</string>
+    <string name="trainer_repeat">Répéter A ↔ B</string>
+    <string name="trainer_stop_repeat">Arrêter la répétition</string>
+    <string name="trainer_edit_notes_help">Choisissez les notes de ce groupe. Ajouter une note la déplace depuis le second groupe. Les modifications restent sur cet appareil.</string>
+    <string name="trainer_all_notes">Toutes les notes</string>
+    <string name="trainer_no_notes">Vider</string>
+    <string name="trainer_save_set">Enregistrer</string>
+    <string name="trainer_listen">Écouter</string>
 </resources>

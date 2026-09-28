@@ -221,6 +221,20 @@ class AudioPipelineTest {
     }
 
     @Test
+    fun `note comparison keeps both exact tones separated by silence with seamless loop edges`() {
+        val first = createToneBuffer(261.6256)
+        val second = createToneBuffer(277.1826)
+        val comparison = createComparisonToneBuffer(261.6256, 277.1826)
+        assertEquals(110_400, comparison.size)
+        assertTrue(comparison.copyOfRange(0, 48_000).contentEquals(first))
+        assertTrue(comparison.copyOfRange(55_200, 103_200).contentEquals(second))
+        assertTrue(comparison.slice(48_000 until 55_200).all { it == 0.toShort() })
+        assertTrue(comparison.slice(103_200 until comparison.size).all { it == 0.toShort() })
+        assertEquals(0, comparison.first().toInt())
+        assertEquals(0, comparison.last().toInt())
+    }
+
+    @Test
     fun `low reference tone includes harmonics audible on a phone speaker`() {
         val samples = createToneBuffer(hertz = 82.0)
         val fundamental = amplitudeAt(samples, 82.0)

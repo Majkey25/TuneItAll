@@ -70,8 +70,9 @@ data class NoteQuestion(
     init {
         require(answerPitchClass in 0..11)
         require(midiNote == MIDDLE_C_MIDI + answerPitchClass)
-        require(choices.size == NOTE_CHOICE_COUNT)
-        require(choices.toSet().size == NOTE_CHOICE_COUNT)
+        require(choices.size in 1..NOTE_CHOICE_COUNT)
+        require(choices.all { it in 0..11 })
+        require(choices.toSet().size == choices.size)
         require(answerPitchClass in choices)
     }
 }
@@ -88,9 +89,10 @@ fun trainerChoices(answer: Chord, seed: Int): List<Chord> {
     return (distractors + answer).shuffled(Random(seed xor TRAINER_SHUFFLE_SALT))
 }
 
-fun noteQuestion(seed: Int): NoteQuestion {
-    val answer = Math.floorMod(seed * NOTE_QUESTION_STEP, 12)
-    val distractors = (0..11).filter { it != answer }.shuffled(Random(seed)).take(NOTE_CHOICE_COUNT - 1)
+fun noteQuestion(seed: Int, notes: Set<Int> = (0..11).toSet(), previous: Int? = null): NoteQuestion {
+    require(notes.isNotEmpty() && notes.all { it in 0..11 })
+    val answer = nextTrainerItem(notes.sorted(), previous, Random(seed))
+    val distractors = notes.sorted().filter { it != answer }.shuffled(Random(seed)).take(NOTE_CHOICE_COUNT - 1)
     return NoteQuestion(
         answerPitchClass = answer,
         midiNote = MIDDLE_C_MIDI + answer,
@@ -112,6 +114,5 @@ fun voicingFrequencies(openNotes: List<MidiNote>, voicing: ChordVoicing): Double
 
 private const val TRAINER_SHUFFLE_SALT = 0x5A17
 private const val NOTE_TRAINER_SHUFFLE_SALT = 0x2C71
-private const val NOTE_QUESTION_STEP = 5
 private const val NOTE_CHOICE_COUNT = 4
 private const val MIDDLE_C_MIDI = 60

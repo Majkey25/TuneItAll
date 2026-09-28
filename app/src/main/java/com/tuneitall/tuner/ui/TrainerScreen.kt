@@ -3,21 +3,22 @@ package com.tuneitall.tuner.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -36,34 +38,32 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.audio.ReferenceTonePlayer
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.Chord
-import com.tuneitall.tuner.music.ChordQuality
 import com.tuneitall.tuner.music.ChordShapeCatalog
+import com.tuneitall.tuner.music.NoteTrainingSets
 import com.tuneitall.tuner.music.instructionalChordQualities
-import com.tuneitall.tuner.music.NoteQuestion
 import com.tuneitall.tuner.music.midiToHertz
-import com.tuneitall.tuner.music.noteQuestion
+import com.tuneitall.tuner.music.nextTrainerItem
 import com.tuneitall.tuner.music.trainerChoices
 import com.tuneitall.tuner.music.voicingFrequencies
 import com.tuneitall.tuner.storage.NoteNotation
 import com.tuneitall.tuner.storage.TrainerStats
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
-private enum class TrainerExercise {
-    CHORDS,
-    NOTES,
-}
-
-private enum class TrainerMode {
-    LEARN,
-    QUIZ,
-}
+private enum class TrainerExercise { CHORDS, NOTES }
+internal enum class TrainerMode { LEARN, QUIZ }
 
 @Composable
 fun TrainerScreen(
@@ -73,319 +73,232 @@ fun TrainerScreen(
     catalog: ChordShapeCatalog,
     onRecord: (Boolean) -> Unit,
     onReset: () -> Unit,
+    noteSets: NoteTrainingSets,
+    onNoteSetsChanged: (NoteTrainingSets) -> Unit,
 ) {
-    val supportedTunings = remember(tunings, catalog) { tunings.filter { catalog.supports(it.id) } }
-    require(supportedTunings.isNotEmpty())
     var exercise by rememberSaveable { mutableStateOf(TrainerExercise.CHORDS) }
     var mode by rememberSaveable { mutableStateOf(TrainerMode.LEARN) }
-    var selectedTuningId by rememberSaveable { mutableStateOf(DEFAULT_TRAINER_TUNING) }
-    var chordIndex by rememberSaveable { mutableIntStateOf(0) }
-    var questionSeed by rememberSaveable { mutableIntStateOf(1) }
-    var selectedChordAnswer by remember { mutableStateOf<Chord?>(null) }
-    var selectedNoteAnswer by remember { mutableStateOf<Int?>(null) }
     var audioFailed by remember { mutableStateOf(false) }
-    val chords = remember { buildList { repeat(12) { root -> instructionalChordQualities.forEach { add(Chord(root, it)) } } } }
-    val tuning = supportedTunings.firstOrNull { it.id == selectedTuningId } ?: supportedTunings.first()
-    val tonePlayer = remember { ReferenceTonePlayer() }
+    var repeating by remember { mutableStateOf(false) }
+    val player = remember { ReferenceTonePlayer() }
+    val dispatcher = remember { Dispatchers.IO.limitedParallelism(1) }
     val scope = rememberCoroutineScope()
-    DisposableEffect(tonePlayer) { onDispose(tonePlayer::close) }
+    var audioJob by remember { mutableStateOf<Job?>(null) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
 
-    fun playChord(chord: Chord) {
-        val voicing = catalog.shape(tuning.id, chord) ?: return
-        val frequencies = voicingFrequencies(tuning.notesLowToHigh, voicing)
-        scope.launch {
+    fun stopAudio() {
+        audioJob?.cancel()
+        repeating = false
+        player.stop()
+    }
+
+    fun play(repeat: Boolean = false, action: () -> Unit) {
+        stopAudio()
+        repeating = repeat
+        audioJob = scope.launch {
             try {
-                withContext(Dispatchers.IO) { tonePlayer.playChord(frequencies) }
+                withContext(dispatcher) {
+                    ensureActive()
+                    action()
+                }
                 audioFailed = false
-            } catch (_: CancellationException) {
-                Unit
+            } catch (error: CancellationException) {
+                throw error
             } catch (_: RuntimeException) {
+                repeating = false
                 audioFailed = true
             }
         }
     }
 
-    fun playNote(question: NoteQuestion) {
-        scope.launch {
-            try {
-                withContext(Dispatchers.IO) { tonePlayer.play(midiToHertz(question.midiNote)) }
-                audioFailed = false
-            } catch (_: CancellationException) {
-                Unit
-            } catch (_: RuntimeException) {
-                audioFailed = true
-            }
+    DisposableEffect(player, lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) stopAudio()
+        }
+        lifecycle.addObserver(observer)
+        onDispose {
+            lifecycle.removeObserver(observer)
+            audioJob?.cancel()
+            player.close()
         }
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .safeDrawingPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+        Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp, vertical = 8.dp)
             .testTag("trainer_screen"),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            stringResource(R.string.destination_trainer),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-        )
-        ChoiceRow(
-            choices = TrainerExercise.entries,
-            selected = exercise,
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.destination_trainer), Modifier.weight(1f),
+                style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.trainer_score, stats.correct, stats.attempts),
+                style = MaterialTheme.typography.labelMedium, modifier = Modifier.testTag("trainer_score"))
+            if (stats.attempts > 0) {
+                TextButton(onClick = onReset) { Text(stringResource(R.string.trainer_reset_score)) }
+            }
+        }
+        TrainerChoiceRow(
+            TrainerExercise.entries, exercise,
             label = { stringResource(if (it == TrainerExercise.CHORDS) R.string.trainer_chords else R.string.trainer_notes) },
             tag = { "trainer_exercise_${it.name.lowercase()}" },
-            onSelected = {
-                exercise = it
-                selectedChordAnswer = null
-                selectedNoteAnswer = null
+            onSelected = { stopAudio(); exercise = it },
+        )
+        TrainerChoiceRow(
+            TrainerMode.entries, mode,
+            label = {
+                stringResource(when {
+                    it == TrainerMode.QUIZ -> R.string.trainer_quiz
+                    exercise == TrainerExercise.NOTES -> R.string.trainer_listen
+                    else -> R.string.trainer_learn
+                })
             },
+            tag = { "trainer_mode_${it.name.lowercase()}" },
+            onSelected = { stopAudio(); mode = it },
         )
-        if (exercise == TrainerExercise.CHORDS) {
-            ChoiceRow(
-                choices = TrainerMode.entries,
-                selected = mode,
-                label = { stringResource(if (it == TrainerMode.LEARN) R.string.trainer_learn else R.string.trainer_quiz) },
-                tag = { "trainer_mode_${it.name.lowercase()}" },
-                onSelected = {
-                    mode = it
-                    selectedChordAnswer = null
-                },
-            )
-            TuningSelector(supportedTunings, tuning.id, { selectedTuningId = it })
-        }
-        Text(stringResource(R.string.trainer_score, stats.correct, stats.attempts), Modifier.testTag("trainer_score"))
         if (audioFailed) Text(stringResource(R.string.audio_initialization_failed), color = MaterialTheme.colorScheme.error)
-
         when (exercise) {
-            TrainerExercise.CHORDS -> when (mode) {
-                TrainerMode.LEARN -> ChordLesson(
-                    chord = chords[Math.floorMod(chordIndex, chords.size)],
-                    tuning = tuning,
-                    notation = notation,
-                    catalog = catalog,
-                    onPrevious = { chordIndex = Math.floorMod(chordIndex - 1, chords.size) },
-                    onPlay = ::playChord,
-                    onNext = { chordIndex = (chordIndex + 1) % chords.size },
-                )
-
-                TrainerMode.QUIZ -> ChordQuiz(
-                    answer = chords[Math.floorMod(questionSeed * CHORD_QUESTION_STEP, chords.size)],
-                    choices = trainerChoices(chords[Math.floorMod(questionSeed * CHORD_QUESTION_STEP, chords.size)], questionSeed),
-                    selectedAnswer = selectedChordAnswer,
-                    tuning = tuning,
-                    notation = notation,
-                    catalog = catalog,
-                    onPlay = ::playChord,
-                    onAnswer = { choice, answer ->
-                        if (selectedChordAnswer == null) {
-                            selectedChordAnswer = choice
-                            onRecord(choice == answer)
-                        }
-                    },
-                    onNext = {
-                        questionSeed++
-                        selectedChordAnswer = null
-                    },
-                )
-            }
-
-            TrainerExercise.NOTES -> {
-                val question = noteQuestion(questionSeed)
-                NoteQuiz(
-                    question = question,
-                    selectedAnswer = selectedNoteAnswer,
-                    notation = notation,
-                    onPlay = { playNote(question) },
-                    onAnswer = { choice ->
-                        if (selectedNoteAnswer == null) {
-                            selectedNoteAnswer = choice
-                            onRecord(choice == question.answerPitchClass)
-                        }
-                    },
-                    onNext = {
-                        questionSeed++
-                        selectedNoteAnswer = null
-                    },
-                )
-            }
-        }
-        if (stats.attempts > 0) {
-            OutlinedButton(onClick = onReset, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.trainer_reset_score))
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-    }
-}
-
-@Composable
-private fun <T> ChoiceRow(
-    choices: List<T>,
-    selected: T,
-    label: @Composable (T) -> String,
-    tag: (T) -> String,
-    onSelected: (T) -> Unit,
-) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        choices.forEach { choice ->
-            FilterChip(
-                selected = selected == choice,
-                onClick = { onSelected(choice) },
-                label = { Text(label(choice)) },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(tag(choice)),
+            TrainerExercise.CHORDS -> ChordTrainer(
+                mode, tunings, notation, catalog, onRecord, ::stopAudio,
+                onPlay = { tuning, chord ->
+                    catalog.shape(tuning.id, chord)?.let { shape ->
+                        play { player.playChord(voicingFrequencies(tuning.notesLowToHigh, shape)) }
+                    }
+                },
+                modifier = Modifier.weight(1f),
+            )
+            TrainerExercise.NOTES -> NoteTrainer(
+                mode, noteSets, notation, onNoteSetsChanged, onRecord,
+                onPlay = { pitch -> play { player.play(midiToHertz(60 + pitch)) } },
+                onRepeat = { a, b -> play(repeat = true) { player.repeatNotes(midiToHertz(60 + a), midiToHertz(60 + b)) } },
+                onStop = ::stopAudio, repeating = repeating, modifier = Modifier.weight(1f),
             )
         }
     }
 }
 
 @Composable
-private fun ChordLesson(
-    chord: Chord,
-    tuning: TuningPreset,
-    notation: NoteNotation,
-    catalog: ChordShapeCatalog,
-    onPrevious: () -> Unit,
-    onPlay: (Chord) -> Unit,
-    onNext: () -> Unit,
+internal fun <T> TrainerChoiceRow(
+    choices: List<T>, selected: T, label: @Composable (T) -> String,
+    tag: (T) -> String, onSelected: (T) -> Unit,
 ) {
-    Text(
-        formatChord(chord, notation),
-        style = MaterialTheme.typography.displaySmall,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.fillMaxWidth().testTag("trainer_chord_label"),
-        textAlign = TextAlign.Center,
-    )
-    ChordDiagram(chord, tuning, notation, catalog, Modifier.fillMaxWidth())
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onPrevious, Modifier.weight(1f).heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.trainer_previous))
-        }
-        Button(onClick = { onPlay(chord) }, Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_play")) {
-            Text(stringResource(R.string.trainer_play_chord))
-        }
-        OutlinedButton(onClick = onNext, Modifier.weight(1f).heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.trainer_next))
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        choices.forEachIndexed { index, choice ->
+            SegmentedButton(
+                selected = selected == choice, onClick = { onSelected(choice) },
+                shape = SegmentedButtonDefaults.itemShape(index, choices.size),
+                label = { Text(label(choice)) },
+                modifier = Modifier.heightIn(min = 48.dp).testTag(tag(choice)),
+            )
         }
     }
 }
 
 @Composable
-private fun ChordQuiz(
-    answer: Chord,
-    choices: List<Chord>,
-    selectedAnswer: Chord?,
-    tuning: TuningPreset,
-    notation: NoteNotation,
-    catalog: ChordShapeCatalog,
-    onPlay: (Chord) -> Unit,
-    onAnswer: (Chord, Chord) -> Unit,
-    onNext: () -> Unit,
+private fun ChordTrainer(
+    mode: TrainerMode, tunings: List<TuningPreset>, notation: NoteNotation, catalog: ChordShapeCatalog,
+    onRecord: (Boolean) -> Unit, onStop: () -> Unit, onPlay: (TuningPreset, Chord) -> Unit,
+    modifier: Modifier,
 ) {
-    Text(
-        stringResource(R.string.trainer_question),
-        modifier = Modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.titleLarge,
-        textAlign = TextAlign.Center,
-    )
-    Button(
-        onClick = { onPlay(answer) },
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("trainer_play"),
-    ) { Text(stringResource(R.string.trainer_play_chord)) }
-    AnswerGrid(
-        choices = choices,
-        enabled = selectedAnswer == null,
-        label = { formatChord(it, notation) },
-        tag = { "trainer_answer_${formatChord(it, notation)}" },
-        onAnswer = { onAnswer(it, answer) },
-    )
-    selectedAnswer?.let { selected ->
-        Feedback(selected == answer, formatChord(answer, notation), R.string.trainer_incorrect, "trainer_feedback")
-        ChordDiagram(answer, tuning, notation, catalog, Modifier.fillMaxWidth())
-        NextButton(onNext, "trainer_next_question")
+    val supported = remember(tunings, catalog) { tunings.filter { catalog.supports(it.id) } }
+    require(supported.isNotEmpty())
+    var tuningId by rememberSaveable { mutableStateOf("guitar-6-standard") }
+    val tuning = supported.firstOrNull { it.id == tuningId } ?: supported.first()
+    val chords = remember(tuning.id, catalog) {
+        (0..11).flatMap { root -> instructionalChordQualities.map { Chord(root, it) } }
+            .filter { catalog.shape(tuning.id, it) != null }
     }
+    var lessonIndex by rememberSaveable(tuning.id) { mutableIntStateOf(0) }
+    var quizIndex by rememberSaveable(tuning.id) { mutableIntStateOf(Random.nextInt(chords.size)) }
+    var choiceSeed by rememberSaveable { mutableIntStateOf(Random.nextInt()) }
+    var selected by remember(mode, tuning.id) { mutableStateOf<Chord?>(null) }
+    var showPicker by remember { mutableStateOf(false) }
+    var showDiagram by remember { mutableStateOf(false) }
+    val chord = chords[if (mode == TrainerMode.LEARN) lessonIndex else quizIndex]
+    val choices = remember(chord, choiceSeed) { trainerChoices(chord, choiceSeed) }
+
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).testTag("trainer_content"),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            TuningSelector(supported, tuning.id, onSelected = { onStop(); tuningId = it })
+            if (mode == TrainerMode.LEARN) {
+                Text(formatChord(chord, notation), Modifier.fillMaxWidth().testTag("trainer_chord_label"),
+                    style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                OutlinedButton(onClick = { showPicker = true }, modifier = Modifier.fillMaxWidth().testTag("trainer_choose_chord")) {
+                    Text(stringResource(R.string.trainer_choose_chord))
+                }
+                ChordDiagram(chord, tuning, notation, catalog, Modifier.fillMaxWidth())
+            } else {
+                Text(stringResource(R.string.trainer_question), style = MaterialTheme.typography.titleLarge)
+                TrainerAnswerGrid(choices, selected == null, { formatChord(it, notation) },
+                    { "trainer_answer_${formatChord(it, notation)}" }) {
+                    if (selected == null) { selected = it; onRecord(it == chord) }
+                }
+                selected?.let {
+                    TrainerFeedback(it == chord, formatChord(chord, notation), "trainer_feedback")
+                    TextButton(onClick = { showDiagram = !showDiagram }) { Text(stringResource(R.string.show_chord_diagrams)) }
+                    if (showDiagram) ChordDiagram(chord, tuning, notation, catalog, Modifier.fillMaxWidth())
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().testTag("trainer_controls"), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (mode == TrainerMode.LEARN) OutlinedButton(
+                onClick = { onStop(); lessonIndex = Math.floorMod(lessonIndex - 1, chords.size) },
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+            ) { Text(stringResource(R.string.trainer_previous)) }
+            Button(onClick = { onPlay(tuning, chord) }, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_play")) {
+                Text(stringResource(R.string.trainer_play_chord))
+            }
+            OutlinedButton(
+                onClick = {
+                    onStop()
+                    if (mode == TrainerMode.LEARN) lessonIndex = (lessonIndex + 1) % chords.size
+                    else {
+                        quizIndex = nextTrainerItem(chords.indices.toList(), quizIndex)
+                        choiceSeed = Random.nextInt()
+                        selected = null
+                        showDiagram = false
+                    }
+                },
+                enabled = mode == TrainerMode.LEARN || selected != null,
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_next_question"),
+            ) { Text(stringResource(R.string.trainer_next)) }
+        }
+    }
+    if (showPicker) AlertDialog(
+        onDismissRequest = { showPicker = false },
+        title = { Text(stringResource(R.string.trainer_choose_chord)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                ChordPicker(chords[lessonIndex], notation) { choice ->
+                    val index = chords.indexOf(choice)
+                    if (index >= 0) { onStop(); lessonIndex = index }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { showPicker = false }) { Text(stringResource(android.R.string.ok)) } },
+    )
 }
 
 @Composable
-private fun NoteQuiz(
-    question: NoteQuestion,
-    selectedAnswer: Int?,
-    notation: NoteNotation,
-    onPlay: () -> Unit,
-    onAnswer: (Int) -> Unit,
-    onNext: () -> Unit,
+internal fun <T> TrainerAnswerGrid(
+    choices: List<T>, enabled: Boolean, label: (T) -> String, tag: (T) -> String, onAnswer: (T) -> Unit,
 ) {
-    Text(
-        stringResource(R.string.trainer_note_question),
-        modifier = Modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.titleLarge,
-        textAlign = TextAlign.Center,
-    )
-    Button(
-        onClick = onPlay,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("trainer_note_play"),
-    ) { Text(stringResource(R.string.trainer_play_note)) }
-    AnswerGrid(
-        choices = question.choices,
-        enabled = selectedAnswer == null,
-        label = { formatPitchClass(it, notation) },
-        tag = { "trainer_note_answer_$it" },
-        onAnswer = onAnswer,
-    )
-    selectedAnswer?.let { selected ->
-        Feedback(
-            selected == question.answerPitchClass,
-            formatPitchClass(question.answerPitchClass, notation),
-            R.string.trainer_note_incorrect,
-            "trainer_note_feedback",
-        )
-        NextButton(onNext, "trainer_note_next")
-    }
-}
-
-@Composable
-private fun <T> AnswerGrid(
-    choices: List<T>,
-    enabled: Boolean,
-    label: (T) -> String,
-    tag: (T) -> String,
-    onAnswer: (T) -> Unit,
-) {
-    choices.chunked(2).forEach { rowChoices ->
+    choices.chunked(2).forEach { row ->
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            rowChoices.forEach { choice ->
-                OutlinedButton(
-                    onClick = { onAnswer(choice) },
-                    enabled = enabled,
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(tag(choice)),
-                ) { Text(label(choice)) }
+            row.forEach { choice ->
+                OutlinedButton(onClick = { onAnswer(choice) }, enabled = enabled,
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(tag(choice))) { Text(label(choice)) }
             }
         }
     }
 }
 
 @Composable
-private fun Feedback(correct: Boolean, answer: String, incorrectString: Int, tag: String) {
+internal fun TrainerFeedback(correct: Boolean, answer: String, tag: String) {
     Text(
-        if (correct) stringResource(R.string.trainer_correct) else stringResource(incorrectString, answer),
+        if (correct) stringResource(R.string.trainer_correct) else stringResource(R.string.trainer_incorrect, answer),
         color = if (correct) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
         modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite }.testTag(tag),
         textAlign = TextAlign.Center,
     )
 }
-
-@Composable
-private fun NextButton(onNext: () -> Unit, tag: String) {
-    Button(onClick = onNext, Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(tag)) {
-        Text(stringResource(R.string.trainer_next))
-    }
-}
-
-private const val DEFAULT_TRAINER_TUNING = "guitar-6-standard"
-private const val CHORD_QUESTION_STEP = 7

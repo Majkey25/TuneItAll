@@ -317,4 +317,21 @@
     <string name="auto_scroll_disclosure_title">How Auto-scroll works</string>
     <string name="auto_scroll_disclosure_body">Auto-scroll uses Android Accessibility to perform deterministic swipe gestures when you start it. It cannot retrieve window content and does not read, collect, store, or share screen data.</string>
     <string name="auto_scroll_disclosure_continue">I understand, continue</string>
+    <string name="trainer_choose_chord">Choose chord</string>
+    <string name="trainer_learning_bank">Learning</string>
+    <string name="trainer_learned_bank">Learned</string>
+    <string name="trainer_set_count">%1$d notes · octave 4</string>
+    <string name="trainer_edit_notes">Edit notes</string>
+    <string name="trainer_empty_bank">This bank is empty. Add notes with Edit notes.</string>
+    <string name="trainer_two_notes">Choose at least two notes for a quiz. You can hear a single note in Listen.</string>
+    <string name="trainer_tap_note">Tap a note to hear it.</string>
+    <string name="trainer_compare">Compare two notes</string>
+    <string name="trainer_hear_slot">Hear %1$s</string>
+    <string name="trainer_repeat">Repeat A ↔ B</string>
+    <string name="trainer_stop_repeat">Stop repeating</string>
+    <string name="trainer_edit_notes_help">Choose the notes for this bank. Adding a note moves it from the other bank. Changes stay on this device.</string>
+    <string name="trainer_all_notes">All notes</string>
+    <string name="trainer_no_notes">Clear</string>
+    <string name="trainer_save_set">Save set</string>
+    <string name="trainer_listen">Listen</string>
 </resources>

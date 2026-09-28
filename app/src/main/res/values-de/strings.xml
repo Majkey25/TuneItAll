@@ -317,4 +317,21 @@
     <string name="auto_scroll_disclosure_title">So funktioniert Auto-Scroll</string>
     <string name="auto_scroll_disclosure_body">Auto-Scroll nutzt Android-Bedienungshilfen für festgelegte Wischgesten, wenn Sie es starten. Es kann keine Fensterinhalte abrufen und liest, erfasst, speichert oder teilt keine Bildschirmdaten.</string>
     <string name="auto_scroll_disclosure_continue">Verstanden, weiter</string>
+    <string name="trainer_choose_chord">Akkord wählen</string>
+    <string name="trainer_learning_bank">Am Lernen</string>
+    <string name="trainer_learned_bank">Gelernt</string>
+    <string name="trainer_set_count">%1$d Töne · Oktave 4</string>
+    <string name="trainer_edit_notes">Töne bearbeiten</string>
+    <string name="trainer_empty_bank">Diese Gruppe ist leer. Fügen Sie über Töne bearbeiten Noten hinzu.</string>
+    <string name="trainer_two_notes">Wählen Sie mindestens zwei Töne für ein Quiz. Einen Ton können Sie unter Anhören abspielen.</string>
+    <string name="trainer_tap_note">Tippen Sie auf einen Ton, um ihn zu hören.</string>
+    <string name="trainer_compare">Zwei Töne vergleichen</string>
+    <string name="trainer_hear_slot">%1$s anhören</string>
+    <string name="trainer_repeat">A ↔ B wiederholen</string>
+    <string name="trainer_stop_repeat">Wiederholung stoppen</string>
+    <string name="trainer_edit_notes_help">Wählen Sie die Töne für diese Gruppe. Hinzugefügte Töne werden aus der anderen Gruppe verschoben. Änderungen bleiben auf diesem Gerät.</string>
+    <string name="trainer_all_notes">Alle Töne</string>
+    <string name="trainer_no_notes">Leeren</string>
+    <string name="trainer_save_set">Gruppe speichern</string>
+    <string name="trainer_listen">Anhören</string>
 </resources>

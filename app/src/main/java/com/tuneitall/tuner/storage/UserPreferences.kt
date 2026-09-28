@@ -17,6 +17,7 @@ import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.metronome.Bpm
 import com.tuneitall.tuner.metronome.MetronomeSettings
 import com.tuneitall.tuner.metronome.MetronomeSound
+import com.tuneitall.tuner.music.NoteTrainingSets
 import com.tuneitall.tuner.tuner.TunerMode
 import com.tuneitall.tuner.ui.theme.ThemeMode
 import org.json.JSONArray
@@ -217,6 +218,21 @@ class UserPreferences(context: Context) {
             putInt(TRAINER_ATTEMPTS_KEY, value.attempts)
         }
 
+    var noteTrainingSets: NoteTrainingSets
+        get() {
+            val defaults = NoteTrainingSets()
+            fun read(key: String, fallback: Set<Int>): Set<Int> = preferences.valueOrDefault(fallback) {
+                getStringSet(key, fallback.map(Int::toString).toSet()).orEmpty()
+                    .mapNotNull(String::toIntOrNull).filter { it in 0..11 }.toSet()
+            }
+            val learning = read(TRAINER_LEARNING_KEY, defaults.learning)
+            return NoteTrainingSets(learning, read(TRAINER_LEARNED_KEY, defaults.learned) - learning)
+        }
+        set(value) = preferences.edit {
+            putStringSet(TRAINER_LEARNING_KEY, value.learning.map(Int::toString).toSet())
+            putStringSet(TRAINER_LEARNED_KEY, value.learned.map(Int::toString).toSet())
+        }
+
     private inline fun <reified T : Enum<T>> SharedPreferences.enumValue(key: String, default: T): T {
         val stored = valueOrDefault<String?>(null) { getString(key, null) } ?: return default
         return enumValues<T>().firstOrNull { it.name == stored } ?: default
@@ -283,6 +299,8 @@ class UserPreferences(context: Context) {
         const val CUSTOM_TUNINGS_KEY = "custom_tunings"
         const val TRAINER_CORRECT_KEY = "trainer_correct"
         const val TRAINER_ATTEMPTS_KEY = "trainer_attempts"
+        const val TRAINER_LEARNING_KEY = "trainer_learning_notes"
+        const val TRAINER_LEARNED_KEY = "trainer_learned_notes"
         const val DEFAULT_TUNING_ID = "guitar-6-standard"
         const val MAX_FAVORITES = 200
     }
