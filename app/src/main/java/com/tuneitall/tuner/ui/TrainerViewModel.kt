@@ -2,6 +2,7 @@ package com.tuneitall.tuner.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import com.tuneitall.tuner.music.NoteTrainingSets
 import com.tuneitall.tuner.storage.TrainerStats
 import com.tuneitall.tuner.storage.UserPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +13,13 @@ class TrainerViewModel(application: Application) : AndroidViewModel(application)
     private val preferences = UserPreferences(application)
     private val mutableStats = MutableStateFlow(preferences.trainerStats)
     val stats: StateFlow<TrainerStats> = mutableStats.asStateFlow()
+    private val mutableNoteSets = MutableStateFlow(preferences.noteTrainingSets)
+    val noteSets: StateFlow<NoteTrainingSets> = mutableNoteSets.asStateFlow()
+
+    fun setNoteSets(value: NoteTrainingSets) {
+        preferences.noteTrainingSets = value
+        mutableNoteSets.value = value
+    }
 
     fun record(correct: Boolean) {
         val current = mutableStats.value

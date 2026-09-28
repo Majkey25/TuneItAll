@@ -322,4 +322,21 @@
     <string name="auto_scroll_disclosure_title">Cómo funciona el desplazamiento automático</string>
     <string name="auto_scroll_disclosure_body">Usa Accesibilidad de Android para realizar gestos de deslizamiento determinados cuando usted lo inicia. No puede obtener el contenido de las ventanas y no lee, recopila, guarda ni comparte datos de pantalla.</string>
     <string name="auto_scroll_disclosure_continue">Entiendo, continuar</string>
+    <string name="trainer_choose_chord">Elegir acorde</string>
+    <string name="trainer_learning_bank">Aprendiendo</string>
+    <string name="trainer_learned_bank">Aprendidas</string>
+    <string name="trainer_set_count">%1$d notas · octava 4</string>
+    <string name="trainer_edit_notes">Editar notas</string>
+    <string name="trainer_empty_bank">Este grupo está vacío. Añade notas con Editar notas.</string>
+    <string name="trainer_two_notes">Elige al menos dos notas para un cuestionario. Puedes reproducir una sola nota en Escuchar.</string>
+    <string name="trainer_tap_note">Toca una nota para escucharla.</string>
+    <string name="trainer_compare">Comparar dos notas</string>
+    <string name="trainer_hear_slot">Escuchar %1$s</string>
+    <string name="trainer_repeat">Repetir A ↔ B</string>
+    <string name="trainer_stop_repeat">Detener repetición</string>
+    <string name="trainer_edit_notes_help">Elige las notas de este grupo. Añadir una nota la mueve desde el otro grupo. Los cambios quedan en este dispositivo.</string>
+    <string name="trainer_all_notes">Todas las notas</string>
+    <string name="trainer_no_notes">Vaciar</string>
+    <string name="trainer_save_set">Guardar grupo</string>
+    <string name="trainer_listen">Escuchar</string>
 </resources>

@@ -1,0 +1,1 @@
+Trainer controls now stay visible. Save separate Learning and Learned note sets, compare A/B notes, and loop them back to back. Note quizzes use your selected set. Chord and note questions are randomized. Chord browsing now uses grids instead of scrolling strips.

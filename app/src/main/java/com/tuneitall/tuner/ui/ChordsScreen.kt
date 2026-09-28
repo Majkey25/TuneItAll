@@ -59,7 +59,6 @@ import com.tuneitall.tuner.music.AcousticChordInstruction
 import com.tuneitall.tuner.music.ArrangementMode
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordEvent
-import com.tuneitall.tuner.music.ChordQuality
 import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.music.NoteEvent
 import com.tuneitall.tuner.music.NoteRange
@@ -278,33 +277,7 @@ private fun ChordLibrary(
     catalog: ChordShapeCatalog,
     onChordSelected: (Chord) -> Unit,
 ) {
-    Text(stringResource(R.string.chords_library), style = MaterialTheme.typography.titleLarge)
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("chord_root_strip"),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        repeat(12) { root ->
-            FilterChip(
-                selected = chord.rootPitchClass == root,
-                onClick = { onChordSelected(chord.copy(rootPitchClass = root)) },
-                label = { Text(formatChord(Chord(root, ChordQuality.MAJOR), notation)) },
-                modifier = Modifier.heightIn(min = 48.dp).testTag("chord_root_$root"),
-            )
-        }
-    }
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("chord_quality_strip"),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        instructionalChordQualities.forEach { quality ->
-            FilterChip(
-                selected = chord.quality == quality,
-                onClick = { onChordSelected(chord.copy(quality = quality, bassPitchClass = null)) },
-                label = { Text(chordQualityName(quality)) },
-                modifier = Modifier.heightIn(min = 48.dp).testTag("chord_quality_${quality.name.lowercase()}"),
-            )
-        }
-    }
+    ChordPicker(chord, notation, onChordSelected)
     Text(
         formatChord(chord, notation),
         style = MaterialTheme.typography.displaySmall,
@@ -312,8 +285,29 @@ private fun ChordLibrary(
         modifier = Modifier.fillMaxWidth().testTag("selected_chord_label"),
         textAlign = TextAlign.Center,
     )
-    Text(stringResource(R.string.chord_voicing, tuning.name), style = MaterialTheme.typography.titleMedium)
+    Text(chordQualityName(chord.quality), style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.chord_voicing, tuning.name), style = MaterialTheme.typography.bodyMedium)
     ChordDiagram(chord, tuning, notation, catalog, Modifier.fillMaxWidth())
+}
+
+@Composable
+internal fun ChordPicker(chord: Chord, notation: NoteNotation, onChordSelected: (Chord) -> Unit) {
+    MusicChoiceGrid(
+        choices = (0..11).toList(), columns = 4,
+        selected = { chord.rootPitchClass == it },
+        label = { formatPitchClass(it, notation) },
+        tag = { "chord_root_$it" },
+        onSelected = { onChordSelected(chord.copy(rootPitchClass = it)) },
+        modifier = Modifier.testTag("chord_root_grid"),
+    )
+    MusicChoiceGrid(
+        choices = instructionalChordQualities, columns = 3,
+        selected = { chord.quality == it },
+        label = { formatChord(chord.copy(quality = it, bassPitchClass = null), notation) },
+        tag = { "chord_quality_${it.name.lowercase()}" },
+        onSelected = { onChordSelected(chord.copy(quality = it, bassPitchClass = null)) },
+        modifier = Modifier.testTag("chord_quality_grid"),
+    )
 }
 
 @Composable

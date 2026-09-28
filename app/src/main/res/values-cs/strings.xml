@@ -327,4 +327,21 @@
     <string name="auto_scroll_disclosure_title">Jak funguje automatické posouvání</string>
     <string name="auto_scroll_disclosure_body">Automatické posouvání používá přístupnost Androidu k přesně daným gestům přejetí, když ho spustíte. Nemůže získat obsah oken a data obrazovky nečte, neshromažďuje, neukládá ani nesdílí.</string>
     <string name="auto_scroll_disclosure_continue">Rozumím, pokračovat</string>
+    <string name="trainer_choose_chord">Vybrat akord</string>
+    <string name="trainer_learning_bank">Učím se</string>
+    <string name="trainer_learned_bank">Naučeno</string>
+    <string name="trainer_set_count">%1$d tónů · oktáva 4</string>
+    <string name="trainer_edit_notes">Upravit tóny</string>
+    <string name="trainer_empty_bank">Tato sada je prázdná. Přidejte tóny přes Upravit tóny.</string>
+    <string name="trainer_two_notes">Pro kvíz vyberte alespoň dva tóny. Jeden tón si můžete přehrát v Poslechu.</string>
+    <string name="trainer_tap_note">Klepnutím přehrajete tón.</string>
+    <string name="trainer_compare">Porovnat dva tóny</string>
+    <string name="trainer_hear_slot">Přehrát %1$s</string>
+    <string name="trainer_repeat">Opakovat A ↔ B</string>
+    <string name="trainer_stop_repeat">Zastavit opakování</string>
+    <string name="trainer_edit_notes_help">Vyberte tóny pro tuto sadu. Přidáním se tón přesune z druhé sady. Změny zůstávají v zařízení.</string>
+    <string name="trainer_all_notes">Všechny tóny</string>
+    <string name="trainer_no_notes">Vymazat</string>
+    <string name="trainer_save_set">Uložit sadu</string>
+    <string name="trainer_listen">Poslech</string>
 </resources>

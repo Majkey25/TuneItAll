@@ -5,6 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasAnyAncestor
@@ -28,8 +31,6 @@ import com.tuneitall.tuner.music.arrangeForStandardE
 import com.tuneitall.tuner.music.NoteEvent
 import com.tuneitall.tuner.music.NoteRange
 import com.tuneitall.tuner.music.SongAnalysisMode
-import com.tuneitall.tuner.music.trainerChoices
-import com.tuneitall.tuner.music.noteQuestion
 import com.tuneitall.tuner.storage.NoteNotation
 import com.tuneitall.tuner.storage.TrainerStats
 import com.tuneitall.tuner.ui.ChordTab
@@ -37,7 +38,6 @@ import com.tuneitall.tuner.ui.ChordUiState
 import com.tuneitall.tuner.ui.ChordsScreen
 import com.tuneitall.tuner.ui.AutoScrollScreen
 import com.tuneitall.tuner.ui.TrainerScreen
-import com.tuneitall.tuner.ui.formatChord
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -76,11 +76,13 @@ class MusicToolsScreenTest {
             }
         }
 
-        compose.onNodeWithTag("chord_root_9").performScrollTo().performClick()
-        compose.onNodeWithTag("chord_quality_minor").performClick()
+        compose.onNodeWithTag("chord_root_grid").assertIsDisplayed()
+        compose.onNodeWithTag("chord_root_11").assertIsDisplayed()
+        compose.onNodeWithTag("chord_root_9").performClick()
+        compose.onNodeWithTag("chord_quality_minor").performScrollTo().performClick()
 
         compose.onNodeWithTag("selected_chord_label").assertTextEquals("Am")
-        compose.onNodeWithTag("chord_diagram").assertIsDisplayed()
+        compose.onNodeWithTag("chord_diagram").performScrollTo().assertIsDisplayed()
         compose.runOnIdle { assertEquals(Chord(9, ChordQuality.MINOR), state.selectedChord) }
     }
 
@@ -350,6 +352,8 @@ class MusicToolsScreenTest {
             }
         }
 
+        // Reveal the timeline vertically without moving its horizontal position.
+        compose.onNodeWithTag("chord_timeline").performScrollTo()
         compose.onNodeWithTag("song_chord_18").assertIsDisplayed()
     }
 
@@ -435,8 +439,7 @@ class MusicToolsScreenTest {
     @Test
     fun trainerQuizRecordsOneAnswerAndKeepsTheAnswerHiddenUntilSelection() {
         var recorded: Boolean? = null
-        val answer = Chord(2, ChordQuality.MINOR)
-        val firstChoice = trainerChoices(answer, seed = 1).first()
+        var records = 0
         compose.setContent {
             TuneItAllTheme {
                 TrainerScreen(
@@ -444,8 +447,10 @@ class MusicToolsScreenTest {
                     tunings = listOf(tuning),
                     notation = NoteNotation.SHARPS,
                     catalog = catalog,
-                    onRecord = { recorded = it },
+                    onRecord = { recorded = it; records++ },
                     onReset = {},
+                    noteSets = com.tuneitall.tuner.music.NoteTrainingSets(),
+                    onNoteSetsChanged = {},
                 )
             }
         }
@@ -453,21 +458,27 @@ class MusicToolsScreenTest {
         compose.onNodeWithTag("trainer_mode_quiz").performClick()
         compose.onNodeWithTag("chord_diagram").assertDoesNotExist()
         compose.onNodeWithTag("chord_diagram_label").assertDoesNotExist()
-        compose.onNodeWithText(formatChord(firstChoice, NoteNotation.SHARPS)).performClick()
+        val choices = compose.onAllNodes(SemanticsMatcher("Chord answer") {
+            it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("trainer_answer_") == true
+        })
+        choices[0].performClick()
 
         compose.onNodeWithTag("trainer_feedback").assertIsDisplayed()
-        compose.onNodeWithTag("chord_diagram").assertIsDisplayed()
+        choices[0].assertIsNotEnabled()
+        compose.onNodeWithTag("trainer_play").assertIsDisplayed()
+        compose.onNodeWithTag("trainer_next_question").assertIsDisplayed()
+        val feedback = compose.onNodeWithTag("trainer_feedback").fetchSemanticsNode().config[SemanticsProperties.Text].first().text
         compose.runOnIdle {
-            assertTrue(recorded != null)
-            assertEquals(firstChoice == answer, recorded)
+            assertEquals(feedback == "Correct", recorded)
+            assertEquals(1, records)
         }
+        compose.onNodeWithTag("trainer_next_question").performClick()
+        compose.onNodeWithTag("trainer_feedback").assertDoesNotExist()
     }
 
     @Test
     fun noteTrainerRecordsOneAnswerWithoutRevealingItFirst() {
         var recorded: Boolean? = null
-        val question = noteQuestion(seed = 1)
-        val firstChoice = question.choices.first()
         compose.setContent {
             TuneItAllTheme {
                 TrainerScreen(
@@ -477,18 +488,22 @@ class MusicToolsScreenTest {
                     catalog = catalog,
                     onRecord = { recorded = it },
                     onReset = {},
+                    noteSets = com.tuneitall.tuner.music.NoteTrainingSets(),
+                    onNoteSetsChanged = {},
                 )
             }
         }
 
         compose.onNodeWithTag("trainer_exercise_notes").performClick()
+        compose.onNodeWithTag("trainer_mode_quiz").performClick()
         compose.onNodeWithTag("trainer_note_feedback").assertDoesNotExist()
         compose.onNodeWithTag("trainer_note_play").assertIsDisplayed()
-        compose.onNodeWithTag("trainer_note_answer_$firstChoice").performClick()
+        compose.onNodeWithTag("trainer_note_answer_0").performClick()
 
         compose.onNodeWithTag("trainer_note_feedback").assertIsDisplayed()
+        val feedback = compose.onNodeWithTag("trainer_note_feedback").fetchSemanticsNode().config[SemanticsProperties.Text].first().text
         compose.runOnIdle {
-            assertEquals(firstChoice == question.answerPitchClass, recorded)
+            assertEquals(feedback == "Correct", recorded)
         }
     }
 }

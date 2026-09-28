@@ -216,6 +216,7 @@ fun TuneItAllApp(
                 AppScreen.Trainer -> {
                     val activeViewModel = trainerViewModel ?: composeViewModel()
                     val activeStats by activeViewModel.stats.collectAsStateWithLifecycle()
+                    val noteSets by activeViewModel.noteSets.collectAsStateWithLifecycle()
                     TrainerScreen(
                         stats = activeStats,
                         tunings = TuningCatalog.presets + state.customTunings,
@@ -223,6 +224,8 @@ fun TuneItAllApp(
                         catalog = chordCatalog.value,
                         onRecord = activeViewModel::record,
                         onReset = activeViewModel::reset,
+                        noteSets = noteSets,
+                        onNoteSetsChanged = activeViewModel::setNoteSets,
                     )
                 }
 

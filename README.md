@@ -15,19 +15,19 @@ analytics, tracking, onboarding, or network permission.
 
 Intoniva is free on [Google Play](https://play.google.com/store/apps/details?id=com.tuneitall.tuner).
 All features are free. There are no subscriptions or paid feature unlocks.
-Latest GitHub version: `0.3.0-alpha.32`. The Play version can lag behind while
+Latest GitHub version: `0.3.0-alpha.33`. The Play version can lag behind while
 Google reviews an update. See the dated [release record](docs/store/2026-09-27-alpha32-release.md).
 
 ## Download
 
 [Google Play: free download](https://play.google.com/store/apps/details?id=com.tuneitall.tuner)
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.32/Intoniva-v0.3.0-alpha.32-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.33/Intoniva-v0.3.0-alpha.33-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.32).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.33).
 
 ## Features
 
@@ -144,12 +144,21 @@ are not included.
 
 ### Trainer
 
-- **Learn chords:** choose supported guitar/ukulele tuning, browse chord names
-  and diagrams, and listen to the chord.
-- **Chord quiz:** hear a chord, choose an answer, then see feedback and its diagram.
-- **Note quiz:** hear a generated note and identify its pitch class.
-- Replay questions, advance to the next exercise, track correct answers and
-  attempts locally, or reset the score.
+- **Learn chords:** choose supported guitar/ukulele tuning, pick roots and
+  qualities from a grid, view diagrams, and listen to the chord.
+- **Chord quiz:** hear a random chord, answer, and optionally reveal its diagram.
+  Consecutive questions do not repeat the same chord.
+- **Note banks:** keep separate Learning and Learned sets. Start with C, D and E,
+  select any of the 12 pitch classes, or move notes to the Learned bank.
+  Both sets stay on the device across restarts.
+- **Listen and compare:** tap notes to hear them, select A/B notes in octave 4,
+  replay either one, or repeat the pair with a short silent gap.
+  Repeating stops when leaving the trainer or putting the app in the background.
+- **Note quiz:** questions and answer choices use only the selected bank.
+  At least two notes are needed. Compare the answer with your guess after answering.
+- Playback and Next controls stay visible below the scrollable content.
+  Track correct answers and attempts locally, or reset the score without clearing
+  the note banks.
 
 ### Hands-free auto-scroll
 

@@ -30,7 +30,13 @@ class ReferenceTonePlayer : AutoCloseable {
         prepareAndPlay(createChordToneBuffer(hertz))
     }
 
-    private fun prepareAndPlay(samples: ShortArray) {
+    @Synchronized
+    fun repeatNotes(firstHertz: Double, secondHertz: Double) {
+        check(!closed) { "Reference tone player is closed" }
+        prepareAndPlay(createComparisonToneBuffer(firstHertz, secondHertz), repeat = true)
+    }
+
+    private fun prepareAndPlay(samples: ShortArray, repeat: Boolean = false) {
         val nextTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -56,14 +62,17 @@ class ReferenceTonePlayer : AutoCloseable {
         if (
             written != samples.size ||
             nextTrack.state != AudioTrack.STATE_INITIALIZED ||
-            nextTrack.setNotificationMarkerPosition(samples.lastIndex) != AudioTrack.SUCCESS
+            (if (repeat) nextTrack.setLoopPoints(0, samples.size, -1)
+            else nextTrack.setNotificationMarkerPosition(samples.lastIndex)) != AudioTrack.SUCCESS
         ) {
             nextTrack.release()
             throw IllegalStateException("Reference tone buffer could not be prepared")
         }
         nextTrack.setPlaybackPositionUpdateListener(
             object : AudioTrack.OnPlaybackPositionUpdateListener {
-                override fun onMarkerReached(completedTrack: AudioTrack) = release(completedTrack)
+                override fun onMarkerReached(completedTrack: AudioTrack) {
+                    if (!repeat) release(completedTrack)
+                }
 
                 override fun onPeriodicNotification(track: AudioTrack) = Unit
             },
@@ -191,6 +200,16 @@ internal fun createChordToneBuffer(hertz: DoubleArray): ShortArray {
     val scale = if (peak > CHORD_MAX_PEAK) CHORD_MAX_PEAK.toDouble() / peak else 1.0
     return ShortArray(mixed.size) { index ->
         (mixed[index] * scale).roundToInt().coerceIn(-CHORD_MAX_PEAK, CHORD_MAX_PEAK).toShort()
+    }
+}
+
+internal fun createComparisonToneBuffer(firstHertz: Double, secondHertz: Double): ShortArray {
+    val first = createToneBuffer(firstHertz)
+    val second = createToneBuffer(secondHertz)
+    val gap = TONE_SAMPLE_RATE * 150 / 1_000
+    return ShortArray(first.size + second.size + gap * 2).also { samples ->
+        first.copyInto(samples)
+        second.copyInto(samples, first.size + gap)
     }
 }
 
