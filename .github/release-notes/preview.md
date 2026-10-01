@@ -1,11 +1,11 @@
-Intoniva `v0.3.0-alpha.33` testing build.
+Intoniva `v0.3.0-alpha.34` testing build.
 
-- Keep Hear and Next buttons on screen while practising.
-- Build separate Learning and Learned note sets, saved locally.
-- Compare two notes with A/B buttons or continuous alternating playback.
-- Quiz only the notes in your selected set.
-- Get randomized chord and note questions. Two-note quizzes can repeat either note so the answer is not predictable.
-- Choose chord roots and qualities from grids instead of horizontal strips.
+- Open directly in Quiz with compact tabs and a note-bank menu.
+- Get random chords in Learn too, including the first chord.
+- Tap Next to skip and hear the next question immediately.
+- Reveal an answer without changing your score.
+- Keep the note quiz layout stable after answering; open A/B comparison when needed.
+- Keep Learning/Learned banks, replay and direct chord selection.
 
 All app features remain free. Pitch/song analysis, metronome playback,
 permissions and dependencies are unchanged.

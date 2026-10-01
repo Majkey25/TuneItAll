@@ -1,0 +1,1 @@
+Trenér se otevírá v kvízu. Výuka začíná náhodným akordem a tlačítko Další vybírá i přehrává nový akord nebo tón. Otázku lze přeskočit bez hádání. Ukázání odpovědi nemění skóre. Přehlednější záložky a výběr sady tónů. Porovnání tónů už neposouvá ovládání kvízu.

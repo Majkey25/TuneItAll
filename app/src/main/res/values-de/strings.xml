@@ -334,4 +334,7 @@
     <string name="trainer_no_notes">Leeren</string>
     <string name="trainer_save_set">Gruppe speichern</string>
     <string name="trainer_listen">Anhören</string>
+    <string name="trainer_show_answer">Antwort zeigen</string>
+    <string name="trainer_answer_revealed">Antwort: %1$s</string>
+    <string name="trainer_correct_answer">Richtig. %1$s</string>
 </resources>

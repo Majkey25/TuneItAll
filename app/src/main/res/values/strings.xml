@@ -334,4 +334,7 @@
     <string name="trainer_no_notes">Clear</string>
     <string name="trainer_save_set">Save set</string>
     <string name="trainer_listen">Listen</string>
+    <string name="trainer_show_answer">Show answer</string>
+    <string name="trainer_answer_revealed">Answer: %1$s</string>
+    <string name="trainer_correct_answer">Correct. %1$s</string>
 </resources>

@@ -344,4 +344,7 @@
     <string name="trainer_no_notes">Vymazat</string>
     <string name="trainer_save_set">Uložit sadu</string>
     <string name="trainer_listen">Poslech</string>
+    <string name="trainer_show_answer">Ukázat odpověď</string>
+    <string name="trainer_answer_revealed">Odpověď: %1$s</string>
+    <string name="trainer_correct_answer">Správně. %1$s</string>
 </resources>

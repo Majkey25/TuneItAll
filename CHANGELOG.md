@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0-alpha.34, 2026-10-01
+
+- Open Trainer in Quiz instead of the sequential chord browser.
+- Randomize the first chord and Next in Learn as well as Quiz.
+- Play the next chord/note immediately when Next is tapped. Skipping no longer requires a guessed answer.
+- Add Show answer without recording an incorrect attempt.
+- Keep the note quiz layout stable after answering; open A/B comparison only when requested.
+- Replace stacked segmented controls with tabs and a compact note-bank selector.
+- Show the correct chord/note name in feedback and move score reset into the score menu.
+
 ## 0.3.0-alpha.33, 2026-09-28
 
 - Keep trainer playback and Next controls visible without scrolling.

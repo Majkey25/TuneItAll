@@ -1,0 +1,1 @@
+Trainer now opens in Quiz. Learn also starts with a random chord and shuffles on Next. Next plays the new question immediately and allows skipping without guessing. Show answer does not affect your score. Cleaner tabs and note-bank controls; the quiz no longer jumps when comparison controls appear.

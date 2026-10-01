@@ -469,7 +469,7 @@ class MusicToolsScreenTest {
         compose.onNodeWithTag("trainer_next_question").assertIsDisplayed()
         val feedback = compose.onNodeWithTag("trainer_feedback").fetchSemanticsNode().config[SemanticsProperties.Text].first().text
         compose.runOnIdle {
-            assertEquals(feedback == "Correct", recorded)
+            assertEquals(feedback.startsWith("Correct."), recorded)
             assertEquals(1, records)
         }
         compose.onNodeWithTag("trainer_next_question").performClick()
@@ -503,7 +503,7 @@ class MusicToolsScreenTest {
         compose.onNodeWithTag("trainer_note_feedback").assertIsDisplayed()
         val feedback = compose.onNodeWithTag("trainer_note_feedback").fetchSemanticsNode().config[SemanticsProperties.Text].first().text
         compose.runOnIdle {
-            assertEquals(feedback == "Correct", recorded)
+            assertEquals(feedback.startsWith("Correct."), recorded)
         }
     }
 }
