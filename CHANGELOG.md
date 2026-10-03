@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-alpha.35, 2026-10-03
+
+- Replace the app identity with an ivory tuning fork on a dark green background, regenerated from the supplied reference with ImageGen.
+- Use centered adaptive foreground/background layers, a matching monochrome layer, and a separately sized notification mark.
+- Replace repository, website, favicon, and store branding. Refresh English and Czech store graphics from the current app UI.
+- Verify icon scale on the Huawei launcher and with native pixel-bound tests.
+
 ## 0.3.0-alpha.34, 2026-10-01
 
 - Open Trainer in Quiz instead of the sequential chord browser.

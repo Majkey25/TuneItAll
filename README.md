@@ -15,19 +15,19 @@ analytics, tracking, onboarding, or network permission.
 
 Intoniva is free on [Google Play](https://play.google.com/store/apps/details?id=com.tuneitall.tuner).
 All features are free. There are no subscriptions or paid feature unlocks.
-Latest GitHub version: `0.3.0-alpha.34`. The Play version can lag behind while
+Latest GitHub version: `0.3.0-alpha.35`. The Play version can lag behind while
 Google reviews an update. See the dated [release record](docs/store/2026-09-27-alpha32-release.md).
 
 ## Download
 
 [Google Play: free download](https://play.google.com/store/apps/details?id=com.tuneitall.tuner)
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.34/Intoniva-v0.3.0-alpha.34-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.35/Intoniva-v0.3.0-alpha.35-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.34).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.35).
 
 ## Features
 
@@ -315,11 +315,12 @@ records rejected alternatives and the remaining accuracy limits.
 
 - Feature graphic: `fastlane/metadata/android/en-US/images/featureGraphic.png`
 - Play icon: `fastlane/metadata/android/en-US/images/icon.png`
-- Regenerate the Play icon with `java tools/RenderStoreIcon.java` from the
-  repository root.
-- Capture eight verified 1080×2340 device screens, then generate English and
-  Czech 1080×1920 framed Play artwork with
-  `java tools/RenderStoreScreenshots.java`.
+- Regenerate Android, Play, website, and GitHub branding with
+  `java tools/RenderStoreIcon.java` from the repository root.
+- Icon source and ImageGen prompts: [assets/source/ICON.md](assets/source/ICON.md)
+- English and Czech store artwork uses 16 device captures of the production UI.
+  Capture provenance and checks: [October branding update](docs/store/2026-10-03-branding.md).
+  Regenerate the 1080×1920 framed artwork with `java tools/RenderStoreScreenshots.java`.
 - English/Czech listings: `docs/store/`
 - Privacy policies: `docs/privacy/`
 - Public website: `https://majkey25.github.io/TuneItAll/`
