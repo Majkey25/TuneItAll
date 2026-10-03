@@ -48,12 +48,27 @@ console errors. The live GitHub README banner also shows the new fork.
 
 ## Google Play status
 
-Not uploaded or submitted in this session. Both connected-browser runtimes fail
-before navigation with `failed to write kernel assets: The system cannot find
-the path specified. (os error 3)`, including after a reset. A separate Playwright
-browser reaches Google sign-in, not the authenticated Play Console.
+Submitted on 3 October 2026 after the browser connection recovered.
+The publishing overview confirms `Probíhá kontrola změn` for all six changes:
 
-The signed AAB and English/Czech listing assets are ready. Remaining work:
-restore authenticated browser access, upload the bundle and both locales'
-artwork, submit the production change, and verify the resulting Play status.
-Build success is not evidence of Play publication.
+- Production release `38 - New tuning fork icon`, 100% rollout in the existing 178 countries.
+- New default icon, inherited by the Czech listing.
+- New English feature graphic and eight English screenshots.
+- New Czech feature graphic and eight Czech screenshots.
+
+Both screenshot sets keep the order Tuner, Chromatic, Tunings, Metronome,
+Chords, Song chords, Trainer, and Auto-scroll. All 19 unique images containing
+the ImageGen artwork are declared as AI-generated or AI-edited in Play Console.
+Listing text, prices, countries, and app permissions are unchanged.
+
+Play accepted the bundle with two optional warnings for missing deobfuscation
+and native debug-symbol files. No supported devices were removed.
+Managed publishing remains off. After the quick checks and Google review pass,
+Google publishes the update automatically. Submission is not public availability.
+
+## GitHub social preview
+
+The repository's custom social preview is uploaded and saved. Its public
+Open Graph image now points to the new `repository-images.githubusercontent.com`
+asset instead of GitHub's default generated preview. The GitHub account avatar
+and unrelated repository settings are unchanged.
