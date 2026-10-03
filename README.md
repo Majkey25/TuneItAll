@@ -16,7 +16,7 @@ analytics, tracking, onboarding, or network permission.
 Intoniva is free on [Google Play](https://play.google.com/store/apps/details?id=com.tuneitall.tuner).
 All features are free. There are no subscriptions or paid feature unlocks.
 Latest GitHub version: `0.3.0-alpha.35`. The Play version can lag behind while
-Google reviews an update. See the dated [release record](docs/store/2026-09-27-alpha32-release.md).
+Google reviews an update. See the dated [release record](docs/store/2026-10-03-alpha35-release.md).
 
 ## Download
 
@@ -320,7 +320,7 @@ records rejected alternatives and the remaining accuracy limits.
 - Icon source and ImageGen prompts: [assets/source/ICON.md](assets/source/ICON.md)
 - English and Czech store artwork uses 16 device captures of the production UI.
   Capture provenance and checks: [October branding update](docs/store/2026-10-03-branding.md).
-  Regenerate the 1080×1920 framed artwork with `java tools/RenderStoreScreenshots.java`.
+  Regenerate the 1080×1920 framed artwork with `java -Dfile.encoding=UTF-8 tools/RenderStoreScreenshots.java`.
 - English/Czech listings: `docs/store/`
 - Privacy policies: `docs/privacy/`
 - Public website: `https://majkey25.github.io/TuneItAll/`
