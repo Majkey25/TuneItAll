@@ -1,11 +1,9 @@
-Intoniva `v0.3.0-alpha.34` testing build.
+Intoniva `v0.3.0-alpha.35` testing build.
 
-- Open directly in Quiz with compact tabs and a note-bank menu.
-- Get random chords in Learn too, including the first chord.
-- Tap Next to skip and hear the next question immediately.
-- Reveal an answer without changing your score.
-- Keep the note quiz layout stable after answering; open A/B comparison when needed.
-- Keep Learning/Learned banks, replay and direct chord selection.
+- New ivory tuning-fork icon on a dark green background.
+- Centered adaptive launcher layers, matching themed icon, and notification mark.
+- Updated repository, website, and Google Play artwork.
+- Fresh English and Czech graphics showing the current app screens.
 
 All app features remain free. Pitch/song analysis, metronome playback,
 permissions and dependencies are unchanged.

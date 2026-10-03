@@ -265,7 +265,7 @@ class AutoScrollOverlayService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
-            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.auto_scroll_notification_title))
             .setContentText(getString(R.string.auto_scroll_notification_text))
             .setOngoing(true)
