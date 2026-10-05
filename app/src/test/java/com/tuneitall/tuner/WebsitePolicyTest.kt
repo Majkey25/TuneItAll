@@ -26,7 +26,7 @@ class WebsitePolicyTest {
                 val url = match.groupValues[1]
                 if (url.startsWith("https://") || url.startsWith("mailto:")) return@link
                 assertFalse(url.contains(":"), url)
-                val path = url.substringBefore('#')
+                val path = url.substringBefore('#').substringBefore('?')
                 val resolved = if (path.isEmpty()) file else File(file.parentFile, path).canonicalFile
                 assertTrue(resolved.toPath().startsWith(root.toPath()), url)
                 val target = if (resolved.isDirectory) File(resolved, "index.html") else resolved
