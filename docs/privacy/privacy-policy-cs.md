@@ -1,9 +1,11 @@
 # Zásady ochrany soukromí Intoniva
 
 Platnost od: 8. září 2026
-Poslední aktualizace: 8. září 2026
+Poslední aktualizace: 5. října 2026
 
-Vydavatelem Intoniva je MajkeyLab. Kontakt pro ochranu soukromí:
+Vydavatelem Intoniva je Matěj Teplý, na Google Play uvedený jako Majkey a
+používající značku MajkeyLab. Odpovídá za osobní údaje získané prostřednictvím
+níže popsané volitelné podpory a dotazů k platbám. Kontakt pro ochranu soukromí:
 `majkeylab@gmail.com`.
 
 Intoniva je offline hudební nástroj pro Android. Nemá účty, reklamy, analytiku,

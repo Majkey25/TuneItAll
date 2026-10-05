@@ -1,9 +1,11 @@
 # Intoniva Privacy Policy
 
 Effective date: 8 September 2026
-Last updated: 8 September 2026
+Last updated: 5 October 2026
 
-Intoniva is published by MajkeyLab. Privacy contact:
+Intoniva is published by Matěj Teplý, listed on Google Play as Majkey and using
+the MajkeyLab name. He is responsible for personal information received through
+optional support and payment enquiries described below. Privacy contact:
 `majkeylab@gmail.com`.
 
 Intoniva is an offline Android music tool. It has no accounts, advertising,
