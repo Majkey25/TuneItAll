@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -96,7 +97,7 @@ fun ChordDiagram(
         R.string.chord_diagram_description,
         voicing.frets.joinToString { if (it < 0) "x" else it.toString() },
     )
-    val lineColor = MaterialTheme.colorScheme.onSurface
+    val lineColor = LocalContentColor.current
     val accent = MaterialTheme.colorScheme.primary
     val fingerTextMeasurer = rememberTextMeasurer()
     val fingerStyle = TextStyle(color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)

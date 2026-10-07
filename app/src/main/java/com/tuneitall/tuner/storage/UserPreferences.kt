@@ -20,6 +20,8 @@ import com.tuneitall.tuner.metronome.MetronomeSound
 import com.tuneitall.tuner.music.NoteTrainingSets
 import com.tuneitall.tuner.tuner.TunerMode
 import com.tuneitall.tuner.ui.theme.ThemeMode
+import com.tuneitall.tuner.ui.theme.AppearanceCodec
+import com.tuneitall.tuner.ui.theme.AppearanceSettings
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -101,6 +103,10 @@ class UserPreferences(context: Context) {
     var themeMode: ThemeMode
         get() = preferences.enumValue(THEME_MODE_KEY, ThemeMode.SYSTEM)
         set(value) = preferences.edit { putString(THEME_MODE_KEY, value.name) }
+
+    var appearance: AppearanceSettings
+        get() = AppearanceCodec.decode(preferences.valueOrDefault("{}") { getString(APPEARANCE_KEY, "{}").orEmpty() })
+        set(value) = preferences.edit { putString(APPEARANCE_KEY, AppearanceCodec.encode(value)) }
 
     var appLanguage: AppLanguage
         get() = preferences.enumValue(APP_LANGUAGE_KEY, AppLanguage.SYSTEM)
@@ -272,6 +278,7 @@ class UserPreferences(context: Context) {
         const val REFERENCE_PITCH_KEY = "a4_hertz"
         const val NOTATION_KEY = "notation"
         const val THEME_MODE_KEY = "theme_mode"
+        const val APPEARANCE_KEY = "appearance_v1"
         const val APP_LANGUAGE_KEY = "app_language"
         const val SENSITIVITY_KEY = "detection_sensitivity"
         const val RESPONSE_MODE_KEY = "tuner_response_mode"

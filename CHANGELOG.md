@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-alpha.36, 2026-10-07
+
+- Add an Appearance screen with separate light/dark presets, native Material You colours, and custom palettes.
+- Add font, text-size, corner, contrast, and black-background controls, with immediate local persistence and a reset action.
+- Keep the Appearance back button visible while scrolling. Preserve existing appearance-mode preferences during upgrade.
+- Keep tuner confirmation green and readable across custom colours. Use the rendered background for system-bar icons.
+
 ## 0.3.0-alpha.35, 2026-10-03
 
 - Replace the app identity with an ivory tuning fork on a dark green background, regenerated from the supplied reference with ImageGen.

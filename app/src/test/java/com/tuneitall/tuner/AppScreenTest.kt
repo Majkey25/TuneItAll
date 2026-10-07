@@ -17,6 +17,7 @@ class AppScreenTest {
         assertEquals(AppScreen.Library, parentScreen(AppScreen.CustomTuning))
         assertEquals(AppScreen.Tuner, parentScreen(AppScreen.Settings))
         assertEquals(AppScreen.Settings, parentScreen(AppScreen.About))
+        assertEquals(AppScreen.Settings, parentScreen(AppScreen.Appearance))
     }
 
     @Test

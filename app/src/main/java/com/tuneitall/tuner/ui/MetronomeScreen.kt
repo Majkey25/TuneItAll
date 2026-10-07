@@ -78,6 +78,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
 import com.tuneitall.tuner.metronome.MetronomeSound
 import kotlinx.coroutines.delay
 
@@ -171,7 +172,7 @@ private fun TempoSongPanel(
     Text(
         text = stringResource(R.string.tempo_song_description),
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = mutedBackgroundColor(),
     )
     Button(
         onClick = onChooseAudio,
@@ -212,7 +213,7 @@ private fun TempoSongPanel(
         Text(
             stringResource(R.string.tempo_octave_note),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = mutedBackgroundColor(),
         )
     }
     state.tempoError?.let { error ->
@@ -367,7 +368,7 @@ private fun RepeatButton(
 
 @Composable
 private fun PhysicalMetronome(playing: Boolean, phaseProvider: () -> Double) {
-    val ink = MaterialTheme.colorScheme.onSurface
+    val ink = MaterialTheme.colorScheme.onBackground
     val background = MaterialTheme.colorScheme.background
     val description = stringResource(R.string.metronome_physical_description)
     val currentPhaseProvider by rememberUpdatedState(phaseProvider)

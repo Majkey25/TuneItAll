@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -40,6 +39,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.ui.theme.inTuneColor
 import com.tuneitall.tuner.model.HeadstockLayout
 import com.tuneitall.tuner.model.MidiNote
 import com.tuneitall.tuner.model.stringCount
@@ -76,7 +76,7 @@ fun Headstock(
     val totalHeight = topPadding + bottomPadding + rowHeight * rows
     val bodyColor = MaterialTheme.colorScheme.surface
     val outlineColor = MaterialTheme.colorScheme.outline
-    val stringColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val stringColor = MaterialTheme.colorScheme.onBackground
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         BoxWithConstraints(
@@ -94,7 +94,7 @@ fun Headstock(
                         .size(SplitHeadstockGeometry.imageSize)
                         .testTag("headstock_3x3_image"),
                     contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
                 )
             }
             if (layout == HeadstockLayout.INLINE_6) {
@@ -105,7 +105,7 @@ fun Headstock(
                         .size(InlineSixGeometry.imageSize)
                         .testTag("headstock_6_inline_image"),
                     contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
                 )
             }
             Canvas(modifier = Modifier.fillMaxSize().testTag("headstock_drawing")) {
@@ -235,9 +235,10 @@ private fun Peg(
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         )
     } else {
-        ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
+        ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
     }
     val borderColor = when {
+        selected && confirmed -> inTuneColor()
         selected -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.outlineVariant
     }
@@ -249,7 +250,7 @@ private fun Peg(
 
     OutlinedButton(
         onClick = { onStringSelected(index) },
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         colors = colors,
         border = BorderStroke(borderWidth, borderColor),
         contentPadding = PaddingValues(0.dp),

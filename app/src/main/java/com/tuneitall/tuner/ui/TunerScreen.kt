@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,6 +60,8 @@ import com.tuneitall.tuner.tuner.TunerMode
 import com.tuneitall.tuner.ui.components.CentsRail
 import com.tuneitall.tuner.ui.components.Headstock
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
+import com.tuneitall.tuner.ui.theme.inTuneColor
+import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
 
 @Composable
 fun TunerScreen(
@@ -126,7 +129,7 @@ fun TunerScreen(
         if (state.mode != TunerMode.CHROMATIC) {
             Text(
                 text = stringResource(R.string.tap_string_to_hear),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.bodySmall,
             )
 
@@ -202,6 +205,8 @@ private fun DetectedNote(
 ) {
     val parts = note?.let { noteParts(it, notation) }
     val color = MaterialTheme.colorScheme.onBackground
+    val confirmationColor = inTuneColor()
+    val textScale = LocalDensity.current.fontScale
     val description = note?.let { formatNote(it, notation) } ?: "—"
     val confirmationProgress by animateFloatAsState(
         targetValue = if (confirmed) 1f else 0f,
@@ -211,7 +216,7 @@ private fun DetectedNote(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .width(184.dp)
+            .width(184.dp * textScale)
             .testTag("detected_note")
             .clearAndSetSemantics { contentDescription = description },
     ) {
@@ -223,8 +228,8 @@ private fun DetectedNote(
                     scaleX = 0.8f + confirmationProgress * 0.2f
                     scaleY = scaleX
                 }
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), RoundedCornerShape(28.dp))
-                .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(28.dp))
+                .background(confirmationColor.copy(alpha = 0.14f), RoundedCornerShape(28.dp))
+                .border(2.dp, confirmationColor, RoundedCornerShape(28.dp))
                 .testTag("tuner_confirmation_feedback"),
         )
         if (parts == null) {
@@ -244,7 +249,7 @@ private fun DetectedNote(
                         fontWeight = FontWeight.SemiBold,
                         color = color,
                         modifier = Modifier
-                            .width(72.dp)
+                            .width(72.dp * textScale)
                             .testTag("detected_note_letter"),
                     )
                     Text(
@@ -254,7 +259,7 @@ private fun DetectedNote(
                         fontWeight = FontWeight.SemiBold,
                         color = color,
                         modifier = Modifier
-                            .width(24.dp)
+                            .width(24.dp * textScale)
                             .testTag("detected_note_accidental"),
                     )
                     Text(
@@ -263,7 +268,7 @@ private fun DetectedNote(
                         fontWeight = FontWeight.Medium,
                         color = color,
                         modifier = Modifier
-                            .width(32.dp)
+                            .width(32.dp * textScale)
                             .testTag("detected_note_octave"),
                     )
                 }
@@ -311,7 +316,7 @@ private fun TunerTopBar(
                     Text(
                         text = stringResource(R.string.choose_tuning),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = mutedBackgroundColor(),
                     )
                 }
             }

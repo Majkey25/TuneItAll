@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appearance">Appearance</string>
+    <string name="appearance_customize">Themes and custom appearance</string>
+    <string name="appearance_mode">Appearance mode</string>
+    <string name="appearance_themes">Themes</string>
+    <string name="appearance_themes_help">Choose a theme for light and dark mode separately.</string>
+    <string name="appearance_theme_choice">%1$s, %2$s theme</string>
+    <string name="appearance_material_you">Material You</string>
+    <string name="appearance_ocean">Ocean</string>
+    <string name="appearance_ember">Ember</string>
+    <string name="appearance_iris">Iris</string>
+    <string name="appearance_slate">Slate</string>
+    <string name="appearance_paper">Paper</string>
+    <string name="appearance_material_help">Material You uses wallpaper colours on Android 12 and later. Older phones use an Intoniva palette.</string>
+    <string name="appearance_custom_colors">Custom colours</string>
+    <string name="appearance_custom_light">Custom light</string>
+    <string name="appearance_custom_dark">Custom dark</string>
+    <string name="appearance_custom_help">Changes are saved on this device. Text colours are adjusted when needed to keep labels readable.</string>
+    <string name="appearance_layout">Controls and corners</string>
+    <string name="appearance_classic">Classic</string>
+    <string name="appearance_material">Material</string>
+    <string name="appearance_corners">Corner roundness</string>
+    <string name="appearance_text">Text</string>
+    <string name="appearance_text_size">Text size</string>
+    <string name="appearance_serif">Serif</string>
+    <string name="appearance_monospace">Mono</string>
+    <string name="appearance_contrast">High contrast</string>
+    <string name="appearance_black">Pure black background in dark mode</string>
+    <string name="appearance_reset">Reset appearance</string>
+    <string name="appearance_accent">Accent</string>
+    <string name="appearance_background">Background</string>
+    <string name="appearance_surface">Surfaces</string>
+    <string name="appearance_foreground">Text</string>
+    <string name="appearance_muted">Secondary text</string>
+    <string name="appearance_outline">Borders</string>
+    <string name="appearance_hex">Hex colour</string>
+    <string name="appearance_hex_error">Enter six hexadecimal digits, for example 166534.</string>
+    <string name="appearance_hue">Hue</string>
+    <string name="appearance_saturation">Saturation</string>
+    <string name="appearance_brightness">Brightness</string>
+</resources>

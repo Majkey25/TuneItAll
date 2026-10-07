@@ -51,6 +51,7 @@ import com.tuneitall.tuner.model.ReferencePitch
 import com.tuneitall.tuner.metronome.MetronomeSound
 import com.tuneitall.tuner.storage.NoteNotation
 import com.tuneitall.tuner.ui.theme.ThemeMode
+import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
 import java.util.Locale
 import kotlin.math.round
 import kotlin.math.roundToInt
@@ -84,6 +85,7 @@ fun SettingsScreen(
     onOpenAbout: () -> Unit,
     onSupport: () -> Unit,
     onBack: () -> Unit,
+    onOpenAppearance: () -> Unit = {},
 ) {
     var section by rememberSaveable(initialSection) { mutableStateOf(initialSection) }
     Column(
@@ -125,6 +127,7 @@ fun SettingsScreen(
                 appLanguage = appLanguage,
                 onAppLanguageChanged = onAppLanguageChanged,
                 onThemeModeChanged = onThemeModeChanged,
+                onOpenAppearance = onOpenAppearance,
                 onReferencePitchChanged = onReferencePitchChanged,
                 onNotationChanged = onNotationChanged,
                 onLayoutChanged = onLayoutChanged,
@@ -154,6 +157,7 @@ private fun GeneralSettings(
     appLanguage: AppLanguage,
     onAppLanguageChanged: (AppLanguage) -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
+    onOpenAppearance: () -> Unit,
     onReferencePitchChanged: (ReferencePitch) -> Unit,
     onNotationChanged: (NoteNotation) -> Unit,
     onLayoutChanged: (HeadstockLayout) -> Unit,
@@ -215,7 +219,7 @@ private fun GeneralSettings(
                 confirmButton = {},
             )
         }
-        Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.appearance), style = MaterialTheme.typography.titleLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             ThemeMode.entries.forEach { mode ->
                 FilterChip(
@@ -226,6 +230,10 @@ private fun GeneralSettings(
                 )
             }
         }
+        OutlinedButton(
+            onClick = onOpenAppearance,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("settings_appearance"),
+        ) { Text(stringResource(R.string.appearance_customize)) }
         Text(stringResource(R.string.reference_pitch), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(R.string.reference_pitch_help), style = MaterialTheme.typography.bodyMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -269,7 +277,7 @@ private fun GeneralSettings(
         if (extreme) {
             Text(
                 text = stringResource(R.string.reference_pitch_caution),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = mutedBackgroundColor(),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -570,15 +578,6 @@ private fun inputSourceName(source: AudioInputSource): String = stringResource(
         AudioInputSource.AUTO -> R.string.audio_input_auto
         AudioInputSource.RAW -> R.string.audio_input_raw
         AudioInputSource.COMPATIBLE -> R.string.audio_input_compatible
-    },
-)
-
-@Composable
-private fun themeModeName(mode: ThemeMode): String = stringResource(
-    when (mode) {
-        ThemeMode.SYSTEM -> R.string.theme_system
-        ThemeMode.LIGHT -> R.string.theme_light
-        ThemeMode.DARK -> R.string.theme_dark
     },
 )
 

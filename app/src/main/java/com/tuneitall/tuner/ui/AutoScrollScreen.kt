@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
 import com.tuneitall.tuner.autoscroll.AutoScrollOverlayService
 import com.tuneitall.tuner.autoscroll.AutoScrollPermissionState
 import com.tuneitall.tuner.autoscroll.AutoScrollPreferences
@@ -223,7 +224,7 @@ fun AutoScrollScreen(
         Text(
             stringResource(R.string.auto_scroll_privacy_note),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = mutedBackgroundColor(),
         )
     }
 }
