@@ -176,7 +176,10 @@ are not included.
 
 ### Appearance, language, privacy and support
 
-- System, Light and Dark themes with green accents.
+- System, Light, and Dark appearance, with separate light/dark theme choices.
+- Intoniva, Material You, Ocean, Ember, Iris, Slate, and Paper presets, plus custom colours.
+- Wallpaper colours on Android 12+, Material controls, custom corners, fonts, text size, high contrast, and black dark backgrounds.
+- Appearance changes stay on-device and apply immediately. Settings → General → Themes and custom appearance.
 - System-default language or English, Czech, German, French and Spanish.
 - One Settings destination, with General, Tuner and Metronome sections.
 - About Intoniva includes the version, attribution, licence information,

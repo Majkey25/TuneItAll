@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appearance">Vzhled</string>
+    <string name="appearance_customize">Motivy a vlastní vzhled</string>
+    <string name="appearance_mode">Režim vzhledu</string>
+    <string name="appearance_themes">Motivy</string>
+    <string name="appearance_themes_help">Vyberte motiv zvlášť pro světlý a tmavý režim.</string>
+    <string name="appearance_theme_choice">%1$s, %2$s motiv</string>
+    <string name="appearance_material_you">Material You</string>
+    <string name="appearance_ocean">Oceán</string>
+    <string name="appearance_ember">Žár</string>
+    <string name="appearance_iris">Kosatec</string>
+    <string name="appearance_slate">Břidlice</string>
+    <string name="appearance_paper">Papír</string>
+    <string name="appearance_material_help">Material You používá barvy tapety od Androidu 12. Starší telefony používají paletu Intoniva.</string>
+    <string name="appearance_custom_colors">Vlastní barvy</string>
+    <string name="appearance_custom_light">Vlastní světlý</string>
+    <string name="appearance_custom_dark">Vlastní tmavý</string>
+    <string name="appearance_custom_help">Změny se ukládají v tomto zařízení. Barvy textu se podle potřeby upraví, aby popisky zůstaly čitelné.</string>
+    <string name="appearance_layout">Ovládání a rohy</string>
+    <string name="appearance_classic">Klasický</string>
+    <string name="appearance_material">Material</string>
+    <string name="appearance_corners">Zaoblení rohů</string>
+    <string name="appearance_text">Text</string>
+    <string name="appearance_text_size">Velikost textu</string>
+    <string name="appearance_serif">Patkové</string>
+    <string name="appearance_monospace">Mono</string>
+    <string name="appearance_contrast">Vysoký kontrast</string>
+    <string name="appearance_black">Černé pozadí v tmavém režimu</string>
+    <string name="appearance_reset">Obnovit výchozí vzhled</string>
+    <string name="appearance_accent">Zvýraznění</string>
+    <string name="appearance_background">Pozadí</string>
+    <string name="appearance_surface">Plochy</string>
+    <string name="appearance_foreground">Text</string>
+    <string name="appearance_muted">Vedlejší text</string>
+    <string name="appearance_outline">Ohraničení</string>
+    <string name="appearance_hex">Hexadecimální barva</string>
+    <string name="appearance_hex_error">Zadejte šest hexadecimálních znaků, například 166534.</string>
+    <string name="appearance_hue">Odstín</string>
+    <string name="appearance_saturation">Sytost</string>
+    <string name="appearance_brightness">Jas</string>
+</resources>

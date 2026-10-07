@@ -38,6 +38,7 @@ import com.tuneitall.tuner.tuner.TunerReading
 import com.tuneitall.tuner.tuner.TunerReadingRetainer
 import com.tuneitall.tuner.tuner.pitchSearchRange
 import com.tuneitall.tuner.ui.theme.ThemeMode
+import com.tuneitall.tuner.ui.theme.AppearanceSettings
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +65,7 @@ data class TunerUiState(
     val referenceTonePlaying: Boolean,
     val error: AudioInputError?,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val appearance: AppearanceSettings = AppearanceSettings(),
     val audioSettings: TunerAudioSettings = TunerProfile.BALANCED.settings,
     val audioInputCapabilities: AudioInputCapabilities = AudioInputCapabilities(
         rawSupported = false,
@@ -146,6 +148,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
             referencePitch = preferences.referencePitch,
             notation = preferences.notation,
             themeMode = preferences.themeMode,
+            appearance = preferences.appearance,
             favoriteIds = preferences.favoriteIds,
             customTunings = initialCustomTunings,
             reading = null,
@@ -308,6 +311,11 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
     fun setThemeMode(themeMode: ThemeMode) {
         preferences.themeMode = themeMode
         mutableUiState.update { it.copy(themeMode = themeMode) }
+    }
+
+    fun setAppearance(appearance: AppearanceSettings) {
+        preferences.appearance = appearance
+        mutableUiState.update { it.copy(appearance = appearance) }
     }
 
     fun saveCustomTuning(tuning: TuningPreset) {

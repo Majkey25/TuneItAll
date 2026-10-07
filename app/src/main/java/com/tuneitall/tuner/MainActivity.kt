@@ -24,6 +24,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +41,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tuneitall.tuner.ui.TunerViewModel
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
 import com.tuneitall.tuner.ui.theme.resolveDarkTheme
+import com.tuneitall.tuner.ui.theme.rgb
+import com.tuneitall.tuner.ui.theme.usesLightSystemBarIcons
 import com.tuneitall.tuner.storage.UserPreferences
 import java.util.Locale
 
@@ -110,8 +113,8 @@ private fun TuneItAllRoot(
     }
     val darkTheme = resolveDarkTheme(state.themeMode, isSystemInDarkTheme())
 
-    UpdateSystemBarAppearance(darkTheme)
-    TuneItAllTheme(darkTheme = darkTheme) {
+    TuneItAllTheme(darkTheme = darkTheme, appearance = state.appearance) {
+        UpdateSystemBarAppearance(usesLightSystemBarIcons(MaterialTheme.colorScheme.background.rgb()))
         Surface(modifier = Modifier.fillMaxSize()) {
             LifecycleStartEffect(viewModel) {
                 viewModel.onStart()

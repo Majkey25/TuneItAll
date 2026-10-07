@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appearance">Apariencia</string>
+    <string name="appearance_customize">Temas y personalización</string>
+    <string name="appearance_mode">Modo</string>
+    <string name="appearance_themes">Temas</string>
+    <string name="appearance_themes_help">Elige un tema por separado para los modos claro y oscuro.</string>
+    <string name="appearance_theme_choice">%1$s, tema %2$s</string>
+    <string name="appearance_material_you">Material You</string>
+    <string name="appearance_ocean">Océano</string>
+    <string name="appearance_ember">Brasa</string>
+    <string name="appearance_iris">Iris</string>
+    <string name="appearance_slate">Pizarra</string>
+    <string name="appearance_paper">Papel</string>
+    <string name="appearance_material_help">Material You usa los colores del fondo desde Android 12. Los teléfonos anteriores usan la paleta Intoniva.</string>
+    <string name="appearance_custom_colors">Colores personalizados</string>
+    <string name="appearance_custom_light">Claro personalizado</string>
+    <string name="appearance_custom_dark">Oscuro personalizado</string>
+    <string name="appearance_custom_help">Los cambios se guardan en este dispositivo. Los colores del texto se ajustan para mantener las etiquetas legibles.</string>
+    <string name="appearance_layout">Controles y esquinas</string>
+    <string name="appearance_classic">Clásico</string>
+    <string name="appearance_material">Material</string>
+    <string name="appearance_corners">Redondez de las esquinas</string>
+    <string name="appearance_text">Texto</string>
+    <string name="appearance_text_size">Tamaño del texto</string>
+    <string name="appearance_serif">Con serifa</string>
+    <string name="appearance_monospace">Mono</string>
+    <string name="appearance_contrast">Alto contraste</string>
+    <string name="appearance_black">Fondo negro en modo oscuro</string>
+    <string name="appearance_reset">Restablecer apariencia</string>
+    <string name="appearance_accent">Acento</string>
+    <string name="appearance_background">Fondo</string>
+    <string name="appearance_surface">Superficies</string>
+    <string name="appearance_foreground">Texto</string>
+    <string name="appearance_muted">Texto secundario</string>
+    <string name="appearance_outline">Bordes</string>
+    <string name="appearance_hex">Color hexadecimal</string>
+    <string name="appearance_hex_error">Introduce seis dígitos hexadecimales, por ejemplo 166534.</string>
+    <string name="appearance_hue">Tono</string>
+    <string name="appearance_saturation">Saturación</string>
+    <string name="appearance_brightness">Brillo</string>
+</resources>

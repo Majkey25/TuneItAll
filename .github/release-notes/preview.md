@@ -1,9 +1,10 @@
-Intoniva `v0.3.0-alpha.35` testing build.
+Intoniva `v0.3.0-alpha.36` testing build.
 
-- New ivory tuning-fork icon on a dark green background.
-- Centered adaptive launcher layers, matching themed icon, and notification mark.
-- Updated repository, website, and Google Play artwork.
-- Fresh English and Czech graphics showing the current app screens.
+- New Appearance screen under Settings → General.
+- Seven built-in themes, Material You wallpaper colours on Android 12+, and separate light/dark choices.
+- Custom palettes, font, text size, Material controls, corners, contrast, and black-background controls.
+- Immediate local saving, a reset button, and a back button that stays visible while scrolling.
+- Readable tuner feedback and system icons with custom colours.
 
 All app features remain free. Pitch/song analysis, metronome playback,
 permissions and dependencies are unchanged.

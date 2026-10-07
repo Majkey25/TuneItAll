@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.ui.theme.inTuneColor
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -50,8 +51,8 @@ fun CentsRail(
             pluralStringResource(R.plurals.cents_sharp, value, value)
         }
     }
-    val railColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val markerColor = if (inTune) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+    val railColor = MaterialTheme.colorScheme.onBackground
+    val markerColor = if (inTune) inTuneColor() else MaterialTheme.colorScheme.onBackground
     val displayText = cents?.let { stringResource(R.string.cents_value, it) } ?: idleText
     val labelWidth = RULER_LABEL_WIDTH * LocalDensity.current.fontScale
     val rulerPadding = labelWidth / 2
@@ -63,7 +64,7 @@ fun CentsRail(
         ) {
             Text(
                 text = displayText,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.SemiBold,
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.testTag("signed_cents"),

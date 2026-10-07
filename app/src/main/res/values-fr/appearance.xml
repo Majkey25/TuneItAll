@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appearance">Apparence</string>
+    <string name="appearance_customize">Thèmes et personnalisation</string>
+    <string name="appearance_mode">Mode</string>
+    <string name="appearance_themes">Thèmes</string>
+    <string name="appearance_themes_help">Choisissez un thème distinct pour les modes clair et sombre.</string>
+    <string name="appearance_theme_choice">%1$s, thème %2$s</string>
+    <string name="appearance_material_you">Material You</string>
+    <string name="appearance_ocean">Océan</string>
+    <string name="appearance_ember">Braise</string>
+    <string name="appearance_iris">Iris</string>
+    <string name="appearance_slate">Ardoise</string>
+    <string name="appearance_paper">Papier</string>
+    <string name="appearance_material_help">Material You utilise les couleurs du fond à partir de Android 12. Les anciens appareils utilisent la palette Intoniva.</string>
+    <string name="appearance_custom_colors">Couleurs personnalisées</string>
+    <string name="appearance_custom_light">Clair personnalisé</string>
+    <string name="appearance_custom_dark">Sombre personnalisé</string>
+    <string name="appearance_custom_help">Les modifications restent sur cet appareil. Les couleurs du texte sont ajustées pour garder les libellés lisibles.</string>
+    <string name="appearance_layout">Commandes et coins</string>
+    <string name="appearance_classic">Classique</string>
+    <string name="appearance_material">Material</string>
+    <string name="appearance_corners">Arrondi des coins</string>
+    <string name="appearance_text">Texte</string>
+    <string name="appearance_text_size">Taille du texte</string>
+    <string name="appearance_serif">Avec empattement</string>
+    <string name="appearance_monospace">Mono</string>
+    <string name="appearance_contrast">Contraste élevé</string>
+    <string name="appearance_black">Fond noir en mode sombre</string>
+    <string name="appearance_reset">Réinitialiser le thème</string>
+    <string name="appearance_accent">Accent</string>
+    <string name="appearance_background">Fond</string>
+    <string name="appearance_surface">Surfaces</string>
+    <string name="appearance_foreground">Texte</string>
+    <string name="appearance_muted">Texte secondaire</string>
+    <string name="appearance_outline">Bordures</string>
+    <string name="appearance_hex">Couleur hexadécimale</string>
+    <string name="appearance_hex_error">Saisissez six chiffres hexadécimaux, par exemple 166534.</string>
+    <string name="appearance_hue">Teinte</string>
+    <string name="appearance_saturation">Saturation</string>
+    <string name="appearance_brightness">Luminosité</string>
+</resources>

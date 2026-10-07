@@ -21,6 +21,7 @@ import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.ChordShapeCatalog
 import com.tuneitall.tuner.ui.AboutScreen
+import com.tuneitall.tuner.ui.AppearanceScreen
 import com.tuneitall.tuner.ui.AutoScrollRoute
 import com.tuneitall.tuner.ui.AppBottomBar
 import com.tuneitall.tuner.ui.CustomTuningScreen
@@ -46,6 +47,7 @@ enum class AppScreen {
     Trainer,
     CustomTuning,
     Settings,
+    Appearance,
     About,
     AutoScroll,
 }
@@ -55,7 +57,7 @@ internal fun parentScreen(screen: AppScreen): AppScreen? = when (screen) {
     AppScreen.Metronome, AppScreen.Chords, AppScreen.Library, AppScreen.Trainer,
     AppScreen.Settings, AppScreen.AutoScroll -> AppScreen.Tuner
     AppScreen.CustomTuning -> AppScreen.Library
-    AppScreen.About -> AppScreen.Settings
+    AppScreen.About, AppScreen.Appearance -> AppScreen.Settings
 }
 
 @Composable
@@ -85,7 +87,7 @@ fun TuneItAllApp(
     LaunchedEffect(screen) {
         viewModel.setTunerActive(screen == AppScreen.Tuner)
         val metronomeActive = screen == AppScreen.Metronome ||
-            (screen == AppScreen.Settings && settingsReturnScreen == AppScreen.Metronome)
+            (screen in listOf(AppScreen.Settings, AppScreen.Appearance) && settingsReturnScreen == AppScreen.Metronome)
         if (!metronomeActive) {
             metronomeViewModel.stopAsync()
             metronomeViewModel.cancelTempoAnalysis()
@@ -99,7 +101,7 @@ fun TuneItAllApp(
         AppScreen.Chords -> PrimaryDestination.CHORDS
         AppScreen.AutoScroll -> PrimaryDestination.AUTO_SCROLL
         AppScreen.Trainer -> PrimaryDestination.TRAINER
-        AppScreen.Library, AppScreen.CustomTuning, AppScreen.Settings, AppScreen.About -> null
+        AppScreen.Library, AppScreen.CustomTuning, AppScreen.Settings, AppScreen.Appearance, AppScreen.About -> null
     }
 
     Scaffold(
@@ -236,6 +238,10 @@ fun TuneItAllApp(
                     appLanguage = appLanguage,
                     onAppLanguageChanged = onAppLanguageChanged,
                     onThemeModeChanged = viewModel::setThemeMode,
+                    onOpenAppearance = {
+                        settingsInitialSection = SettingsSection.GENERAL
+                        screen = AppScreen.Appearance
+                    },
                     onReferencePitchChanged = viewModel::setReferencePitch,
                     onNotationChanged = viewModel::setNotation,
                     onLayoutChanged = viewModel::setHeadstockLayout,
@@ -251,6 +257,14 @@ fun TuneItAllApp(
                     onOpenAbout = { screen = AppScreen.About },
                     onSupport = openSupportPage,
                     onBack = { screen = settingsReturnScreen },
+                )
+
+                AppScreen.Appearance -> AppearanceScreen(
+                    appearance = state.appearance,
+                    themeMode = state.themeMode,
+                    onAppearanceChanged = viewModel::setAppearance,
+                    onThemeModeChanged = viewModel::setThemeMode,
+                    onBack = { screen = AppScreen.Settings },
                 )
 
                 AppScreen.About -> AboutScreen(

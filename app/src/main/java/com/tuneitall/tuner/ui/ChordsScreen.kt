@@ -54,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.AcousticChordInstruction
 import com.tuneitall.tuner.music.ArrangementMode
@@ -373,7 +374,7 @@ private fun SongChordPanel(
         Text(
             stringResource(R.string.song_analysis_description),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = mutedBackgroundColor(),
         )
     }
     SongModeSelector(state.analysisMode, onAnalysisModeSelected)

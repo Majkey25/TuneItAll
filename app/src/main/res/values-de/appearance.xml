@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appearance">Darstellung</string>
+    <string name="appearance_customize">Designs und eigene Darstellung</string>
+    <string name="appearance_mode">Darstellungsmodus</string>
+    <string name="appearance_themes">Designs</string>
+    <string name="appearance_themes_help">Wähle ein Design getrennt für den hellen und dunklen Modus.</string>
+    <string name="appearance_theme_choice">%1$s, %2$s Design</string>
+    <string name="appearance_material_you">Material You</string>
+    <string name="appearance_ocean">Ozean</string>
+    <string name="appearance_ember">Glut</string>
+    <string name="appearance_iris">Iris</string>
+    <string name="appearance_slate">Schiefer</string>
+    <string name="appearance_paper">Papier</string>
+    <string name="appearance_material_help">Material You nutzt ab Android 12 die Farben des Hintergrundbilds. Ältere Geräte nutzen die Intoniva-Palette.</string>
+    <string name="appearance_custom_colors">Eigene Farben</string>
+    <string name="appearance_custom_light">Eigener heller Modus</string>
+    <string name="appearance_custom_dark">Eigener dunkler Modus</string>
+    <string name="appearance_custom_help">Änderungen werden auf diesem Gerät gespeichert. Textfarben werden bei Bedarf für lesbare Beschriftungen angepasst.</string>
+    <string name="appearance_layout">Bedienelemente und Ecken</string>
+    <string name="appearance_classic">Klassisch</string>
+    <string name="appearance_material">Material</string>
+    <string name="appearance_corners">Rundung der Ecken</string>
+    <string name="appearance_text">Text</string>
+    <string name="appearance_text_size">Textgröße</string>
+    <string name="appearance_serif">Serif</string>
+    <string name="appearance_monospace">Mono</string>
+    <string name="appearance_contrast">Hoher Kontrast</string>
+    <string name="appearance_black">Schwarzer Hintergrund im dunklen Modus</string>
+    <string name="appearance_reset">Darstellung zurücksetzen</string>
+    <string name="appearance_accent">Akzent</string>
+    <string name="appearance_background">Hintergrund</string>
+    <string name="appearance_surface">Flächen</string>
+    <string name="appearance_foreground">Text</string>
+    <string name="appearance_muted">Sekundärer Text</string>
+    <string name="appearance_outline">Rahmen</string>
+    <string name="appearance_hex">Hex-Farbe</string>
+    <string name="appearance_hex_error">Gib sechs Hexadezimalzeichen ein, zum Beispiel 166534.</string>
+    <string name="appearance_hue">Farbton</string>
+    <string name="appearance_saturation">Sättigung</string>
+    <string name="appearance_brightness">Helligkeit</string>
+</resources>
