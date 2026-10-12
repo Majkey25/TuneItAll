@@ -7,13 +7,21 @@
 2. Update `CHANGELOG.md` and both Fastlane changelog files.
 3. Run `./tools/build.ps1 -AllowUnsigned` and connected-device tests.
 4. Push a matching `v*-alpha.*`, `v*-beta.*`, or `v*-rc.*` tag. The preview
-   workflow publishes a verified debug-signed APK and SHA-256 checksum as a
-   GitHub prerelease.
+   workflow builds without signing credentials. Separate `preview-signing`
+   and `release-publication` jobs verify signing and publication of
+   the verified debug-signed APK and SHA-256 checksum as a GitHub prerelease.
 
 Preview APKs are for direct testing only. They do not use the private Play upload
-key and must not be promoted to a stable release. The repository secret
-`TUNEITALL_PREVIEW_KEYSTORE_BASE64` keeps preview signatures stable between
-GitHub Actions runs.
+key and must not be promoted to a stable release. Store
+`TUNEITALL_PREVIEW_KEYSTORE_BASE64` only in the `preview-signing` environment
+to keep preview signatures stable between GitHub Actions runs.
+
+Before enabling signed workflows, protect `main` with strict `Test, lint, and build`
+checks and restrict `preview-signing`, `play-signing`, and `release-publication`
+deployment refs as described in the [security policy](../SECURITY.md).
+Restrict `v*` tag creation, updates and deletion to the repository owner/admin.
+The owner authorizes releases; no independent reviewer is required. Signing
+credentials must not remain at repository or organization scope.
 
 ## Stable Play release
 
@@ -21,11 +29,13 @@ GitHub Actions runs.
 2. Increment `versionCode` and `versionName`; update `CHANGELOG.md` and both
    Fastlane changelog files.
 3. Run `./tools/build.ps1 -AllowUnsigned` and all connected-device tests.
-4. Configure GitHub Actions secrets:
+4. Store these secrets only in the `play-signing` environment:
    `TUNEITALL_KEYSTORE_BASE64`, `TUNEITALL_KEYSTORE_PASSWORD`,
    `TUNEITALL_KEY_ALIAS`, and `TUNEITALL_KEY_PASSWORD`.
-5. Create and push an annotated `vX.Y.Z` tag only after review. The release
-   workflow builds a signed AAB, verifies it, and creates a draft GitHub release.
+5. Create and push an annotated `vX.Y.Z` tag after the quality gate passes. The release
+   workflow builds without signing credentials. A separate runner uses trusted
+   `main` logic to verify and sign the AAB in `play-signing`.
+   `release-publication` verifies provenance before creating the draft GitHub release.
 6. Verify the AAB checksum and upload certificate, then upload the same AAB to
    Play internal testing. Review the Play pre-launch report before promotion.
 

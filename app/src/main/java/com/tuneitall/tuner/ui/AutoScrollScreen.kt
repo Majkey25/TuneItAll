@@ -23,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,9 +39,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
+import com.tuneitall.tuner.ui.theme.errorBackgroundColor
 import com.tuneitall.tuner.autoscroll.AutoScrollOverlayService
+import com.tuneitall.tuner.autoscroll.AutoScrollAccessibilityService
 import com.tuneitall.tuner.autoscroll.AutoScrollPermissionState
 import com.tuneitall.tuner.autoscroll.AutoScrollPreferences
 import com.tuneitall.tuner.autoscroll.AutoScrollSpeed
@@ -54,12 +56,14 @@ fun AutoScrollRoute() {
     val preferences = remember(context) { AutoScrollPreferences(context) }
     var overlayAllowed by remember { mutableStateOf(AutoScrollPermissionState.canDrawOverlays(context)) }
     var accessibilityEnabled by remember { mutableStateOf(AutoScrollPermissionState.isAccessibilityEnabled(context)) }
-    var speed by remember { mutableIntStateOf(preferences.speed) }
+    val scrollState by AutoScrollAccessibilityService.state.collectAsStateWithLifecycle()
+    val speed = scrollState.speed ?: preferences.speed
     var disclosureAccepted by remember { mutableStateOf(preferences.disclosureAccepted) }
 
     LifecycleResumeEffect(context) {
         overlayAllowed = AutoScrollPermissionState.canDrawOverlays(context)
         accessibilityEnabled = AutoScrollPermissionState.isAccessibilityEnabled(context)
+        AutoScrollAccessibilityService.updateSpeed(preferences.speed)
         onPauseOrDispose { }
     }
 
@@ -69,8 +73,8 @@ fun AutoScrollRoute() {
         disclosureAccepted = disclosureAccepted,
         speed = speed,
         onSpeedChanged = {
-            speed = AutoScrollSpeed.clamp(it)
-            preferences.speed = speed
+            preferences.speed = AutoScrollSpeed.clamp(it)
+            AutoScrollAccessibilityService.updateSpeed(preferences.speed)
         },
         onOpenOverlaySettings = {
             context.startActivity(
@@ -131,6 +135,7 @@ fun AutoScrollScreen(
                         onOpenAccessibilitySettings()
                     },
                     modifier = Modifier.testTag("auto_scroll_disclosure_continue"),
+                    colors = dialogTextButtonColors(),
                 ) {
                     Text(stringResource(R.string.auto_scroll_disclosure_continue))
                 }
@@ -139,6 +144,7 @@ fun AutoScrollScreen(
                 TextButton(
                     onClick = { showDisclosure = false },
                     modifier = Modifier.testTag("auto_scroll_disclosure_cancel"),
+                    colors = dialogTextButtonColors(),
                 ) {
                     Text(stringResource(android.R.string.cancel))
                 }
@@ -247,7 +253,7 @@ private fun PermissionRow(
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(
                 stringResource(if (granted) R.string.auto_scroll_permission_ready else R.string.auto_scroll_permission_required),
-                color = if (granted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                color = if (granted) MaterialTheme.colorScheme.primary else errorBackgroundColor(),
             )
         }
         if (!granted) {

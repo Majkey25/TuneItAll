@@ -34,26 +34,34 @@ class AppearanceSettingsTest {
     }
 
     @Test
-    fun legacyPaletteAndModeDefaultsArePreserved() {
+    fun modernDefaultsAndExplicitLegacyLayoutArePreserved() {
         val settings = AppearanceCodec.decode("{}")
         assertEquals(AppearanceSettings(), settings)
+        assertEquals(ThemeLayout.MATERIAL, settings.layout)
         assertEquals(0xFAF9F6, appearanceColorScheme(settings, false).background.rgb())
         assertEquals(0x101010, appearanceColorScheme(settings, true).background.rgb())
-        assertEquals(0x63D17A, appearanceColorScheme(settings, false).primaryContainer.rgb())
+        assertEquals(0xD4EBD7, appearanceColorScheme(settings, false).primaryContainer.rgb())
+        assertEquals(0x234B2D, appearanceColorScheme(settings, true).primaryContainer.rgb())
+        val legacy = AppearanceCodec.decode("""{"layout":"CLASSIC"}""")
+        assertEquals(ThemeLayout.CLASSIC, legacy.layout)
+        assertEquals(0x63D17A, appearanceColorScheme(legacy, false).primaryContainer.rgb())
+        assertEquals(0x63D17A, appearanceColorScheme(legacy, true).primaryContainer.rgb())
+        val glass = settings.copy(layout = ThemeLayout.GLASS)
+        assertEquals(glass, AppearanceCodec.decode(AppearanceCodec.encode(glass)))
     }
 
     @Test
     fun everyPresetAndExtremeCustomPaletteKeepsTextReadable() {
-        for (palette in ThemePalette.entries) for (dark in listOf(false, true)) {
-            val settings = AppearanceSettings(lightTheme = palette, darkTheme = palette)
+        for (palette in ThemePalette.entries) for (dark in listOf(false, true)) for (layout in ThemeLayout.entries) {
+            val settings = AppearanceSettings(lightTheme = palette, darkTheme = palette, layout = layout)
             assertReadable(settings, dark)
             assertReadable(settings.copy(highContrast = true, blackBackground = true), dark)
         }
-        for (background in listOf(0, 0xFFFFFF, 0x777777, 0x63D17A)) {
+        for (background in listOf(0, 0xFFFFFF, 0x777777, 0x63D17A)) for (layout in ThemeLayout.entries.filter { it != ThemeLayout.CLASSIC }) {
             val custom = AppearanceSettings().customLight.copy(background = background, surface = 0xFFFFFF - background,
                 text = background, muted = background, accent = background, outline = background)
             val settings = AppearanceSettings(lightTheme = ThemePalette.CUSTOM, darkTheme = ThemePalette.CUSTOM,
-                customLight = custom, customDark = custom)
+                customLight = custom, customDark = custom, layout = layout)
             assertReadable(settings, false)
             assertReadable(settings.copy(highContrast = true), false)
             assertReadable(settings.copy(blackBackground = true), true)
@@ -96,5 +104,15 @@ class AppearanceSettingsTest {
             assertTrue("Contrast failed for ${settings.palette(dark)}, dark=$dark", colorContrast(foreground.rgb(), background.rgb()) >= 4.5)
         }
         assertTrue(colorContrast(scheme.outline.rgb(), scheme.background.rgb()) >= 3.0)
+        listOf(scheme.surface, scheme.surfaceVariant, scheme.surfaceContainerLow, scheme.surfaceContainer,
+            scheme.surfaceContainerHigh, scheme.surfaceContainerHighest).forEach { surface ->
+            val detail = "${settings.palette(dark)}, layout=${settings.layout}, dark=$dark, surface=${surface.rgb().toString(16)}"
+            assertTrue("onSurface=${scheme.onSurface.rgb().toString(16)} failed for $detail",
+                colorContrast(scheme.onSurface.rgb(), surface.rgb()) >= 4.5)
+            assertTrue("onSurfaceVariant=${scheme.onSurfaceVariant.rgb().toString(16)} failed for $detail",
+                colorContrast(scheme.onSurfaceVariant.rgb(), surface.rgb()) >= 4.5)
+            assertTrue("error=${scheme.error.rgb().toString(16)} failed for $detail",
+                colorContrast(scheme.error.rgb(), surface.rgb()) >= 4.5)
+        }
     }
 }

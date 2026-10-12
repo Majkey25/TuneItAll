@@ -20,6 +20,13 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "Release verification failed with exit code $LASTEXITCODE"
     }
+
+    $testClasses = Join-Path $repoRoot ".reference/tmp/bundle-verifier-classes"
+    & javac -d $testClasses (Join-Path $PSScriptRoot "VerifyBundle.java") (Join-Path $PSScriptRoot "VerifyBundleTest.java")
+    if ($LASTEXITCODE -ne 0) { throw "Bundle verifier tests did not compile" }
+    & java -cp $testClasses VerifyBundleTest (Join-Path $repoRoot ".reference/tmp")
+    if ($LASTEXITCODE -ne 0) { throw "Bundle signature regression failed" }
+    & (Join-Path $PSScriptRoot "VerifyReleaseTest.ps1") -BundletoolPath (Join-Path $repoRoot ".reference/tmp/bundletool-all-1.18.3.jar")
 } finally {
     Pop-Location
 }

@@ -15,6 +15,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
@@ -30,6 +31,8 @@ private val LightBackground = Color(0xFFFAF9F6)
 private val LightForeground = Color(0xFF111111)
 private val AccentGreen = Color(0xFF63D17A)
 private val LightAccentGreen = Color(0xFF166534)
+
+internal val LocalGlassEffects = staticCompositionLocalOf { false }
 
 internal val TuneItAllDarkColors = darkColorScheme(
     primary = AccentGreen,
@@ -143,12 +146,15 @@ fun TuneItAllTheme(
     val colors = remember(context, darkTheme, appearance) { appearanceColorScheme(appearance, darkTheme, context) }
     val shapes = when (appearance.layout) {
         ThemeLayout.CLASSIC -> TuneItAllShapes
-        ThemeLayout.MATERIAL -> Shapes()
+        ThemeLayout.MATERIAL, ThemeLayout.GLASS -> Shapes()
         ThemeLayout.CUSTOM -> RoundedCornerShape(appearance.cornerRadius.dp).let { Shapes(it, it, it, it, it) }
     }
     val typography = remember(appearance.font) { appearanceTypography(appearance.font) }
     val density = LocalDensity.current
-    CompositionLocalProvider(LocalDensity provides Density(density.density, density.fontScale * appearance.textScale / 100f)) {
+    CompositionLocalProvider(
+        LocalDensity provides Density(density.density, density.fontScale * appearance.textScale / 100f),
+        LocalGlassEffects provides (appearance.layout == ThemeLayout.GLASS && !appearance.highContrast),
+    ) {
         MaterialTheme(colorScheme = colors, shapes = shapes, typography = typography, content = content)
     }
 }
@@ -156,7 +162,7 @@ fun TuneItAllTheme(
 fun appearanceColorScheme(settings: AppearanceSettings, dark: Boolean, context: Context? = null): ColorScheme {
     val base = if (dark) TuneItAllDarkColors else TuneItAllLightColors
     val palette = settings.palette(dark)
-    val source = if (palette == ThemePalette.MATERIAL_YOU && context != null && Build.VERSION.SDK_INT >= 31) {
+    val paletteScheme = if (palette == ThemePalette.MATERIAL_YOU && context != null && Build.VERSION.SDK_INT >= 31) {
         if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else if (palette == ThemePalette.INTONIVA) base else {
         val colors = settings.colors(dark)
@@ -186,7 +192,10 @@ fun appearanceColorScheme(settings: AppearanceSettings, dark: Boolean, context: 
             surfaceDim = background,
         )
     }
-    if (!settings.highContrast && !(settings.blackBackground && dark)) return ensureReadableColors(source)
+    val source = if (settings.layout == ThemeLayout.CLASSIC) paletteScheme else modernColorScheme(paletteScheme, palette, dark)
+    if (!settings.highContrast && !(settings.blackBackground && dark)) {
+        return ensureReadableColors(source, settings.layout != ThemeLayout.CLASSIC)
+    }
     val background = when {
         settings.highContrast -> if (dark) Color.Black else Color.White
         else -> Color.Black
@@ -201,18 +210,59 @@ fun appearanceColorScheme(settings: AppearanceSettings, dark: Boolean, context: 
         surfaceContainerLowest = background, surfaceDim = background,
         surfaceBright = surface, surfaceVariant = surface, surfaceContainer = surface,
         surfaceContainerLow = surface, surfaceContainerHigh = surface, surfaceContainerHighest = surface,
-    ))
+    ), settings.layout != ThemeLayout.CLASSIC)
 }
 
-private fun ensureReadableColors(source: ColorScheme): ColorScheme {
+private fun modernColorScheme(source: ColorScheme, palette: ThemePalette, dark: Boolean): ColorScheme {
+    val surface = source.surface
+    val text = readableColor(source.onSurface.rgb(), surface.rgb()).asColor()
+    val tonalScale = (20 downTo 0).first { step ->
+        listOf(0.025f, 0.05f, 0.08f, 0.12f).all { amount ->
+            colorContrast(text.rgb(), lerp(surface, text, amount * step / 20f).rgb()) >= 4.5
+        }
+    } / 20f
+    fun tone(amount: Float): Color = lerp(surface, text, amount * tonalScale)
+    val highest = tone(0.12f)
+    val muted = if (palette == ThemePalette.INTONIVA) lerp(text, surface, 0.28f) else source.onSurfaceVariant
+    val container = if (palette == ThemePalette.INTONIVA) {
+        if (dark) Color(0xFF234B2D) else Color(0xFFD4EBD7)
+    } else source.primaryContainer
+    val onContainer = readableColor(source.onPrimaryContainer.rgb(), container.rgb()).asColor()
+    return source.copy(
+        primaryContainer = container, onPrimaryContainer = onContainer,
+        secondaryContainer = container, onSecondaryContainer = onContainer,
+        tertiaryContainer = container, onTertiaryContainer = onContainer,
+        primaryFixed = container, primaryFixedDim = container, onPrimaryFixed = onContainer, onPrimaryFixedVariant = onContainer,
+        secondaryFixed = container, secondaryFixedDim = container, onSecondaryFixed = onContainer, onSecondaryFixedVariant = onContainer,
+        tertiaryFixed = container, tertiaryFixedDim = container, onTertiaryFixed = onContainer, onTertiaryFixedVariant = onContainer,
+        onSurfaceVariant = muted,
+        outline = if (palette == ThemePalette.INTONIVA) lerp(text, surface, 0.46f) else source.outline,
+        outlineVariant = if (palette == ThemePalette.CUSTOM) source.outlineVariant else lerp(surface, text, 0.18f),
+        surfaceContainerLowest = surface, surfaceContainerLow = tone(0.025f),
+        surfaceContainer = tone(0.05f), surfaceContainerHigh = tone(0.08f),
+        surfaceContainerHighest = highest, surfaceVariant = highest,
+        surfaceBright = if (dark) highest else surface, surfaceDim = if (dark) surface else highest,
+    )
+}
+
+private fun ensureReadableColors(source: ColorScheme, modern: Boolean): ColorScheme {
     val primary = readableAccent(source.primary.rgb(), source.background.rgb()).asColor()
+    val surfaces = if (modern) listOf(source.surface, source.surfaceVariant, source.surfaceContainerLow, source.surfaceContainer,
+        source.surfaceContainerHigh, source.surfaceContainerHighest) else listOf(source.surface)
+    fun readableSurfaceText(preferred: Color): Color {
+        if (surfaces.all { colorContrast(preferred.rgb(), it.rgb()) >= 4.5 }) return preferred
+        return listOf(Color.Black, Color.White).maxBy { foreground ->
+            surfaces.minOf { colorContrast(foreground.rgb(), it.rgb()) }
+        }
+    }
+    val error = readableSurfaceText(source.error)
     return source.copy(
         primary = primary,
         onPrimary = readableColor(source.onPrimary.rgb(), primary.rgb()).asColor(),
         onBackground = readableColor(source.onBackground.rgb(), source.background.rgb()).asColor(),
-        onSurface = readableColor(source.onSurface.rgb(), source.surface.rgb()).asColor(),
-        onSurfaceVariant = readableColor(source.onSurfaceVariant.rgb(), source.surface.rgb()).asColor(),
-        error = readableColor(source.error.rgb(), source.surface.rgb()).asColor(),
+        onSurface = readableSurfaceText(source.onSurface),
+        onSurfaceVariant = readableSurfaceText(source.onSurfaceVariant),
+        error = error, onError = readableColor(source.onError.rgb(), error.rgb()).asColor(),
         outline = readableColor(source.outline.rgb(), source.background.rgb(), 3.0).asColor(),
     )
 }
@@ -244,4 +294,8 @@ fun inTuneColor(): Color {
 
 @Composable
 fun mutedBackgroundColor(): Color = readableColor(MaterialTheme.colorScheme.onSurfaceVariant.rgb(),
+    MaterialTheme.colorScheme.background.rgb()).asColor()
+
+@Composable
+fun errorBackgroundColor(): Color = readableColor(MaterialTheme.colorScheme.error.rgb(),
     MaterialTheme.colorScheme.background.rgb()).asColor()

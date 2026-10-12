@@ -20,6 +20,8 @@
     <string name="appearance_layout">Controles y esquinas</string>
     <string name="appearance_classic">Clásico</string>
     <string name="appearance_material">Material</string>
+    <string name="appearance_glass">Cristal</string>
+    <string name="appearance_glass_help">Cristal añade superficies ligeramente translúcidas sin desenfoque en vivo. El alto contraste mantiene las superficies opacas.</string>
     <string name="appearance_corners">Redondez de las esquinas</string>
     <string name="appearance_text">Texto</string>
     <string name="appearance_text_size">Tamaño del texto</string>

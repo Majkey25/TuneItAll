@@ -20,6 +20,8 @@
     <string name="appearance_layout">Ovládání a rohy</string>
     <string name="appearance_classic">Klasický</string>
     <string name="appearance_material">Material</string>
+    <string name="appearance_glass">Sklo</string>
+    <string name="appearance_glass_help">Sklo přidává jemné průsvitné plochy bez živého rozmazání. Vysoký kontrast ponechá plochy neprůhledné.</string>
     <string name="appearance_corners">Zaoblení rohů</string>
     <string name="appearance_text">Text</string>
     <string name="appearance_text_size">Velikost textu</string>

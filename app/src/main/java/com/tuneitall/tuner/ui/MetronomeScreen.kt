@@ -79,6 +79,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
+import com.tuneitall.tuner.ui.theme.errorBackgroundColor
+import com.tuneitall.tuner.ui.theme.asColor
+import com.tuneitall.tuner.ui.theme.readableColor
+import com.tuneitall.tuner.ui.theme.rgb
 import com.tuneitall.tuner.metronome.MetronomeSound
 import kotlinx.coroutines.delay
 
@@ -219,7 +223,7 @@ private fun TempoSongPanel(
     state.tempoError?.let { error ->
         Text(
             text = stringResource(tempoSongErrorResource(error)),
-            color = MaterialTheme.colorScheme.error,
+            color = errorBackgroundColor(),
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive }.testTag("tempo_error"),
         )
     }
@@ -291,6 +295,7 @@ private fun BpmControl(state: MetronomeUiState, onBpmChange: (Int) -> Unit) {
                     }
                 },
                 suffix = { Text(stringResource(R.string.metronome_bpm)) },
+                colors = outlinedFieldColors(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
@@ -519,7 +524,9 @@ private fun MetronomeQuickSettings(
     onMutedChange: (Boolean) -> Unit,
     onCountInChange: (Int) -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    val plane = MaterialTheme.colorScheme.surfaceContainerLow
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = plane,
+        contentColor = readableColor(MaterialTheme.colorScheme.onSurface.rgb(), plane.rgb()).asColor()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -538,6 +545,7 @@ private fun MetronomeQuickSettings(
                 onVolumeChange = onVolumeChange,
                 onMutedChange = onMutedChange,
                 onCountInChange = onCountInChange,
+                plane = plane,
             )
             Button(
                 onClick = onDismiss,
@@ -563,7 +571,7 @@ private fun PlaybackControls(state: MetronomeUiState, onTap: () -> Unit, onStart
     status?.let {
         Text(
             text = it,
-            color = if (state.error == null) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.error,
+            color = if (state.error == null) MaterialTheme.colorScheme.onBackground else errorBackgroundColor(),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.fillMaxWidth().semantics {
                 if (state.error != null) liveRegion = LiveRegionMode.Assertive

@@ -48,8 +48,11 @@ Intoniva neobsahuje reklamy, účet, analytiku ani sledování a nežádá o př
 k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává,
 neuchovává, nesdílí ani neodesílá.
 
-Vybranou písničku dekóduje jen v zařízení. Zdrojový zvuk nekopíruje, neuchovává
-ani neodesílá.
+Vybrané skladby se pro dekódování kopírují do soukromé mezipaměti aplikace
+v zařízení. Kopie může zůstat uložená pro přehrávání a opakovanou analýzu,
+dokud je skladba načtená, i při pozastavení nebo na pozadí. Aplikace se pokouší
+nepotřebné kopie mazat a při novém spuštění uklidit zbylé soubory. Zdrojový
+soubor nemění a žádný zvuk neodesílá.
 
 Volitelná podpora v podrobnostech o aplikaci otevře Buy Me a Coffee v externím
 prohlížeči. Neodemkne žádnou funkci.

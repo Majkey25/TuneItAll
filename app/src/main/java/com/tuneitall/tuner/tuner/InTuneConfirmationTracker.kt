@@ -38,9 +38,13 @@ class InTuneConfirmationTracker {
             return false
         }
 
+        val missingStartedAt = missingSince
+        if (missingStartedAt != null && nowMillis - missingStartedAt > MAX_DROPOUT_MILLIS) inTuneSince = null
         missingSince = null
 
         if (inTune) {
+            val outOfTuneStartedAt = outOfTuneSince
+            if (outOfTuneStartedAt != null && nowMillis - outOfTuneStartedAt >= REARM_MILLIS) clearConfirmation()
             outOfTuneSince = null
             if (confirmed) return false
             val startedAt = inTuneSince ?: nowMillis.also { inTuneSince = it }

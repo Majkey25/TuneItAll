@@ -74,7 +74,8 @@ class UserPreferences(context: Context) {
         set(value) = preferences.edit { putString(MODE_KEY, value.name) }
 
     var lastTuningId: String
-        get() = preferences.getString(LAST_TUNING_KEY, DEFAULT_TUNING_ID).orEmpty().ifBlank { DEFAULT_TUNING_ID }
+        get() = preferences.valueOrDefault(DEFAULT_TUNING_ID) { getString(LAST_TUNING_KEY, DEFAULT_TUNING_ID).orEmpty() }
+            .ifBlank { DEFAULT_TUNING_ID }
         set(value) {
             require(value.isNotBlank()) { "Last tuning ID must not be blank" }
             preferences.edit { putString(LAST_TUNING_KEY, value) }
@@ -87,7 +88,7 @@ class UserPreferences(context: Context) {
     var referencePitch: ReferencePitch
         get() {
             if (!preferences.contains(REFERENCE_PITCH_KEY)) return ReferencePitch(ReferencePitch.DEFAULT_HERTZ)
-            val hertz = Double.fromBits(preferences.getLong(REFERENCE_PITCH_KEY, 0L))
+            val hertz = Double.fromBits(preferences.valueOrDefault(0L) { getLong(REFERENCE_PITCH_KEY, 0L) })
             return if (hertz.isFinite() && hertz in ReferencePitch.MIN_HERTZ..ReferencePitch.MAX_HERTZ) {
                 ReferencePitch(hertz)
             } else {
@@ -194,8 +195,7 @@ class UserPreferences(context: Context) {
         set(value) = preferences.edit { putBoolean(METRONOME_MUTED_KEY, value) }
 
     var favoriteIds: Set<String>
-        get() = preferences.getStringSet(FAVORITES_KEY, emptySet())
-            .orEmpty()
+        get() = preferences.valueOrDefault(emptySet<String>()) { getStringSet(FAVORITES_KEY, emptySet()).orEmpty() }
             .asSequence()
             .filter(String::isNotBlank)
             .take(MAX_FAVORITES)
@@ -207,7 +207,7 @@ class UserPreferences(context: Context) {
         }
 
     var customTunings: List<TuningPreset>
-        get() = CustomTuningCodec.decode(preferences.getString(CUSTOM_TUNINGS_KEY, "[]").orEmpty())
+        get() = CustomTuningCodec.decode(preferences.valueOrDefault("[]") { getString(CUSTOM_TUNINGS_KEY, "[]").orEmpty() })
         set(value) {
             val encoded = CustomTuningCodec.encode(value)
             preferences.edit { putString(CUSTOM_TUNINGS_KEY, encoded) }

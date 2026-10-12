@@ -40,6 +40,32 @@ class ChordShapeCatalogTest {
     }
 
     @Test
+    fun `invalid first variants fall back to earliest playable bundled voicing`() {
+        val recovered = mapOf(
+            Chord(1, ChordQuality.AUGMENTED) to ChordVoicing(
+                frets = listOf(9, 8, 7, 6, 6, -1),
+                fingers = listOf(4, 3, 2, 1, 1, 0),
+                barres = listOf(6),
+                baseFret = 6,
+            ),
+            Chord(4, ChordQuality.MINOR_SEVENTH) to ChordVoicing(
+                frets = listOf(12, -1, 12, 12, 12, -1),
+                fingers = listOf(2, 0, 3, 3, 3, 0),
+                baseFret = 12,
+            ),
+            Chord(10, ChordQuality.MINOR_SEVENTH) to ChordVoicing(
+                frets = listOf(-1, 1, 3, 1, 2, 1),
+                fingers = listOf(0, 1, 3, 1, 2, 1),
+                barres = listOf(1),
+            ),
+        )
+
+        recovered.forEach { (chord, expected) ->
+            assertEquals(expected, catalog.shape("guitar-6-standard", chord), chord.toString())
+        }
+    }
+
+    @Test
     fun `relative source frets become absolute and keep fingering details`() {
         val abMinor = shape(8, ChordQuality.MINOR)
 
@@ -65,19 +91,30 @@ class ChordShapeCatalogTest {
     }
 
     @Test
-    fun `every exposed shape contains exactly the requested chord tones`() {
+    fun `all reviewed available shapes preserve chord tones and playable fingering`() {
         listOf("guitar-6-standard", "ukulele-standard").forEach { tuningId ->
             val tuning = requireNotNull(TuningCatalog.byId(tuningId))
+            val unavailable = Chord(if (tuningId == "guitar-6-standard") 4 else 11, ChordQuality.MINOR_ADD_NINTH)
             repeat(12) { root ->
                 instructionalChordQualities.forEach { quality ->
                     val chord = Chord(root, quality)
-                    val voicing = catalog.shape(tuningId, chord) ?: return@forEach
+                    if (chord == unavailable) {
+                        assertNull(catalog.shape(tuningId, chord), "$tuningId $chord")
+                        return@forEach
+                    }
+                    val voicing = requireNotNull(catalog.shape(tuningId, chord)) { "$tuningId $chord" }
                     val soundedPitchClasses = voicing.frets.mapIndexedNotNull { index, fret ->
                         fret.takeIf { it >= 0 }?.let { (tuning.notesLowToHigh[index].value + it) % 12 }
                     }.toSet()
                     val requiredPitchClasses = essentialIntervals.getValue(quality)
                         .mapTo(mutableSetOf()) { (root + it) % 12 }
 
+                    assertEquals(tuning.notesLowToHigh.size, voicing.frets.size, "$tuningId $chord $voicing")
+                    assertEquals(voicing.frets.size, voicing.fingers.size, "$tuningId $chord $voicing")
+                    assertTrue(voicing.frets.all { it in -1..24 }, "$tuningId $chord $voicing")
+                    assertTrue(voicing.fingers.all { it in 0..4 }, "$tuningId $chord $voicing")
+                    assertTrue(voicing.barres.all { it in 1..24 }, "$tuningId $chord $voicing")
+                    assertTrue(voicing.baseFret in 1..24, "$tuningId $chord $voicing")
                     assertTrue(soundedPitchClasses.all(chord.pitchClasses::contains), "$tuningId $chord $voicing")
                     assertTrue(soundedPitchClasses.containsAll(requiredPitchClasses), "$tuningId $chord $voicing")
                     assertTrue(

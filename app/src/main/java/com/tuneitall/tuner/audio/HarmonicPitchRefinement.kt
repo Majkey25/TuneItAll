@@ -108,7 +108,32 @@ private fun harmonicProjections(
 ): DoubleArray {
     val omega = 2.0 * PI * frequency
     val projections = DoubleArray(2 * harmonics)
-    for (harmonic in 1..harmonics) {
+    // Reverse Goertzel preserves phase relative to start; paired recurrences share each sample.
+    for (harmonic in 1 until harmonics step 2) {
+        val firstCosine = cos(harmonic * omega)
+        val secondCosine = cos((harmonic + 1) * omega)
+        val firstCoefficient = 2.0 * firstCosine
+        val secondCoefficient = 2.0 * secondCosine
+        var firstPrevious = 0.0
+        var firstBeforePrevious = 0.0
+        var secondPrevious = 0.0
+        var secondBeforePrevious = 0.0
+        for (index in samples.lastIndex downTo start) {
+            val value = samples[index] - mean
+            val firstCurrent = value + firstCoefficient * firstPrevious - firstBeforePrevious
+            val secondCurrent = value + secondCoefficient * secondPrevious - secondBeforePrevious
+            firstBeforePrevious = firstPrevious
+            firstPrevious = firstCurrent
+            secondBeforePrevious = secondPrevious
+            secondPrevious = secondCurrent
+        }
+        projections[2 * (harmonic - 1)] = firstPrevious - firstCosine * firstBeforePrevious
+        projections[2 * (harmonic - 1) + 1] = sin(harmonic * omega) * firstBeforePrevious
+        projections[2 * harmonic] = secondPrevious - secondCosine * secondBeforePrevious
+        projections[2 * harmonic + 1] = sin((harmonic + 1) * omega) * secondBeforePrevious
+    }
+    if (harmonics % 2 == 1) {
+        val harmonic = harmonics
         val cosineStep = cos(harmonic * omega)
         val sineStep = sin(harmonic * omega)
         var cosine = 1.0

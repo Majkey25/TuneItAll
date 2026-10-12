@@ -140,6 +140,7 @@ data class PitchEstimate(
 }
 
 class YinPitchDetector {
+    private val fftDifference = YinDifference()
     private var difference = DoubleArray(0)
     private var cumulativeMean = DoubleArray(0)
     private var decimated = DoubleArray(0)
@@ -310,6 +311,11 @@ class YinPitchDetector {
     }
 
     private fun calculateDifference(samples: DoubleArray, tauMax: Int, analysisStart: Int) {
+        // Short lag ranges cost less directly than two FFTs.
+        if (tauMax >= FFT_MIN_TAU) {
+            fftDifference.calculate(samples, tauMax, analysisStart, difference)
+            return
+        }
         difference[0] = 0.0
         val analysisLength = samples.size - tauMax
         for (tau in 1..tauMax) {
@@ -422,6 +428,7 @@ class YinPitchDetector {
         const val LOW_RANGE_MAX_HERTZ = 150.0
         val REFINEMENT_RATIO = 2.0.pow(1.0 / 12.0)
         const val MIN_TAU = 2
+        const val FFT_MIN_TAU = 128
         const val PCM_SCALE = 32768.0
         const val NO_TROUGH_MIN_PERIODICITY = 0.25
         const val NO_TROUGH_MARGIN = 0.05

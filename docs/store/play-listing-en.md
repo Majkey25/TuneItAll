@@ -49,8 +49,11 @@ Intoniva has no ads, account, analytics, tracking, or internet permission.
 Microphone audio is analyzed transiently on-device and never recorded, retained,
 shared, or transmitted.
 
-Selected song files are decoded only on-device. Intoniva does not copy, retain,
-or upload the source audio.
+Selected songs are copied to private app cache for on-device decoding. A copy
+can remain for playback and reanalysis while the song is loaded, including while
+paused or in the background. Cleanup is attempted when copies are no longer
+needed and on a fresh app start. The original file is unchanged and no audio is
+uploaded.
 
 Optional support in App details opens Buy Me a Coffee in an external browser.
 It does not unlock app features.

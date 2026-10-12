@@ -20,6 +20,8 @@
     <string name="appearance_layout">Commandes et coins</string>
     <string name="appearance_classic">Classique</string>
     <string name="appearance_material">Material</string>
+    <string name="appearance_glass">Verre</string>
+    <string name="appearance_glass_help">Verre ajoute des surfaces légèrement translucides sans flou en temps réel. Le contraste élevé garde les surfaces opaques.</string>
     <string name="appearance_corners">Arrondi des coins</string>
     <string name="appearance_text">Texte</string>
     <string name="appearance_text_size">Taille du texte</string>

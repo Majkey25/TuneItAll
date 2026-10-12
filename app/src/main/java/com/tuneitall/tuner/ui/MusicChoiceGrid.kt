@@ -31,6 +31,7 @@ internal fun <T> MusicChoiceGrid(
                         selected = selected(choice),
                         onClick = { onSelected(choice) },
                         label = { Text(label(choice)) },
+                        colors = currentPlaneChipColors(),
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(tag(choice)),
                     )
                 }

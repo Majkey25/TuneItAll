@@ -130,23 +130,28 @@ class MetronomePlayer internal constructor(
         if (active.acceptsUpdates) active.update(settings)
     }
 
-    fun stop(): MetronomeStopResult {
+    fun stop(): MetronomeStopResult = captureStop().invoke()
+
+    internal fun captureStop(): () -> MetronomeStopResult {
         val active = synchronized(this) {
-            session ?: return if (lastFailure == null) {
-                MetronomeStopResult.STOPPED
-            } else {
-                MetronomeStopResult.FAILED
+            val current = session
+            if (current == null) {
+                val result = if (lastFailure == null) MetronomeStopResult.STOPPED else MetronomeStopResult.FAILED
+                return { result }
             }
+            current.requestStop()
+            current
         }
-        active.requestStop()
-        val result = active.awaitStop()
-        synchronized(this) {
-            if (!active.isAlive && session === active) {
-                lastFailure = active.failure?.message
-                session = null
+        return {
+            val result = active.awaitStop()
+            synchronized(this) {
+                if (!active.isAlive && session === active) {
+                    lastFailure = active.failure?.message
+                    session = null
+                }
             }
+            result
         }
-        return result
     }
 
     @Synchronized
@@ -340,11 +345,13 @@ private class PlaybackSession(
         }
     }
 
-    fun phase(): Double = synchronized(streamLock) {
+    fun phase(): Double = if (!playStarted) 0.0 else synchronized(streamLock) {
         val activeOutput = output ?: return@synchronized 0.0
         return@synchronized try {
             stream.phaseAt(playbackFrame(activeOutput))
         } catch (_: IllegalArgumentException) {
+            0.0
+        } catch (_: IllegalStateException) {
             0.0
         }
     }
@@ -436,7 +443,6 @@ private class PlaybackSession(
 
 private class PlaybackLifecycle {
     private val stage = AtomicReference(PlaybackStage.STARTING)
-    private val playLock = Any()
 
     val stopping: Boolean
         get() = stage.get() == PlaybackStage.STOPPING
@@ -448,17 +454,17 @@ private class PlaybackLifecycle {
 
     fun outputReady(): Boolean = stage.compareAndSet(PlaybackStage.CREATING, PlaybackStage.READY)
 
-    fun play(output: MetronomeOutput): Boolean = synchronized(playLock) {
-        if (!stage.compareAndSet(PlaybackStage.READY, PlaybackStage.PLAYING)) return@synchronized false
+    fun play(output: MetronomeOutput): Boolean {
+        if (!stage.compareAndSet(PlaybackStage.READY, PlaybackStage.PLAYING)) return false
         output.play()
-        true
+        return true
     }
 
-    fun requestStop() = synchronized(playLock) {
+    fun requestStop() {
         while (true) {
             val current = stage.get()
-            if (current == PlaybackStage.STOPPING || current == PlaybackStage.TERMINATED) return@synchronized
-            if (stage.compareAndSet(current, PlaybackStage.STOPPING)) return@synchronized
+            if (current == PlaybackStage.STOPPING || current == PlaybackStage.TERMINATED) return
+            if (stage.compareAndSet(current, PlaybackStage.STOPPING)) return
         }
     }
 

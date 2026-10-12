@@ -83,6 +83,7 @@ fun TuningLibraryScreen(
             value = query,
             onValueChange = { query = it },
             label = { Text(stringResource(R.string.search_tunings)) },
+            colors = outlinedFieldColors(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -90,6 +91,7 @@ fun TuningLibraryScreen(
             item {
                 FilterChip(
                     selected = favoritesOnly,
+                    colors = currentPlaneChipColors(),
                     onClick = {
                         favoritesOnly = !favoritesOnly
                         if (favoritesOnly) instrument = null
@@ -101,6 +103,7 @@ fun TuningLibraryScreen(
             item {
                 FilterChip(
                     selected = instrument == null && !favoritesOnly,
+                    colors = currentPlaneChipColors(),
                     onClick = {
                         instrument = null
                         favoritesOnly = false
@@ -112,6 +115,7 @@ fun TuningLibraryScreen(
             items(Instrument.entries.filterNot { it == Instrument.CHROMATIC }) { option ->
                 FilterChip(
                     selected = instrument == option && !favoritesOnly,
+                    colors = currentPlaneChipColors(),
                     onClick = {
                         instrument = option
                         favoritesOnly = false
@@ -125,6 +129,7 @@ fun TuningLibraryScreen(
             item {
                 FilterChip(
                     selected = stringCount == null,
+                    colors = currentPlaneChipColors(),
                     onClick = { stringCount = null },
                     label = { Text(stringResource(R.string.all_strings)) },
                 )
@@ -132,6 +137,7 @@ fun TuningLibraryScreen(
             items(listOf(4, 5, 6, 7, 8, 9)) { count ->
                 FilterChip(
                     selected = stringCount == count,
+                    colors = currentPlaneChipColors(),
                     onClick = { stringCount = count },
                     label = { Text(pluralStringResource(R.plurals.string_count, count, count)) },
                 )
@@ -172,7 +178,7 @@ fun TuningLibraryScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 TextButton(
                                     onClick = { onToggleFavorite(preset.id) },
-                                    colors = textButtonColors,
+                                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
                                     modifier = Modifier.semantics {
                                         contentDescription = "$favoriteDescription: ${preset.name}"
                                     },
@@ -182,7 +188,7 @@ fun TuningLibraryScreen(
                                 if (preset.id in customIds) {
                                     TextButton(
                                         onClick = { pendingDeletion = preset },
-                                        colors = textButtonColors,
+                                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
                                         modifier = Modifier.testTag("delete_tuning_${preset.id}"),
                                     ) {
                                         Text(stringResource(R.string.delete))
@@ -208,10 +214,11 @@ fun TuningLibraryScreen(
                         pendingDeletion = null
                     },
                     modifier = Modifier.testTag("confirm_delete_tuning"),
+                    colors = dialogTextButtonColors(),
                 ) { Text(stringResource(R.string.delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDeletion = null }) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = { pendingDeletion = null }, colors = dialogTextButtonColors()) { Text(stringResource(R.string.cancel)) }
             },
         )
     }

@@ -240,7 +240,7 @@ private fun Peg(
     val borderColor = when {
         selected && confirmed -> inTuneColor()
         selected -> MaterialTheme.colorScheme.primary
-        else -> MaterialTheme.colorScheme.outlineVariant
+        else -> MaterialTheme.colorScheme.outline
     }
     val borderWidth = when {
         selected && confirmed -> 3.dp

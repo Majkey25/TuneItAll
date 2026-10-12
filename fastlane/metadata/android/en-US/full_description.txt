@@ -29,7 +29,7 @@ Song analysis provides estimates. Dense mixes can be ambiguous; results may need
 
 Intoniva has no ads, account, analytics, tracking, or internet permission. Microphone audio is analyzed transiently on-device and never recorded, retained, shared, or transmitted.
 
-Selected song files are decoded only on-device and are never copied or uploaded.
+Selected song files are copied into private app cache for local analysis and playback. They are never uploaded.
 
 Auto-scroll uses Android Accessibility only to perform user-requested swipe gestures. It cannot retrieve screen content and does not read, store, record, or send anything shown on screen. No Shizuku is required.
 

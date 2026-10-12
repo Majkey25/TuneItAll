@@ -11,10 +11,16 @@ and runtime dependency set:
 
 Microphone samples remain on-device, are processed transiently in memory, and
 are discarded immediately. Local preferences, custom tunings, trainer scores,
-and Auto-scroll disclosure acceptance do not leave the device. A song selected
-through Android's system document picker is decoded transiently on-device;
-Intoniva stores only in-memory chord, note, tempo, and arrangement results and
-does not copy, upload, or retain the source audio.
+and Auto-scroll disclosure acceptance do not leave the device. Songs selected
+through Android's system document picker are copied to private app cache for
+on-device decoding. Playback and reanalysis retain one cached copy while the
+song is loaded, including while paused or in the background. Tempo analysis and
+unsuccessful imports attempt to delete their working copies when finished.
+The retained copy is deleted on a best-effort basis when the song is removed or
+replaced, or the app releases the loaded song. Copies left after a crash or
+failed deletion may remain until startup cleanup, Android cache cleanup,
+clearing app data, or uninstalling. The original file is not changed and no audio
+is uploaded. Chord, note, tempo, and arrangement results remain in memory.
 
 The optional Accessibility service performs only user-requested swipe gestures.
 Its metadata explicitly disables window-content retrieval. Floating controls

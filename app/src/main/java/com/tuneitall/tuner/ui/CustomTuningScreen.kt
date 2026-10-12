@@ -32,12 +32,14 @@ import com.tuneitall.tuner.model.MidiNote
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.model.notes
 import com.tuneitall.tuner.storage.CustomTuningCodec
+import com.tuneitall.tuner.ui.theme.errorBackgroundColor
 import java.util.Locale
 import java.util.UUID
 
 @Composable
 fun CustomTuningScreen(
     existing: List<TuningPreset>,
+    customCount: Int,
     onSave: (TuningPreset) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -49,7 +51,7 @@ fun CustomTuningScreen(
     val parsedNotes = noteInputs.map(::parseSingleNote)
     val duplicateName = existing.any { it.name.equals(name.trim(), ignoreCase = true) }
     val valid = name.isNotBlank() && !duplicateName && parsedNotes.all { it != null } &&
-        existing.size < CustomTuningCodec.MAX_CUSTOM_TUNINGS
+        customCount < CustomTuningCodec.MAX_CUSTOM_TUNINGS
 
     fun updateShape(nextInstrument: Instrument, nextCount: Int) {
         instrument = nextInstrument
@@ -72,6 +74,7 @@ fun CustomTuningScreen(
             onValueChange = { name = it.take(MAX_NAME_LENGTH) },
             label = { Text(stringResource(R.string.tuning_name)) },
             isError = duplicateName,
+            colors = outlinedFieldColors(),
             supportingText = {
                 if (duplicateName) Text(stringResource(R.string.duplicate_tuning_name))
             },
@@ -86,6 +89,7 @@ fun CustomTuningScreen(
             Instrument.entries.filterNot { it == Instrument.CHROMATIC }.forEach { option ->
                 FilterChip(
                     selected = instrument == option,
+                    colors = currentPlaneChipColors(),
                     onClick = {
                         updateShape(option, defaultStringCount(option))
                     },
@@ -99,6 +103,7 @@ fun CustomTuningScreen(
                 stringCountsFor(instrument).forEach { count ->
                     FilterChip(
                         selected = stringCount == count,
+                        colors = currentPlaneChipColors(),
                         onClick = { updateShape(instrument, count) },
                         label = { Text(count.toString()) },
                         modifier = Modifier.weight(1f),
@@ -113,6 +118,7 @@ fun CustomTuningScreen(
                 layoutOptions.forEach { option ->
                     FilterChip(
                         selected = layout == option,
+                        colors = currentPlaneChipColors(),
                         onClick = { layout = option },
                         label = { Text(layoutName(option)) },
                         modifier = Modifier.weight(1f),
@@ -129,6 +135,7 @@ fun CustomTuningScreen(
                 },
                 label = { Text(stringResource(R.string.string_note, instrumentStringNumber(index, noteInputs.size))) },
                 isError = value.isNotBlank() && parsedNotes[index] == null,
+                colors = outlinedFieldColors(),
                 supportingText = {
                     if (value.isNotBlank() && parsedNotes[index] == null) {
                         Text(stringResource(R.string.note_example))
@@ -138,8 +145,8 @@ fun CustomTuningScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        if (existing.size >= CustomTuningCodec.MAX_CUSTOM_TUNINGS) {
-            Text(stringResource(R.string.custom_tuning_limit), color = MaterialTheme.colorScheme.error)
+        if (customCount >= CustomTuningCodec.MAX_CUSTOM_TUNINGS) {
+            Text(stringResource(R.string.custom_tuning_limit), color = errorBackgroundColor())
         }
         Button(
             enabled = valid,

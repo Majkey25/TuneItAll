@@ -29,7 +29,7 @@ Analýza skladby poskytuje odhady. Hutné mixy mohou být nejednoznačné; výsl
 
 Intoniva neobsahuje reklamy, účet, analytiku ani sledování a nežádá o přístup k internetu. Zvuk mikrofonu zpracuje dočasně jen v zařízení; nikdy ho nenahrává, neuchovává, nesdílí ani neodesílá.
 
-Vybranou písničku dekóduje pouze v zařízení a nikdy ji nekopíruje ani neodesílá.
+Vybranou písničku zkopíruje do soukromé mezipaměti aplikace pro místní analýzu a přehrávání. Nikdy ji neodesílá.
 
 Automatické posouvání používá Usnadnění Androidu pouze k provedení gest přejetí vyžádaných uživatelem. Nemůže načítat obsah obrazovky a nic z obrazovky nečte, neukládá, nenahrává ani neodesílá. Shizuku není potřeba.
 

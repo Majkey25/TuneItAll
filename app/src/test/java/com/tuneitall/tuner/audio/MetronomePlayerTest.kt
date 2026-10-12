@@ -56,6 +56,84 @@ class MetronomePlayerTest {
     }
 
     @Test
+    fun `captured stop completion never stops a later playback session`() {
+        val outputs = listOf(FakeOutput(writeDelayMillis = 1L), FakeOutput(writeDelayMillis = 1L))
+        val creations = AtomicInteger()
+        val player = MetronomePlayer(
+            outputFactory = { outputs[creations.getAndIncrement()] },
+            setAudioThreadPriority = {},
+        )
+
+        try {
+            player.start(MetronomeSettings())
+            val finishOldStop = player.captureStop()
+            assertTrue(waitUntil { !player.running })
+            player.start(MetronomeSettings())
+
+            assertEquals(MetronomeStopResult.STOPPED, finishOldStop())
+            assertTrue(player.running)
+            assertEquals(0, outputs[1].stopCount.get())
+            assertEquals(0, outputs[1].releaseCount.get())
+        } finally {
+            player.stop()
+        }
+    }
+
+    @Test
+    fun `stop controls do not wait for native play and retain output ownership`() {
+        val output = FakeOutput(blockPlay = true, blockPlaybackRead = true)
+        val player = testPlayer(output, startupTimeoutMillis = 5_000L)
+        val startFailure = AtomicReference<Throwable?>()
+        val finishStop = AtomicReference<() -> MetronomeStopResult>()
+        val stopStatus = AtomicReference<MetronomePlayerStatus>()
+        val phase = AtomicReference<Double>()
+        val stopCaptured = CountDownLatch(1)
+        val starter = Thread {
+            try {
+                player.start(MetronomeSettings())
+            } catch (error: Throwable) {
+                startFailure.set(error)
+            }
+        }
+        val stopper = Thread {
+            phase.set(player.phase())
+            player.requestStop()
+            finishStop.set(player.captureStop())
+            stopStatus.set(player.status)
+            stopCaptured.countDown()
+        }
+
+        try {
+            starter.start()
+            assertTrue(output.playEntered.await(1, TimeUnit.SECONDS))
+            stopper.start()
+            assertTrue(stopCaptured.await(1, TimeUnit.SECONDS), "Stop controls waited for native play")
+            assertEquals(0.0, phase.get())
+            assertEquals(1L, output.playbackReadEntered.count)
+            assertTrue(requireNotNull(stopStatus.get()).running)
+            assertTrue(requireNotNull(stopStatus.get()).stopping)
+            assertEquals(0, output.releaseCount.get())
+            assertFailsWith<IllegalStateException> { player.start(MetronomeSettings()) }
+
+            output.allowPlaybackRead.countDown()
+            output.allowPlay.countDown()
+            starter.join(1_000L)
+            assertFalse(starter.isAlive)
+            assertEquals(null, startFailure.get())
+            assertEquals(MetronomeStopResult.STOPPED, requireNotNull(finishStop.get())())
+            assertEquals(1, output.playCount.get())
+            assertEquals(1, output.stopCount.get())
+            assertEquals(1, output.releaseCount.get())
+        } finally {
+            output.allowPlaybackRead.countDown()
+            output.allowPlay.countDown()
+            starter.join(1_000L)
+            stopper.join(1_000L)
+            player.stop()
+        }
+    }
+
+    @Test
     fun `startup timeout retains live stopping worker and rejects restart`() {
         val priorityEntered = CountDownLatch(1)
         val allowPriority = CountDownLatch(1)
@@ -347,6 +425,44 @@ class MetronomePlayerTest {
     }
 
     @Test
+    fun `phase falls back when output is released during playback position read`() {
+        val output = FakeOutput(blockWriteCall = 2, failWriteCall = 2, blockPlaybackRead = true)
+        val player = testPlayer(output)
+        val phase = AtomicReference<Double?>()
+        val phaseFailure = AtomicReference<Throwable?>()
+        val reader = Thread {
+            try {
+                phase.set(player.phase())
+            } catch (error: Throwable) {
+                phaseFailure.set(error)
+            }
+        }
+
+        try {
+            player.start(MetronomeSettings())
+            assertTrue(output.writeBlocked.await(1, TimeUnit.SECONDS))
+            reader.start()
+            assertTrue(output.playbackReadEntered.await(1, TimeUnit.SECONDS))
+
+            output.allowWrite.countDown()
+            assertTrue(output.released.await(1, TimeUnit.SECONDS))
+            output.allowPlaybackRead.countDown()
+            reader.join(1_000L)
+
+            assertFalse(reader.isAlive)
+            assertEquals(null, phaseFailure.get())
+            assertEquals(0.0, phase.get())
+            assertEquals(MetronomeStopResult.FAILED, player.stop())
+            assertEquals(1, output.releaseCount.get())
+        } finally {
+            output.allowWrite.countDown()
+            output.allowPlaybackRead.countDown()
+            reader.join(1_000L)
+            player.stop()
+        }
+    }
+
+    @Test
     fun `stream update starts at next main beat`() {
         val stream = MetronomeStream(MetronomeSettings(bpm = Bpm(120), subdivision = 1))
         val rendered = ShortArray(40_960)
@@ -437,6 +553,8 @@ class MetronomePlayerTest {
         private val failWriteCall: Int? = null,
         private val holdPlaybackWriteCall: Int? = null,
         private val writeDelayMillis: Long = 0L,
+        private val blockPlaybackRead: Boolean = false,
+        private val blockPlay: Boolean = false,
     ) : MetronomeOutput {
         private val framePosition = AtomicLong()
         private val framesWritten = AtomicLong()
@@ -449,12 +567,23 @@ class MetronomePlayerTest {
         val allowWrite = CountDownLatch(1)
         val fadeWritten = CountDownLatch(1)
         val released = CountDownLatch(1)
+        val playbackReadEntered = CountDownLatch(1)
+        val allowPlaybackRead = CountDownLatch(1)
+        val playEntered = CountDownLatch(1)
+        val allowPlay = CountDownLatch(1)
         @Volatile
         var heldWriteWasFade = false
             private set
 
         override val playbackHeadPosition: Int
-            get() = framePosition.get().toInt()
+            get() {
+                if (blockPlaybackRead) {
+                    playbackReadEntered.countDown()
+                    allowPlaybackRead.await()
+                    check(releaseCount.get() == 0) { "Metronome output was released" }
+                }
+                return framePosition.get().toInt()
+            }
 
         override fun write(buffer: ShortArray, offset: Int, size: Int): Int {
             val call = writeCount.incrementAndGet()
@@ -480,6 +609,10 @@ class MetronomePlayerTest {
 
         override fun play() {
             playCount.incrementAndGet()
+            if (blockPlay) {
+                playEntered.countDown()
+                allowPlay.await()
+            }
         }
 
         override fun stop() {

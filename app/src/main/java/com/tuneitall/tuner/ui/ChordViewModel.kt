@@ -4,12 +4,12 @@ import android.app.Application
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
-import com.tuneitall.tuner.audio.audioDisplayName
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tuneitall.tuner.audio.SongAudioDecoder
 import com.tuneitall.tuner.audio.SongDecodeError
 import com.tuneitall.tuner.audio.SongDecodeException
+import com.tuneitall.tuner.audio.runSongImport
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.AcousticArrangement
 import com.tuneitall.tuner.music.ArrangementMode
@@ -21,6 +21,8 @@ import com.tuneitall.tuner.music.SongAnalysisMode
 import com.tuneitall.tuner.music.SongEvent
 import com.tuneitall.tuner.music.arrangeForStandardE
 import java.util.concurrent.CancellationException
+import java.io.File
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -71,6 +73,7 @@ data class ChordUiState(
 class ChordViewModel internal constructor(
     application: Application,
     private val decoder: SongAudioDecoder,
+    private val arrangementDispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1),
 ) : AndroidViewModel(application) {
     constructor(application: Application) : this(application, SongAudioDecoder(application))
 
@@ -78,14 +81,19 @@ class ChordViewModel internal constructor(
     private var analysisJob: Job? = null
     @Volatile
     private var analysisGeneration = 0L
+    private var arrangementJob: Job? = null
+    private var arrangementGeneration = 0L
     private var positionJob: Job? = null
     private var player: MediaPlayer? = null
+    private var playbackSource: File? = null
     private var currentSongUri: Uri? = null
     private var analysisPausedForScreen = false
-    private val chordCatalog by lazy { ChordShapeCatalog.fromResources(application.resources) }
     val uiState: StateFlow<ChordUiState> = mutableUiState.asStateFlow()
 
-    fun setTab(tab: ChordTab) = mutableUiState.update { it.copy(tab = tab) }
+    fun setTab(tab: ChordTab) {
+        if (mutableUiState.value.tab == ChordTab.SONG && tab == ChordTab.LIBRARY) pausePlayback()
+        mutableUiState.update { it.copy(tab = tab) }
+    }
 
     fun setChord(chord: Chord) = mutableUiState.update { it.copy(selectedChord = chord) }
 
@@ -94,29 +102,41 @@ class ChordViewModel internal constructor(
         mutableUiState.update { it.copy(selectedTuningId = id) }
     }
 
-    fun setTranspose(semitones: Int) = mutableUiState.update { state ->
-        val next = state.copy(transposeSemitones = semitones.coerceIn(MIN_TRANSPOSE, MAX_TRANSPOSE))
-        next.copy(arrangement = buildArrangement(next))
+    fun setTranspose(semitones: Int) {
+        val bounded = semitones.coerceIn(MIN_TRANSPOSE, MAX_TRANSPOSE)
+        if (mutableUiState.value.transposeSemitones == bounded) return
+        cancelArrangement()
+        mutableUiState.update { it.copy(transposeSemitones = bounded, arrangement = null) }
+        rebuildArrangement()
     }
 
-    fun setArrangementMode(mode: ArrangementMode) = mutableUiState.update { state ->
-        val next = state.copy(arrangementMode = mode)
-        next.copy(arrangement = buildArrangement(next))
+    fun setArrangementMode(mode: ArrangementMode) {
+        if (mutableUiState.value.arrangementMode == mode) return
+        cancelArrangement()
+        mutableUiState.update { it.copy(arrangementMode = mode, arrangement = null) }
+        rebuildArrangement()
     }
 
     fun setSongAnalysisMode(mode: SongAnalysisMode) {
         if (mutableUiState.value.analysisMode == mode) return
+        cancelArrangement()
         mutableUiState.update { it.copy(analysisMode = mode, events = emptyList(), arrangement = null, analysisError = null) }
         currentSongUri?.let(::startAnalysis)
     }
 
     fun setNoteRange(range: NoteRange) {
         if (mutableUiState.value.noteRange == range) return
-        mutableUiState.update { it.copy(noteRange = range, events = emptyList(), analysisError = null) }
-        if (mutableUiState.value.analysisMode == SongAnalysisMode.NOTES) currentSongUri?.let(::startAnalysis)
+        if (mutableUiState.value.analysisMode == SongAnalysisMode.NOTES) {
+            cancelArrangement()
+            mutableUiState.update { it.copy(noteRange = range, events = emptyList(), arrangement = null, analysisError = null) }
+            currentSongUri?.let(::startAnalysis)
+        } else {
+            mutableUiState.update { it.copy(noteRange = range) }
+        }
     }
 
     fun loadSong(uri: Uri) {
+        cancelArrangement()
         analysisJob?.cancel()
         analysisGeneration++
         analysisPausedForScreen = false
@@ -138,29 +158,35 @@ class ChordViewModel internal constructor(
                 playbackError = null,
             )
         }
-        preparePlayer(uri)
         startAnalysis(uri)
     }
 
     private fun startAnalysis(uri: Uri) {
+        cancelArrangement()
         analysisJob?.cancel()
         val generation = ++analysisGeneration
         val request = mutableUiState.value
+        val sourceAtStart = playbackSource
+        val analysisUri = sourceAtStart?.let(Uri::fromFile) ?: uri
         mutableUiState.update {
-            it.copy(analyzing = true, analysisProgress = 0, events = emptyList(), analysisError = null)
+            it.copy(analyzing = true, analysisProgress = 0, events = emptyList(), arrangement = null, analysisError = null)
         }
         analysisJob = viewModelScope.launch {
-            val job = currentCoroutineContext()[Job]
             try {
-                val resolvedName = withContext(Dispatchers.IO) { audioDisplayName(getApplication(), uri) }
-                if (generation != analysisGeneration) return@launch
-                mutableUiState.update { state -> state.copy(fileName = resolvedName) }
-                val result = withContext(Dispatchers.IO) {
+                val result = runSongImport(onDiscard = { it.sourceFile?.delete() }) { cancelled ->
                     decoder.analyze(
-                        uri = uri,
+                        uri = analysisUri,
                         mode = request.analysisMode,
                         noteRange = request.noteRange,
-                        isCancelled = { job?.isActive == false },
+                        isCancelled = cancelled,
+                        retainSource = sourceAtStart == null,
+                        onDisplayName = { name ->
+                            if (sourceAtStart == null) launch(Dispatchers.Main.immediate) {
+                                if (generation == analysisGeneration) {
+                                    mutableUiState.update { it.copy(fileName = name) }
+                                }
+                            }
+                        },
                         onProgress = { progress ->
                             launch(Dispatchers.Main.immediate) {
                                 if (generation == analysisGeneration) {
@@ -170,26 +196,34 @@ class ChordViewModel internal constructor(
                         },
                     )
                 }
-                if (generation != analysisGeneration) return@launch
+                if (generation != analysisGeneration) {
+                    result.sourceFile?.delete()
+                    return@launch
+                }
+                if (sourceAtStart == null) {
+                    releasePlayer()
+                    playbackSource = result.sourceFile
+                    result.sourceFile?.let { preparePlayer(Uri.fromFile(it)) }
+                }
                 while (true) {
                     val arrangementState = mutableUiState.value.copy(events = result.events)
-                    val arrangement = withContext(Dispatchers.IO) { buildArrangement(arrangementState) }
+                    val arrangement = buildArrangement(arrangementState)
                     if (generation != analysisGeneration) return@launch
                     val current = mutableUiState.value
                     if (current.transposeSemitones != arrangementState.transposeSemitones ||
                         current.arrangementMode != arrangementState.arrangementMode
                     ) continue
-                    mutableUiState.update { state ->
-                        state.copy(
+                    if (mutableUiState.compareAndSet(
+                        current,
+                        current.copy(
                             analyzing = false,
                             analysisProgress = 100,
                             events = result.events,
-                            durationMillis = maxOf(state.durationMillis, result.durationMillis),
+                            durationMillis = maxOf(current.durationMillis, result.durationMillis),
                             arrangement = arrangement,
                             analysisError = if (result.events.isEmpty()) SongChordError.NO_CHORDS else null,
-                        )
-                    }
-                    break
+                        ),
+                    )) break
                 }
             } catch (_: CancellationException) {
                 Unit
@@ -214,9 +248,7 @@ class ChordViewModel internal constructor(
         if (!mutableUiState.value.prepared) return
         try {
             if (activePlayer.isPlaying) {
-                activePlayer.pause()
-                positionJob?.cancel()
-                mutableUiState.update { it.copy(playing = false, positionMillis = activePlayer.currentPosition.toLong()) }
+                pausePlayback()
             } else {
                 activePlayer.start()
                 mutableUiState.update { it.copy(playing = true, playbackError = null) }
@@ -246,21 +278,17 @@ class ChordViewModel internal constructor(
             }
             return
         }
-        player?.let { activePlayer ->
-            if (runCatching { activePlayer.isPlaying }.getOrDefault(false)) {
-                runCatching { activePlayer.pause() }
-            }
-        }
-        positionJob?.cancel()
+        pausePlayback()
         if (mutableUiState.value.analyzing) {
             analysisJob?.cancel()
             analysisGeneration++
             analysisPausedForScreen = true
         }
-        mutableUiState.update { it.copy(playing = false, analyzing = false) }
+        mutableUiState.update { it.copy(analyzing = false) }
     }
 
     fun clearSong() {
+        cancelArrangement()
         analysisJob?.cancel()
         analysisGeneration++
         analysisPausedForScreen = false
@@ -284,6 +312,7 @@ class ChordViewModel internal constructor(
     }
 
     override fun onCleared() {
+        cancelArrangement()
         analysisJob?.cancel()
         analysisGeneration++
         analysisPausedForScreen = false
@@ -360,15 +389,68 @@ class ChordViewModel internal constructor(
         positionJob = null
         val activePlayer = player
         player = null
-        activePlayer?.release()
+        try {
+            activePlayer?.release()
+        } finally {
+            playbackSource?.delete()
+            playbackSource = null
+        }
     }
 
-    private fun buildArrangement(state: ChordUiState): AcousticArrangement? {
-        if (state.analysisMode != SongAnalysisMode.CHORDS) return null
-        val chords = state.events.filterIsInstance<ChordEvent>().map { event ->
-            event.chord.transpose(state.transposeSemitones)
+    private fun pausePlayback() {
+        positionJob?.cancel()
+        val activePlayer = player
+        try {
+            val position = if (activePlayer != null && mutableUiState.value.prepared) {
+                if (activePlayer.isPlaying) activePlayer.pause()
+                activePlayer.currentPosition.toLong()
+            } else mutableUiState.value.positionMillis
+            mutableUiState.update { it.copy(playing = false, positionMillis = position) }
+        } catch (_: IllegalStateException) {
+            mutableUiState.update { it.copy(playing = false, playbackError = SongChordError.PLAYBACK_FAILED) }
         }
-        return if (chords.isEmpty()) null else arrangeForStandardE(chords, chordCatalog, state.arrangementMode)
+    }
+
+    private fun cancelArrangement() {
+        arrangementJob?.cancel()
+        arrangementJob = null
+        arrangementGeneration++
+    }
+
+    private fun rebuildArrangement() {
+        val request = mutableUiState.value
+        if (request.analysisMode != SongAnalysisMode.CHORDS || request.events.isEmpty()) return
+        val generation = arrangementGeneration
+        val songGeneration = analysisGeneration
+        arrangementJob = viewModelScope.launch {
+            try {
+                val arrangement = buildArrangement(request)
+                mutableUiState.update { state ->
+                    if (generation == arrangementGeneration && songGeneration == analysisGeneration &&
+                        state.events === request.events && state.transposeSemitones == request.transposeSemitones &&
+                        state.arrangementMode == request.arrangementMode && state.analysisMode == request.analysisMode
+                    ) state.copy(arrangement = arrangement, analysisError = null) else state
+                }
+            } catch (_: CancellationException) {
+                Unit
+            } catch (_: RuntimeException) {
+                if (generation == arrangementGeneration && songGeneration == analysisGeneration) {
+                    mutableUiState.update { it.copy(analysisError = SongChordError.DECODE_FAILED) }
+                }
+            }
+        }
+    }
+
+    private suspend fun buildArrangement(state: ChordUiState): AcousticArrangement? {
+        if (state.analysisMode != SongAnalysisMode.CHORDS) return null
+        if (state.events.isEmpty()) return null
+        val catalog = ChordShapeCatalog.load(getApplication<Application>().resources)
+        return withContext(arrangementDispatcher) {
+            val chords = state.events.filterIsInstance<ChordEvent>().map { event ->
+                event.chord.transpose(state.transposeSemitones)
+            }
+            if (chords.isEmpty()) null else arrangeForStandardE(chords, catalog, state.arrangementMode)
+        }
     }
 
     private fun SongDecodeError.toUiError(): SongChordError = when (this) {

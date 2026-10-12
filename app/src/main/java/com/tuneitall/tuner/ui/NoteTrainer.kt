@@ -27,9 +27,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.music.NoteBank
@@ -50,6 +52,7 @@ internal fun NoteTrainer(
     onStop: () -> Unit,
     repeating: Boolean,
     modifier: Modifier,
+    header: @Composable () -> Unit = {},
 ) {
     var bank by rememberSaveable { mutableStateOf(NoteBank.LEARNING) }
     val notes = sets.notes(bank)
@@ -59,39 +62,40 @@ internal fun NoteTrainer(
     var showComparison by remember(mode, bank, notes) { mutableStateOf(false) }
     var seed by rememberSaveable(bank, notes) { mutableIntStateOf(Random.nextInt()) }
     var previous by rememberSaveable(bank, notes) { mutableStateOf<Int?>(null) }
-    var selected by remember(mode, bank, notes, seed) { mutableStateOf<Int?>(null) }
-    var revealed by remember(mode, bank, notes, seed) { mutableStateOf(false) }
+    var selected by rememberSaveable(bank, notes, seed, previous) { mutableStateOf<Int?>(null) }
+    var revealed by rememberSaveable(bank, notes, seed, previous) { mutableStateOf(false) }
     val question = remember(seed, notes, previous) { if (notes.size >= 2) noteQuestion(seed, notes, previous) else null }
-    var first by rememberSaveable(bank, notes, mode) { mutableIntStateOf(sortedNotes.firstOrNull() ?: 0) }
-    var second by rememberSaveable(bank, notes, mode) { mutableIntStateOf(sortedNotes.getOrNull(1) ?: first) }
+    var first by rememberSaveable(bank, notes) { mutableIntStateOf(sortedNotes.firstOrNull() ?: 0) }
+    var second by rememberSaveable(bank, notes) { mutableIntStateOf(sortedNotes.getOrNull(1) ?: first) }
     val compareVisible = notes.isNotEmpty() && mode == TrainerMode.LEARN
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
-            Box {
-                TextButton(onClick = { bankMenu = true }, modifier = Modifier.testTag("trainer_bank_menu")) {
-                    Text(stringResource(if (bank == NoteBank.LEARNING) R.string.trainer_learning_bank else R.string.trainer_learned_bank))
-                    Icon(painterResource(R.drawable.ic_expand_more), null, Modifier.size(18.dp))
-                }
-                DropdownMenu(expanded = bankMenu, onDismissRequest = { bankMenu = false }) {
-                    NoteBank.entries.forEach { choice ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(if (choice == NoteBank.LEARNING) R.string.trainer_learning_bank else R.string.trainer_learned_bank)) },
-                            onClick = { onStop(); bank = choice; bankMenu = false },
-                            modifier = Modifier.testTag("trainer_bank_${choice.name.lowercase()}"),
-                        )
-                    }
-                }
-            }
-            TextButton(onClick = { onStop(); editing = true }, modifier = Modifier.testTag("trainer_edit_notes")) {
-                Text(stringResource(R.string.trainer_edit_notes))
-            }
-        }
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).testTag("trainer_note_content"),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            header()
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
+                Box {
+                    TextButton(onClick = { bankMenu = true }, modifier = Modifier.testTag("trainer_bank_menu")) {
+                        Text(stringResource(if (bank == NoteBank.LEARNING) R.string.trainer_learning_bank else R.string.trainer_learned_bank))
+                        Icon(painterResource(R.drawable.ic_expand_more), null, Modifier.size(18.dp))
+                    }
+                    DropdownMenu(expanded = bankMenu, onDismissRequest = { bankMenu = false }) {
+                        NoteBank.entries.forEach { choice ->
+                            DropdownMenuItem(
+                                text = { Text(stringResource(if (choice == NoteBank.LEARNING) R.string.trainer_learning_bank else R.string.trainer_learned_bank)) },
+                                onClick = { onStop(); bank = choice; bankMenu = false },
+                                modifier = Modifier.testTag("trainer_bank_${choice.name.lowercase()}"),
+                            )
+                        }
+                    }
+                }
+                TextButton(onClick = { onStop(); editing = true }, modifier = Modifier.testTag("trainer_edit_notes")) {
+                    Text(stringResource(R.string.trainer_edit_notes))
+                }
+            }
             Text(stringResource(R.string.trainer_set_count, notes.size), style = MaterialTheme.typography.labelMedium)
             if (notes.isEmpty()) {
                 Text(stringResource(R.string.trainer_empty_bank))
@@ -149,7 +153,7 @@ internal fun NoteTrainer(
         }
         Column(Modifier.fillMaxWidth().testTag("trainer_note_controls"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (compareVisible) {
-                NoteComparisonPlayback(first, second, onPlay, onRepeat, onStop, repeating)
+                NoteComparisonPlayback(first, second, notation, onPlay, onRepeat, onStop, repeating)
             }
             if (mode == TrainerMode.QUIZ) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -186,14 +190,14 @@ internal fun NoteTrainer(
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NotePicker("A", first, sortedNotes, notation, Modifier.weight(1f)) { onStop(); first = it }
-                    NotePicker("B", second, sortedNotes, notation, Modifier.weight(1f)) { onStop(); second = it }
+                    NotePicker("A", first, sortedNotes, notation, Modifier.weight(1f), MaterialTheme.colorScheme.surfaceContainerHigh) { onStop(); first = it }
+                    NotePicker("B", second, sortedNotes, notation, Modifier.weight(1f), MaterialTheme.colorScheme.surfaceContainerHigh) { onStop(); second = it }
                 }
-                NoteComparisonPlayback(first, second, onPlay, onRepeat, onStop, repeating)
+                NoteComparisonPlayback(first, second, notation, onPlay, onRepeat, onStop, repeating, MaterialTheme.colorScheme.surfaceContainerHigh)
             }
         },
         confirmButton = {
-            TextButton(onClick = { onStop(); showComparison = false }, modifier = Modifier.testTag("trainer_close_compare")) {
+            TextButton(onClick = { onStop(); showComparison = false }, colors = dialogTextButtonColors(), modifier = Modifier.testTag("trainer_close_compare")) {
                 Text(stringResource(android.R.string.ok))
             }
         },
@@ -202,15 +206,15 @@ internal fun NoteTrainer(
 
 @Composable
 private fun NoteComparisonPlayback(
-    first: Int, second: Int, onPlay: (Int) -> Unit, onRepeat: (Int, Int) -> Unit,
-    onStop: () -> Unit, repeating: Boolean,
+    first: Int, second: Int, notation: NoteNotation, onPlay: (Int) -> Unit, onRepeat: (Int, Int) -> Unit,
+    onStop: () -> Unit, repeating: Boolean, plane: Color = MaterialTheme.colorScheme.background,
 ) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = { onPlay(first) }, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_play_a")) {
-            Text(stringResource(R.string.trainer_hear_slot, "A"))
+        OutlinedButton(onClick = { onPlay(first) }, colors = outlinedButtonColors(plane), modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_play_a")) {
+            Text(stringResource(R.string.trainer_hear_slot, "A · ${formatMidiNote(60 + first, notation)}"), textAlign = TextAlign.Center)
         }
-        OutlinedButton(onClick = { onPlay(second) }, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_play_b")) {
-            Text(stringResource(R.string.trainer_hear_slot, "B"))
+        OutlinedButton(onClick = { onPlay(second) }, colors = outlinedButtonColors(plane), modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("trainer_play_b")) {
+            Text(stringResource(R.string.trainer_hear_slot, "B · ${formatMidiNote(60 + second, notation)}"), textAlign = TextAlign.Center)
         }
     }
     Button(
@@ -222,11 +226,12 @@ private fun NoteComparisonPlayback(
 
 @Composable
 private fun NotePicker(
-    slot: String, selected: Int, notes: List<Int>, notation: NoteNotation, modifier: Modifier, onSelected: (Int) -> Unit,
+    slot: String, selected: Int, notes: List<Int>, notation: NoteNotation, modifier: Modifier,
+    plane: Color = MaterialTheme.colorScheme.background, onSelected: (Int) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier) {
-        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("trainer_pick_$slot")) {
+        OutlinedButton(onClick = { expanded = true }, colors = outlinedButtonColors(plane), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("trainer_pick_$slot")) {
             Text("$slot · ${formatMidiNote(60 + selected, notation)} ▾")
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -259,20 +264,20 @@ private fun NoteSetEditor(
                     onSelected = { draft = if (it in draft) draft - it else draft + it },
                 )
                 Row {
-                    TextButton(onClick = { draft = (0..11).toSet() }, modifier = Modifier.testTag("trainer_set_all")) {
+                    TextButton(onClick = { draft = (0..11).toSet() }, colors = dialogTextButtonColors(), modifier = Modifier.testTag("trainer_set_all")) {
                         Text(stringResource(R.string.trainer_all_notes))
                     }
-                    TextButton(onClick = { draft = emptySet() }, modifier = Modifier.testTag("trainer_set_none")) {
+                    TextButton(onClick = { draft = emptySet() }, colors = dialogTextButtonColors(), modifier = Modifier.testTag("trainer_set_none")) {
                         Text(stringResource(R.string.trainer_no_notes))
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(draft) }, modifier = Modifier.testTag("trainer_set_save")) {
+            TextButton(onClick = { onSave(draft) }, colors = dialogTextButtonColors(), modifier = Modifier.testTag("trainer_set_save")) {
                 Text(stringResource(R.string.trainer_save_set))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) } },
+        dismissButton = { TextButton(onClick = onDismiss, colors = dialogTextButtonColors()) { Text(stringResource(android.R.string.cancel)) } },
     )
 }

@@ -10,6 +10,54 @@ import kotlin.test.assertEquals
 
 class SongAudioDecoderTest {
     @Test
+    fun `aggregate work accepts normal long songs but rejects costly surround audio`() {
+        DecodedAudioClock().accept(48_000, 48_000 * 1800, 2)
+        SongImportBudget().sourceSize(48_000L * 1800 * 2 * Short.SIZE_BYTES + 44)
+        assertEquals(SongDecodeError.TOO_LONG, assertFailsWith<SongDecodeException> {
+            DecodedAudioClock().accept(192_000, 192_000 * 1800, 8)
+        }.reason)
+        assertEquals(SongDecodeError.DECODE_FAILED, assertFailsWith<SongDecodeException> {
+            decodePcmSamples(ByteBuffer.allocate(SongImportBudget.MAX_PCM_BYTES + 8), 2,
+                AudioFormat.ENCODING_PCM_FLOAT)
+        }.reason)
+    }
+
+    @Test
+    fun `import rejects source packet timestamp stall and elapsed work over budget`() {
+        var now = 0L
+        val budget = SongImportBudget { now }
+        budget.sourceSize(1)
+        budget.packet(1024, 0)
+        budget.packet(1024, 1)
+        assertFailsWith<SongDecodeException> { budget.packet(1, 0) }
+        assertFailsWith<SongDecodeException> { budget.sourceSize(SongImportBudget.MAX_SOURCE_BYTES + 1) }
+        now = SongImportBudget.MAX_STALL_NANOS - 1
+        budget.decoding(true)
+        now += SongImportBudget.MAX_STALL_NANOS
+        assertFailsWith<SongDecodeException> { budget.decoding(false) }
+        now = SongImportBudget.MAX_WORK_NANOS
+        assertFailsWith<SongDecodeException> { budget.check() }
+        val bytes = SongImportBudget()
+        bytes.packet(SongImportBudget.MAX_SOURCE_BYTES.toInt(), 0)
+        assertFailsWith<SongDecodeException> { bytes.packet(1, 0) }
+        val packets = SongImportBudget()
+        repeat(SongImportBudget.MAX_PACKETS) { packets.packet(0, 0) }
+        assertFailsWith<SongDecodeException> { packets.packet(0, 0) }
+    }
+
+    @Test
+    fun `slow staging does not consume the codec output stall budget`() {
+        var now = 0L
+        val budget = SongImportBudget { now }
+        now = 6_000_000_000L
+        budget.beginDecoding()
+        budget.decoding(false)
+        now += SongImportBudget.MAX_STALL_NANOS
+        assertFailsWith<SongDecodeException> { budget.decoding(false) }
+        now = SongImportBudget.MAX_WORK_NANOS
+        assertFailsWith<SongDecodeException> { budget.beginDecoding() }
+    }
+    @Test
     fun `decoded duration follows frames and rejects format changes and excess frames`() {
         val clock = DecodedAudioClock()
         clock.accept(48_000, 24_000, 2)

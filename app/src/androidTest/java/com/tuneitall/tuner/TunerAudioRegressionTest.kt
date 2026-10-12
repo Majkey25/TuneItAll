@@ -11,7 +11,9 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.test.core.app.ApplicationProvider
+import androidx.lifecycle.ViewModelStore
 import com.tuneitall.tuner.audio.AudioInput
+import com.tuneitall.tuner.audio.AudioInputError
 import com.tuneitall.tuner.audio.AudioInputSource
 import com.tuneitall.tuner.audio.AdaptiveNoiseFloor
 import com.tuneitall.tuner.audio.PitchFrame
@@ -23,13 +25,19 @@ import com.tuneitall.tuner.audio.PitchTracker
 import com.tuneitall.tuner.audio.TunerAudioSettings
 import com.tuneitall.tuner.audio.YinPitchDetector
 import com.tuneitall.tuner.model.ReferencePitch
+import com.tuneitall.tuner.model.MidiNote
 import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.tuner.MusicMath
 import com.tuneitall.tuner.tuner.TunerMode
+import com.tuneitall.tuner.tuner.TunerReading
 import com.tuneitall.tuner.tuner.pitchSearchRange
 import com.tuneitall.tuner.ui.TunerViewModel
+import com.tuneitall.tuner.ui.DetectionCallbackToken
+import com.tuneitall.tuner.ui.TunerUiState
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.MessageDigest
@@ -52,6 +60,120 @@ import org.junit.Test
 class TunerAudioRegressionTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun selectingReferenceTonePreservesStoppedMicrophoneFailure() {
+        val viewModel = TunerViewModel(ApplicationProvider.getApplicationContext<Application>())
+        val store = ViewModelStore().apply { put("tuner-reference-error", viewModel) }
+        val original = viewModel.uiState.value
+        val failure = AudioInputError.ReadFailed(AudioRecord.ERROR_DEAD_OBJECT)
+        val mutableState = TunerViewModel::class.java.getDeclaredField("mutableUiState")
+            .apply { isAccessible = true }.get(viewModel) as MutableStateFlow<TunerUiState>
+        val foreground = TunerViewModel::class.java.getDeclaredField("foreground").apply { isAccessible = true }
+        composeRule.setContent { }
+        try {
+            composeRule.runOnIdle {
+                foreground.setBoolean(viewModel, true)
+                mutableState.value = original.copy(listening = false, error = failure)
+                viewModel.selectStringAndPlayReference(0)
+                assertTrue(viewModel.uiState.value.referenceTonePlaying)
+                assertFalse(viewModel.uiState.value.listening)
+                assertEquals("Reference playback hid the microphone retry error", failure, viewModel.uiState.value.error)
+            }
+        } finally {
+            composeRule.runOnIdle {
+                viewModel.onStop()
+                viewModel.selectMode(original.mode)
+                store.clear()
+            }
+        }
+    }
+
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun conflatedDisplayUpdatesCannotHideAnOutOfTuneFrameFromConfirmation() {
+        val viewModel = TunerViewModel(ApplicationProvider.getApplicationContext<Application>())
+        val store = ViewModelStore().apply { put("tuner-delivery", viewModel) }
+        val state = viewModel.uiState.value.copy(listening = true, audioSettings = TunerAudioSettings(confirmationMillis = 600L))
+        val captured = DetectionCallbackToken(state, 0L, 0L)
+        val note = MidiNote(45)
+        val tuned = TunerReading(note, note, 110.0, 0.0, true)
+        val publish = TunerViewModel::class.java.getDeclaredMethod(
+            "publishReadingLocked", DetectionCallbackToken::class.java, TunerReading::class.java, java.lang.Long.TYPE,
+        ).apply { isAccessible = true }
+        val lock = requireNotNull(TunerViewModel::class.java.getDeclaredField("pitchPipelineLock").apply { isAccessible = true }.get(viewModel))
+        val stateField = TunerViewModel::class.java.getDeclaredField("mutableUiState").apply { isAccessible = true }
+        val mutableState = stateField.get(viewModel) as MutableStateFlow<TunerUiState>
+        val foreground = TunerViewModel::class.java.getDeclaredField("foreground").apply { isAccessible = true }
+        composeRule.setContent { }
+        try {
+            composeRule.runOnIdle {
+                foreground.setBoolean(viewModel, true)
+                mutableState.value = state
+                synchronized(lock) { publish.invoke(viewModel, captured, tuned, 0L) }
+            }
+            composeRule.waitUntil(2_000) { viewModel.uiState.value.reading != null }
+            val failure = AtomicReference<Throwable?>()
+            composeRule.runOnIdle {
+                val worker = Thread {
+                    try {
+                        synchronized(lock) {
+                            publish.invoke(viewModel, captured, tuned, 500L)
+                            publish.invoke(viewModel, captured, tuned.copy(cents = 30.0, inTune = false), 550L)
+                            publish.invoke(viewModel, captured, tuned, 1_100L)
+                            publish.invoke(viewModel, captured, tuned, 1_150L)
+                        }
+                    } catch (error: Throwable) {
+                        failure.set(error)
+                    }
+                }
+                worker.start()
+                worker.join(2_000)
+                assertTrue("Delivery worker blocked on Main", !worker.isAlive)
+            }
+            composeRule.runOnIdle {
+                assertEquals(null, failure.get())
+                assertFalse("Dropped display frame renewed confirmation", viewModel.uiState.value.tuningConfirmed)
+            }
+        } finally {
+            composeRule.runOnIdle { store.clear() }
+        }
+    }
+
+    @Test
+    fun rapidTunerStopRestartRetryAndSourceChangesRemainCurrentWithoutBlockingMain() {
+        val viewModel = TunerViewModel(ApplicationProvider.getApplicationContext<Application>())
+        val store = ViewModelStore().apply { put("tuner-lifecycle", viewModel) }
+        val original = viewModel.uiState.value.audioSettings
+        composeRule.setContent { }
+        try {
+            composeRule.runOnIdle { viewModel.onStart() }
+            composeRule.waitUntil(8_000) { viewModel.uiState.value.audioInputCapabilities.activeSource != null }
+            var elapsedMillis = 0L
+            composeRule.runOnIdle {
+                val started = SystemClock.elapsedRealtime()
+                repeat(8) {
+                    viewModel.onStop()
+                    viewModel.onStart()
+                    viewModel.retryAudio()
+                    viewModel.setTunerAudioSettings(original.copy(inputSource = AudioInputSource.COMPATIBLE))
+                    viewModel.setTunerAudioSettings(original)
+                }
+                elapsedMillis = SystemClock.elapsedRealtime() - started
+            }
+            assertTrue("Main waited for audio lifecycle: $elapsedMillis ms", elapsedMillis < 500L)
+            composeRule.waitUntil(8_000) { viewModel.uiState.value.audioInputCapabilities.activeSource != null }
+            assertTrue(viewModel.uiState.value.listening)
+            assertEquals(null, viewModel.uiState.value.error)
+        } finally {
+            composeRule.runOnIdle {
+                viewModel.setTunerAudioSettings(original)
+                viewModel.onStop()
+                store.clear()
+            }
+        }
+    }
 
     @Test
     fun changingDetectionContextPreservesPendingSpeakerFeedback() {
@@ -129,7 +251,7 @@ class TunerAudioRegressionTest {
                 input.start(
                     windowSize = 8192,
                     source = AudioInputSource.AUTO,
-                    onWindow = { window, rate ->
+                    onWindow = { window, rate, _ ->
                         if (completed.count > 0) {
                             if (window.size != 8192 || rate != 48_000) {
                                 failure = "Unexpected microphone format: ${window.size} samples at $rate Hz"

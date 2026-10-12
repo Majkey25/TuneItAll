@@ -24,8 +24,15 @@ import androidx.core.app.NotificationCompat
 import com.tuneitall.tuner.MainActivity
 import com.tuneitall.tuner.R
 import kotlin.math.abs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 class AutoScrollOverlayService : Service() {
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var windowManager: WindowManager
     private lateinit var preferences: AutoScrollPreferences
     private var panel: View? = null
@@ -41,13 +48,20 @@ class AutoScrollOverlayService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         preferences = AutoScrollPreferences(this)
         speed = preferences.speed
+        AutoScrollAccessibilityService.updateSpeed(speed)
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, notification())
+        serviceScope.launch {
+            AutoScrollAccessibilityService.state.collect { state ->
+                speed = state.speed ?: preferences.speed
+                render()
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         speed = preferences.speed
-        AutoScrollAccessibilityService.instance?.setSpeed(speed)
+        AutoScrollAccessibilityService.updateSpeed(speed)
         when (intent?.action) {
             ACTION_EXIT -> {
                 shutdown()
@@ -67,6 +81,7 @@ class AutoScrollOverlayService : Service() {
     }
 
     override fun onDestroy() {
+        serviceScope.cancel()
         stopScrolling()
         remove(panel)
         remove(bubble)
@@ -138,13 +153,13 @@ class AutoScrollOverlayService : Service() {
     private fun updateSpeed(next: Int) {
         speed = AutoScrollSpeed.clamp(next)
         preferences.speed = speed
-        AutoScrollAccessibilityService.instance?.setSpeed(speed)
+        AutoScrollAccessibilityService.updateSpeed(speed)
         render()
     }
 
     private fun render() {
         val view = panel ?: return
-        val running = AutoScrollAccessibilityService.instance?.isRunning() == true
+        val running = AutoScrollAccessibilityService.state.value.running
         view.findViewById<TextView>(R.id.autoScrollSpeed).text = speed.toString()
         view.findViewById<TextView>(R.id.autoScrollStatus).setText(
             if (running) R.string.auto_scroll_running else R.string.auto_scroll_ready,

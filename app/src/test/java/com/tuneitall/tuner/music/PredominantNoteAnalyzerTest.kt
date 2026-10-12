@@ -2,15 +2,59 @@ package com.tuneitall.tuner.music
 
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class PredominantNoteAnalyzerTest {
+    @Test
+    fun `fast annotated melody keeps its pitches across sample rates`() {
+        val melody = listOf(69, 72, 76, 74, 71, 77, 69, 73)
+        for (rate in listOf(44_100, 48_000, 96_000)) for (transpose in listOf(-5, 0, 4)) {
+            val samples = soloMelody(melody.map { it + transpose }, rate, 200)
+
+            val events = analyze(samples, NoteRange.VIOLIN, rate)
+
+            assertEquals(melody.map { it + transpose }, events.map(NoteEvent::midiNote), "$rate/$transpose: $events")
+            assertEquals(0L, events.first().startMillis)
+            assertEquals(1_600L, events.last().endMillis)
+            events.zipWithNext().forEach { (previous, next) -> assertEquals(previous.endMillis, next.startMillis) }
+        }
+    }
+
+    @Test
+    fun `short annotated melody does not drop a one hop note`() {
+        val melody = listOf(69, 72, 76, 74, 71, 77, 69, 73)
+
+        val events = analyze(soloMelody(melody, SAMPLE_RATE, 160), NoteRange.VIOLIN)
+
+        assertEquals(melody, events.map(NoteEvent::midiNote), events.toString())
+        assertEquals(0L, events.first().startMillis)
+        assertEquals(1_280L, events.last().endMillis)
+        events.zipWithNext().forEach { (previous, next) -> assertEquals(previous.endMillis, next.startMillis) }
+    }
+
+    @Test
+    fun `decaying broadband percussion does not become a melody`() {
+        for (rate in listOf(44_100, 48_000, 96_000)) for (seed in listOf(2, 3, 5)) {
+            val random = Random(seed)
+            val samples = FloatArray(rate * 3) { frame ->
+                val age = (frame.toDouble() / rate) % 0.3
+                (exp(-20 * age) * random.nextDouble(-0.7, 0.7)).toFloat()
+            }
+
+            val events = analyze(samples, NoteRange.VIOLIN, rate)
+
+            assertTrue(events.isEmpty(), "$rate/$seed: $events")
+        }
+    }
+
     @Test
     fun `lowest bass note survives normal reference tuning offsets`() {
         val failures = mutableListOf<String>()
@@ -224,6 +268,16 @@ class PredominantNoteAnalyzerTest {
         val extractor = StreamingHarmonicFeatureExtractor(sampleRate, includeLowestNoteMargin = true)
         extractor.accept(samples)
         return analyzeNotes(extractor.finish(), range, extractor.durationMillis)
+    }
+
+    private fun soloMelody(notes: List<Int>, sampleRate: Int, noteMillis: Int): FloatArray {
+        val framesPerNote = sampleRate * noteMillis / 1000
+        var phase = 0.0
+        return FloatArray(framesPerNote * notes.size) { frame ->
+            phase += 2 * PI * midiToHertz(notes[frame / framesPerNote]) / sampleRate
+            (0.18 * (sin(phase) + 0.45 * sin(2 * phase) + 0.28 * sin(3 * phase) +
+                0.18 * sin(4 * phase) + 0.10 * sin(5 * phase) + 0.06 * sin(6 * phase))).toFloat()
+        }
     }
 
     private companion object {

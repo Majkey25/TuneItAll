@@ -51,6 +51,7 @@ import com.tuneitall.tuner.model.ReferencePitch
 import com.tuneitall.tuner.metronome.MetronomeSound
 import com.tuneitall.tuner.storage.NoteNotation
 import com.tuneitall.tuner.ui.theme.ThemeMode
+import com.tuneitall.tuner.ui.theme.errorBackgroundColor
 import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
 import java.util.Locale
 import kotlin.math.round
@@ -93,60 +94,65 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .safeDrawingPadding()
-            .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .testTag("settings_screen"),
     ) {
         SecondaryHeader(stringResource(R.string.settings), onBack)
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
         ) {
-            SettingsSection.entries.forEach { candidate ->
-                FilterChip(
-                    selected = section == candidate,
-                    onClick = { section = candidate },
-                    label = {
-                        Text(
-                            stringResource(
-                                when (candidate) {
-                                    SettingsSection.GENERAL -> R.string.settings_general
-                                    SettingsSection.TUNER -> R.string.settings_tuner
-                                    SettingsSection.METRONOME -> R.string.settings_metronome
-                                },
-                            ),
-                        )
-                    },
-                    modifier = Modifier.heightIn(min = 48.dp).testTag("settings_section_${candidate.name.lowercase()}"),
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SettingsSection.entries.forEach { candidate ->
+                    FilterChip(
+                        selected = section == candidate,
+                        colors = currentPlaneChipColors(),
+                        onClick = { section = candidate },
+                        label = {
+                            Text(
+                                stringResource(
+                                    when (candidate) {
+                                        SettingsSection.GENERAL -> R.string.settings_general
+                                        SettingsSection.TUNER -> R.string.settings_tuner
+                                        SettingsSection.METRONOME -> R.string.settings_metronome
+                                    },
+                                ),
+                            )
+                        },
+                        modifier = Modifier.heightIn(min = 48.dp).testTag("settings_section_${candidate.name.lowercase()}"),
+                    )
+                }
+            }
+            when (section) {
+                SettingsSection.GENERAL -> GeneralSettings(
+                    state = state,
+                    appLanguage = appLanguage,
+                    onAppLanguageChanged = onAppLanguageChanged,
+                    onThemeModeChanged = onThemeModeChanged,
+                    onOpenAppearance = onOpenAppearance,
+                    onReferencePitchChanged = onReferencePitchChanged,
+                    onNotationChanged = onNotationChanged,
+                    onLayoutChanged = onLayoutChanged,
+                    onOpenAbout = onOpenAbout,
+                    onSupport = onSupport,
+                )
+
+                SettingsSection.TUNER -> AudioSettings(state, onAudioSettingsChanged)
+                SettingsSection.METRONOME -> MetronomeSettingsControls(
+                    state = metronomeState,
+                    onNumeratorChange = onMetronomeNumeratorChanged,
+                    onDenominatorChange = onMetronomeDenominatorChanged,
+                    onSubdivisionChange = onMetronomeSubdivisionChanged,
+                    onAccentEveryChange = onMetronomeAccentChanged,
+                    onSoundChange = onMetronomeSoundChanged,
+                    onVolumeChange = onMetronomeVolumeChanged,
+                    onMutedChange = onMetronomeMutedChanged,
+                    onCountInChange = onMetronomeCountInChanged,
                 )
             }
-        }
-        when (section) {
-            SettingsSection.GENERAL -> GeneralSettings(
-                state = state,
-                appLanguage = appLanguage,
-                onAppLanguageChanged = onAppLanguageChanged,
-                onThemeModeChanged = onThemeModeChanged,
-                onOpenAppearance = onOpenAppearance,
-                onReferencePitchChanged = onReferencePitchChanged,
-                onNotationChanged = onNotationChanged,
-                onLayoutChanged = onLayoutChanged,
-                onOpenAbout = onOpenAbout,
-                onSupport = onSupport,
-            )
-
-            SettingsSection.TUNER -> AudioSettings(state, onAudioSettingsChanged)
-            SettingsSection.METRONOME -> MetronomeSettingsControls(
-                state = metronomeState,
-                onNumeratorChange = onMetronomeNumeratorChanged,
-                onDenominatorChange = onMetronomeDenominatorChanged,
-                onSubdivisionChange = onMetronomeSubdivisionChanged,
-                onAccentEveryChange = onMetronomeAccentChanged,
-                onSoundChange = onMetronomeSoundChanged,
-                onVolumeChange = onMetronomeVolumeChanged,
-                onMutedChange = onMetronomeMutedChanged,
-                onCountInChange = onMetronomeCountInChanged,
-            )
         }
     }
 }
@@ -210,7 +216,7 @@ private fun GeneralSettings(
                                         },
                                     ),
                             ) {
-                                RadioButton(selected = language == appLanguage, onClick = null)
+                                RadioButton(selected = language == appLanguage, onClick = null, colors = dialogRadioButtonColors())
                                 Text(appLanguageName(language))
                             }
                         }
@@ -224,6 +230,7 @@ private fun GeneralSettings(
             ThemeMode.entries.forEach { mode ->
                 FilterChip(
                     selected = state.themeMode == mode,
+                    colors = currentPlaneChipColors(),
                     onClick = { onThemeModeChanged(mode) },
                     label = { Text(themeModeName(mode)) },
                     modifier = Modifier.weight(1f),
@@ -250,6 +257,7 @@ private fun GeneralSettings(
                 label = { Text("Hz") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 isError = input.isNotBlank() && !inAllowedRange,
+                colors = outlinedFieldColors(),
                 singleLine = true,
                 modifier = Modifier.weight(2f),
             )
@@ -271,7 +279,7 @@ private fun GeneralSettings(
                     ReferencePitch.MIN_HERTZ,
                     ReferencePitch.MAX_HERTZ,
                 ),
-                color = MaterialTheme.colorScheme.error,
+                color = errorBackgroundColor(),
             )
         }
         if (extreme) {
@@ -315,6 +323,7 @@ private fun GeneralSettings(
             NoteNotation.entries.forEach { notation ->
                 FilterChip(
                     selected = state.notation == notation,
+                    colors = currentPlaneChipColors(),
                     onClick = { onNotationChanged(notation) },
                     label = { Text(if (notation == NoteNotation.SHARPS) "♯" else "♭") },
                     modifier = Modifier.weight(1f),
@@ -328,6 +337,7 @@ private fun GeneralSettings(
                 state.tuning.layouts.forEach { layout ->
                     FilterChip(
                         selected = state.headstockLayout == layout,
+                        colors = currentPlaneChipColors(),
                         onClick = { onLayoutChanged(layout) },
                         label = { Text(layoutName(layout)) },
                         modifier = Modifier.weight(1f),
@@ -387,6 +397,7 @@ private fun AudioSettings(
         ResponseMode.entries.forEach { response ->
             FilterChip(
                 selected = settings.response == response,
+                colors = currentPlaneChipColors(),
                 onClick = { onSettingsChanged(settings.copy(response = response)) },
                 label = { Text(responseName(response)) },
                 modifier = Modifier.weight(1f),
@@ -431,6 +442,7 @@ private fun ProfileRow(
         profiles.forEach { profile ->
             FilterChip(
                 selected = selectedProfile == profile,
+                colors = currentPlaneChipColors(),
                 onClick = { onSettingsChanged(profile.settings) },
                 label = { Text(profileName(profile)) },
                 modifier = Modifier.weight(1f),
@@ -439,6 +451,7 @@ private fun ProfileRow(
         if (showCustom) {
             FilterChip(
                 selected = selectedProfile == null,
+                colors = currentPlaneChipColors(),
                 onClick = {},
                 enabled = false,
                 label = { Text(stringResource(R.string.profile_custom)) },
@@ -507,6 +520,7 @@ private fun AdvancedAudioSettings(
         AudioInputSource.entries.forEach { source ->
             FilterChip(
                 selected = settings.inputSource == source,
+                colors = currentPlaneChipColors(),
                 onClick = { onSettingsChanged(settings.copy(inputSource = source)) },
                 enabled = source != AudioInputSource.RAW || state.audioInputCapabilities.rawSupported,
                 label = { Text(inputSourceName(source)) },

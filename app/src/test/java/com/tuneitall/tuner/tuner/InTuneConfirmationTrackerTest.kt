@@ -64,6 +64,34 @@ class InTuneConfirmationTrackerTest {
     }
 
     @Test
+    fun `return after missing readings rearms only after five hundred milliseconds`() {
+        val tracker = confirmedTracker()
+
+        assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_600, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_099, confirmationMillis = 250))
+        assertTrue(tracker.isConfirmed)
+        assertFalse(tracker.update(target = null, inTune = false, nowMillis = 2_100, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_600, confirmationMillis = 250))
+        assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_849, confirmationMillis = 250))
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 2_850, confirmationMillis = 250))
+    }
+
+    @Test
+    fun `return after an out-of-tune interval rearms only after five hundred milliseconds`() {
+        val tracker = confirmedTracker()
+
+        assertFalse(tracker.update(a4, inTune = false, nowMillis = 1_600, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_099, confirmationMillis = 250))
+        assertTrue(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = false, nowMillis = 2_100, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_600, confirmationMillis = 250))
+        assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_849, confirmationMillis = 250))
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 2_850, confirmationMillis = 250))
+    }
+
+    @Test
     fun `retained in-tune display cannot confirm without a raw reading`() {
         val tracker = InTuneConfirmationTracker()
         val retainer = TunerReadingRetainer()
@@ -96,6 +124,27 @@ class InTuneConfirmationTrackerTest {
         assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_301, confirmationMillis = 250))
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_302, confirmationMillis = 250))
         assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_552, confirmationMillis = 250))
+    }
+
+    @Test
+    fun `a fresh reading after a long missing interval restarts pending confirmation`() {
+        val tracker = InTuneConfirmationTracker()
+
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_000, confirmationMillis = 250))
+        assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_100, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_500, confirmationMillis = 250))
+        assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_749, confirmationMillis = 250))
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_750, confirmationMillis = 250))
+    }
+
+    @Test
+    fun `a fresh reading at the dropout boundary preserves pending confirmation`() {
+        val tracker = InTuneConfirmationTracker()
+
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_000, confirmationMillis = 250))
+        assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_100, confirmationMillis = 250))
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_300, confirmationMillis = 250))
     }
 
     @Test

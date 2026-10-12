@@ -72,6 +72,7 @@
     <string name="chord_voicing">Position pour %1$s</string>
     <string name="chord_diagram_description">Diagramme d’accord. Frettes de la corde grave à la corde aiguë : %1$s</string>
     <string name="chord_shape_standard_only">Des diagrammes fiables sont disponibles pour la guitare en Standard E et le ukulélé en Standard C.</string>
+    <string name="chord_diagram_unavailable">Aucun diagramme vérifié pour cet accord.</string>
     <string name="fret_number">Frette %1$d</string>
     <string name="import_audio">Analyser un morceau</string>
     <string name="replace_audio">Analyser un autre morceau</string>
@@ -274,6 +275,7 @@
     <string name="copyright_notice">Copyright © 2026 Intoniva. Tous droits réservés.</string>
     <string name="offline_privacy_summary">Hors ligne. Sans publicité, compte, analyse, suivi ni accès réseau.</string>
     <string name="microphone_about">Les échantillons du microphone sont analysés temporairement sur cet appareil. Ils ne sont jamais enregistrés, conservés, partagés ni transmis.</string>
+    <string name="song_cache_privacy">Les morceaux sélectionnés sont temporairement copiés dans le cache privé pour analyse et lecture. Retirer ou remplacer un morceau libère sa copie de lecture. L’application tente de supprimer les copies de travail et les fichiers restants au démarrage. Après un plantage ou un échec de suppression, des copies peuvent rester jusqu’au nettoyage du cache, à la suppression des données ou à la désinstallation. Les fichiers originaux ne sont pas modifiés et aucun son n’est envoyé.</string>
     <string name="headstock_icon_attribution">Icônes Gibson Les Paul et gibson explorer par Alessandro Curci, thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Politique de confidentialité</string>
     <string name="privacy_policy_full">Intoniva est publiée par MajkeyLab (majkeylab@gmail.com). Le son du microphone et le fichier musical choisi sont traités uniquement sur l’appareil ; les résultats d’accords, notes, tempo et arrangement restent en mémoire. Les réglages, favoris, accordages personnalisés et scores restent locaux jusqu’à l’effacement des données ou la désinstallation. Le défilement automatique exécute les balayages demandés et ne peut pas récupérer le contenu de l’écran. L’application n’a ni compte, publicité, analyse, profilage, suivi, vente ou partage de données, serveur de l’éditeur, ni autorisation Internet. Buy Me a Coffee et l’assistance facultative par e-mail ou GitHub s’ouvrent hors de l’application selon les conditions de leurs fournisseurs. Si vous contactez l’assistance, MajkeyLab peut recevoir l’adresse ou le compte, le message et les pièces jointes choisis, pour l’assistance, la prévention des abus ou les obligations légales, sur la base des démarches demandées ou d’intérêts légitimes. Les échanges privés avec l’assistance sont normalement supprimés dans les 12 mois suivant la clôture de la demande, sauf demande de suppression anticipée ou obligation légale de conservation plus longue. Les signalements publics sur GitHub peuvent rester dans l’historique du projet jusqu’à leur modification ou suppression ; la durée de conservation de l’assistance privée ne leur est pas applicable. MajkeyLab ne peut pas supprimer les copies détenues par d’autres personnes ou services. Les utilisateurs de l’UE et de l’EEE peuvent exercer les droits applicables d’accès, rectification, effacement, limitation, opposition ou portabilité et saisir leur autorité de contrôle. Les droits applicables des États américains peuvent être demandés par e-mail ; Intoniva ne vend ni ne partage d’informations personnelles, n’utilise ni publicité ciblée ni incitation financière et ne discrimine pas après une demande. MajkeyLab ne possède aucun dossier serveur de l’application. Intoniva ne vise pas les enfants ; un enfant ne doit pas envoyer de données au support sans parent ou tuteur.</string>
@@ -325,7 +327,7 @@
     <string name="trainer_choose_chord">Choisir un accord</string>
     <string name="trainer_learning_bank">En apprentissage</string>
     <string name="trainer_learned_bank">Acquis</string>
-    <string name="trainer_set_count">%1$d notes · octave 4</string>
+    <string name="trainer_set_count">Notes : %1$d · octave 4</string>
     <string name="trainer_edit_notes">Modifier les notes</string>
     <string name="trainer_empty_bank">Ce groupe est vide. Ajoutez des notes avec Modifier les notes.</string>
     <string name="trainer_two_notes">Choisissez au moins deux notes pour un quiz. Une seule note peut être jouée dans Écouter.</string>

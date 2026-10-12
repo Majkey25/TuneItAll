@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="qa_auto_scroll_accessibility_label" translatable="false">Intoniva QA auto-scroll</string>
+</resources>

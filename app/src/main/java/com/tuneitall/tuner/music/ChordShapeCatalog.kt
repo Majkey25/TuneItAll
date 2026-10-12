@@ -2,6 +2,10 @@ package com.tuneitall.tuner.music
 
 import android.content.res.Resources
 import com.tuneitall.tuner.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -14,6 +18,15 @@ class ChordShapeCatalog private constructor(
     fun supports(tuningId: String): Boolean = tuningId in shapes
 
     companion object {
+        private val loadMutex = Mutex()
+        private var loadedCatalog: ChordShapeCatalog? = null
+
+        suspend fun load(resources: Resources): ChordShapeCatalog = withContext(Dispatchers.IO) {
+            loadMutex.withLock {
+                loadedCatalog ?: fromResources(resources).also { loadedCatalog = it }
+            }
+        }
+
         fun parse(guitarJson: String, ukuleleJson: String): ChordShapeCatalog = ChordShapeCatalog(
             mapOf(
                 GUITAR_STANDARD_ID to parseInstrument(guitarJson, GUITAR_KEYS, GUITAR_OPEN_PITCH_CLASSES),
@@ -37,8 +50,8 @@ private fun parseInstrument(json: String, sourceKeys: List<String>, openPitchCla
             instructionalChordQualities.forEach { quality ->
                 val source = entries.findChord(SUFFIXES.getValue(quality))
                 val chord = Chord(rootPitchClass, quality)
-                val voicing = source.firstVoicing(openPitchClasses.size)
-                if (voicing.matches(chord, openPitchClasses)) put(chord, voicing)
+                val voicing = source.firstVoicing(chord, openPitchClasses)
+                if (voicing != null) put(chord, voicing)
             }
         }
     }
@@ -63,16 +76,21 @@ private fun JSONArray.findChord(suffix: String): JSONObject {
     error("Chord suffix '$suffix' is missing from the bundled catalog")
 }
 
-private fun JSONObject.firstVoicing(stringCount: Int): ChordVoicing {
-    val position = getJSONArray("positions").getJSONObject(0)
-    val baseFret = position.optInt("baseFret", 1)
-    val relativeFrets = position.getJSONArray("frets").toIntList(stringCount)
-    return ChordVoicing(
-        frets = relativeFrets.map { fret -> fret.toAbsoluteFret(baseFret) },
-        fingers = position.getJSONArray("fingers").toIntList(stringCount),
-        barres = position.getJSONArray("barres").toIntList().map { it.toAbsoluteFret(baseFret) },
-        baseFret = baseFret,
-    )
+private fun JSONObject.firstVoicing(chord: Chord, openPitchClasses: List<Int>): ChordVoicing? {
+    val positions = getJSONArray("positions")
+    for (index in 0 until positions.length()) {
+        val position = positions.getJSONObject(index)
+        val baseFret = position.optInt("baseFret", 1)
+        val relativeFrets = position.getJSONArray("frets").toIntList(openPitchClasses.size)
+        val voicing = ChordVoicing(
+            frets = relativeFrets.map { fret -> fret.toAbsoluteFret(baseFret) },
+            fingers = position.getJSONArray("fingers").toIntList(openPitchClasses.size),
+            barres = position.getJSONArray("barres").toIntList().map { it.toAbsoluteFret(baseFret) },
+            baseFret = baseFret,
+        )
+        if (voicing.matches(chord, openPitchClasses)) return voicing
+    }
+    return null
 }
 
 private fun JSONArray.toIntList(expectedSize: Int? = null): List<Int> =

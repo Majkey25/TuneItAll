@@ -17,26 +17,31 @@ class ReferenceTonePlayer : AutoCloseable {
     private val volumeShapers = mutableMapOf<AudioTrack, VolumeShaper>()
     private var track: AudioTrack? = null
     private var closed = false
+    private var generation = 0L
+    private var stopCompletion: (() -> Unit)? = null
+
+    fun play(hertz: Double, isCurrent: () -> Boolean = { true }) =
+        prepareAndPlay({ createToneBuffer(hertz) }, isCurrent)
+
+    fun playChord(hertz: DoubleArray, isCurrent: () -> Boolean = { true }) =
+        prepareAndPlay({ createChordToneBuffer(hertz) }, isCurrent)
+
+    fun repeatNotes(firstHertz: Double, secondHertz: Double, isCurrent: () -> Boolean = { true }) =
+        prepareAndPlay({ createComparisonToneBuffer(firstHertz, secondHertz) }, isCurrent, repeat = true)
 
     @Synchronized
-    fun play(hertz: Double) {
-        check(!closed) { "Reference tone player is closed" }
-        prepareAndPlay(createToneBuffer(hertz))
+    fun invalidatePending() {
+        generation++
     }
 
-    @Synchronized
-    fun playChord(hertz: DoubleArray) {
-        check(!closed) { "Reference tone player is closed" }
-        prepareAndPlay(createChordToneBuffer(hertz))
-    }
-
-    @Synchronized
-    fun repeatNotes(firstHertz: Double, secondHertz: Double) {
-        check(!closed) { "Reference tone player is closed" }
-        prepareAndPlay(createComparisonToneBuffer(firstHertz, secondHertz), repeat = true)
-    }
-
-    private fun prepareAndPlay(samples: ShortArray, repeat: Boolean = false) {
+    private fun prepareAndPlay(samples: () -> ShortArray, isCurrent: () -> Boolean, repeat: Boolean = false) {
+        if (!isCurrent()) return
+        val requestGeneration = synchronized(this) {
+            check(!closed) { "Reference tone player is closed" }
+            ++generation
+        }
+        val rendered = samples()
+        if (!isCurrentRequest(requestGeneration, isCurrent)) return
         val nextTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -51,69 +56,89 @@ class ReferenceTonePlayer : AutoCloseable {
                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                     .build(),
             )
-            .setBufferSizeInBytes(samples.size * Short.SIZE_BYTES)
+            .setBufferSizeInBytes(rendered.size * Short.SIZE_BYTES)
             .setTransferMode(AudioTrack.MODE_STATIC)
             .build()
-        if (nextTrack.state == AudioTrack.STATE_UNINITIALIZED) {
-            nextTrack.release()
-            throw IllegalStateException("Reference tone output did not initialize")
-        }
-        val written = nextTrack.write(samples, 0, samples.size, AudioTrack.WRITE_BLOCKING)
-        if (
-            written != samples.size ||
-            nextTrack.state != AudioTrack.STATE_INITIALIZED ||
-            (if (repeat) nextTrack.setLoopPoints(0, samples.size, -1)
-            else nextTrack.setNotificationMarkerPosition(samples.lastIndex)) != AudioTrack.SUCCESS
-        ) {
-            nextTrack.release()
-            throw IllegalStateException("Reference tone buffer could not be prepared")
-        }
-        nextTrack.setPlaybackPositionUpdateListener(
-            object : AudioTrack.OnPlaybackPositionUpdateListener {
-                override fun onMarkerReached(completedTrack: AudioTrack) {
-                    if (!repeat) release(completedTrack)
-                }
-
-                override fun onPeriodicNotification(track: AudioTrack) = Unit
-            },
-            handler,
-        )
-
-        val previousTrack = track
+        var published = false
         try {
-            nextTrack.play()
-        } catch (error: IllegalStateException) {
-            nextTrack.release()
-            throw error
-        }
-        track = nextTrack
-        tracks += nextTrack
-        if (previousTrack != null) fadeOutAndRelease(previousTrack)
-        while (tracks.size > MAX_ACTIVE_TRACKS) {
-            val oldestTrack = tracks.first()
-            runCatching { oldestTrack.setVolume(0f) }
-            release(oldestTrack)
+            if (nextTrack.state == AudioTrack.STATE_UNINITIALIZED) {
+                throw IllegalStateException("Reference tone output did not initialize")
+            }
+            if (!isCurrentRequest(requestGeneration, isCurrent)) return
+            val written = nextTrack.write(rendered, 0, rendered.size, AudioTrack.WRITE_BLOCKING)
+            if (
+                written != rendered.size ||
+                nextTrack.state != AudioTrack.STATE_INITIALIZED ||
+                (if (repeat) nextTrack.setLoopPoints(0, rendered.size, -1)
+                else nextTrack.setNotificationMarkerPosition(rendered.lastIndex)) != AudioTrack.SUCCESS
+            ) {
+                throw IllegalStateException("Reference tone buffer could not be prepared")
+            }
+            nextTrack.setPlaybackPositionUpdateListener(
+                object : AudioTrack.OnPlaybackPositionUpdateListener {
+                    override fun onMarkerReached(completedTrack: AudioTrack) {
+                        if (!repeat) release(completedTrack)
+                    }
+
+                    override fun onPeriodicNotification(track: AudioTrack) = Unit
+                },
+                handler,
+            )
+            val previousTrack = synchronized(this) {
+                if (closed || requestGeneration != generation || !isCurrent()) return
+                nextTrack.play()
+                val previous = track
+                track = nextTrack
+                tracks += nextTrack
+                stopCompletion = null
+                published = true
+                previous
+            }
+            if (previousTrack != null) fadeOutAndRelease(previousTrack)
+            while (true) {
+                val oldestTrack = synchronized(this) { tracks.firstOrNull().takeIf { tracks.size > MAX_ACTIVE_TRACKS } }
+                    ?: break
+                runCatching { oldestTrack.setVolume(0f) }
+                release(oldestTrack)
+            }
+        } finally {
+            if (!published) nextTrack.release()
         }
     }
 
-    @Synchronized
-    fun stop() {
-        val activeTrack = track ?: return
-        track = null
-        fadeOutAndRelease(activeTrack)
+    private fun isCurrentRequest(requestGeneration: Long, isCurrent: () -> Boolean): Boolean =
+        isCurrent() && synchronized(this) { !closed && requestGeneration == generation }
+
+    fun stop(onStopped: () -> Unit = {}) {
+        val activeTrack: AudioTrack?
+        val alreadyStopped: Boolean
+        synchronized(this) {
+            generation++
+            activeTrack = track
+            track = null
+            alreadyStopped = tracks.isEmpty()
+            stopCompletion = onStopped.takeUnless { alreadyStopped }
+        }
+        if (activeTrack != null) fadeOutAndRelease(activeTrack)
+        if (alreadyStopped) onStopped()
     }
 
-    @Synchronized
     private fun release(completedTrack: AudioTrack) {
-        if (!tracks.remove(completedTrack)) return
-        if (track === completedTrack) track = null
-        runCatching { volumeShapers.remove(completedTrack)?.close() }
+        val released = synchronized(this) {
+            if (!tracks.remove(completedTrack)) return
+            if (track === completedTrack) track = null
+            val completion = if (tracks.isEmpty()) stopCompletion.also { stopCompletion = null } else null
+            Pair(volumeShapers.remove(completedTrack), completion)
+        }
+        runCatching { released.first?.close() }
         runCatching { completedTrack.stop() }
         completedTrack.release()
+        released.second?.invoke()
     }
 
+    @Synchronized
     private fun fadeOutAndRelease(activeTrack: AudioTrack) {
-        if (activeTrack !in tracks) return
+        if (activeTrack !in tracks || activeTrack in volumeShapers) return
         val fade = referenceToneSwitchFade()
         val shaper = try {
             activeTrack.createVolumeShaper(
@@ -132,13 +157,17 @@ class ReferenceTonePlayer : AutoCloseable {
         handler.postDelayed({ release(activeTrack) }, fade.durationMillis)
     }
 
-    @Synchronized
     override fun close() {
-        if (closed) return
-        closed = true
-        handler.removeCallbacksAndMessages(null)
-        track = null
-        tracks.toList().forEach(::release)
+        val activeTracks = synchronized(this) {
+            if (closed) return
+            closed = true
+            generation++
+            handler.removeCallbacksAndMessages(null)
+            track = null
+            stopCompletion = null
+            tracks.toList()
+        }
+        activeTracks.forEach(::release)
     }
 }
 

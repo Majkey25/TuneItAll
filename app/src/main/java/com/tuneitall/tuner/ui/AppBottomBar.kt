@@ -2,7 +2,10 @@ package com.tuneitall.tuner.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalContentColor
@@ -12,21 +15,27 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.ui.theme.LocalGlassEffects
+import com.tuneitall.tuner.ui.theme.asColor
+import com.tuneitall.tuner.ui.theme.readableColor
+import com.tuneitall.tuner.ui.theme.rgb
 import java.util.Locale
 
 enum class PrimaryDestination(
@@ -46,11 +55,20 @@ internal data class ResolvedNavigationColors(
 )
 
 @Composable
-internal fun bottomNavigationSelectedColors(): ResolvedNavigationColors = ResolvedNavigationColors(
-    indicator = MaterialTheme.colorScheme.primaryContainer,
-    icon = MaterialTheme.colorScheme.onPrimaryContainer,
-    text = MaterialTheme.colorScheme.onBackground,
-)
+internal fun bottomNavigationContainerColor(): Color = MaterialTheme.colorScheme.surfaceContainer
+    .copy(alpha = if (LocalGlassEffects.current) 0.94f else 1f)
+
+@Composable
+internal fun bottomNavigationSelectedColors(): ResolvedNavigationColors {
+    val colors = MaterialTheme.colorScheme
+    val background = bottomNavigationContainerColor().compositeOver(colors.background)
+    return ResolvedNavigationColors(colors.primaryContainer, colors.onPrimaryContainer,
+        readableColor(colors.onSurface.rgb(), background.rgb()).asColor())
+}
+
+@Composable
+internal fun bottomNavigationUnselectedColor(): Color = readableColor(MaterialTheme.colorScheme.onSurfaceVariant.rgb(),
+    bottomNavigationContainerColor().compositeOver(MaterialTheme.colorScheme.background).rgb()).asColor()
 
 @Composable
 fun AppBottomBar(
@@ -59,18 +77,23 @@ fun AppBottomBar(
     modifier: Modifier = Modifier,
 ) {
     val selectedColors = bottomNavigationSelectedColors()
-    val unselectedColor = MaterialTheme.colorScheme.onBackground
+    val unselectedColor = bottomNavigationUnselectedColor()
+    val glass = LocalGlassEffects.current
+    val fontScale = LocalDensity.current.fontScale
     BoxWithConstraints(modifier) {
         val labelStyle = if (maxWidth < 400.dp) {
-            MaterialTheme.typography.labelSmall.copy(
-                fontSize = 9.sp,
-                lineHeight = 11.sp,
-                letterSpacing = 0.sp,
-            )
+            MaterialTheme.typography.labelSmall
         } else {
             MaterialTheme.typography.labelMedium
         }
-        NavigationBar {
+        NavigationBar(
+            containerColor = bottomNavigationContainerColor(),
+            tonalElevation = 0.dp,
+            modifier = Modifier.heightIn(min = 80.dp + 32.dp * (fontScale - 1f).coerceAtLeast(0f))
+                .then(if (glass) Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.large) else Modifier),
+        ) {
             PrimaryDestination.entries.forEach { destination ->
                 val label = stringResource(destination.labelResource)
                 val key = destination.name.lowercase(Locale.ROOT)
@@ -81,9 +104,8 @@ fun AppBottomBar(
                     label = {
                         Text(
                             text = label,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Clip,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                             style = labelStyle,
                             modifier = Modifier.testTag("bottom_label_$key"),
                         )

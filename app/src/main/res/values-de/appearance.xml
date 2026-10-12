@@ -20,6 +20,8 @@
     <string name="appearance_layout">Bedienelemente und Ecken</string>
     <string name="appearance_classic">Klassisch</string>
     <string name="appearance_material">Material</string>
+    <string name="appearance_glass">Glas</string>
+    <string name="appearance_glass_help">Glas nutzt dezente transparente Flächen ohne Live-Unschärfe. Bei hohem Kontrast bleiben die Flächen undurchsichtig.</string>
     <string name="appearance_corners">Rundung der Ecken</string>
     <string name="appearance_text">Text</string>
     <string name="appearance_text_size">Textgröße</string>

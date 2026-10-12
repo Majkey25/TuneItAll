@@ -44,7 +44,18 @@ data class AutoScrollGestureProfile(
     val gestureDurationMs: Long,
     val startYFraction: Float,
     val endYFraction: Float,
-)
+) {
+    fun endYPixels(heightPixels: Int, touchSlopPixels: Int): Float =
+        minOf(heightPixels * endYFraction, heightPixels * startYFraction - 2f * touchSlopPixels)
+            .coerceAtLeast(0f)
+
+    fun durationForTravelMs(travelPixels: Float, touchSlopPixels: Int, longPressTimeoutMs: Int): Long =
+        minOf(
+            gestureDurationMs,
+            (travelPixels * longPressTimeoutMs / (3f * touchSlopPixels.coerceAtLeast(1)))
+                .toLong().coerceAtLeast(1L),
+        )
+}
 
 object AutoScrollGestureProfileFactory {
     fun create(settings: AutoScrollSettings, speedLevel: Int): AutoScrollGestureProfile {

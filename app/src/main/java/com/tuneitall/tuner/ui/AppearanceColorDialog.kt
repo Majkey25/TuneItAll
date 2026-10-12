@@ -66,6 +66,7 @@ internal fun AppearanceColorDialog(title: String, initial: Int, onDismiss: () ->
                     },
                     label = { Text(stringResource(R.string.appearance_hex)) }, prefix = { Text("#") },
                     singleLine = true, isError = parsed == null,
+                    colors = outlinedFieldColors(MaterialTheme.colorScheme.surfaceContainerHigh, MaterialTheme.colorScheme.onSurface),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
                     supportingText = { if (parsed == null) Text(stringResource(R.string.appearance_hex_error)) },
                     modifier = Modifier.fillMaxWidth().testTag("appearance_color_hex"),
