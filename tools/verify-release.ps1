@@ -1,20 +1,28 @@
 [CmdletBinding()]
 param(
-    [switch]$AllowUnsigned
+    [switch]$AllowUnsigned,
+    [switch]$RequireUnsigned,
+    [string]$BundletoolPath,
+    [string]$ExpectedVersion,
+    [string]$ExpectedVersionCode,
+    [string]$ExpectedSha256,
+    [string]$ArtifactDirectory
 )
 
 $ErrorActionPreference = "Stop"
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$apk = Join-Path $repoRoot "app/build/outputs/apk/debug/app-debug.apk"
-$aab = Join-Path $repoRoot "app/build/outputs/bundle/release/app-release.aab"
-$releaseManifest = Join-Path $repoRoot "app/build/intermediates/bundle_manifest/release/processApplicationManifestReleaseForBundle/AndroidManifest.xml"
+if ([string]::IsNullOrWhiteSpace($ArtifactDirectory)) { $ArtifactDirectory = Join-Path $repoRoot "app/build/outputs" }
+$apk = Join-Path $ArtifactDirectory "apk/debug/app-debug.apk"
+$aab = Join-Path $ArtifactDirectory "bundle/release/app-release.aab"
 
 foreach ($artifact in @($apk, $aab)) {
     if (-not (Test-Path -LiteralPath $artifact -PathType Leaf)) {
         throw "Missing build artifact: $artifact"
     }
-    if ((Get-Item -LiteralPath $artifact).Length -eq 0) {
-        throw "Empty build artifact: $artifact"
+    $length = (Get-Item -LiteralPath $artifact).Length
+    if ($length -le 0 -or $length -gt 512L * 1024 * 1024) {
+        throw "Empty or oversized build artifact: $artifact"
     }
 }
 
@@ -41,15 +49,50 @@ if ($null -eq $buildTools) {
 }
 $aapt = Join-Path $buildTools.FullName $aaptName
 
-if (-not (Test-Path -LiteralPath $releaseManifest -PathType Leaf)) {
-    throw "Missing merged release manifest: $releaseManifest"
+if ($ExpectedSha256 -and (Get-FileHash -Algorithm SHA256 -LiteralPath $aab).Hash -ne $ExpectedSha256) {
+    throw "Bundle differs from approved SHA-256"
 }
-[xml]$manifest = Get-Content -LiteralPath $releaseManifest -Raw
+$expectedFingerprint = 'DE46935ECA9035EEDA463E1E68FA5881396282D3E1F38546A41A352B5C3ED096'
+$signer = if ($RequireUnsigned) { 'unsigned' } else { $expectedFingerprint }
+try {
+    # Windows PowerShell treats native stderr as errors; the verifier's exit code decides success.
+    $ErrorActionPreference = "Continue"
+    $global:LASTEXITCODE = -1
+    $signatureResult = & java (Join-Path $PSScriptRoot "VerifyBundle.java") $aab $signer 2>&1 | Out-String
+    if ($global:LASTEXITCODE -ne 0 -and $AllowUnsigned -and -not $RequireUnsigned) {
+        $signer = 'unsigned'
+        $signatureResult = & java (Join-Path $PSScriptRoot "VerifyBundle.java") $aab $signer 2>&1 | Out-String
+    }
+} finally {
+    $ErrorActionPreference = "Stop"
+}
+if ($global:LASTEXITCODE -ne 0) { throw "Bundle entry signature verification failed: $signatureResult" }
+Write-Output $signatureResult.Trim()
+
+if ([string]::IsNullOrWhiteSpace($BundletoolPath)) {
+    $BundletoolPath = Join-Path $repoRoot ".reference/tmp/bundletool-all-1.18.3.jar"
+    if (-not (Test-Path -LiteralPath $BundletoolPath -PathType Leaf)) {
+        New-Item -ItemType Directory -Force -Path (Split-Path $BundletoolPath) | Out-Null
+        Invoke-WebRequest -Uri "https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar" -OutFile $BundletoolPath
+    }
+}
+if ((Get-FileHash -Algorithm SHA256 -LiteralPath $BundletoolPath).Hash -ne
+    'A099CFA1543F55593BC2ED16A70A7C67FE54B1747BB7301F37FDFD6D91028E29') {
+    throw "Unexpected bundletool SHA-256"
+}
+$manifestText = & java -jar $BundletoolPath dump manifest "--bundle=$aab" --module=base
+if ($LASTEXITCODE -ne 0) { throw "Could not inspect exact bundle manifest" }
+$xmlSettings = [System.Xml.XmlReaderSettings]::new()
+$xmlSettings.DtdProcessing = [System.Xml.DtdProcessing]::Prohibit
+$xmlSettings.XmlResolver = $null
+$reader = [System.Xml.XmlReader]::Create([IO.StringReader]::new(($manifestText -join "`n")), $xmlSettings)
+$manifest = [xml]::new()
+try { $manifest.Load($reader) } finally { $reader.Dispose() }
 $androidNamespace = "http://schemas.android.com/apk/res/android"
 $applicationId = $manifest.manifest.package
 $versionCode = $manifest.manifest.GetAttribute("versionCode", $androidNamespace)
 $versionName = $manifest.manifest.GetAttribute("versionName", $androidNamespace)
-$permissions = @($manifest.manifest.'uses-permission' | ForEach-Object {
+$permissions = @($manifest.manifest.SelectNodes('uses-permission | uses-permission-sdk-23') | ForEach-Object {
     $_.GetAttribute("name", $androidNamespace)
 })
 if ($applicationId -ne "com.tuneitall.tuner") {
@@ -57,6 +100,28 @@ if ($applicationId -ne "com.tuneitall.tuner") {
 }
 if ([string]::IsNullOrWhiteSpace($versionCode) -or [string]::IsNullOrWhiteSpace($versionName)) {
     throw "Release version metadata is missing"
+}
+if (($ExpectedVersion -and $versionName -ne $ExpectedVersion) -or
+    ($ExpectedVersionCode -and $versionCode -ne $ExpectedVersionCode)) {
+    throw "Bundle version differs from approved release"
+}
+if ('android.permission.INTERNET' -in $permissions) {
+    throw "INTERNET permission must not be present"
+}
+if ('com.google.android.gms.permission.AD_ID' -in $permissions) {
+    throw "AD_ID permission must not be present"
+}
+$badging = & $aapt dump badging $apk 2>&1 | Out-String
+if ($LASTEXITCODE -ne 0 -or $badging -notmatch "package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'") {
+    throw "Could not inspect exact APK identity"
+}
+if ($Matches[1] -ne $applicationId -or $Matches[2] -ne $versionCode -or $Matches[3] -ne $versionName) {
+    throw "APK and bundle identity/version differ"
+}
+$apkPermissions = @([regex]::Matches($badging, "uses-permission(?:-sdk-23)?: name='([^']+)'") |
+    ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+if (Compare-Object ($permissions | Sort-Object -Unique) $apkPermissions) {
+    throw "APK and bundle permissions differ"
 }
 foreach ($requiredPermission in @(
     "android.permission.RECORD_AUDIO",
@@ -68,67 +133,90 @@ foreach ($requiredPermission in @(
         throw "$requiredPermission is missing"
     }
 }
-if ('android.permission.INTERNET' -in $permissions) {
-    throw "INTERNET permission must not be present"
+$accessibilityServices = @($manifest.manifest.application.SelectNodes('service') | Where-Object {
+    $_.GetAttribute("permission", $androidNamespace) -ceq "android.permission.BIND_ACCESSIBILITY_SERVICE"
+})
+if ($accessibilityServices.Count -ne 1 -or
+    $accessibilityServices[0].GetAttribute("name", $androidNamespace) -cne "com.tuneitall.tuner.autoscroll.AutoScrollAccessibilityService") {
+    throw "Unexpected Accessibility service declarations"
 }
-if ('com.google.android.gms.permission.AD_ID' -in $permissions) {
-    throw "AD_ID permission must not be present"
-}
-$accessibilityService = @($manifest.manifest.application.service) | Where-Object {
-    $_.GetAttribute("name", $androidNamespace) -eq "com.tuneitall.tuner.autoscroll.AutoScrollAccessibilityService"
-} | Select-Object -First 1
-if ($null -eq $accessibilityService -or $accessibilityService.GetAttribute("exported", $androidNamespace) -ne "true") {
+$accessibilityService = $accessibilityServices[0]
+if ($accessibilityService.GetAttribute("exported", $androidNamespace) -cne "true") {
     throw "Accessibility service must be exported for the Android system to bind it"
 }
 if ($accessibilityService.GetAttribute("permission", $androidNamespace) -ne "android.permission.BIND_ACCESSIBILITY_SERVICE") {
     throw "Accessibility service binding permission is missing"
 }
 
-$accessibility = & $aapt dump xmltree $apk --file res/xml/auto_scroll_accessibility_service.xml 2>&1 | Out-String
-if ($LASTEXITCODE -ne 0) {
-    throw "aapt2 could not inspect Accessibility metadata: $accessibility"
+$metadata = @($accessibilityService.SelectNodes('meta-data') | Where-Object {
+    $_.GetAttribute("name", $androidNamespace) -ceq "android.accessibilityservice"
+})
+if ($metadata.Count -ne 1 -or $metadata[0].GetAttribute("resource", $androidNamespace) -notmatch '^@xml/[a-z0-9_]+$') {
+    throw "Accessibility service metadata is missing or invalid"
 }
-if ($accessibility -notmatch 'canRetrieveWindowContent[^\r\n]*=false') {
-    throw "Accessibility service must not retrieve window content"
+$resource = $metadata[0].GetAttribute("resource", $androidNamespace).Substring(1)
+$resources = & java -jar $BundletoolPath dump resources "--bundle=$aab" "--resource=$resource" --values
+if ($LASTEXITCODE -ne 0) { throw "Could not resolve bundle Accessibility resource" }
+$resourcePaths = @($resources | Where-Object { $_ -match '^\s+\(' } | ForEach-Object {
+    if ($_ -notmatch '^\s+\([^\r\n]+\) - \[FILE\] (res/xml(?:-[a-zA-Z0-9_-]+)?/[a-z0-9_]+\.xml)$') {
+        throw "Unsupported bundle Accessibility resource value"
+    }
+    $Matches[1]
+} | Sort-Object -Unique)
+if ($resourcePaths.Count -eq 0) { throw "Bundle Accessibility resource has no XML files" }
+$descriptionResource = & java -jar $BundletoolPath dump resources "--bundle=$aab" --resource=string/auto_scroll_accessibility_description
+if ($LASTEXITCODE -ne 0 -or ($descriptionResource -join "`n") -cnotmatch '(?m)^(0x[0-9a-f]+) - string/auto_scroll_accessibility_description$') {
+    throw "Accessibility description resource is missing"
 }
-if ($accessibility -notmatch 'canPerformGestures[^\r\n]*=true') {
-    throw "Accessibility service gesture capability is missing"
-}
+$descriptionId = $Matches[1]
+$approvedAttributes = @(
+    "description=@$descriptionId", 'accessibilityEventTypes=0x00000020',
+    'accessibilityFeedbackType=0x00000010', 'notificationTimeout=0',
+    'canRetrieveWindowContent=false', 'canPerformGestures=true'
+)
 
-$archive = [IO.Compression.ZipFile]::OpenRead($aab)
+$scratchRoot = Join-Path $repoRoot ".reference/tmp"
+$scratch = Join-Path $scratchRoot ("aab-verifier-" + [guid]::NewGuid())
+New-Item -ItemType Directory -Path $scratch -Force | Out-Null
 try {
-    if ($null -eq $archive.GetEntry("base/manifest/AndroidManifest.xml")) {
-        throw "Android App Bundle is missing its base manifest"
+    $apkSet = Join-Path $scratch "universal.apks"
+    $bundleApk = Join-Path $scratch "universal.apk"
+    & java -jar $BundletoolPath build-apks "--bundle=$aab" "--output=$apkSet" --mode=universal "--aapt2=$aapt" --max-threads=2 | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "Could not generate bundle verification APK" }
+    $archive = [IO.Compression.ZipFile]::OpenRead($apkSet)
+    try {
+        $entry = $archive.GetEntry("universal.apk")
+        if ($null -eq $entry) { throw "Bundle verification APK is missing" }
+        [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $bundleApk)
+    } finally { $archive.Dispose() }
+    foreach ($resourcePath in $resourcePaths) {
+        $accessibility = & $aapt dump xmltree $bundleApk --file $resourcePath 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) { throw "aapt2 could not inspect bundle Accessibility metadata: $accessibility" }
+        $attributes = @([regex]::Matches($accessibility, '(?m)^\s+A: (.+)\(0x[0-9a-f]+\)=(.+)\r?$') | ForEach-Object {
+            $name = $_.Groups[1].Value
+            if (-not $name.StartsWith("${androidNamespace}:", [StringComparison]::Ordinal)) {
+                throw "Accessibility attribute has an unexpected namespace"
+            }
+            $name.Substring($androidNamespace.Length + 1) + '=' + $_.Groups[2].Value.Trim()
+        })
+        if ('canRetrieveWindowContent=false' -cnotin $attributes) {
+            throw "Accessibility service must not retrieve window content"
+        }
+        if ('canPerformGestures=true' -cnotin $attributes) {
+            throw "Accessibility service gesture capability is missing"
+        }
+        if ($attributes.Count -ne $approvedAttributes.Count -or
+            (Compare-Object $approvedAttributes $attributes -CaseSensitive)) {
+            throw "Accessibility capabilities differ from approved metadata"
+        }
     }
 } finally {
-    $archive.Dispose()
-}
-
-$jarsigner = (Get-Command jarsigner -ErrorAction Stop).Source
-# Android upload certificates are self-signed, so jarsigner -strict reports a
-# PKIX error even for a valid Play bundle. Verify every entry, then pin signer.
-$signingResult = & $jarsigner -verify -certs $aab 2>&1 | Out-String
-$signed = $LASTEXITCODE -eq 0 -and $signingResult -match 'jar verified'
-if (-not $signed -and -not $AllowUnsigned) {
-    throw "Release bundle is unsigned"
-}
-if ($signed) {
-    $keytool = (Get-Command keytool -ErrorAction Stop).Source
-    $certificate = & $keytool -printcert -jarfile $aab 2>&1 | Out-String
-    if ($LASTEXITCODE -ne 0) {
-        throw "Could not inspect the release signing certificate: $certificate"
-    }
-    $fingerprintMatch = [regex]::Match($certificate, 'SHA256:\s*([0-9A-F:]+)', 'IgnoreCase')
-    if (-not $fingerprintMatch.Success) {
-        throw "Release signing certificate has no SHA-256 fingerprint"
-    }
-    $fingerprint = $fingerprintMatch.Groups[1].Value.Replace(':', '').ToUpperInvariant()
-    $expectedFingerprint = 'DE46935ECA9035EEDA463E1E68FA5881396282D3E1F38546A41A352B5C3ED096'
-    if ($fingerprint -ne $expectedFingerprint) {
-        throw "Unexpected release signing certificate SHA-256: $fingerprint"
-    }
+    $resolved = (Resolve-Path -LiteralPath $scratch).Path
+    $expectedRoot = [IO.Path]::GetFullPath($scratchRoot) + [IO.Path]::DirectorySeparatorChar
+    if (-not $resolved.StartsWith($expectedRoot, [StringComparison]::OrdinalIgnoreCase)) { throw "Unsafe scratch path" }
+    Remove-Item -LiteralPath $resolved -Recurse -Force
 }
 
 Get-FileHash -Algorithm SHA256 -LiteralPath $apk, $aab |
     Select-Object Path, Hash
-Write-Output "Verified package $applicationId version $versionName ($versionCode); signed release: $signed"
+Write-Output "Verified exact package $applicationId version $versionName ($versionCode); signer: $signer"

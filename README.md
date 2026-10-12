@@ -223,7 +223,9 @@ One native Kotlin application module:
 - One continuous mono PCM16 `AudioTrack` for foreground-only metronome playback.
 - Native `MediaExtractor`/`MediaCodec` decoding for user-selected local audio,
   preserving channel powers before bounded STFT chroma extraction, template matching, and temporal
-  smoothing. No audio file is copied, uploaded, or retained by Intoniva.
+  smoothing. Selected audio is copied into private app cache for bounded analysis
+  and playback, never uploaded. See the [privacy policy](docs/privacy/privacy-policy-en.md)
+  for retention and cleanup behavior.
 - Harmonic-rich one-shot reference tones with click-free switching.
 - Pinned MIT `chords-db` data for canonical guitar and ukulele fingerings.
 - Theme-aware attributed headstock images and a native metronome body.
@@ -296,9 +298,13 @@ assembly, package/permission verification, and SHA-256 generation. Actions are
 pinned to immutable commit SHAs.
 
 Pre-release tags such as `v0.3.0-alpha.18` build a verified, debug-signed APK and
-publish it with a SHA-256 checksum. A reviewed stable `vX.Y.Z` tag triggers the
-signed release workflow only when all four keystore secrets are configured. It
-creates a draft GitHub release; Play upload remains a deliberate manual step.
+publish it with a SHA-256 checksum. A stable `vX.Y.Z` tag creates a draft signed
+GitHub release. The owner authorizes releases; no independent reviewer is required.
+Candidate builds have no signing secrets; a separate runner uses trusted `main`
+logic and environment-only
+credentials from `preview-signing` or `play-signing`. Protected `main` requires
+strict `Test, lint, and build` checks. Signing and `release-publication` environments
+restrict deployment refs; Play upload remains a deliberate manual step.
 See [release process](docs/releasing.md), [architecture](docs/architecture.md),
 and [security policy](SECURITY.md).
 

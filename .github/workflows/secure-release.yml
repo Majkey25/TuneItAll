@@ -1,0 +1,334 @@
+name: Isolated artifact signing
+
+on:
+  workflow_call:
+    inputs:
+      kind:
+        required: true
+        type: string
+      tag:
+        required: true
+        type: string
+      source_sha:
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: signed-release-${{ inputs.kind }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      source_sha: ${{ steps.source.outputs.sha }}
+      version_code: ${{ steps.source.outputs.version_code }}
+      aab_digest: ${{ steps.digests.outputs.aab }}
+      apk_digest: ${{ steps.digests.outputs.apk }}
+      artifact_id: ${{ steps.unsigned.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Resolve immutable release source
+        id: source
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          RELEASE_KIND: ${{ inputs.kind }}
+        run: |
+          [[ "$RELEASE_KIND" =~ ^(play|preview|release)$ ]]
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]]
+          sha="$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+          test -z "$SOURCE_SHA" || test "$SOURCE_SHA" = "$sha"
+          git merge-base --is-ancestor "$sha" origin/main
+          git checkout --detach "$sha"
+          version="$(sed -n 's/^        versionName = "\([^"]*\)"$/\1/p' app/build.gradle.kts)"
+          code="$(sed -n 's/^        versionCode = \([0-9]*\)$/\1/p' app/build.gradle.kts)"
+          test "$RELEASE_TAG" = "v$version"
+          [[ "$code" =~ ^[1-9][0-9]*$ ]]
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "version_code=$code" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+        with:
+          cache-provider: basic
+      - name: Build without signing secrets or write authority
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:bundleRelease --no-daemon --max-workers=2
+      - name: Record candidate digests
+        id: digests
+        run: |
+          echo "aab=$(sha256sum app/build/outputs/bundle/release/app-release.aab | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "apk=$(sha256sum app/build/outputs/apk/debug/app-debug.apk | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        id: unsigned
+        with:
+          name: unsigned-${{ github.run_id }}-${{ inputs.kind }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/apk/debug/app-debug.apk
+
+  verify-unsigned:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+          path: trusted
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact_id }}
+          merge-multiple: true
+          path: candidate
+      - name: Verify unsigned identity and metadata without signing authority
+        shell: pwsh
+        env:
+          AAB_DIGEST: ${{ needs.build.outputs.aab_digest }}
+          APK_DIGEST: ${{ needs.build.outputs.apk_digest }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          VERSION_CODE: ${{ needs.build.outputs.version_code }}
+        run: |
+          if ($env:AAB_DIGEST -cnotmatch '^[0-9a-f]{64}$' -or $env:APK_DIGEST -cnotmatch '^[0-9a-f]{64}$') { throw "Invalid candidate digest" }
+          if ((Get-FileHash candidate/apk/debug/app-debug.apk).Hash -ne $env:APK_DIGEST) { throw "APK candidate digest differs" }
+          ./trusted/tools/verify-release.ps1 -ArtifactDirectory "$PWD/candidate" -RequireUnsigned -ExpectedSha256 $env:AAB_DIGEST -ExpectedVersion ($env:RELEASE_TAG.Substring(1)) -ExpectedVersionCode $env:VERSION_CODE
+
+  sign:
+    needs: [build, verify-unsigned]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    environment: ${{ inputs.kind == 'preview' && 'preview-signing' || 'play-signing' }}
+    outputs:
+      artifact_id: ${{ steps.signed.outputs.artifact-id }}
+      aab_digest: ${{ steps.provenance.outputs.aab }}
+      apk_digest: ${{ steps.provenance.outputs.apk }}
+      provenance_digest: ${{ steps.provenance.outputs.provenance }}
+    steps:
+      # No candidate code, Gradle/cache, bundletool or aapt2 in this job.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+          path: trusted
+      - name: Require protected main and signing refs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIGNING_ENVIRONMENT: ${{ inputs.kind == 'preview' && 'preview-signing' || 'play-signing' }}
+          RELEASE_KIND: ${{ inputs.kind }}
+          SOURCE_SHA: ${{ needs.build.outputs.source_sha }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          ./trusted/tools/verify-release-policy.ps1 -ReleaseEnvironment $env:SIGNING_ENVIRONMENT -ReleaseKind $env:RELEASE_KIND -ReleaseTag $env:RELEASE_TAG
+          if ($env:SOURCE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw "Invalid source SHA" }
+          $tagSha = & git -C trusted rev-parse "refs/tags/$($env:RELEASE_TAG)^{commit}"
+          if ($LASTEXITCODE -ne 0 -or $tagSha -cne $env:SOURCE_SHA) { throw "Release tag differs from verified source" }
+          & git -C trusted merge-base --is-ancestor $env:SOURCE_SHA origin/main
+          if ($LASTEXITCODE -ne 0) { throw "Release source is not on protected main" }
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact_id }}
+          merge-multiple: true
+          path: candidate
+      - name: Verify previously checked bytes with the JDK
+        shell: pwsh
+        env:
+          AAB_DIGEST: ${{ needs.build.outputs.aab_digest }}
+          APK_DIGEST: ${{ needs.build.outputs.apk_digest }}
+        run: |
+          if ($env:AAB_DIGEST -cnotmatch '^[0-9a-f]{64}$' -or $env:APK_DIGEST -cnotmatch '^[0-9a-f]{64}$') { throw "Invalid candidate digest" }
+          if ((Get-FileHash candidate/bundle/release/app-release.aab).Hash -ne $env:AAB_DIGEST) { throw "AAB candidate digest differs" }
+          if ((Get-FileHash candidate/apk/debug/app-debug.apk).Hash -ne $env:APK_DIGEST) { throw "APK candidate digest differs" }
+          & java trusted/tools/VerifyBundle.java candidate/bundle/release/app-release.aab unsigned
+          if ($LASTEXITCODE -ne 0) { throw "Unsigned bundle entry verification failed" }
+      - name: Sign Play bundle with environment-only credentials
+        if: inputs.kind != 'preview'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.TUNEITALL_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.TUNEITALL_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.TUNEITALL_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.TUNEITALL_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64" && test -n "$KEYSTORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD"
+          key="$RUNNER_TEMP/upload.jks"
+          trap 'rm -f "$key"' EXIT
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$key"
+          jarsigner -keystore "$key" -storepass:env KEYSTORE_PASSWORD -keypass:env KEY_PASSWORD candidate/bundle/release/app-release.aab "$KEY_ALIAS"
+      - name: Sign preview APK with environment-only identity
+        if: inputs.kind == 'preview'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.TUNEITALL_PREVIEW_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          key="$RUNNER_TEMP/preview.jks"
+          trap 'rm -f "$key"' EXIT
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$key"
+          signer="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          "$signer" sign --ks "$key" --ks-pass pass:android --ks-key-alias androiddebugkey --key-pass pass:android candidate/apk/debug/app-debug.apk
+          "$signer" verify --verbose --print-certs candidate/apk/debug/app-debug.apk > "$RUNNER_TEMP/preview-signer.txt"
+          grep -Fx 'Number of signers: 1' "$RUNNER_TEMP/preview-signer.txt"
+          grep -F 'certificate SHA-256 digest: 768843c2e67e38838c8bd7751443a4cfa5b21dbfe6db077f93677100dbcccda6' "$RUNNER_TEMP/preview-signer.txt"
+      - name: Verify bundle entries with the JDK and record provenance
+        id: provenance
+        shell: pwsh
+        env:
+          RELEASE_KIND: ${{ inputs.kind }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          SOURCE_SHA: ${{ needs.build.outputs.source_sha }}
+          VERSION_CODE: ${{ needs.build.outputs.version_code }}
+          UNSIGNED_AAB_DIGEST: ${{ needs.build.outputs.aab_digest }}
+          UNSIGNED_APK_DIGEST: ${{ needs.build.outputs.apk_digest }}
+        run: |
+          $signer = if ($env:RELEASE_KIND -eq 'preview') { 'unsigned' } else { 'DE46935ECA9035EEDA463E1E68FA5881396282D3E1F38546A41A352B5C3ED096' }
+          & java trusted/tools/VerifyBundle.java candidate/bundle/release/app-release.aab $signer
+          if ($LASTEXITCODE -ne 0) { throw "Final bundle entry verification failed" }
+          $aabHash = (Get-FileHash candidate/bundle/release/app-release.aab).Hash.ToLowerInvariant()
+          $apkHash = (Get-FileHash candidate/apk/debug/app-debug.apk).Hash.ToLowerInvariant()
+          if ($env:RELEASE_KIND -eq 'preview' -and $aabHash -cne $env:UNSIGNED_AAB_DIGEST) { throw "Preview signing changed the bundle" }
+          if ($env:RELEASE_KIND -ne 'preview' -and $apkHash -cne $env:UNSIGNED_APK_DIGEST) { throw "Play signing changed the APK" }
+          @{ source = $env:SOURCE_SHA; tag = $env:RELEASE_TAG; versionCode = $env:VERSION_CODE; unsignedAabSha256 = $env:UNSIGNED_AAB_DIGEST; unsignedApkSha256 = $env:UNSIGNED_APK_DIGEST; aabSha256 = $aabHash; apkSha256 = $apkHash } | ConvertTo-Json | Set-Content candidate/provenance.json
+          "aab=$aabHash" >> $env:GITHUB_OUTPUT
+          "apk=$apkHash" >> $env:GITHUB_OUTPUT
+          "provenance=$((Get-FileHash candidate/provenance.json).Hash.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        id: signed
+        with:
+          name: intoniva-${{ inputs.kind }}-bundle-${{ needs.build.outputs.source_sha }}
+          if-no-files-found: error
+          retention-days: 30
+          path: candidate/
+
+  verify-signed:
+    needs: [build, sign]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+          path: trusted
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.sign.outputs.artifact_id }}
+          merge-multiple: true
+          path: candidate
+      - name: Verify final identity and metadata without signing authority
+        shell: pwsh
+        env:
+          RELEASE_KIND: ${{ inputs.kind }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          SOURCE_SHA: ${{ needs.build.outputs.source_sha }}
+          VERSION_CODE: ${{ needs.build.outputs.version_code }}
+          UNSIGNED_AAB_DIGEST: ${{ needs.build.outputs.aab_digest }}
+          UNSIGNED_APK_DIGEST: ${{ needs.build.outputs.apk_digest }}
+          AAB_DIGEST: ${{ needs.sign.outputs.aab_digest }}
+          APK_DIGEST: ${{ needs.sign.outputs.apk_digest }}
+          PROVENANCE_DIGEST: ${{ needs.sign.outputs.provenance_digest }}
+        run: |
+          if ($env:AAB_DIGEST -cnotmatch '^[0-9a-f]{64}$' -or $env:APK_DIGEST -cnotmatch '^[0-9a-f]{64}$' -or $env:PROVENANCE_DIGEST -cnotmatch '^[0-9a-f]{64}$') { throw "Invalid signed digest" }
+          if ((Get-FileHash candidate/apk/debug/app-debug.apk).Hash -ne $env:APK_DIGEST) { throw "Signed APK digest differs" }
+          if ((Get-FileHash candidate/provenance.json).Hash -ne $env:PROVENANCE_DIGEST) { throw "Signed provenance digest differs" }
+          $provenance = Get-Content candidate/provenance.json -Raw | ConvertFrom-Json
+          if ($provenance.source -cne $env:SOURCE_SHA -or $provenance.tag -cne $env:RELEASE_TAG -or $provenance.versionCode -cne $env:VERSION_CODE -or $provenance.unsignedAabSha256 -cne $env:UNSIGNED_AAB_DIGEST -or $provenance.unsignedApkSha256 -cne $env:UNSIGNED_APK_DIGEST -or $provenance.aabSha256 -cne $env:AAB_DIGEST -or $provenance.apkSha256 -cne $env:APK_DIGEST) { throw "Signed provenance differs from verified candidate" }
+          ./trusted/tools/verify-release.ps1 -ArtifactDirectory "$PWD/candidate" -RequireUnsigned:($env:RELEASE_KIND -eq 'preview') -ExpectedSha256 $env:AAB_DIGEST -ExpectedVersion ($env:RELEASE_TAG.Substring(1)) -ExpectedVersionCode $env:VERSION_CODE
+
+  publish:
+    if: inputs.kind != 'play'
+    needs: [build, sign, verify-signed]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: read
+    environment: release-publication
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+          path: trusted
+      - name: Require publication policy and intended refs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_KIND: ${{ inputs.kind }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: ./trusted/tools/verify-release-policy.ps1 -ReleaseEnvironment release-publication -ReleaseKind $env:RELEASE_KIND -ReleaseTag $env:RELEASE_TAG
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.sign.outputs.artifact_id }}
+          merge-multiple: true
+          path: verified
+      - name: Publish only verified bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_KIND: ${{ inputs.kind }}
+          SOURCE_SHA: ${{ needs.build.outputs.source_sha }}
+          AAB_DIGEST: ${{ needs.sign.outputs.aab_digest }}
+          APK_DIGEST: ${{ needs.sign.outputs.apk_digest }}
+          PROVENANCE_DIGEST: ${{ needs.sign.outputs.provenance_digest }}
+        run: |
+          [[ "$AAB_DIGEST" =~ ^[0-9a-f]{64}$ && "$APK_DIGEST" =~ ^[0-9a-f]{64}$ && "$PROVENANCE_DIGEST" =~ ^[0-9a-f]{64}$ ]]
+          test "$(sha256sum verified/provenance.json | cut -d' ' -f1)" = "$PROVENANCE_DIGEST"
+          test "$(jq -r .source verified/provenance.json)" = "$SOURCE_SHA"
+          test "$(jq -r .tag verified/provenance.json)" = "$RELEASE_TAG"
+          test "$(sha256sum verified/bundle/release/app-release.aab | cut -d' ' -f1)" = "$AAB_DIGEST"
+          test "$(sha256sum verified/apk/debug/app-debug.apk | cut -d' ' -f1)" = "$APK_DIGEST"
+          test "$(jq -r .aabSha256 verified/provenance.json)" = "$AAB_DIGEST"
+          test "$(jq -r .apkSha256 verified/provenance.json)" = "$APK_DIGEST"
+          tag_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq .object.sha)"
+          tag_type="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq .object.type)"
+          if test "$tag_type" = tag; then tag_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" --jq .object.sha)"; fi
+          test "$tag_sha" = "$SOURCE_SHA"
+          if test "$RELEASE_KIND" = preview; then
+            asset="Intoniva-$RELEASE_TAG-debug.apk"
+            cp verified/apk/debug/app-debug.apk "$asset"
+            sha256sum "$asset" > "$asset.sha256"
+            gh release create "$RELEASE_TAG" "$asset" "$asset.sha256" verified/provenance.json --prerelease --verify-tag --title "Intoniva $RELEASE_TAG" --notes "Testing APK. Not a Google Play production build."
+          else
+            gh release create "$RELEASE_TAG" verified/bundle/release/app-release.aab verified/provenance.json --draft --verify-tag --generate-notes --title "Intoniva $RELEASE_TAG"
+          fi
