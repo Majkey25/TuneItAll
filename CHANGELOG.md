@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0-alpha.37, 2026-10-12
+
+- Reduce pitch and song-analysis CPU work without changing the validated reference calculations.
+- Keep tuner audio ownership, confirmation and displayed readings consistent across rapid changes and navigation.
+- Keep metronome stop controls responsive during a delayed native start, and prevent stale stop requests from stopping a new session.
+- Keep song chord/note labels anchored and diagrams readable on short screens and with enlarged text. Disable diagrams without a verified fingering.
+- Add Material and Glass layouts and correct controls, navigation and custom-colour contrast across themes.
+- Keep trainer actions reachable and preserve quiz/comparison state through configuration changes.
+- Fix low-speed auto-scroll and unintended long presses; retain Stop/restart ownership.
+- Bound local song imports and cancellation, reject incomplete files, and disclose the private cache copy used for analysis and playback.
+- Isolate release signing from candidate build scripts and verify exact artifacts, signer identity and restricted deployment policies.
+
+Song recognition remains experimental. These changes do not establish universal
+chord accuracy or quiet unplugged-electric accuracy on every phone.
+
 ## 0.3.0-alpha.36, 2026-10-07
 
 - Add an Appearance screen with separate light/dark presets, native Material You colours, and custom palettes.

@@ -1,0 +1,1 @@
+Úspornější zpracování tónů a skladeb. Rychlá odezva tlačítka Stop v metronomu. Čitelné akordy na nízkých obrazovkách i s větším písmem. Rozložení Material a Glass s lepším kontrastem. Dostupné ovládání traineru. Opravené pomalé automatické posouvání a nechtěné dlouhé stisky. Bezpečnější místní import skladeb. Rozpoznávání skladeb zůstává experimentální.

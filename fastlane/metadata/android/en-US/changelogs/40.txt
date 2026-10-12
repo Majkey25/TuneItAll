@@ -1,0 +1,1 @@
+More efficient pitch and song processing. Responsive metronome Stop controls. Readable song chord panels on short screens and with larger text. Material and Glass layouts with improved contrast. Accessible trainer controls. Fixed low-speed auto-scroll and accidental long presses. Safer local song imports. Song recognition remains experimental.
