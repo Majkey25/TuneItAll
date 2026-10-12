@@ -6,7 +6,9 @@ import android.content.res.Configuration
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.core.view.WindowCompat
 import androidx.test.core.app.ApplicationProvider
 import com.tuneitall.tuner.audio.DetectionSensitivity
@@ -87,6 +90,7 @@ import com.tuneitall.tuner.ui.TunerUiState
 import com.tuneitall.tuner.ui.TunerViewModel
 import com.tuneitall.tuner.ui.TuningLibraryScreen
 import com.tuneitall.tuner.ui.bottomNavigationSelectedColors
+import com.tuneitall.tuner.ui.bottomNavigationContainerColor
 import com.tuneitall.tuner.ui.modeSelectorSelectedColors
 import com.tuneitall.tuner.ui.metronomeErrorResource
 import com.tuneitall.tuner.ui.secondaryHeaderContentColor
@@ -483,7 +487,7 @@ class TuneItAllFlowTest {
             val actionColor = textColor("metronome_start_stop_label")
             composeRule.runOnIdle {
                 assertTrue(contrastRatio(statusColor, background) >= 4.5f)
-                assertEquals(Color(0xFF63D17A), actionContainer)
+                assertEquals(if (darkTheme) Color(0xFF234B2D) else Color(0xFFD4EBD7), actionContainer)
                 assertTrue(contrastRatio(actionColor, actionContainer) >= 4.5f)
                 assertFalse(statusColor == primary)
             }
@@ -628,6 +632,15 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithContentDescription("Metronome").assertIsSelected()
         composeRule.onNodeWithTag("metronome_settings").performClick()
         composeRule.onNodeWithTag("settings_section_metronome").assertIsSelected()
+        composeRule.onNodeWithTag("settings_section_general").performClick()
+        composeRule.onNodeWithTag("settings_appearance").performScrollTo().performClick()
+        composeRule.onNodeWithTag("appearance_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("back_button").performClick()
+        composeRule.onNodeWithTag("settings_section_general").assertIsSelected()
+        composeRule.onNodeWithTag("back_button").performClick()
+        composeRule.onNodeWithTag("metronome_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("metronome_settings").performClick()
+        composeRule.onNodeWithTag("settings_section_metronome").assertIsSelected()
         composeRule.onNodeWithTag("back_button").performClick()
         composeRule.onNodeWithTag("metronome_screen").assertIsDisplayed()
 
@@ -663,6 +676,32 @@ class TuneItAllFlowTest {
         listOf("◉", "♩", "♬", "≡", "✓").forEach { glyph ->
             composeRule.onNodeWithText(glyph, useUnmergedTree = true).assertDoesNotExist()
         }
+    }
+
+    @Test
+    fun trainerChoicesAndResolvedQuestionSurviveLeavingTheTab() {
+        val viewModel = TunerViewModel(ApplicationProvider.getApplicationContext())
+        composeRule.setContent {
+            TuneItAllTheme {
+                TuneItAllApp(state(), viewModel, {}, {}, AppLanguage.SYSTEM, {})
+            }
+        }
+        composeRule.onNodeWithTag("bottom_item_trainer").performClick()
+        composeRule.onNodeWithTag("trainer_exercise_notes").performClick()
+        composeRule.onNodeWithTag("trainer_mode_learn").performClick()
+        composeRule.onNodeWithTag("bottom_item_metronome").performClick()
+        composeRule.onNodeWithTag("bottom_item_trainer").performClick()
+        composeRule.onNodeWithTag("trainer_exercise_notes").assertIsSelected()
+        composeRule.onNodeWithTag("trainer_mode_learn").assertIsSelected()
+
+        composeRule.onNodeWithTag("trainer_mode_quiz").performClick()
+        composeRule.onNodeWithTag("trainer_note_reveal").performClick()
+        val feedback = composeRule.onNodeWithTag("trainer_note_feedback").fetchSemanticsNode()
+            .config[androidx.compose.ui.semantics.SemanticsProperties.Text].first().text
+        composeRule.onNodeWithTag("bottom_item_tuner").performClick()
+        composeRule.onNodeWithTag("bottom_item_trainer").performClick()
+        composeRule.onNodeWithTag("trainer_note_feedback").assertTextEquals(feedback)
+        composeRule.onNodeWithTag("trainer_note_answer_0").assertIsNotEnabled()
     }
 
     @Test
@@ -746,8 +785,8 @@ class TuneItAllFlowTest {
         composeRule.runOnIdle {
             assertEquals(Color(0xFFFAF9F6), background)
             assertEquals(Color(0xFF166534), accent)
-            assertEquals(Color(0xFF63D17A), selectedContainer)
-            assertEquals(Color(0xFF63D17A), primaryFixed)
+            assertEquals(Color(0xFFD4EBD7), selectedContainer)
+            assertEquals(Color(0xFFD4EBD7), primaryFixed)
         }
         composeRule.onNodeWithText("Dark").performClick()
         composeRule.onNodeWithText("Dark").assertIsSelected()
@@ -755,8 +794,8 @@ class TuneItAllFlowTest {
             assertEquals(ThemeMode.DARK, UserPreferences(context).themeMode)
             assertEquals(Color(0xFF101010), background)
             assertEquals(Color(0xFF63D17A), accent)
-            assertEquals(Color(0xFF63D17A), selectedContainer)
-            assertEquals(Color(0xFF63D17A), primaryFixed)
+            assertEquals(Color(0xFF234B2D), selectedContainer)
+            assertEquals(Color(0xFF234B2D), primaryFixed)
         }
     }
 
@@ -767,20 +806,19 @@ class TuneItAllFlowTest {
         var navigationColors: ResolvedNavigationColors? = null
         var primaryContainer = Color.Unspecified
         var onPrimaryContainer = Color.Unspecified
-        var background = Color.Unspecified
-        var onBackground = Color.Unspecified
+        var navigationContainer = Color.Unspecified
         composeRule.setContent {
             TuneItAllTheme(darkTheme = darkTheme) {
                 val resolvedModeColors = modeSelectorSelectedColors()
                 val resolvedNavigationColors = bottomNavigationSelectedColors()
+                val resolvedNavigationContainer = bottomNavigationContainerColor()
                 val colorScheme = MaterialTheme.colorScheme
                 SideEffect {
                     modeColors = resolvedModeColors
                     navigationColors = resolvedNavigationColors
                     primaryContainer = colorScheme.primaryContainer
                     onPrimaryContainer = colorScheme.onPrimaryContainer
-                    background = colorScheme.background
-                    onBackground = colorScheme.onBackground
+                    navigationContainer = resolvedNavigationContainer
                 }
             }
         }
@@ -792,9 +830,8 @@ class TuneItAllFlowTest {
             assertEquals(onPrimaryContainer, mode.content)
             assertEquals(primaryContainer, navigation.indicator)
             assertEquals(onPrimaryContainer, navigation.icon)
-            assertEquals(Color(0xFF63D17A), primaryContainer)
-            assertEquals(onBackground, navigation.text)
-            assertTrue(contrastRatio(navigation.text, background) >= 4.5f)
+            assertEquals(if (darkTheme) Color(0xFF234B2D) else Color(0xFFD4EBD7), primaryContainer)
+            assertTrue(contrastRatio(navigation.text, navigationContainer) >= 4.5f)
             assertTrue(contrastRatio(navigation.icon, navigation.indicator) >= 4.5f)
             assertTrue(contrastRatio(mode.content, mode.container) >= 4.5f)
         }
@@ -899,7 +936,7 @@ class TuneItAllFlowTest {
                 assertTrue(contrastRatio(color, background) >= 4.5f)
             }
             assertEquals(Color(0xFF166534), primary)
-            assertEquals(Color(0xFF63D17A), primaryContainer)
+            assertEquals(Color(0xFFD4EBD7), primaryContainer)
             assertTrue(contrastRatio(primary, background) >= 4.5f)
             assertTrue(contrastRatio(onPrimary, primary) >= 4.5f)
         }
@@ -1280,11 +1317,88 @@ class TuneItAllFlowTest {
     }
 
     @Test
+    fun appShellClearsCustomTuningDraftAfterUiBackSystemBackAndSave() {
+        val viewModel = TunerViewModel(ApplicationProvider.getApplicationContext())
+        lateinit var backDispatcher: OnBackPressedDispatcher
+        composeRule.setContent {
+            backDispatcher = requireNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
+            val currentState by viewModel.uiState.collectAsState()
+            TuneItAllTheme {
+                TuneItAllApp(
+                    state = currentState,
+                    viewModel = viewModel,
+                    openApplicationSettings = {},
+                    openSupportPage = {},
+                    appLanguage = AppLanguage.SYSTEM,
+                    onAppLanguageChanged = {},
+                )
+            }
+        }
+        val nameField = hasText(context.getString(R.string.tuning_name)) and hasSetTextAction()
+        val createLabel = context.getString(R.string.create_custom_tuning)
+
+        fun assertDefaultDraft() {
+            assertEquals("", composeRule.onNode(nameField).fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
+            composeRule.onNodeWithText(context.getString(R.string.instrument_guitar)).assertIsSelected()
+            composeRule.onNodeWithText("6").assertIsSelected()
+            composeRule.onNodeWithText("3 + 3").assertIsSelected()
+            val lowString = hasText(context.getString(R.string.string_note, 6)) and hasSetTextAction()
+            assertEquals("E2", composeRule.onNode(lowString).fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
+        }
+
+        composeRule.onNodeWithTag("tuning_picker").performClick()
+        composeRule.onNodeWithText(createLabel).performClick()
+        composeRule.onNode(nameField).performTextInput("Discard UI draft")
+        composeRule.onNodeWithText("9").performClick()
+        composeRule.onNode(hasText(context.getString(R.string.string_note, 9)) and hasSetTextAction())
+            .apply {
+                performScrollTo()
+                performTextClearance()
+                performTextInput("D1")
+            }
+        composeRule.onNodeWithTag("back_button").performScrollTo().performClick()
+        composeRule.onNodeWithText(context.getString(R.string.tuning_library)).assertIsDisplayed()
+        composeRule.onNodeWithText(createLabel).performClick()
+        assertDefaultDraft()
+        composeRule.runOnIdle { assertTrue(viewModel.uiState.value.customTunings.isEmpty()) }
+
+        composeRule.onNode(nameField).performScrollTo().performTextInput("Discard system-back draft")
+        composeRule.onNodeWithText(context.getString(R.string.instrument_bass)).performClick()
+        composeRule.runOnIdle { backDispatcher.onBackPressed() }
+        composeRule.onNodeWithText(context.getString(R.string.tuning_library)).assertIsDisplayed()
+        composeRule.onNodeWithText(createLabel).performClick()
+        assertDefaultDraft()
+        composeRule.runOnIdle { assertTrue(viewModel.uiState.value.customTunings.isEmpty()) }
+
+        composeRule.onNode(nameField).performTextInput("Saved route tuning")
+        composeRule.onNodeWithText(context.resources.getQuantityString(R.plurals.layout_inline, 6, 6))
+            .performScrollTo().performClick()
+        composeRule.onNode(hasText(context.getString(R.string.string_note, 6)) and hasSetTextAction())
+            .apply {
+                performScrollTo()
+                performTextClearance()
+                performTextInput("D2")
+            }
+        composeRule.onNodeWithText(context.getString(R.string.save_and_tune)).performScrollTo().performClick()
+        composeRule.onNodeWithTag("tuning_picker").assertIsDisplayed()
+        composeRule.runOnIdle {
+            assertEquals("Saved route tuning", viewModel.uiState.value.tuning.name)
+            assertEquals(HeadstockLayout.INLINE_6, viewModel.uiState.value.headstockLayout)
+            assertEquals(MidiNote(38), viewModel.uiState.value.tuning.notesLowToHigh.first())
+            assertEquals("Saved route tuning", UserPreferences(context).customTunings.single().name)
+        }
+        composeRule.onNodeWithTag("tuning_picker").performClick()
+        composeRule.onNodeWithText(createLabel).performClick()
+        assertDefaultDraft()
+        composeRule.onNodeWithText(context.getString(R.string.save_and_tune)).performScrollTo().assertIsNotEnabled()
+    }
+
+    @Test
     fun customNineStringTuningSavesValidatedNotes() {
         var saved: TuningPreset? = null
         composeRule.setContent {
             TuneItAllTheme {
-                CustomTuningScreen(existing = emptyList(), onSave = { saved = it }, onBack = {})
+                CustomTuningScreen(existing = emptyList(), customCount = 0, onSave = { saved = it }, onBack = {})
             }
         }
 
@@ -1302,7 +1416,7 @@ class TuneItAllFlowTest {
         var saved: TuningPreset? = null
         composeRule.setContent {
             TuneItAllTheme {
-                CustomTuningScreen(existing = emptyList(), onSave = { saved = it }, onBack = {})
+                CustomTuningScreen(existing = emptyList(), customCount = 0, onSave = { saved = it }, onBack = {})
             }
         }
 
@@ -1312,6 +1426,71 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithText("Save and start tuning").performScrollTo().performClick()
 
         assertEquals(setOf(HeadstockLayout.INLINE_6), saved?.layouts)
+    }
+
+    @Test
+    fun builtInTuningsDoNotConsumeTheCustomTuningLimit() {
+        val standard = standardTuning()
+        val custom = List(99) { index ->
+            standard.copy(id = "custom-$index", name = "Custom $index", layouts = setOf(HeadstockLayout.SPLIT_3_3))
+        }
+        var saved: TuningPreset? = null
+        composeRule.setContent {
+            TuneItAllTheme {
+                CustomTuningScreen(
+                    existing = TuningCatalog.presets + custom,
+                    customCount = custom.size,
+                    onSave = { saved = it },
+                    onBack = {},
+                )
+            }
+        }
+
+        composeRule.onNode(hasText(context.getString(R.string.tuning_name)) and hasSetTextAction())
+            .performTextInput("Hundredth")
+        composeRule.onNodeWithText(context.getString(R.string.save_and_tune))
+            .performScrollTo().assertIsEnabled().performClick()
+        assertEquals("Hundredth", saved?.name)
+    }
+
+    @Test
+    fun oneHundredCustomTuningsDisableSaving() {
+        val standard = standardTuning()
+        val custom = List(100) { index ->
+            standard.copy(id = "custom-$index", name = "Custom $index", layouts = setOf(HeadstockLayout.SPLIT_3_3))
+        }
+        composeRule.setContent {
+            TuneItAllTheme {
+                CustomTuningScreen(
+                    existing = TuningCatalog.presets + custom,
+                    customCount = custom.size,
+                    onSave = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        composeRule.onNode(hasText(context.getString(R.string.tuning_name)) and hasSetTextAction())
+            .performTextInput("One more")
+        composeRule.onNodeWithText(context.getString(R.string.save_and_tune))
+            .performScrollTo().assertIsNotEnabled()
+        composeRule.onNodeWithText(context.getString(R.string.custom_tuning_limit))
+            .performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun customTuningStillRejectsBuiltInNames() {
+        composeRule.setContent {
+            TuneItAllTheme {
+                CustomTuningScreen(existing = TuningCatalog.presets, customCount = 0, onSave = {}, onBack = {})
+            }
+        }
+
+        composeRule.onNode(hasText(context.getString(R.string.tuning_name)) and hasSetTextAction())
+            .performTextInput(standardTuning().name)
+        composeRule.onNodeWithText(context.getString(R.string.duplicate_tuning_name)).assertIsDisplayed()
+        composeRule.onNodeWithText(context.getString(R.string.save_and_tune))
+            .performScrollTo().assertIsNotEnabled()
     }
 
     @Test
@@ -1408,6 +1587,7 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithText("Support me").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Support this app → Buy Me a Coffee")
             .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag("back_button").assertIsDisplayed()
         composeRule.runOnIdle {
             assertEquals(1, supportCount)
             darkTheme = true

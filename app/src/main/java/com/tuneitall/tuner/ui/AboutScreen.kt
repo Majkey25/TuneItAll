@@ -69,6 +69,7 @@ fun AboutScreen(
         }
         if (showPrivacy) {
             Text(stringResource(R.string.privacy_policy_full))
+            Text(stringResource(R.string.song_cache_privacy))
             Text(stringResource(R.string.support_payment_privacy))
         }
         TextButton(

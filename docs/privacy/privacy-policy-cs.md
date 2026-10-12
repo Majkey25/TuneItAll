@@ -1,7 +1,7 @@
 # Zásady ochrany soukromí Intoniva
 
 Platnost od: 8. září 2026
-Poslední aktualizace: 5. října 2026
+Poslední aktualizace: 11. října 2026
 
 Vydavatelem Intoniva je Matěj Teplý, na Google Play uvedený jako Majkey a
 používající značku MajkeyLab. Odpovídá za osobní údaje získané prostřednictvím
@@ -19,9 +19,15 @@ Intoniva používá mikrofon během aktivní ladičky. Vzorky dočasně zpracuje
 paměti pro odhad výšky tónu. Nenahrává, neuchovává, neodesílá ani nesdílí je.
 
 Když přes systémový výběr Androidu zvolíte písničku, Intoniva ji může přečíst
-pro odhad akordů, tónů, tempa a akustické aranže. Zdrojový soubor nekopíruje ani
-neodesílá. Výsledky zůstávají v paměti a zmizí po nahrazení nebo ukončení procesu
-aplikace.
+pro odhad akordů, tónů, tempa a akustické aranže. Pro analýzu vytvoří dočasnou
+kopii v soukromé mezipaměti aplikace. Jednu kopii ponechá pro přehrávání a novou
+analýzu, dokud je písnička načtená, i při pozastavení nebo na pozadí. Při odebrání
+či nahrazení písničky nebo uvolnění načtené skladby se ji pokusí smazat. Pracovní
+kopie analýzy tempa a neúspěšných importů se po skončení pokusí smazat.
+Po pádu nebo neúspěšném smazání mohou kopie zůstat do úklidu při spuštění,
+vyčištění mezipaměti Androidem, vymazání dat nebo odinstalování.
+Původní soubor se nemění a zvuk se nikam neodesílá. Výsledky zůstávají v paměti
+a zmizí po nahrazení nebo ukončení procesu aplikace.
 
 Nastavení, oblíbené položky, vlastní ladění, nastavení metronomu, přijetí
 vysvětlení automatického posouvání a skóre tréninku zůstávají v soukromém

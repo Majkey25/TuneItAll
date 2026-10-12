@@ -14,6 +14,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,7 +29,7 @@ class MetronomePlaybackTest {
     fun allMetronomeSoundsPlayThroughOneNativeSession() {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val viewModel = MetronomeViewModel(application)
-        viewModel.setBpm(240)
+        viewModel.setBpm(400)
         viewModel.setSubdivision(4)
         viewModel.setAccentEvery(2)
         viewModel.setVolume(60)
@@ -276,6 +278,85 @@ class MetronomePlaybackTest {
     }
 
     @Test
+    fun duplicateStopDoesNotOvertakeTheQueuedStop() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val dispatcher = ControlledDispatcher()
+        val creations = AtomicInteger()
+        val player = MetronomePlayer(
+            outputFactory = {
+                creations.incrementAndGet()
+                ImmediateOutput()
+            },
+            setAudioThreadPriority = {},
+        )
+        val viewModel = MetronomeViewModel(application, player, dispatcher)
+
+        try {
+            viewModel.start()
+            viewModel.stopAsync()
+            viewModel.stop()
+            viewModel.start()
+
+            assertTrue(viewModel.uiState.value.stopping)
+            assertEquals(1, creations.get())
+            dispatcher.runAll()
+            assertFalse(viewModel.uiState.value.stopping)
+
+            viewModel.start()
+            dispatcher.runAll()
+            assertEquals(2, creations.get())
+            assertTrue(player.running)
+        } finally {
+            dispatcher.runAll()
+            viewModel.stop()
+        }
+    }
+
+    @Test
+    fun staleQueuedStopCannotStopRestartAfterCancelledStartCleanup() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val dispatcher = ControlledDispatcher()
+        val atSessionClaim = CountDownLatch(1)
+        val allowSessionClaim = CountDownLatch(1)
+        val startCalls = AtomicInteger()
+        val player = MetronomePlayer(
+            outputFactory = { ImmediateOutput() },
+            setAudioThreadPriority = {},
+            beforeSessionClaim = {
+                if (startCalls.incrementAndGet() == 1) {
+                    atSessionClaim.countDown()
+                    allowSessionClaim.await()
+                }
+            },
+        )
+        val viewModel = MetronomeViewModel(application, player, dispatcher)
+        viewModel.startAsync()
+        val starter = Thread(dispatcher::runNext)
+        starter.start()
+
+        try {
+            assertTrue(atSessionClaim.await(1, TimeUnit.SECONDS))
+            viewModel.stopAsync()
+            allowSessionClaim.countDown()
+            starter.join(1_000L)
+            assertFalse(starter.isAlive)
+            assertFalse(viewModel.uiState.value.stopping)
+
+            viewModel.start()
+            assertTrue(player.running)
+            dispatcher.runAll()
+
+            assertTrue(player.running)
+            assertTrue(viewModel.uiState.value.playing)
+        } finally {
+            allowSessionClaim.countDown()
+            starter.join(1_000L)
+            dispatcher.runAll()
+            viewModel.stop()
+        }
+    }
+
+    @Test
     fun stopMonitorWaitsForLateWorkerExitAndAllowsRestart() {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val priorityEntered = CountDownLatch(1)
@@ -332,6 +413,25 @@ class MetronomePlaybackTest {
 
         assertFalse(viewModel.uiState.value.listening)
         viewModel.onStop()
+    }
+
+    private class ControlledDispatcher : CoroutineDispatcher() {
+        private val queued = ArrayDeque<Runnable>()
+
+        override fun dispatch(context: CoroutineContext, block: Runnable) = synchronized(queued) {
+            queued.addLast(block)
+        }
+
+        fun runNext() {
+            synchronized(queued) { queued.removeFirst() }.run()
+        }
+
+        fun runAll() {
+            while (true) {
+                val next = synchronized(queued) { queued.removeFirstOrNull() } ?: return
+                next.run()
+            }
+        }
     }
 
     private class ImmediateOutput : MetronomeOutput {

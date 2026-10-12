@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
 import android.os.SystemClock
-import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -39,13 +38,22 @@ import com.tuneitall.tuner.tuner.TunerReadingRetainer
 import com.tuneitall.tuner.tuner.pitchSearchRange
 import com.tuneitall.tuner.ui.theme.ThemeMode
 import com.tuneitall.tuner.ui.theme.AppearanceSettings
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -90,6 +98,15 @@ internal data class DetectionCallbackToken(
     val detectionContextRevision: Long,
 )
 
+private data class CaptureRequest(val generation: Long, val source: AudioInputSource?)
+private data class ReferenceRequest(val generation: Long, val hertz: Double?)
+private data class DetectionResult(
+    val captured: DetectionCallbackToken,
+    val reading: TunerReading?,
+    val confirmed: Boolean,
+    val revision: Long,
+)
+
 internal fun isCurrentDetectionCallback(
     captured: DetectionCallbackToken,
     current: TunerUiState,
@@ -125,9 +142,19 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
     private val readingRetainer = TunerReadingRetainer()
     private val feedbackInputGate = FeedbackInputGate()
     private val pitchPipelineLock = Any()
+    @Volatile
     private var audioSessionGeneration = 0L
     private var detectionContextRevision = 0L
-    private var referenceToneStopJob: Job? = null
+    private var detectionResultRevision = 0L
+    private var pendingConfirmation = false
+    @Volatile
+    private var referenceGeneration = 0L
+    @Volatile
+    private var cleared = false
+    private val audioControlScope = CoroutineScope(SupervisorJob())
+    private val captureRequests = MutableStateFlow(CaptureRequest(0L, null))
+    private val referenceRequests = MutableStateFlow(ReferenceRequest(0L, null))
+    private val detectionResults = Channel<DetectionResult>(Channel.CONFLATED)
     @Volatile
     private var foreground = false
     @Volatile
@@ -161,6 +188,73 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         ),
     )
     val uiState: StateFlow<TunerUiState> = mutableUiState.asStateFlow()
+
+    init {
+        audioControlScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                withContext(Dispatchers.IO) {
+                    captureRequests.collect { request ->
+                        try {
+                            audioInput.stop()
+                            if (
+                                isActive && !cleared && foreground && tunerActive &&
+                                request.generation == audioSessionGeneration && request.source != null
+                            ) {
+                                startAudio(request)
+                            }
+                        } catch (error: CancellationException) {
+                            throw error
+                        } catch (error: RuntimeException) {
+                            invalidateAudioSession(request.generation, scheduleStop = false) {
+                                it.copy(
+                                    listening = false,
+                                    reading = null,
+                                    tuningConfirmed = false,
+                                    error = AudioInputError.InitializationFailed(error.message ?: error.javaClass.simpleName),
+                                )
+                            }
+                        }
+                    }
+                }
+            } finally {
+                withContext(NonCancellable + Dispatchers.IO) { audioInput.close() }
+            }
+        }
+        audioControlScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                withContext(Dispatchers.IO) {
+                    referenceRequests.collectLatest { request ->
+                        if (!isCurrentReference(request.generation)) return@collectLatest
+                        try {
+                            if (request.hertz == null) {
+                                stopReferenceOutput(request.generation)
+                            } else {
+                                val context = currentCoroutineContext()
+                                tonePlayer.play(request.hertz) { context.isActive && isCurrentReference(request.generation) }
+                                delay(REFERENCE_PREVIEW_MILLIS)
+                                stopReferenceTone(request.generation)
+                            }
+                        } catch (error: CancellationException) {
+                            throw error
+                        } catch (_: RuntimeException) {
+                            synchronized(pitchPipelineLock) {
+                                if (!isCurrentReference(request.generation)) return@synchronized
+                                mutableUiState.update {
+                                    it.copy(error = AudioInputError.InitializationFailed("Reference tone output is unavailable"))
+                                }
+                            }
+                            stopReferenceOutput(request.generation)
+                        }
+                    }
+                }
+            } finally {
+                withContext(NonCancellable + Dispatchers.IO) { tonePlayer.close() }
+            }
+        }
+        viewModelScope.launch {
+            for (result in detectionResults) applyDetectionResult(result)
+        }
+    }
 
     fun onStart() {
         foreground = true
@@ -203,19 +297,15 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                     error = null,
                 )
             }
-            audioInput.stop()
         }
     }
 
     fun retryAudio() {
         if (!mutableUiState.value.microphoneGranted) return
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) { audioInput.stop() }
-            invalidateAudioSession {
-                it.copy(listening = false, reading = null, tuningConfirmed = false, error = null)
-            }
-            startAudioIfReady()
+        invalidateAudioSession {
+            it.copy(listening = false, reading = null, tuningConfirmed = false, error = null)
         }
+        startAudioIfReady()
     }
 
     fun selectMode(mode: TunerMode) {
@@ -282,7 +372,10 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
             if (settings == current.audioSettings) return
             preferences.tunerAudioSettings = settings
             val sourceChanged = settings.inputSource != current.audioSettings.inputSource
-            if (sourceChanged) audioSessionGeneration++
+            if (sourceChanged) {
+                audioSessionGeneration++
+                captureRequests.value = CaptureRequest(audioSessionGeneration, null)
+            }
             updateDetectionContextLocked {
                 it.copy(
                     audioSettings = settings,
@@ -299,7 +392,6 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
             sourceChanged
         }
         if (!restartAudio) return
-        audioInput.stop()
         startAudioIfReady()
     }
 
@@ -340,55 +432,69 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun playReferenceTone() {
-        referenceToneStopJob?.cancel()
-        referenceToneStopJob = null
-        val state = mutableUiState.value
-        val target = state.tuning.notesLowToHigh[state.selectedString]
-        try {
-            tonePlayer.play(MusicMath.frequency(target, state.referencePitch))
-            updateDetectionContext {
-                it.copy(referenceTonePlaying = true, reading = null, tuningConfirmed = false, error = null)
+        if (cleared || !foreground || !tunerActive) return
+        tonePlayer.invalidatePending()
+        synchronized(pitchPipelineLock) {
+            if (cleared || !foreground || !tunerActive) return
+            val state = mutableUiState.value
+            val target = state.tuning.notesLowToHigh[state.selectedString]
+            referenceGeneration++
+            updateDetectionContextLocked {
+                it.copy(referenceTonePlaying = true, reading = null, tuningConfirmed = false, error = if (it.listening) null else it.error)
             }
-            referenceToneStopJob = viewModelScope.launch {
-                delay(REFERENCE_PREVIEW_MILLIS)
-                referenceToneStopJob = null
-                stopReferenceTone()
-            }
-        } catch (_: RuntimeException) {
-            tonePlayer.stop()
-            updateDetectionContext {
-                it.copy(
-                    referenceTonePlaying = false,
-                    error = AudioInputError.InitializationFailed("Reference tone output is unavailable"),
-                )
+            referenceRequests.value = ReferenceRequest(referenceGeneration, MusicMath.frequency(target, state.referencePitch))
+        }
+    }
+
+    private fun stopReferenceTone(expectedGeneration: Long? = null) {
+        if (expectedGeneration != null && expectedGeneration != referenceGeneration) return
+        tonePlayer.invalidatePending()
+        synchronized(pitchPipelineLock) {
+            if (expectedGeneration != null && expectedGeneration != referenceGeneration) return@synchronized
+            referenceGeneration++
+            referenceRequests.value = ReferenceRequest(referenceGeneration, null)
+        }
+    }
+
+    private fun isCurrentReference(generation: Long): Boolean = !cleared && generation == referenceGeneration
+
+    private fun stopReferenceOutput(generation: Long) {
+        tonePlayer.stop {
+            synchronized(pitchPipelineLock) {
+                if (!isCurrentReference(generation) || !mutableUiState.value.referenceTonePlaying) return@synchronized
+                updateDetectionContextLocked { it.copy(referenceTonePlaying = false) }
             }
         }
     }
 
-    private fun stopReferenceTone() {
-        referenceToneStopJob?.cancel()
-        referenceToneStopJob = null
-        tonePlayer.stop()
-        updateDetectionContext { it.copy(referenceTonePlaying = false) }
-    }
-
     override fun onCleared() {
-        audioInput.close()
-        tonePlayer.close()
+        cleared = true
+        tonePlayer.invalidatePending()
+        audioControlScope.cancel()
+        detectionResults.close()
         confirmationPlayer.close()
         super.onCleared()
     }
 
-    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    private fun startAudio() {
-        val sessionGeneration = prepareAudioStart()
+    private fun startAudio(request: CaptureRequest) {
+        val sessionGeneration = request.generation
+        if (cleared || !foreground || !tunerActive || sessionGeneration != audioSessionGeneration) return
+        if (ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            invalidateAudioSession(sessionGeneration) {
+                it.copy(microphoneGranted = false, listening = false, reading = null, tuningConfirmed = false)
+            }
+            return
+        }
         audioInput.start(
             windowSize = ANALYSIS_WINDOW_SIZE,
-            source = mutableUiState.value.audioSettings.inputSource,
-            onWindow = { samples, sampleRate ->
+            source = requireNotNull(request.source),
+            onWindow = { samples, sampleRate, windowGeneration ->
                 val captured = synchronized(pitchPipelineLock) {
                     val state = mutableUiState.value
-                    if (!isDetectionActive(state) || sessionGeneration != audioSessionGeneration) {
+                    if (
+                        !isDetectionActive(state) || sessionGeneration != audioSessionGeneration ||
+                        windowGeneration != detectionContextRevision
+                    ) {
                         return@synchronized null
                     }
                     DetectionCallbackToken(state, sessionGeneration, detectionContextRevision)
@@ -399,18 +505,18 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                     captured.state.selectedString,
                     captured.state.referencePitch,
                 )
-                val pipelineResult = synchronized(pitchPipelineLock) {
-                    if (!isCurrentDetectionContextLocked(captured)) return@synchronized null
-                    val settings = captured.state.audioSettings
-                    val feedbackActive = !feedbackInputGate.accepts(SystemClock.elapsedRealtime())
-                    if (feedbackActive && range.maxHertz >= CONFIRMATION_CHIME_HERTZ / 2.0) return@synchronized null
-                    val frame = detector.analyze(
-                        samples,
-                        sampleRate,
-                        range.minHertz,
-                        range.maxHertz,
-                        rejectConfirmation = feedbackActive,
-                    )
+                val settings = captured.state.audioSettings
+                val feedbackActive = !feedbackInputGate.accepts(SystemClock.elapsedRealtime())
+                if (feedbackActive && range.maxHertz >= CONFIRMATION_CHIME_HERTZ / 2.0) return@start
+                val frame = detector.analyze(
+                    samples,
+                    sampleRate,
+                    range.minHertz,
+                    range.maxHertz,
+                    rejectConfirmation = feedbackActive,
+                )
+                synchronized(pitchPipelineLock) {
+                    if (!isCurrentDetectionContextLocked(captured)) return@synchronized
                     noiseFloor.observe(frame.rms, frame.isDetectorVoiced)
                     val tracked = if (
                         noiseFloor.accepts(
@@ -432,79 +538,22 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                         )
                         null
                     }
-                    Pair(
-                        tracked?.let {
-                            engine.update(
-                                estimate = it,
-                                mode = captured.state.mode,
-                                tuning = captured.state.tuning,
-                                selectedString = captured.state.selectedString,
-                                referencePitch = captured.state.referencePitch,
-                                settings = settings,
-                            )
-                        },
-                        settings,
-                    )
-                }
-                val (rawReading, settings) = pipelineResult ?: return@start
-                val nowMillis = SystemClock.elapsedRealtime()
-                viewModelScope.launch {
-                    val playbackFailure = synchronized(pitchPipelineLock) {
-                        val current = mutableUiState.value
-                        if (!isDetectionActive(current)) return@synchronized null
-                        var failure: RuntimeException? = null
-                        val applied = mutateIfCurrentDetectionCallback(
-                            captured,
-                            current,
-                            audioSessionGeneration,
-                            detectionContextRevision,
-                        ) {
-                            val displayReading = readingRetainer.update(
-                                rawReading,
-                                nowMillis,
-                                settings.readingHoldMillis,
-                            )
-                            val playConfirmation = confirmationTracker.update(
-                                rawReading?.target,
-                                rawReading?.inTune == true,
-                                nowMillis,
-                                settings.confirmationMillis,
-                            )
-                            mutableUiState.update {
-                                it.copy(
-                                    reading = displayReading,
-                                    tuningConfirmed = confirmationTracker.isConfirmed,
-                                )
-                            }
-                            if (playConfirmation && confirmationTracker.isConfirmed) {
-                                try {
-                                    feedbackInputGate.suppress(
-                                        nowMillis = SystemClock.elapsedRealtime(),
-                                        durationMillis = CONFIRMATION_FEEDBACK_MILLIS,
-                                    )
-                                    confirmationPlayer.play()
-                                } catch (error: RuntimeException) {
-                                    feedbackInputGate.reset()
-                                    failure = error
-                                }
-                            }
-                        }
-                        if (!applied) return@synchronized null
-                        failure
+                    val rawReading = tracked?.let {
+                        engine.update(
+                            estimate = it,
+                            mode = captured.state.mode,
+                            tuning = captured.state.tuning,
+                            selectedString = captured.state.selectedString,
+                            referencePitch = captured.state.referencePitch,
+                            settings = settings,
+                        )
                     }
-                    if (playbackFailure != null) {
-                        synchronized(pitchPipelineLock) {
-                            if (!isCurrentDetectionContextLocked(captured)) return@synchronized
-                            mutableUiState.update {
-                                it.copy(error = AudioInputError.InitializationFailed("Confirmation sound is unavailable"))
-                            }
-                        }
-                    }
+                    publishReadingLocked(captured, rawReading, SystemClock.elapsedRealtime())
                 }
             },
             onStarted = { capabilities ->
                 synchronized(pitchPipelineLock) {
-                    if (sessionGeneration == audioSessionGeneration) {
+                    if (!cleared && sessionGeneration == audioSessionGeneration) {
                         mutableUiState.update { it.copy(audioInputCapabilities = capabilities) }
                     }
                 }
@@ -514,12 +563,78 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                     it.copy(listening = false, reading = null, tuningConfirmed = false, error = error)
                 }
             },
+            captureGeneration = {
+                synchronized(pitchPipelineLock) {
+                    if (isDetectionActive(mutableUiState.value) && sessionGeneration == audioSessionGeneration) {
+                        detectionContextRevision
+                    } else {
+                        null
+                    }
+                }
+            },
         )
+        if (cleared || !foreground || !tunerActive || sessionGeneration != audioSessionGeneration) audioInput.stop()
+    }
+
+    private fun publishReadingLocked(captured: DetectionCallbackToken, rawReading: TunerReading?, nowMillis: Long) {
+        val settings = captured.state.audioSettings
+        val displayReading = readingRetainer.update(rawReading, nowMillis, settings.readingHoldMillis)
+        val playConfirmation = confirmationTracker.update(
+            rawReading?.target,
+            rawReading?.inTune == true,
+            nowMillis,
+            settings.confirmationMillis,
+        )
+        pendingConfirmation = confirmationTracker.isConfirmed && (pendingConfirmation || playConfirmation)
+        detectionResultRevision++
+        detectionResults.trySend(DetectionResult(captured, displayReading, confirmationTracker.isConfirmed, detectionResultRevision))
+    }
+
+    private fun applyDetectionResult(result: DetectionResult) {
+        val captured = result.captured
+        val playbackFailure = synchronized(pitchPipelineLock) {
+            val current = mutableUiState.value
+            if (!isDetectionActive(current) || result.revision != detectionResultRevision) return@synchronized null
+            var failure: RuntimeException? = null
+            val applied = mutateIfCurrentDetectionCallback(
+                captured,
+                current,
+                audioSessionGeneration,
+                detectionContextRevision,
+            ) {
+                mutableUiState.update {
+                    it.copy(reading = result.reading, tuningConfirmed = result.confirmed)
+                }
+                if (pendingConfirmation && result.confirmed) {
+                    pendingConfirmation = false
+                    try {
+                        feedbackInputGate.suppress(
+                            nowMillis = SystemClock.elapsedRealtime(),
+                            durationMillis = CONFIRMATION_FEEDBACK_MILLIS,
+                        )
+                        confirmationPlayer.play()
+                    } catch (error: RuntimeException) {
+                        feedbackInputGate.reset()
+                        failure = error
+                    }
+                }
+            }
+            if (!applied) return@synchronized null
+            failure
+        }
+        if (playbackFailure != null) {
+            synchronized(pitchPipelineLock) {
+                if (!isCurrentDetectionContextLocked(captured)) return@synchronized
+                mutableUiState.update {
+                    it.copy(error = AudioInputError.InitializationFailed("Confirmation sound is unavailable"))
+                }
+            }
+        }
     }
 
     private fun startAudioIfReady() {
         val state = mutableUiState.value
-        if (!foreground || !tunerActive || !state.microphoneGranted || state.listening) return
+        if (cleared || !foreground || !tunerActive || !state.microphoneGranted || state.listening) return
         if (
             ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.RECORD_AUDIO) !=
             PackageManager.PERMISSION_GRANTED
@@ -527,7 +642,10 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
             mutableUiState.update { it.copy(microphoneGranted = false, listening = false) }
             return
         }
-        startAudio()
+        synchronized(pitchPipelineLock) {
+            val generation = prepareAudioStart()
+            captureRequests.value = CaptureRequest(generation, mutableUiState.value.audioSettings.inputSource)
+        }
     }
 
     private fun isCurrentDetectionContextLocked(captured: DetectionCallbackToken): Boolean {
@@ -542,7 +660,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun isDetectionActive(current: TunerUiState): Boolean {
-        return foreground &&
+        return !cleared && foreground &&
             tunerActive &&
             current.listening &&
             !current.referenceTonePlaying
@@ -566,6 +684,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun invalidateAudioSession(
         expectedSessionGeneration: Long? = null,
+        scheduleStop: Boolean = true,
         transform: (TunerUiState) -> TunerUiState,
     ): Boolean = synchronized(pitchPipelineLock) {
         if (expectedSessionGeneration != null && expectedSessionGeneration != audioSessionGeneration) {
@@ -577,6 +696,7 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
                 it.copy(audioInputCapabilities = it.audioInputCapabilities.copy(activeSource = null))
             }
         }
+        if (scheduleStop) captureRequests.value = CaptureRequest(audioSessionGeneration, null)
         true
     }
 
@@ -592,14 +712,14 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
         engine.reset()
         readingRetainer.reset()
         confirmationTracker.reset()
+        pendingConfirmation = false
         // The speaker/room tail outlives a mode, tuning, or settings change.
     }
 
     private fun stopTunerAudio() {
         invalidateAudioSession {
-            it.copy(listening = false, referenceTonePlaying = false, reading = null, tuningConfirmed = false)
+            it.copy(listening = false, reading = null, tuningConfirmed = false)
         }
-        audioInput.stop()
         stopReferenceTone()
         confirmationPlayer.stop()
     }

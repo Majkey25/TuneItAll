@@ -6,13 +6,21 @@ class AutoScrollPreferences(context: Context) {
     private val preferences = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     var speed: Int
-        get() = AutoScrollSpeed.clamp(preferences.getInt(KEY_SPEED, AutoScrollSpeed.DEFAULT_LEVEL))
+        get() = try {
+            AutoScrollSpeed.clamp(preferences.getInt(KEY_SPEED, AutoScrollSpeed.DEFAULT_LEVEL))
+        } catch (_: ClassCastException) {
+            AutoScrollSpeed.DEFAULT_LEVEL
+        }
         set(value) {
             preferences.edit().putInt(KEY_SPEED, AutoScrollSpeed.clamp(value)).apply()
         }
 
     var disclosureAccepted: Boolean
-        get() = preferences.getBoolean(KEY_DISCLOSURE_ACCEPTED, false)
+        get() = try {
+            preferences.getBoolean(KEY_DISCLOSURE_ACCEPTED, false)
+        } catch (_: ClassCastException) {
+            false
+        }
         set(value) {
             preferences.edit().putBoolean(KEY_DISCLOSURE_ACCEPTED, value).apply()
         }

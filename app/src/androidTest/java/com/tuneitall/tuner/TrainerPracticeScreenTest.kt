@@ -12,9 +12,14 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.tuneitall.tuner.music.NoteBank
@@ -42,6 +47,142 @@ import org.junit.Test
 
 class TrainerPracticeScreenTest {
     @get:Rule val compose = createComposeRule()
+
+    @Test
+    fun resolvedChordQuestionsSurviveModeSwitchAndRestoration() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val restoration = StateRestorationTester(compose)
+        var mode by mutableStateOf(TrainerMode.QUIZ)
+        var records = 0
+        restoration.setContent {
+            TuneItAllTheme {
+                Box(Modifier.width(360.dp).height(520.dp)) {
+                    ChordTrainer(mode, TuningCatalog.presets, NoteNotation.SHARPS,
+                        ChordShapeCatalog.fromResources(context.resources), { records++ }, {}, { _, _ -> }, Modifier)
+                }
+            }
+        }
+        val choices = compose.onAllNodes(SemanticsMatcher("Chord answer") {
+            it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("trainer_answer_") == true
+        })
+        choices[0].performClick()
+        val feedback = compose.onNodeWithTag("trainer_feedback").fetchSemanticsNode()
+            .config[SemanticsProperties.Text].first().text
+        compose.runOnIdle { mode = TrainerMode.LEARN }
+        compose.runOnIdle { mode = TrainerMode.QUIZ }
+        compose.onNodeWithTag("trainer_feedback").assertTextEquals(feedback)
+        choices[0].assertIsNotEnabled()
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithTag("trainer_feedback").assertTextEquals(feedback)
+        choices[0].assertIsNotEnabled()
+        compose.runOnIdle { assertEquals(1, records) }
+
+        compose.onNodeWithTag("trainer_next_question").performClick()
+        compose.onNodeWithTag("trainer_feedback").assertDoesNotExist()
+        choices[0].assertIsEnabled()
+        compose.onNodeWithTag("trainer_reveal").performClick()
+        compose.runOnIdle { mode = TrainerMode.LEARN }
+        compose.runOnIdle { mode = TrainerMode.QUIZ }
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithTag("trainer_feedback").assertIsDisplayed()
+        choices[0].assertIsNotEnabled()
+        compose.runOnIdle { assertEquals(1, records) }
+    }
+
+    @Test
+    fun resolvedNoteQuestionsSurviveModeSwitchAndRestoration() {
+        val restoration = StateRestorationTester(compose)
+        var mode by mutableStateOf(TrainerMode.QUIZ)
+        var records = 0
+        restoration.setContent {
+            TuneItAllTheme {
+                Box(Modifier.width(360.dp).height(520.dp)) {
+                    NoteTrainer(mode, NoteTrainingSets(), NoteNotation.SHARPS,
+                        {}, { records++ }, {}, { _, _ -> }, {}, false, Modifier)
+                }
+            }
+        }
+        compose.onNodeWithTag("trainer_note_answer_0").performClick()
+        val feedback = compose.onNodeWithTag("trainer_note_feedback").fetchSemanticsNode()
+            .config[SemanticsProperties.Text].first().text
+        compose.runOnIdle { mode = TrainerMode.LEARN }
+        compose.runOnIdle { mode = TrainerMode.QUIZ }
+        compose.onNodeWithTag("trainer_note_feedback").assertTextEquals(feedback)
+        compose.onNodeWithTag("trainer_note_answer_0").assertIsNotEnabled()
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithTag("trainer_note_feedback").assertTextEquals(feedback)
+        compose.onNodeWithTag("trainer_note_answer_0").assertIsNotEnabled()
+        compose.runOnIdle { assertEquals(1, records) }
+
+        compose.onNodeWithTag("trainer_note_next").performClick()
+        compose.onNodeWithTag("trainer_note_feedback").assertDoesNotExist()
+        compose.onNodeWithTag("trainer_note_answer_0").assertIsEnabled()
+        compose.onNodeWithTag("trainer_note_reveal").performClick()
+        compose.runOnIdle { mode = TrainerMode.LEARN }
+        compose.runOnIdle { mode = TrainerMode.QUIZ }
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithTag("trainer_note_feedback").assertIsDisplayed()
+        compose.onNodeWithTag("trainer_note_answer_0").assertIsNotEnabled()
+        compose.runOnIdle { assertEquals(1, records) }
+    }
+
+    @Test
+    fun quizComparisonKeepsTheAnsweredPairAcrossModeSwitch() {
+        var mode by mutableStateOf(TrainerMode.QUIZ)
+        var sets by mutableStateOf(NoteTrainingSets())
+        compose.setContent {
+            TuneItAllTheme {
+                Box(Modifier.width(360.dp).height(520.dp)) {
+                    NoteTrainer(mode, sets, NoteNotation.SHARPS,
+                        {}, {}, {}, { _, _ -> }, {}, false, Modifier)
+                }
+            }
+        }
+        compose.onNodeWithTag("trainer_note_answer_4").performClick()
+        compose.onNodeWithTag("trainer_compare_notes").performClick()
+        val first = compose.onNodeWithTag("trainer_play_a").fetchSemanticsNode()
+            .config[SemanticsProperties.Text].first().text
+        val second = compose.onNodeWithTag("trainer_play_b").fetchSemanticsNode()
+            .config[SemanticsProperties.Text].first().text
+        compose.onNodeWithTag("trainer_close_compare").performClick()
+        compose.runOnIdle { mode = TrainerMode.LEARN }
+        compose.runOnIdle { mode = TrainerMode.QUIZ }
+        compose.onNodeWithTag("trainer_compare_notes").performClick()
+        compose.onNodeWithTag("trainer_play_a").assertTextEquals(first)
+        compose.onNodeWithTag("trainer_play_b").assertTextEquals(second)
+        compose.onNodeWithTag("trainer_close_compare").performClick()
+        compose.runOnIdle { sets = NoteTrainingSets(setOf(0, 2)) }
+        compose.onNodeWithTag("trainer_note_feedback").assertDoesNotExist()
+        compose.runOnIdle { mode = TrainerMode.LEARN }
+        compose.onNodeWithTag("trainer_play_a").assertTextEquals("Hear A · C4")
+        compose.onNodeWithTag("trainer_play_b").assertTextEquals("Hear B · D4")
+    }
+
+    @Test
+    fun trainerListenContentAndControlsStayReachableAtMaximumTextSize() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val catalog = ChordShapeCatalog.fromResources(context.resources)
+        compose.setContent {
+            TuneItAllTheme {
+                CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2.6f)) {
+                    Box(Modifier.width(320.dp).height(568.dp)) {
+                        TrainerScreen(
+                            TrainerStats(4, 9), TuningCatalog.presets, NoteNotation.SHARPS,
+                            catalog, {}, {}, NoteTrainingSets((0..11).toSet()), {},
+                        )
+                    }
+                }
+            }
+        }
+        compose.onNodeWithTag("trainer_exercise_notes").performScrollTo().performClick()
+        compose.onNodeWithTag("trainer_mode_learn").performScrollTo().performClick()
+        compose.onNodeWithTag("trainer_listen_11").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("trainer_pick_A").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("trainer_pick_B").assertIsDisplayed()
+        compose.onNodeWithTag("trainer_play_a").assertIsDisplayed()
+        compose.onNodeWithTag("trainer_play_b").assertIsDisplayed()
+        compose.onNodeWithTag("trainer_repeat").assertIsDisplayed()
+    }
 
     @Test
     fun learnNextShufflesAndPlaysTheDisplayedChord() {
@@ -175,8 +316,8 @@ class TrainerPracticeScreenTest {
                 }
             }
         }
-        compose.onNodeWithTag("trainer_play_a").assertIsDisplayed().performClick()
-        compose.onNodeWithTag("trainer_play_b").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("trainer_play_a").assertIsDisplayed().assertTextEquals("Hear A · C4").performClick()
+        compose.onNodeWithTag("trainer_play_b").assertIsDisplayed().assertTextEquals("Hear B · C♯4").performClick()
         compose.onNodeWithTag("trainer_repeat").assertIsDisplayed().performClick()
         compose.runOnIdle {
             assertEquals(listOf(0, 1), played)
@@ -184,6 +325,14 @@ class TrainerPracticeScreenTest {
         }
         compose.onNodeWithTag("trainer_repeat").assertTextEquals("Stop repeating").performClick()
         compose.runOnIdle { assertTrue(!repeating) }
+        compose.onNodeWithTag("trainer_pick_B").performScrollTo().performClick()
+        compose.onNodeWithTag("trainer_pick_B_2").performClick()
+        compose.onNodeWithTag("trainer_play_b").assertIsDisplayed().assertTextEquals("Hear B · D4").performClick()
+        compose.onNodeWithTag("trainer_repeat").performClick()
+        compose.runOnIdle {
+            assertEquals(listOf(0, 1, 2), played)
+            assertEquals(0 to 2, repeated)
+        }
     }
 
     @Test

@@ -5,7 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -42,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -55,6 +55,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
+import com.tuneitall.tuner.ui.theme.errorBackgroundColor
+import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.AcousticChordInstruction
 import com.tuneitall.tuner.music.ArrangementMode
@@ -97,87 +99,97 @@ fun ChordsScreen(
     val activeInstruction = state.arrangement?.instructions?.getOrNull(activeChordIndex)
     val activeChord = activeInstruction?.soundingChord
         ?: (activeEvent as? ChordEvent)?.chord?.transpose(state.transposeSemitones)
-    val arrangementTuning = tunings.firstOrNull { it.id == STANDARD_E_TUNING_ID } ?: selectedTuning
+    val arrangementTuning = requireNotNull(TuningCatalog.byId(STANDARD_E_TUNING_ID))
     val showCurrentChordBar = state.tab == ChordTab.SONG && state.fileName != null
     var showDiagrams by rememberSaveable { mutableStateOf(false) }
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .safeDrawingPadding()
             .testTag("chords_screen"),
     ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .testTag("chords_content"),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Text(
-                stringResource(R.string.destination_chords),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.semantics { heading() },
-            )
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ChordTab.entries.forEach { tab ->
-                    FilterChip(
-                        selected = state.tab == tab,
-                        onClick = { onTabSelected(tab) },
-                        label = {
-                            Text(stringResource(if (tab == ChordTab.LIBRARY) R.string.chords_library else R.string.song_chords))
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ),
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("chord_tab_${tab.name.lowercase()}"),
+        val compactChordBar = maxHeight < CHORD_DIAGRAM_HEIGHT + 256.dp * LocalDensity.current.fontScale
+        Column(Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .testTag("chords_content"),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Text(
+                    stringResource(R.string.destination_chords),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { heading() },
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ChordTab.entries.forEach { tab ->
+                        FilterChip(
+                            selected = state.tab == tab,
+                            onClick = { onTabSelected(tab) },
+                            label = {
+                                Text(stringResource(if (tab == ChordTab.LIBRARY) R.string.chords_library else R.string.song_chords))
+                            },
+                            colors = currentPlaneChipColors().copy(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            ),
+                            modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("chord_tab_${tab.name.lowercase()}"),
+                        )
+                    }
+                }
+                if (state.tab == ChordTab.LIBRARY) {
+                    TuningSelector(tunings, selectedTuning.id, onTuningSelected)
+                } else if (state.analysisMode == SongAnalysisMode.CHORDS) {
+                    Text(
+                        "${instrumentName(arrangementTuning.instrument)} · ${arrangementTuning.name}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.testTag("song_tuning"),
                     )
                 }
-            }
-            if (state.tab == ChordTab.LIBRARY || state.analysisMode == SongAnalysisMode.CHORDS) {
-                TuningSelector(tunings, selectedTuning.id, onTuningSelected)
-            }
-            when (state.tab) {
-                ChordTab.LIBRARY -> ChordLibrary(
-                    chord = state.selectedChord,
-                    tuning = selectedTuning,
-                    notation = notation,
-                    catalog = catalog,
-                    onChordSelected = onChordSelected,
-                )
+                when (state.tab) {
+                    ChordTab.LIBRARY -> ChordLibrary(
+                        chord = state.selectedChord,
+                        tuning = selectedTuning,
+                        notation = notation,
+                        catalog = catalog,
+                        onChordSelected = onChordSelected,
+                    )
 
-                ChordTab.SONG -> SongChordPanel(
-                    state = state,
+                    ChordTab.SONG -> SongChordPanel(
+                        state = state,
+                        notation = notation,
+                        activeEvent = activeEvent,
+                        onAnalysisModeSelected = onAnalysisModeSelected,
+                        onArrangementModeSelected = onArrangementModeSelected,
+                        onNoteRangeSelected = onNoteRangeSelected,
+                        onChooseAudio = { launcher.launch(arrayOf("audio/*")) },
+                        onPlayPause = onPlayPause,
+                        onSeek = onSeek,
+                        onTransposeChanged = onTransposeChanged,
+                        onClearSong = onClearSong,
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+            if (showCurrentChordBar) {
+                CurrentSongEventBar(
+                    event = activeEvent,
+                    mode = state.analysisMode,
+                    transposeSemitones = state.transposeSemitones,
                     notation = notation,
-                    activeEvent = activeEvent,
-                    onAnalysisModeSelected = onAnalysisModeSelected,
-                    onArrangementModeSelected = onArrangementModeSelected,
-                    onNoteRangeSelected = onNoteRangeSelected,
-                    onChooseAudio = { launcher.launch(arrayOf("audio/*")) },
-                    onPlayPause = onPlayPause,
-                    onSeek = onSeek,
-                    onTransposeChanged = onTransposeChanged,
-                    onClearSong = onClearSong,
+                    chord = activeChord,
+                    instruction = activeInstruction,
+                    capo = state.arrangement?.capo,
+                    tuning = arrangementTuning,
+                    catalog = catalog,
+                    showDiagram = showDiagrams,
+                    onShowDiagramChanged = { showDiagrams = it },
+                    compact = compactChordBar,
                 )
             }
-            Spacer(Modifier.height(8.dp))
-        }
-        if (showCurrentChordBar) {
-            CurrentSongEventBar(
-                event = activeEvent,
-                mode = state.analysisMode,
-                transposeSemitones = state.transposeSemitones,
-                notation = notation,
-                chord = activeChord,
-                instruction = activeInstruction,
-                capo = state.arrangement?.capo,
-                tuning = if (activeInstruction == null) selectedTuning else arrangementTuning,
-                catalog = catalog,
-                showDiagram = showDiagrams,
-                onShowDiagramChanged = { showDiagrams = it },
-            )
         }
     }
 }
@@ -195,9 +207,13 @@ private fun CurrentSongEventBar(
     catalog: ChordShapeCatalog,
     showDiagram: Boolean,
     onShowDiagramChanged: (Boolean) -> Unit,
+    compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val noteMode = mode == SongAnalysisMode.NOTES
+    val diagramChord = instruction?.shapeChord ?: chord
+    val hasVoicing = diagramChord != null && catalog.shape(tuning.id, diagramChord) != null
+    val diagramVisible = showDiagram && hasVoicing && mode == SongAnalysisMode.CHORDS
     val label = when (event) {
         is ChordEvent -> formatChord(instruction?.soundingChord ?: event.chord.transpose(transposeSemitones), notation)
         is NoteEvent -> formatMidiNote(event.midiNote + transposeSemitones, notation)
@@ -209,61 +225,76 @@ private fun CurrentSongEventBar(
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
-        Column(
+        Row(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(Modifier.fillMaxWidth()) {
-                Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         stringResource(if (noteMode) R.string.current_note else R.string.current_chord),
                         style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
                     )
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .semantics { liveRegion = LiveRegionMode.Polite }
-                            .testTag(if (noteMode) "current_song_note" else "current_song_chord"),
-                    )
-                    if (instruction != null && capo != null) {
-                        Text(
-                            stringResource(
-                                R.string.acoustic_shape,
-                                capo,
-                                formatChord(instruction.shapeChord, notation),
-                            ),
-                            style = MaterialTheme.typography.labelLarge,
-                            modifier = Modifier.testTag("acoustic_shape"),
+                    if (mode == SongAnalysisMode.CHORDS) {
+                        val diagramDescription = stringResource(
+                            if (hasVoicing) R.string.show_chord_diagrams else R.string.chord_diagram_unavailable,
                         )
+                        FilledTonalIconToggleButton(
+                            checked = diagramVisible,
+                            onCheckedChange = onShowDiagramChanged,
+                            enabled = hasVoicing,
+                            colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
+                                checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            ),
+                            modifier = Modifier.size(48.dp)
+                                .semantics { contentDescription = diagramDescription }
+                                .testTag("song_diagrams_toggle"),
+                        ) {
+                            DestinationIcon(PrimaryDestination.CHORDS, "song_diagram_toggle")
+                        }
                     }
                 }
-                if (mode == SongAnalysisMode.CHORDS) {
-                    val diagramDescription = stringResource(R.string.show_chord_diagrams)
-                    FilledTonalIconToggleButton(
-                        checked = showDiagram,
-                        onCheckedChange = onShowDiagramChanged,
-                        enabled = chord != null,
-                        colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
-                            checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ),
-                        modifier = Modifier.align(Alignment.CenterEnd).size(48.dp)
-                            .semantics { contentDescription = diagramDescription }
-                            .testTag("song_diagrams_toggle"),
-                    ) {
-                        DestinationIcon(PrimaryDestination.CHORDS, "song_diagram_toggle")
-                    }
+                Text(
+                    label,
+                    style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics { liveRegion = LiveRegionMode.Polite }
+                        .testTag(if (noteMode) "current_song_note" else "current_song_chord"),
+                )
+                if (instruction != null && capo != null) {
+                    Text(
+                        stringResource(R.string.acoustic_shape, capo, formatChord(instruction.shapeChord, notation)),
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().testTag("acoustic_shape"),
+                    )
+                }
+                if (!compact && diagramVisible) {
+                    ChordDiagram(
+                        requireNotNull(diagramChord),
+                        tuning,
+                        notation,
+                        catalog,
+                        Modifier.fillMaxWidth().padding(top = 8.dp),
+                    )
                 }
             }
-            if (showDiagram && chord != null && mode == SongAnalysisMode.CHORDS) {
+            if (compact && diagramVisible) {
                 ChordDiagram(
-                    instruction?.shapeChord ?: chord,
+                    requireNotNull(diagramChord),
                     tuning,
                     notation,
                     catalog,
-                    Modifier.fillMaxWidth().padding(top = 8.dp),
+                    diagramHeight = COMPACT_SONG_DIAGRAM_HEIGHT,
                 )
             }
         }
@@ -322,6 +353,7 @@ private fun SongModeSelector(selected: SongAnalysisMode, onSelected: (SongAnalys
             }
             FilterChip(
                 selected = selected == mode,
+                colors = currentPlaneChipColors(),
                 onClick = { onSelected(mode) },
                 label = { Text(stringResource(label)) },
                 modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("song_mode_${mode.name.lowercase()}"),
@@ -346,6 +378,7 @@ private fun NoteRangeSelector(selected: NoteRange, onSelected: (NoteRange) -> Un
             }
             FilterChip(
                 selected = selected == range,
+                colors = currentPlaneChipColors(),
                 onClick = { onSelected(range) },
                 label = { Text(stringResource(label)) },
                 modifier = Modifier.heightIn(min = 48.dp).testTag("song_note_range_${range.name.lowercase()}"),
@@ -386,6 +419,7 @@ private fun SongChordPanel(
             ArrangementMode.entries.forEach { mode ->
                 FilterChip(
                     selected = state.arrangementMode == mode,
+                    colors = currentPlaneChipColors(),
                     onClick = { onArrangementModeSelected(mode) },
                     label = {
                         Text(
@@ -437,7 +471,7 @@ private fun SongChordPanel(
     listOfNotNull(state.analysisError, state.playbackError).distinct().forEach { error ->
         Text(
             songErrorText(error, state.analysisMode),
-            color = MaterialTheme.colorScheme.error,
+            color = errorBackgroundColor(),
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive }
                 .testTag("song_error_${error.name.lowercase()}"),
         )
@@ -509,6 +543,7 @@ private fun SongChordPanel(
             ) { index, event ->
                 FilterChip(
                     selected = index == activeIndex,
+                    colors = currentPlaneChipColors(),
                     onClick = { onSeek(event.startMillis) },
                     label = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -531,11 +566,12 @@ private fun formatSongEvent(event: SongEvent, transposeSemitones: Int, notation:
 }
 
 private const val STANDARD_E_TUNING_ID = "guitar-6-standard"
+private val COMPACT_SONG_DIAGRAM_HEIGHT = 140.dp
 
 @Composable
 private fun SongSeekBar(positionMillis: Long, durationMillis: Long, onSeek: (Long) -> Unit) {
-    var seeking by rememberSaveable { mutableStateOf(false) }
-    var value by rememberSaveable { mutableFloatStateOf(positionMillis.toFloat()) }
+    var seeking by remember { mutableStateOf(false) }
+    var value by remember { mutableFloatStateOf(positionMillis.toFloat()) }
     LaunchedEffect(positionMillis, seeking) {
         if (!seeking) value = positionMillis.toFloat()
     }

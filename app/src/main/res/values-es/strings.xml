@@ -72,6 +72,7 @@
     <string name="chord_voicing">Posición para %1$s</string>
     <string name="chord_diagram_description">Diagrama de acorde. Trastes desde la cuerda grave a la aguda: %1$s</string>
     <string name="chord_shape_standard_only">Hay diagramas fiables para guitarra en Standard E y ukelele en Standard C.</string>
+    <string name="chord_diagram_unavailable">No hay un diagrama verificado para este acorde.</string>
     <string name="fret_number">Traste %1$d</string>
     <string name="import_audio">Analizar una canción</string>
     <string name="replace_audio">Analizar otra canción</string>
@@ -274,6 +275,7 @@
     <string name="copyright_notice">Copyright © 2026 Intoniva. Todos los derechos reservados.</string>
     <string name="offline_privacy_summary">Sin conexión. Sin anuncios, cuentas, análisis, seguimiento ni acceso a la red.</string>
     <string name="microphone_about">Las muestras del micrófono se analizan temporalmente en este dispositivo. Nunca se graban, conservan, comparten ni transmiten.</string>
+    <string name="song_cache_privacy">Las canciones seleccionadas se copian temporalmente en la caché privada para análisis y reproducción. Quitar o sustituir una canción libera su copia de reproducción. La aplicación intenta borrar las copias de trabajo y los archivos restantes al iniciarse. Tras un fallo o una eliminación fallida, pueden quedar copias hasta limpiar la caché, borrar los datos o desinstalar. Los archivos originales no cambian y nunca se sube audio.</string>
     <string name="headstock_icon_attribution">Iconos Gibson Les Paul y gibson explorer de Alessandro Curci, thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Política de privacidad</string>
     <string name="privacy_policy_full">MajkeyLab (majkeylab@gmail.com) publica Intoniva. El audio del micrófono y el archivo de canción que elija se procesan solo en el dispositivo; los resultados de acordes, notas, tempo y arreglo quedan en memoria. Los ajustes, favoritos, afinaciones y puntuaciones se guardan localmente hasta borrar los datos o desinstalar. El desplazamiento automático realiza gestos solicitados y no puede obtener el contenido de la pantalla. La aplicación no tiene cuentas, anuncios, analítica, perfiles, seguimiento, venta o intercambio de datos, servidor del editor ni permiso de Internet. Buy Me a Coffee y el soporte opcional por correo o GitHub se abren fuera de la aplicación bajo las condiciones de sus proveedores. Si contacta con soporte, MajkeyLab puede recibir la dirección o cuenta, mensaje y adjuntos que decida enviar para soporte, prevención de abuso o cumplimiento legal, basándose en pasos solicitados o intereses legítimos. La correspondencia privada de soporte se elimina normalmente en un plazo de 12 meses desde el cierre de la solicitud, salvo que se pida antes o la ley exija conservarla más tiempo. Las incidencias públicas de GitHub pueden permanecer en el historial del proyecto hasta su edición o eliminación; no se les aplica el plazo de conservación del soporte privado. MajkeyLab no puede borrar copias en poder de otras personas o servicios. Los usuarios de la UE y el EEE pueden ejercer los derechos aplicables de acceso, rectificación, supresión, limitación, oposición o portabilidad y reclamar ante su autoridad. Los derechos estatales aplicables de EE. UU. pueden solicitarse por correo; Intoniva no vende ni comparte información personal, no usa publicidad dirigida ni incentivos financieros y no discrimina por una solicitud. MajkeyLab no tiene ningún registro de la aplicación en servidor. Intoniva no está dirigida a menores; un menor no debe enviar datos al soporte sin padre, madre o tutor.</string>
@@ -325,7 +327,7 @@
     <string name="trainer_choose_chord">Elegir acorde</string>
     <string name="trainer_learning_bank">Aprendiendo</string>
     <string name="trainer_learned_bank">Aprendidas</string>
-    <string name="trainer_set_count">%1$d notas · octava 4</string>
+    <string name="trainer_set_count">Notas: %1$d · octava 4</string>
     <string name="trainer_edit_notes">Editar notas</string>
     <string name="trainer_empty_bank">Este grupo está vacío. Añade notas con Editar notas.</string>
     <string name="trainer_two_notes">Elige al menos dos notas para un cuestionario. Puedes reproducir una sola nota en Escuchar.</string>

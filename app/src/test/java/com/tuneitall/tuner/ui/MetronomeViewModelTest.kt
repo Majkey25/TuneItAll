@@ -31,6 +31,16 @@ class MetronomeViewModelTest {
     }
 
     @Test
+    fun `tap tempo ignores a short bounce without moving the last valid tap`() {
+        val tapTempo = TapTempo()
+
+        assertNull(tapTempo.tap(0L))
+        assertNull(tapTempo.tap(100L))
+        assertEquals(Bpm(120), tapTempo.tap(500L))
+        assertEquals(Bpm(120), tapTempo.tap(1_000L))
+    }
+
+    @Test
     fun `tap tempo accepts exact 30 to 400 BPM boundaries`() {
         val fastest = TapTempo()
         assertNull(fastest.tap(0L))

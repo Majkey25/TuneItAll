@@ -1,6 +1,9 @@
 package com.tuneitall.tuner.music
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.sin
 import kotlin.random.Random
@@ -11,6 +14,17 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class TempoAnalyzerTest {
+    @Test
+    fun `performed syncopated guitar follows the annotated beat instead of dotted accents`() {
+        val resource = assertNotNull(javaClass.getResourceAsStream("/guitarset/00_Rock1-130-A_comp_mic.wav"))
+        val samples = readMonoWav(resource.use { it.readBytes() }, 44_100)
+        val estimate = assertNotNull(StreamingTempoAnalyzer(44_100).apply { accept(samples) }.finish())
+
+        // The published beat-position annotation has 48 beats spaced at 60/130 seconds.
+        assertTrue(abs(estimate.bpm - 130) <= 2, estimate.toString())
+        assertTrue(estimate.confidence < 0.5, estimate.toString())
+    }
+
     @Test
     fun `equal loudness instrument changes retain a strong regular beat`() {
         for (rate in listOf(8_000, 44_100, 48_000)) {
@@ -165,6 +179,38 @@ class TempoAnalyzerTest {
     }
 
     @Test
+    fun `two isolated attacks do not establish a recurring tempo`() {
+        val source = clickTrack(120, seconds = 2)
+        val pair = FloatArray(SAMPLE_RATE * 12)
+        source.copyInto(pair, SAMPLE_RATE * 4, endIndex = SAMPLE_RATE)
+
+        assertEquals(null, StreamingTempoAnalyzer(SAMPLE_RATE).apply { accept(pair) }.finish())
+
+        val repeated = FloatArray(pair.size)
+        source.copyInto(repeated, SAMPLE_RATE * 4, endIndex = SAMPLE_RATE * 3 / 2)
+        val estimate = assertNotNull(StreamingTempoAnalyzer(SAMPLE_RATE).apply { accept(repeated) }.finish())
+        assertEquals(120, estimate.bpm)
+        assertEquals(40, assertNotNull(StreamingTempoAnalyzer(SAMPLE_RATE).apply {
+            accept(clickTrack(40, seconds = 4))
+        }.finish()).bpm)
+    }
+
+    @Test
+    fun `quiet recurring beats survive one loud unrelated attack`() {
+        val audio = drumPattern().also { samples -> samples.indices.forEach { samples[it] *= 0.08f } }
+        val random = Random(17)
+        val start = (5.17 * SAMPLE_RATE).toInt()
+        for (offset in 0 until SAMPLE_RATE / 12) {
+            val time = offset.toDouble() / SAMPLE_RATE
+            audio[start + offset] += (exp(-45 * time) * (random.nextDouble() * 2 - 1)).toFloat()
+        }
+
+        val estimate = assertNotNull(StreamingTempoAnalyzer(SAMPLE_RATE).apply { accept(audio) }.finish())
+
+        assertEquals(120, estimate.bpm)
+    }
+
+    @Test
     fun `dual mono matches mono tempo`() {
         val mono = clickTrack(105, seconds = 12)
         val monoEstimate = StreamingTempoAnalyzer(SAMPLE_RATE).apply { accept(mono) }.finish()
@@ -217,6 +263,33 @@ class TempoAnalyzerTest {
         assertFailsWith<IllegalArgumentException> { analyzer.accept(floatArrayOf(0f, Float.NaN)) }
         analyzer.accept(FloatArray(SAMPLE_RATE * 2))
         assertFailsWith<IllegalArgumentException> { analyzer.accept(FloatArray(2)) }
+    }
+
+    private fun readMonoWav(bytes: ByteArray, sampleRate: Int): FloatArray {
+        require(bytes.size >= 12 && bytes.decodeToString(0, 4) == "RIFF" && bytes.decodeToString(8, 12) == "WAVE")
+        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        var offset = 12
+        var formatChecked = false
+        while (offset + 8 <= bytes.size) {
+            val id = bytes.decodeToString(offset, offset + 4)
+            val size = buffer.getInt(offset + 4)
+            offset += 8
+            require(size >= 0 && size <= bytes.size - offset)
+            if (id == "fmt ") {
+                require(size >= 16)
+                assertEquals(1, buffer.getShort(offset).toInt())
+                assertEquals(1, buffer.getShort(offset + 2).toInt())
+                assertEquals(sampleRate, buffer.getInt(offset + 4))
+                assertEquals(16, buffer.getShort(offset + 14).toInt())
+                formatChecked = true
+            }
+            if (id == "data") {
+                require(formatChecked && size > 0 && size % 2 == 0)
+                return FloatArray(size / 2) { buffer.getShort(offset + it * 2) / 32768f }
+            }
+            offset += size + size % 2
+        }
+        error("Missing PCM data")
     }
 
     private fun interleave(vararg channels: FloatArray): FloatArray {

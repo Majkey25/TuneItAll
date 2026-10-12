@@ -3,17 +3,23 @@ package com.tuneitall.tuner
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
@@ -74,27 +80,35 @@ fun TuneItAllApp(
     trainerViewModel: TrainerViewModel? = null,
 ) {
     val resources = LocalResources.current
-    val chordCatalog = remember(resources) {
-        lazy(LazyThreadSafetyMode.NONE) { ChordShapeCatalog.fromResources(resources) }
-    }
-    var screen by rememberSaveable { androidx.compose.runtime.mutableStateOf(AppScreen.Tuner) }
-    var settingsReturnScreen by rememberSaveable { androidx.compose.runtime.mutableStateOf(AppScreen.Tuner) }
-    var settingsInitialSection by rememberSaveable { androidx.compose.runtime.mutableStateOf(SettingsSection.TUNER) }
+    var chordCatalog by remember(resources) { mutableStateOf<ChordShapeCatalog?>(null) }
+    val tunings = remember(state.customTunings) { TuningCatalog.presets + state.customTunings }
+    var screen by rememberSaveable { mutableStateOf(AppScreen.Tuner) }
+    val screenStateHolder = rememberSaveableStateHolder()
+    var settingsReturnScreen by rememberSaveable { mutableStateOf(AppScreen.Tuner) }
+    var settingsInitialSection by rememberSaveable { mutableStateOf(SettingsSection.TUNER) }
     val metronomeState by metronomeViewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(screen, resources) {
+        if (chordCatalog == null && screen in listOf(AppScreen.Chords, AppScreen.Trainer)) {
+            chordCatalog = ChordShapeCatalog.load(resources)
+        }
+    }
     LifecycleStartEffect(metronomeViewModel) {
         onStopOrDispose { metronomeViewModel.onStop() }
     }
     LaunchedEffect(screen) {
         viewModel.setTunerActive(screen == AppScreen.Tuner)
         val metronomeActive = screen == AppScreen.Metronome ||
-            (screen in listOf(AppScreen.Settings, AppScreen.Appearance) && settingsReturnScreen == AppScreen.Metronome)
+            (screen in listOf(AppScreen.Settings, AppScreen.Appearance, AppScreen.About) && settingsReturnScreen == AppScreen.Metronome)
         if (!metronomeActive) {
             metronomeViewModel.stopAsync()
             metronomeViewModel.cancelTempoAnalysis()
         }
     }
     val parent = if (screen == AppScreen.Settings) settingsReturnScreen else parentScreen(screen)
-    BackHandler(enabled = parent != null) { screen = requireNotNull(parent) }
+    BackHandler(enabled = parent != null) {
+        if (screen == AppScreen.CustomTuning) screenStateHolder.removeState(screen.name)
+        screen = requireNotNull(parent)
+    }
     val primaryDestination = when (screen) {
         AppScreen.Tuner -> PrimaryDestination.TUNER
         AppScreen.Metronome -> PrimaryDestination.METRONOME
@@ -123,7 +137,8 @@ fun TuneItAllApp(
             }
         },
     ) { contentPadding ->
-        Box(Modifier.fillMaxSize().padding(contentPadding)) {
+        Box(Modifier.fillMaxSize().padding(contentPadding).consumeWindowInsets(contentPadding)) {
+            screenStateHolder.SaveableStateProvider(screen.name) {
             when (screen) {
                 AppScreen.Tuner -> TunerScreen(
                     state = state,
@@ -132,6 +147,7 @@ fun TuneItAllApp(
                     onToggleFavorite = { viewModel.toggleFavorite(state.tuning.id) },
                     onOpenLibrary = { screen = AppScreen.Library },
                     onOpenSettings = {
+                        screenStateHolder.removeState(AppScreen.Settings.name)
                         settingsReturnScreen = AppScreen.Tuner
                         settingsInitialSection = SettingsSection.TUNER
                         screen = AppScreen.Settings
@@ -159,6 +175,7 @@ fun TuneItAllApp(
                     onLoadTempoSong = metronomeViewModel::loadTempoSong,
                     onApplyDetectedTempo = metronomeViewModel::applyDetectedTempo,
                     onOpenSettings = {
+                        screenStateHolder.removeState(AppScreen.Settings.name)
                         settingsReturnScreen = AppScreen.Metronome
                         settingsInitialSection = SettingsSection.METRONOME
                         screen = AppScreen.Settings
@@ -172,11 +189,16 @@ fun TuneItAllApp(
                         activeViewModel.onScreenActive(true)
                         onStopOrDispose { activeViewModel.onScreenActive(false) }
                     }
-                    ChordsScreen(
+                    val catalog = chordCatalog
+                    if (catalog == null) {
+                        Box(Modifier.fillMaxSize().testTag("chords_screen"), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    } else ChordsScreen(
                         state = activeState,
-                        tunings = TuningCatalog.presets + state.customTunings,
+                        tunings = tunings,
                         notation = state.notation,
-                        catalog = chordCatalog.value,
+                        catalog = catalog,
                         onTabSelected = activeViewModel::setTab,
                         onChordSelected = activeViewModel::setChord,
                         onTuningSelected = activeViewModel::setTuning,
@@ -192,7 +214,7 @@ fun TuneItAllApp(
                 }
 
                 AppScreen.Library -> TuningLibraryScreen(
-                    presets = TuningCatalog.presets + state.customTunings,
+                    presets = tunings,
                     favoriteIds = state.favoriteIds,
                     notation = state.notation,
                     onSelect = { tuning ->
@@ -207,23 +229,33 @@ fun TuneItAllApp(
                 )
 
                 AppScreen.CustomTuning -> CustomTuningScreen(
-                    existing = TuningCatalog.presets + state.customTunings,
+                    existing = tunings,
+                    customCount = state.customTunings.size,
                     onSave = { tuning ->
                         viewModel.saveCustomTuning(tuning)
+                        screenStateHolder.removeState(AppScreen.CustomTuning.name)
                         screen = AppScreen.Tuner
                     },
-                    onBack = { screen = AppScreen.Library },
+                    onBack = {
+                        screenStateHolder.removeState(AppScreen.CustomTuning.name)
+                        screen = AppScreen.Library
+                    },
                 )
 
                 AppScreen.Trainer -> {
                     val activeViewModel = trainerViewModel ?: composeViewModel()
                     val activeStats by activeViewModel.stats.collectAsStateWithLifecycle()
                     val noteSets by activeViewModel.noteSets.collectAsStateWithLifecycle()
-                    TrainerScreen(
+                    val catalog = chordCatalog
+                    if (catalog == null) {
+                        Box(Modifier.fillMaxSize().testTag("trainer_screen"), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    } else TrainerScreen(
                         stats = activeStats,
-                        tunings = TuningCatalog.presets + state.customTunings,
+                        tunings = tunings,
                         notation = state.notation,
-                        catalog = chordCatalog.value,
+                        catalog = catalog,
                         onRecord = activeViewModel::record,
                         onReset = activeViewModel::reset,
                         noteSets = noteSets,
@@ -273,6 +305,7 @@ fun TuneItAllApp(
                 )
 
                 AppScreen.AutoScroll -> AutoScrollRoute()
+            }
             }
         }
     }

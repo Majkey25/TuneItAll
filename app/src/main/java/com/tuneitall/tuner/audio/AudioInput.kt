@@ -38,9 +38,10 @@ class AudioInput(context: Context) : AutoCloseable {
     fun start(
         windowSize: Int,
         source: AudioInputSource,
-        onWindow: (ShortArray, Int) -> Unit,
+        onWindow: (ShortArray, Int, Long) -> Unit,
         onStarted: (AudioInputCapabilities) -> Unit,
         onError: (AudioInputError) -> Unit,
+        captureGeneration: () -> Long? = { 0L },
     ) {
         require(windowSize in MIN_WINDOW_SIZE..MAX_WINDOW_SIZE) {
             "Window size must be between $MIN_WINDOW_SIZE and $MAX_WINDOW_SIZE"
@@ -51,7 +52,7 @@ class AudioInput(context: Context) : AutoCloseable {
         }
 
         val nextWorker = Thread(
-            { recordLoop(windowSize, source, onWindow, onStarted, onError) },
+            { recordLoop(windowSize, source, onWindow, onStarted, onError, captureGeneration) },
             THREAD_NAME,
         )
         val accepted = try {
@@ -107,9 +108,10 @@ class AudioInput(context: Context) : AutoCloseable {
     private fun recordLoop(
         windowSize: Int,
         source: AudioInputSource,
-        onWindow: (ShortArray, Int) -> Unit,
+        onWindow: (ShortArray, Int, Long) -> Unit,
         onStarted: (AudioInputCapabilities) -> Unit,
         onError: (AudioInputError) -> Unit,
+        captureGeneration: () -> Long?,
     ) {
         fun reportPriorityFailure(error: RuntimeException) {
             if (running) {
@@ -179,7 +181,7 @@ class AudioInput(context: Context) : AutoCloseable {
                             activeSource = audioInputSource(audioSource),
                         ),
                     )
-                    readWindows(activeSession, windowSize, onWindow, onError)
+                    readWindows(activeSession, windowSize, onWindow, onError, captureGeneration)
                     return
                 } finally {
                     releaseSession(activeSession)
@@ -233,20 +235,26 @@ class AudioInput(context: Context) : AutoCloseable {
     private fun readWindows(
         activeSession: RecorderSession,
         windowSize: Int,
-        onWindow: (ShortArray, Int) -> Unit,
+        onWindow: (ShortArray, Int, Long) -> Unit,
         onError: (AudioInputError) -> Unit,
+        captureGeneration: () -> Long?,
     ) {
         val recorder = activeSession.recorder
         val hopSize = minOf(DEFAULT_HOP_SIZE, max(1, windowSize / 2))
         val readBuffer = ShortArray(max(hopSize, MIN_READ_SIZE))
+        var windowGeneration = 0L
         val assembler = AudioWindowAssembler(windowSize, hopSize) { window ->
-            onWindow(window, recorder.sampleRate)
+            onWindow(window, recorder.sampleRate, windowGeneration)
         }
         try {
             while (running && !Thread.currentThread().isInterrupted) {
+                val generation = captureGeneration()
                 val count = recorder.read(readBuffer, 0, readBuffer.size, AudioRecord.READ_BLOCKING)
-                if (count > 0) {
-                    assembler.append(readBuffer, count)
+                if (count > 0 && running) {
+                    val currentGeneration = captureGeneration()
+                    val acceptedGeneration = generation?.takeIf { it == currentGeneration }
+                    if (acceptedGeneration != null) windowGeneration = acceptedGeneration
+                    assembler.append(readBuffer, count, acceptedGeneration)
                 } else if (count < 0 && running) {
                     onError(AudioInputError.ReadFailed(count))
                     return
@@ -372,14 +380,22 @@ internal class AudioWindowAssembler(
     private var writeIndex = 0
     private var buffered = 0
     private var samplesSinceWindow = 0
+    private var generation: Long? = null
 
     init {
         require(windowSize >= 2) { "Window size must be at least 2" }
         require(hopSize in 1..windowSize) { "Hop size must be between 1 and window size" }
     }
 
-    fun append(samples: ShortArray, count: Int) {
+    fun append(samples: ShortArray, count: Int, generation: Long? = 0L) {
         require(count in 0..samples.size) { "Count must fit the sample buffer" }
+        if (generation == null || generation != this.generation) {
+            writeIndex = 0
+            buffered = 0
+            samplesSinceWindow = 0
+            this.generation = generation
+        }
+        if (generation == null) return
         for (index in 0 until count) {
             ring[writeIndex] = samples[index]
             writeIndex = (writeIndex + 1) % ring.size

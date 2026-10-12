@@ -74,6 +74,7 @@
     <string name="chord_voicing">Hmat pro %1$s</string>
     <string name="chord_diagram_description">Diagram akordu. Pražce od nejnižší struny: %1$s</string>
     <string name="chord_shape_standard_only">Ověřené diagramy jsou dostupné pro kytaru Standard E a ukulele Standard C.</string>
+    <string name="chord_diagram_unavailable">Pro tento akord není ověřený diagram.</string>
     <string name="fret_number">Pražec %1$d</string>
     <string name="import_audio">Analyzovat skladbu</string>
     <string name="replace_audio">Analyzovat další skladbu</string>
@@ -279,6 +280,7 @@
     <string name="copyright_notice">Copyright © 2026 Intoniva. Všechna práva vyhrazena.</string>
     <string name="offline_privacy_summary">Offline. Bez reklam, účtu, analytiky, sledování a přístupu k síti.</string>
     <string name="microphone_about">Vzorky z mikrofonu se zpracují dočasně v tomto zařízení. Nikdy se nenahrávají, neuchovávají, nesdílejí ani neodesílají.</string>
+    <string name="song_cache_privacy">Vybrané písničky se dočasně kopírují do soukromé mezipaměti pro analýzu a přehrávání. Odebrání či nahrazení písničky uvolní její kopii pro přehrávání. Aplikace se pokouší smazat pracovní kopie a při spuštění také zbytky; po pádu či neúspěšném smazání mohou zůstat do vyčištění mezipaměti, vymazání dat nebo odinstalování. Původní soubory se nemění a zvuk se nikdy neodesílá.</string>
     <string name="headstock_icon_attribution">Ikony Gibson Les Paul a gibson explorer: Alessandro Curci, thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Zásady ochrany soukromí</string>
     <string name="privacy_policy_full">Vydavatelem Intoniva je MajkeyLab (majkeylab@gmail.com). Zvuk z mikrofonu a vámi vybraný soubor písně se zpracují pouze v zařízení; výsledky akordů, tónů, tempa a aranže zůstávají v paměti. Nastavení, oblíbená a vlastní ladění a skóre tréninku se ukládají místně, dokud nevymažete data aplikace nebo ji neodinstalujete. Automatické posouvání provádí uživatelem vyžádaná gesta a nemůže získat obsah obrazovky. Aplikace nemá účty, reklamy, analytiku, profilování, sledování, prodej či sdílení údajů, server vydavatele ani oprávnění k internetu. Buy Me a Coffee a volitelný e-mail či GitHub podpora se otevírají mimo aplikaci podle podmínek poskytovatelů. Pokud podporu kontaktujete, MajkeyLab může obdržet adresu nebo název účtu, zprávu a přílohy, které odešlete, kvůli podpoře, prevenci zneužití nebo právním povinnostem na základě vámi vyžádaných kroků či oprávněného zájmu. Soukromá korespondence s podporou se běžně smaže do 12 měsíců od uzavření požadavku, pokud nepožádáte dříve nebo zákon nevyžaduje delší dobu. Veřejná GitHub hlášení mohou zůstat v historii projektu do úpravy nebo odstranění; doba uchování soukromé podpory se na ně nevztahuje. Kopie u dalších osob nebo služeb MajkeyLab nemůže vymazat. Uživatelé v EU a EHP mohou uplatnit příslušná práva na přístup, opravu, výmaz, omezení, námitku či přenositelnost a podat stížnost dozorovému úřadu. Příslušná práva států USA lze uplatnit e-mailem; Intoniva osobní údaje neprodává ani nesdílí, nepoužívá cílenou reklamu ani finanční pobídky a za žádost nediskriminuje. MajkeyLab nemá žádný serverový záznam aplikace, který by mohl zpřístupnit, exportovat, opravit nebo smazat. Intoniva není určena dětem; dítě nesmí poslat údaje podpoře bez rodiče či zákonného zástupce.</string>
@@ -330,7 +332,7 @@
     <string name="trainer_choose_chord">Vybrat akord</string>
     <string name="trainer_learning_bank">Učím se</string>
     <string name="trainer_learned_bank">Naučeno</string>
-    <string name="trainer_set_count">%1$d tónů · oktáva 4</string>
+    <string name="trainer_set_count">Tóny: %1$d · oktáva 4</string>
     <string name="trainer_edit_notes">Upravit tóny</string>
     <string name="trainer_empty_bank">Tato sada je prázdná. Přidejte tóny přes Upravit tóny.</string>
     <string name="trainer_two_notes">Pro kvíz vyberte alespoň dva tóny. Jeden tón si můžete přehrát v Poslechu.</string>

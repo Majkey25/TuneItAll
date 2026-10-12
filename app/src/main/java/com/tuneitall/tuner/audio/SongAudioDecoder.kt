@@ -8,6 +8,10 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.system.ErrnoException
+import android.system.Os
+import android.system.OsConstants
+import android.system.StructPollfd
 import com.tuneitall.tuner.music.NoteRange
 import com.tuneitall.tuner.music.SongAnalysisMode
 import com.tuneitall.tuner.music.SongEvent
@@ -16,9 +20,10 @@ import com.tuneitall.tuner.music.StreamingTempoAnalyzer
 import com.tuneitall.tuner.music.TempoEstimate
 import com.tuneitall.tuner.music.analyzeChords
 import com.tuneitall.tuner.music.analyzeNotes
-import com.tuneitall.tuner.music.checkAnalysisCancellation
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.io.File
+import java.io.IOException
 import java.util.concurrent.CancellationException
 
 enum class SongDecodeError {
@@ -33,10 +38,22 @@ class SongDecodeException(val reason: SongDecodeError, cause: Throwable? = null)
 data class SongAnalysisResult(
     val durationMillis: Long,
     val events: List<SongEvent>,
+    val sourceFile: File? = null,
 )
 
 class SongAudioDecoder(context: Context) {
     private val applicationContext = context.applicationContext
+
+    init {
+        synchronized(cacheLock) {
+            if (!cachePrepared) {
+                applicationContext.cacheDir.listFiles().orEmpty()
+                    .filter { it.isFile && it.name.startsWith("song-import-") }
+                    .forEach { it.delete() }
+                cachePrepared = true
+            }
+        }
+    }
 
     fun analyze(
         uri: Uri,
@@ -44,54 +61,119 @@ class SongAudioDecoder(context: Context) {
         noteRange: NoteRange = NoteRange.ANY,
         isCancelled: () -> Boolean = { false },
         onProgress: (Int) -> Unit = {},
-    ): SongAnalysisResult {
-        var extractor: StreamingHarmonicFeatureExtractor? = null
-        val durationMillis = decode(uri, isCancelled, onProgress) { sampleRate, channels, samples ->
-            val activeExtractor = extractor ?: StreamingHarmonicFeatureExtractor(
-                sampleRate, isCancelled = isCancelled, channelCount = channels,
-                includeLowestNoteMargin = mode == SongAnalysisMode.NOTES,
-            ).also { extractor = it }
-            activeExtractor.accept(samples)
+        onDisplayName: (String) -> Unit = {},
+        retainSource: Boolean = false,
+    ): SongAnalysisResult = SongImportSession(isCancelled).use { session ->
+        session.check()
+        onDisplayName(audioDisplayName(applicationContext, uri, session))
+        val cancelled = { session.check(); false }
+        var sourceFile: File? = null
+        var completed = false
+        try {
+            var extractor: StreamingHarmonicFeatureExtractor? = null
+            val durationMillis = decode(uri, session, onProgress, retainSource = { file ->
+                if (retainSource) sourceFile = file
+                retainSource
+            }) { sampleRate, channels, samples ->
+                val activeExtractor = extractor ?: StreamingHarmonicFeatureExtractor(
+                    sampleRate, isCancelled = cancelled, channelCount = channels,
+                    includeLowestNoteMargin = mode == SongAnalysisMode.NOTES,
+                ).also { extractor = it }
+                activeExtractor.accept(samples)
+            }
+            val frames = extractor?.finish().orEmpty()
+            onProgress(95)
+            val events = when (mode) {
+                SongAnalysisMode.CHORDS, SongAnalysisMode.POWER -> analyzeChords(frames, mode, durationMillis, cancelled)
+                SongAnalysisMode.NOTES -> analyzeNotes(frames, noteRange, durationMillis, cancelled)
+            }
+            session.check()
+            onProgress(100)
+            SongAnalysisResult(durationMillis, events, sourceFile).also { completed = true }
+        } finally {
+            if (!completed) sourceFile?.delete()
         }
-        val frames = extractor?.finish().orEmpty()
-        onProgress(95)
-        val events = when (mode) {
-            SongAnalysisMode.CHORDS, SongAnalysisMode.POWER -> analyzeChords(frames, mode, durationMillis, isCancelled)
-            SongAnalysisMode.NOTES -> analyzeNotes(frames, noteRange, durationMillis, isCancelled)
-        }
-        checkAnalysisCancellation(isCancelled)
-        onProgress(100)
-        return SongAnalysisResult(durationMillis, events)
     }
 
     fun analyzeTempo(
         uri: Uri,
         isCancelled: () -> Boolean = { false },
         onProgress: (Int) -> Unit = {},
-    ): TempoEstimate? {
+        onDisplayName: (String) -> Unit = {},
+    ): TempoEstimate? = SongImportSession(isCancelled).use { session ->
+        session.check()
+        onDisplayName(audioDisplayName(applicationContext, uri, session))
+        val cancelled = { session.check(); false }
         var analyzer: StreamingTempoAnalyzer? = null
-        decode(uri, isCancelled, onProgress) { sampleRate, channels, samples ->
+        decode(uri, session, onProgress) { sampleRate, channels, samples ->
             val activeAnalyzer = analyzer ?: StreamingTempoAnalyzer(
-                sampleRate, isCancelled = isCancelled, channelCount = channels,
+                sampleRate, isCancelled = cancelled, channelCount = channels,
             ).also { analyzer = it }
             activeAnalyzer.accept(samples)
         }
         val result = analyzer?.finish()
-        checkAnalysisCancellation(isCancelled)
+        session.check()
         onProgress(100)
-        return result
+        result
     }
 
     private fun decode(
         uri: Uri,
-        isCancelled: () -> Boolean,
+        session: SongImportSession,
         onProgress: (Int) -> Unit,
+        retainSource: (File) -> Boolean = { false },
         onSamples: (Int, Int, FloatArray) -> Unit,
     ): Long {
         val extractor = MediaExtractor()
         var codec: MediaCodec? = null
+        var source: File? = null
+        var sourceRetained = false
         try {
-            extractor.setDataSource(applicationContext, uri, emptyMap())
+            val staged = File.createTempFile("song-import-", ".audio", applicationContext.cacheDir)
+            source = staged
+            val descriptor = applicationContext.contentResolver.openAssetFileDescriptor(uri, "r", session.signal)
+                ?: throw SongDecodeException(SongDecodeError.DECODE_FAILED)
+            descriptor.use {
+                session.attach(descriptor)
+                session.budget.sourceSize(descriptor.declaredLength)
+                val fd = descriptor.fileDescriptor
+                val poll = StructPollfd().apply { this.fd = fd; events = OsConstants.POLLIN.toShort() }
+                val polls = arrayOf(poll)
+                descriptor.createInputStream().use { input ->
+                    staged.outputStream().use { output ->
+                        val buffer = ByteArray(65_536)
+                        var total = 0L
+                        while (true) {
+                            session.check()
+                            if (descriptor.declaredLength >= 0 && total >= descriptor.declaredLength) break
+                            val ready = Os.poll(polls, 100)
+                            session.check()
+                            if (ready == 0) continue
+                            if (poll.revents.toInt() and (OsConstants.POLLERR or OsConstants.POLLNVAL) != 0) {
+                                throw SongDecodeException(SongDecodeError.DECODE_FAILED)
+                            }
+                            val count = try {
+                                input.read(buffer)
+                            } catch (error: IOException) {
+                                if ((error.cause as? ErrnoException)?.errno == OsConstants.EAGAIN) 0 else throw error
+                            }
+                            if (count < 0) {
+                                if (descriptor.declaredLength >= 0 && total < descriptor.declaredLength) {
+                                    throw SongDecodeException(SongDecodeError.DECODE_FAILED)
+                                }
+                                break
+                            }
+                            if (count == 0) continue
+                            total += count
+                            session.budget.sourceSize(total)
+                            output.write(buffer, 0, count)
+                        }
+                    }
+                }
+            }
+            session.check()
+            extractor.setDataSource(staged.absolutePath)
+            session.check()
             val trackIndex = (0 until extractor.trackCount).firstOrNull { index ->
                 extractor.getTrackFormat(index).getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true
             } ?: throw SongDecodeException(SongDecodeError.NO_AUDIO_TRACK)
@@ -100,21 +182,29 @@ class SongAudioDecoder(context: Context) {
                 ?: throw SongDecodeException(SongDecodeError.NO_AUDIO_TRACK)
             val durationMicros = inputFormat.longOrDefault(MediaFormat.KEY_DURATION, -1L)
             if (durationMicros > MAX_DURATION_MICROS) throw SongDecodeException(SongDecodeError.TOO_LONG)
+            val decodedClock = DecodedAudioClock()
+            val inputRate = inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+            val inputChannels = inputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+            DecodedAudioClock().accept(inputRate, 0, inputChannels)
+            if (durationMicros > 0 && durationMicros / 1_000_000.0 * inputRate * inputChannels >
+                SongImportBudget.MAX_CHANNEL_SAMPLES
+            ) throw SongDecodeException(SongDecodeError.TOO_LONG)
 
             extractor.selectTrack(trackIndex)
             codec = MediaCodec.createDecoderByType(mime)
             codec.configure(inputFormat, null, null, 0)
             codec.start()
+            session.budget.beginDecoding()
 
             val bufferInfo = MediaCodec.BufferInfo()
             var inputEnded = false
             var outputEnded = false
             var outputFormat = inputFormat
-            val decodedClock = DecodedAudioClock()
             var lastProgress = -1
 
             while (!outputEnded) {
-                if (isCancelled()) throw CancellationException("Song analysis cancelled")
+                session.check()
+                var producedOutput = false
                 if (!inputEnded) {
                     val inputIndex = codec.dequeueInputBuffer(CODEC_TIMEOUT_MICROS)
                     if (inputIndex >= 0) {
@@ -124,6 +214,7 @@ class SongAudioDecoder(context: Context) {
                             codec.queueInputBuffer(inputIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                             inputEnded = true
                         } else {
+                            session.budget.packet(size, extractor.sampleTime)
                             codec.queueInputBuffer(inputIndex, 0, size, extractor.sampleTime, extractor.sampleFlags)
                             extractor.advance()
                         }
@@ -135,6 +226,9 @@ class SongAudioDecoder(context: Context) {
                     MediaCodec.INFO_TRY_AGAIN_LATER -> Unit
                     else -> if (outputIndex >= 0) {
                         if (bufferInfo.size > 0) {
+                            if (bufferInfo.size > SongImportBudget.MAX_PCM_BYTES) {
+                                throw SongDecodeException(SongDecodeError.DECODE_FAILED)
+                            }
                             val outputBuffer = requireNotNull(codec.getOutputBuffer(outputIndex))
                             outputBuffer.position(bufferInfo.offset)
                             outputBuffer.limit(bufferInfo.offset + bufferInfo.size)
@@ -151,9 +245,11 @@ class SongAudioDecoder(context: Context) {
                                 MediaFormat.KEY_PCM_ENCODING,
                                 AudioFormat.ENCODING_PCM_16BIT,
                             )
+                            decodedClock.accept(sampleRate, 0, channels)
                             val samples = decodePcmSamples(pcm, channels, encoding)
                             decodedClock.accept(sampleRate, samples.size / channels, channels)
                             onSamples(sampleRate, channels, samples)
+                            producedOutput = true
                             if (durationMicros > 0L) {
                                 val progress = (bufferInfo.presentationTimeUs * 90L / durationMicros).toInt().coerceIn(0, 89)
                                 if (progress != lastProgress) {
@@ -166,15 +262,18 @@ class SongAudioDecoder(context: Context) {
                         codec.releaseOutputBuffer(outputIndex, false)
                     }
                 }
+                session.budget.decoding(producedOutput)
             }
-            checkAnalysisCancellation(isCancelled)
+            session.check()
             onProgress(90)
+            sourceRetained = retainSource(staged)
             return decodedClock.durationMillis
         } catch (error: CancellationException) {
             throw error
         } catch (error: SongDecodeException) {
             throw error
         } catch (error: Exception) {
+            session.check()
             throw SongDecodeException(SongDecodeError.DECODE_FAILED, error)
         } finally {
             codec?.let { activeCodec ->
@@ -182,7 +281,13 @@ class SongAudioDecoder(context: Context) {
                 runCatching { activeCodec.release() }
             }
             runCatching { extractor.release() }
+            if (!sourceRetained) source?.delete()
         }
+    }
+
+    private companion object {
+        val cacheLock = Any()
+        var cachePrepared = false
     }
 }
 
@@ -200,7 +305,9 @@ internal class DecodedAudioClock {
         ) {
             throw SongDecodeException(SongDecodeError.UNSUPPORTED_PCM)
         }
-        if (sampleCount + count > rate * MAX_DURATION_SECONDS) {
+        if (sampleCount + count > rate * MAX_DURATION_SECONDS ||
+            (sampleCount + count) * channels > SongImportBudget.MAX_CHANNEL_SAMPLES
+        ) {
             throw SongDecodeException(SongDecodeError.TOO_LONG)
         }
         sampleRate = rate
@@ -209,20 +316,21 @@ internal class DecodedAudioClock {
     }
 }
 
-internal fun audioDisplayName(context: Context, uri: Uri): String {
+private fun audioDisplayName(context: Context, uri: Uri, session: SongImportSession): String {
     var cursor: Cursor? = null
     return try {
-        cursor = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+        cursor = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null, session.signal)
         if (cursor?.moveToFirst() == true) cursor.getString(0).orEmpty() else uri.lastPathSegment.orEmpty()
     } catch (_: RuntimeException) {
         uri.lastPathSegment.orEmpty()
     } finally {
         cursor?.close()
-    }.ifBlank { "Audio" }
+    }.take(256).ifBlank { "Audio" }.also { session.check() }
 }
 
 internal fun decodePcmSamples(buffer: ByteBuffer, channelCount: Int, encoding: Int): FloatArray {
     if (channelCount !in 1..8) throw SongDecodeException(SongDecodeError.UNSUPPORTED_PCM)
+    if (buffer.remaining() > SongImportBudget.MAX_PCM_BYTES) throw SongDecodeException(SongDecodeError.DECODE_FAILED)
     val sampleBytes = when (encoding) {
         AudioFormat.ENCODING_PCM_16BIT -> Short.SIZE_BYTES
         AudioFormat.ENCODING_PCM_FLOAT -> Float.SIZE_BYTES

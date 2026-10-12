@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <service
+            android:name="com.tuneitall.tuner.autoscroll.AutoScrollAccessibilityService"
+            android:label="@string/qa_auto_scroll_accessibility_label"
+            tools:replace="android:label" />
+        <provider
+            android:name="com.tuneitall.tuner.SongImportTestProvider"
+            android:authorities="${applicationId}.song-import-test"
+            android:process=":song_import_test"
+            android:exported="false" />
+    </application>
+</manifest>

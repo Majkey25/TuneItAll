@@ -6,7 +6,7 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 enum class ThemePalette { INTONIVA, MATERIAL_YOU, OCEAN, EMBER, IRIS, SLATE, PAPER, CUSTOM }
-enum class ThemeLayout { CLASSIC, MATERIAL, CUSTOM }
+enum class ThemeLayout { CLASSIC, MATERIAL, CUSTOM, GLASS }
 enum class ThemeFont { SYSTEM, SERIF, MONOSPACE }
 
 data class ThemeColors(
@@ -58,7 +58,7 @@ data class AppearanceSettings(
     val darkTheme: ThemePalette = ThemePalette.INTONIVA,
     val customLight: ThemeColors = paletteColors(ThemePalette.INTONIVA, false),
     val customDark: ThemeColors = paletteColors(ThemePalette.INTONIVA, true),
-    val layout: ThemeLayout = ThemeLayout.CLASSIC,
+    val layout: ThemeLayout = ThemeLayout.MATERIAL,
     val cornerRadius: Int = 8,
     val font: ThemeFont = ThemeFont.SYSTEM,
     val textScale: Int = 100,

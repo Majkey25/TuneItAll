@@ -11,7 +11,7 @@ import com.tuneitall.tuner.audio.MetronomeStopResult
 import com.tuneitall.tuner.audio.SongAudioDecoder
 import com.tuneitall.tuner.audio.SongDecodeError
 import com.tuneitall.tuner.audio.SongDecodeException
-import com.tuneitall.tuner.audio.audioDisplayName
+import com.tuneitall.tuner.audio.runSongImport
 import com.tuneitall.tuner.metronome.Bpm
 import com.tuneitall.tuner.metronome.MetronomeSettings
 import com.tuneitall.tuner.metronome.MetronomeSound
@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 enum class MetronomeError {
@@ -93,8 +92,8 @@ class MetronomeViewModel internal constructor(
     }
 
     fun stopAsync() {
-        val generation = reserveStop() ?: return
-        viewModelScope.launch(blockingDispatcher) { completeStop(generation) }
+        val request = reserveStop() ?: return
+        viewModelScope.launch(blockingDispatcher) { completeStop(request) }
     }
 
     fun start() {
@@ -103,8 +102,8 @@ class MetronomeViewModel internal constructor(
     }
 
     fun stop() {
-        val generation = reserveStop() ?: return
-        completeStop(generation)
+        val request = reserveStop() ?: return
+        completeStop(request)
     }
 
     private fun reserveStart(): StartRequest? = synchronized(lock) {
@@ -166,9 +165,10 @@ class MetronomeViewModel internal constructor(
         }
     }
 
-    private fun reserveStop(): Long? = synchronized(lock) {
+    private fun reserveStop(): StopRequest? = synchronized(lock) {
         val state = mutableUiState.value
-        if (startInFlightGeneration == null && !state.starting && !state.playing && !state.stopping) {
+        if (state.stopping) return@synchronized null
+        if (startInFlightGeneration == null && !state.starting && !state.playing) {
             return@synchronized null
         }
         playbackGeneration++
@@ -178,14 +178,14 @@ class MetronomeViewModel internal constructor(
         mutableUiState.update {
             it.copy(starting = false, playing = false, stopping = true, error = null)
         }
-        playbackGeneration
+        StopRequest(playbackGeneration, player.captureStop())
     }
 
-    private fun completeStop(generation: Long) {
-        val result = player.stop()
+    private fun completeStop(request: StopRequest) {
+        val result = request.finish()
         synchronized(lock) {
-            if (generation != playbackGeneration) return
-            applyStopResultLocked(generation, result)
+            if (request.generation != playbackGeneration) return
+            applyStopResultLocked(request.generation, result)
         }
     }
 
@@ -237,15 +237,18 @@ class MetronomeViewModel internal constructor(
             )
         }
         tempoJob = viewModelScope.launch {
-            val job = currentCoroutineContext()[Job]
             try {
-                val fileName = withContext(blockingDispatcher) { audioDisplayName(getApplication(), uri) }
-                if (generation != tempoGeneration) return@launch
-                mutableUiState.update { it.copy(tempoFileName = fileName) }
-                val tempo = withContext(blockingDispatcher) {
+                val tempo = runSongImport { cancelled ->
                     songDecoder.analyzeTempo(
                         uri = uri,
-                        isCancelled = { job?.isActive == false },
+                        isCancelled = cancelled,
+                        onDisplayName = { name ->
+                            launch(Dispatchers.Main.immediate) {
+                                if (generation == tempoGeneration) {
+                                    mutableUiState.update { it.copy(tempoFileName = name) }
+                                }
+                            }
+                        },
                         onProgress = { progress ->
                             launch(Dispatchers.Main.immediate) {
                                 if (generation == tempoGeneration) {
@@ -342,12 +345,12 @@ class MetronomeViewModel internal constructor(
         }
     }
 
-    private suspend fun monitorStop(generation: Long) {
+    private suspend fun monitorStop(generation: Long, finish: () -> MetronomeStopResult) {
         while (currentCoroutineContext().isActive) {
             delay(STATUS_POLL_MILLIS)
             if (synchronized(lock) { generation != playbackGeneration }) return
             if (!player.status.running) {
-                val result = player.stop()
+                val result = finish()
                 synchronized(lock) {
                     if (generation != playbackGeneration) return
                     if (result != MetronomeStopResult.STOPPING) {
@@ -397,7 +400,8 @@ class MetronomeViewModel internal constructor(
 
     private fun launchStopMonitorLocked(generation: Long) {
         playbackJob?.cancel()
-        playbackJob = viewModelScope.launch { monitorStop(generation) }
+        val finish = player.captureStop()
+        playbackJob = viewModelScope.launch { monitorStop(generation, finish) }
     }
 
     private fun MetronomeUiState.playbackSettings(): MetronomeSettings =
@@ -407,6 +411,11 @@ class MetronomeViewModel internal constructor(
         val generation: Long,
         val settings: MetronomeSettings,
         val cancellation: AtomicBoolean,
+    )
+
+    private data class StopRequest(
+        val generation: Long,
+        val finish: () -> MetronomeStopResult,
     )
 
     private fun SongDecodeError.toTempoSongError(): TempoSongError = when (this) {
@@ -443,15 +452,14 @@ internal class TapTempo {
         require(nowMillis >= 0L)
         val previous = lastTapMillis
         require(previous == null || nowMillis >= previous)
-        lastTapMillis = nowMillis
-        if (previous == null) return null
-
-        val interval = nowMillis - previous
-        if (interval > RESET_MILLIS) {
+        if (previous == null || nowMillis - previous > RESET_MILLIS) {
+            lastTapMillis = nowMillis
             intervals.clear()
             return null
         }
+        val interval = nowMillis - previous
         if (interval < MIN_INTERVAL_MILLIS) return null
+        lastTapMillis = nowMillis
         if (intervals.size == MAX_INTERVALS) intervals.removeFirst()
         intervals.addLast(interval)
 

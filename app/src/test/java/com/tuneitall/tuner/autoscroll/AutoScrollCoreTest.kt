@@ -41,6 +41,30 @@ class AutoScrollCoreTest {
     }
 
     @Test
+    fun `slow gestures cross device touch slop without changing larger gestures`() {
+        val slow = AutoScrollGestureProfileFactory.create(AutoScrollSettings.defaults, 1)
+        val fast = AutoScrollGestureProfileFactory.create(AutoScrollSettings.defaults, 30)
+
+        assertEquals(48f, 2232 * slow.startYFraction - slow.endYPixels(2232, 24))
+        assertEquals(2232 * fast.endYFraction, fast.endYPixels(2232, 24))
+        assertEquals(0f, slow.endYPixels(10, 24))
+    }
+
+    @Test
+    fun `slow gestures avoid long presses while retaining their original cadence`() {
+        val slow = AutoScrollGestureProfileFactory.create(AutoScrollSettings.defaults, 1)
+        val fast = AutoScrollGestureProfileFactory.create(AutoScrollSettings.defaults, 30)
+        val duration = slow.durationForTravelMs(48f, 24, 500)
+
+        assertEquals(333L, duration)
+        assertTrue(duration * 24f / 48f < 500)
+        assertTrue(duration * 48f / 48f < 500)
+        assertEquals(1944L, slow.gestureDurationMs)
+        assertEquals(listOf(0L), gestureStartTimes(slow, 10))
+        assertEquals(fast.gestureDurationMs, fast.durationForTravelMs(2232 * (fast.startYFraction - fast.endYFraction), 24, 500))
+    }
+
+    @Test
     fun `gesture batches fit the platform stroke and duration limits`() {
         val profile = AutoScrollGestureProfileFactory.create(AutoScrollSettings.defaults, 30)
         val starts = gestureStartTimes(profile, platformMaxStrokeCount = 10)

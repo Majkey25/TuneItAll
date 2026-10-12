@@ -22,7 +22,10 @@ internal fun analyzeNotes(
             observedHarmonicCount(frame, midi - NoteRange.ANY.midiRange.first) >= 2
         }
         DoubleArray(midiRange.count() + 1).also { scores ->
-            scores[0] = NO_NOTE_BASE + NO_NOTE_TONAL_WEIGHT * (1.0 - frame.tonalStrength)
+            scores[0] = maxOf(
+                NO_NOTE_BASE + NO_NOTE_TONAL_WEIGHT * (1.0 - frame.tonalStrength),
+                NO_NOTE_NOISE_WEIGHT * frame.spectralFlatness,
+            )
             midiRange.forEachIndexed { index, midi ->
                 scores[index + 1] = noteEmission(frame, midi, belowRange, harmonicSources)
             }
@@ -107,10 +110,13 @@ private fun decodeNoteStates(
         checkAnalysisCancellation(isCancelled)
         val current = DoubleArray(stateCount)
         for (state in 0 until stateCount) {
+            checkAnalysisCancellation(isCancelled)
             var bestPrevious = state
             var bestScore = previous[state]
             // ponytail: exact search over at most 89 states; optimize only if long-song profiling needs it.
             for (candidate in 0 until stateCount) {
+                // Transition penalties are nonnegative, so this candidate cannot beat the current path.
+                if (previous[candidate] <= bestScore) continue
                 val score = previous[candidate] - noteTransitionPenalty(
                     fromState = candidate,
                     toState = state,
@@ -164,6 +170,7 @@ private fun mergeNoteGaps(events: List<NoteEvent>): List<NoteEvent> = buildList 
 
 private const val NO_NOTE_BASE = 0.06
 private const val NO_NOTE_TONAL_WEIGHT = 0.12
+private const val NO_NOTE_NOISE_WEIGHT = 0.25
 private const val NO_NOTE_TRANSITION = 0.08
 private const val NOTE_CHANGE_BASE = 0.14
 private const val NOTE_JUMP_PENALTY = 0.012
@@ -172,5 +179,6 @@ private const val MAX_PENALIZED_JUMP = 24
 private const val BELOW_RANGE_PENALTY = 0.85f
 private const val MIN_NOTE_SALIENCE = 0.14f
 private const val MIN_TONAL_STRENGTH = 0.10f
-private const val MIN_NOTE_MILLIS = 120L
+// A real short note can occupy only one 85 to 93 ms hop after overlapping-window decoding.
+private const val MIN_NOTE_MILLIS = 80L
 private const val MAX_NOTE_GAP_MILLIS = 120L

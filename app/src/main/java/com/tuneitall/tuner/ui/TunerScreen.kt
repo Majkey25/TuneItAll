@@ -61,6 +61,7 @@ import com.tuneitall.tuner.ui.components.CentsRail
 import com.tuneitall.tuner.ui.components.Headstock
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
 import com.tuneitall.tuner.ui.theme.inTuneColor
+import com.tuneitall.tuner.ui.theme.errorBackgroundColor
 import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
 
 @Composable
@@ -168,7 +169,6 @@ private fun TunerStatusRow(state: TunerUiState) {
                 state.tuning.name
             },
             color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier
                 .weight(1.2f)
@@ -177,7 +177,6 @@ private fun TunerStatusRow(state: TunerUiState) {
         Text(
             text = modeText,
             color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier
@@ -187,7 +186,6 @@ private fun TunerStatusRow(state: TunerUiState) {
         Text(
             text = stringResource(R.string.reference_pitch_value, state.referencePitch.hertz),
             color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
             textAlign = TextAlign.End,
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier
@@ -374,7 +372,6 @@ private fun ModeSelector(selected: TunerMode, onSelected: (TunerMode) -> Unit) {
                                 TunerMode.CHROMATIC -> R.string.mode_chromatic
                             },
                         ),
-                        maxLines = 1,
                         style = MaterialTheme.typography.labelMedium,
                     )
                 },
@@ -422,7 +419,7 @@ private fun MicrophoneStatus(
         state.error != null -> {
             Text(
                 text = audioErrorText(state.error),
-                color = MaterialTheme.colorScheme.error,
+                color = errorBackgroundColor(),
                 style = MaterialTheme.typography.bodySmall,
             )
             TextButton(

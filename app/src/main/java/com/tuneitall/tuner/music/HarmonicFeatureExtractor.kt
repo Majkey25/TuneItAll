@@ -223,7 +223,7 @@ internal class StreamingHarmonicFeatureExtractor(
             }
             real.fill(0.0, windowSize)
             imaginary.fill(0.0, windowSize)
-            fft(real, imaginary)
+            fft(real, imaginary, isCancelled)
             for (bin in firstBin - 1..lastBin + 1) {
                 // Packing two real channels: |L[k]|² + |R[k]|² = (|Z[k]|² + |Z[-k]|²) / 2.
                 val mirror = fftSize - bin
@@ -249,7 +249,7 @@ internal class StreamingHarmonicFeatureExtractor(
 
         real.fill(0.0, windowSize)
         imaginary.fill(0.0, windowSize)
-        fft(real, imaginary)
+        fft(real, imaginary, isCancelled)
         val firstBin = (minFrequencyHertz * fftSize / sampleRate).toInt().coerceAtLeast(1)
         val lastBin = (MAX_FREQUENCY_HERTZ * fftSize / sampleRate).toInt().coerceAtMost(fftSize / 2 - 2)
         for (bin in firstBin - 1..lastBin + 1) magnitudes[bin] = hypot(real[bin], imaginary[bin])
@@ -456,10 +456,12 @@ private fun onsetStrength(frames: List<FloatArray>, index: Int): Float {
     return if (total > 0f) (positiveFlux / total).coerceIn(0f, 1f) else 0f
 }
 
-internal fun fft(real: DoubleArray, imaginary: DoubleArray) {
+internal fun fft(real: DoubleArray, imaginary: DoubleArray, isCancelled: () -> Boolean = { false }) {
     require(real.size == imaginary.size && real.size.countOneBits() == 1)
+    checkAnalysisCancellation(isCancelled)
     var reversed = 0
     for (index in 1 until real.size) {
+        if (index % 1024 == 0) checkAnalysisCancellation(isCancelled)
         var bit = real.size shr 1
         while (reversed and bit != 0) {
             reversed = reversed xor bit
@@ -484,6 +486,7 @@ internal fun fft(real: DoubleArray, imaginary: DoubleArray) {
             var weightReal = 1.0
             var weightImaginary = 0.0
             for (offset in 0 until length / 2) {
+                if ((block + offset) % 1024 == 0) checkAnalysisCancellation(isCancelled)
                 val even = block + offset
                 val odd = even + length / 2
                 val oddReal = real[odd] * weightReal - imaginary[odd] * weightImaginary
@@ -499,6 +502,7 @@ internal fun fft(real: DoubleArray, imaginary: DoubleArray) {
         }
         length = length shl 1
     }
+    checkAnalysisCancellation(isCancelled)
 }
 
 private const val MIN_WINDOW_SECONDS = 8192.0 / 48000.0

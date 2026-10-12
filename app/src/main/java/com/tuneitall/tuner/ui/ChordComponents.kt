@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -32,6 +34,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tuneitall.tuner.R
@@ -86,6 +89,7 @@ fun ChordDiagram(
     catalog: ChordShapeCatalog,
     modifier: Modifier = Modifier,
     showLabel: Boolean = false,
+    diagramHeight: Dp = CHORD_DIAGRAM_HEIGHT,
 ) {
     val voicing = catalog.shape(tuning.id, chord)
     if (voicing == null) {
@@ -93,6 +97,8 @@ fun ChordDiagram(
         return
     }
     val baseFret = voicing.baseFret
+    val diagramScale = diagramHeight / CHORD_DIAGRAM_HEIGHT
+    val diagramWidth = CHORD_DIAGRAM_WIDTH * diagramScale
     val description = stringResource(
         R.string.chord_diagram_description,
         voicing.frets.joinToString { if (it < 0) "x" else it.toString() },
@@ -109,80 +115,92 @@ fun ChordDiagram(
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .width(CHORD_DIAGRAM_WIDTH)
+                    .width(diagramWidth)
                     .padding(start = 8.dp),
             )
         }
         Canvas(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .width(CHORD_DIAGRAM_WIDTH)
-                .height(CHORD_DIAGRAM_HEIGHT)
+                .width(diagramWidth)
+                .height(diagramHeight)
                 .semantics { contentDescription = description }
                 .testTag("chord_diagram"),
         ) {
-            val side = 28.dp.toPx()
-            val top = 34.dp.toPx()
-            val bottom = size.height - 12.dp.toPx()
-            val stringGap = (size.width - side * 2f) / (voicing.frets.size - 1)
-            val fretGap = (bottom - top) / DISPLAY_FRETS
-            repeat(voicing.frets.size) { string ->
-                val x = side + string * stringGap
-                drawLine(lineColor, Offset(x, top), Offset(x, bottom), 1.dp.toPx())
-            }
-            repeat(DISPLAY_FRETS + 1) { fret ->
-                val y = top + fret * fretGap
-                drawLine(
-                    lineColor,
-                    Offset(side, y),
-                    Offset(size.width - side, y),
-                    if (fret == 0 && baseFret == 1) 4.dp.toPx() else 1.dp.toPx(),
-                    StrokeCap.Round,
-                )
-            }
-            voicing.barres.forEach { barreFret ->
-                val matchingStrings = voicing.frets.indices.filter { voicing.frets[it] == barreFret }
-                if (matchingStrings.size >= 2) {
-                    val row = barreFret - baseFret
-                    val y = top + (row + 0.5f) * fretGap
+            val diagramWidthPixels = CHORD_DIAGRAM_WIDTH.toPx()
+            val diagramHeightPixels = CHORD_DIAGRAM_HEIGHT.toPx()
+            val drawScale = minOf(size.width / diagramWidthPixels, size.height / diagramHeightPixels)
+            if (drawScale <= 0f) return@Canvas
+            withTransform({
+                translate(left = (size.width - diagramWidthPixels * drawScale) / 2f)
+                scale(drawScale, drawScale, pivot = Offset.Zero)
+            }) {
+                val side = 28.dp.toPx()
+                val top = 34.dp.toPx()
+                val bottom = diagramHeightPixels - 12.dp.toPx()
+                val stringGap = (diagramWidthPixels - side * 2f) / (voicing.frets.size - 1)
+                val fretGap = (bottom - top) / DISPLAY_FRETS
+                repeat(voicing.frets.size) { string ->
+                    val x = side + string * stringGap
+                    drawLine(lineColor, Offset(x, top), Offset(x, bottom), 1.dp.toPx())
+                }
+                repeat(DISPLAY_FRETS + 1) { fret ->
+                    val y = top + fret * fretGap
                     drawLine(
-                        accent,
-                        Offset(side + requireNotNull(matchingStrings.minOrNull()) * stringGap, y),
-                        Offset(side + requireNotNull(matchingStrings.maxOrNull()) * stringGap, y),
-                        14.dp.toPx(),
+                        lineColor,
+                        Offset(side, y),
+                        Offset(diagramWidthPixels - side, y),
+                        if (fret == 0 && baseFret == 1) 4.dp.toPx() else 1.dp.toPx(),
                         StrokeCap.Round,
                     )
                 }
-            }
-            voicing.frets.forEachIndexed { string, fret ->
-                val x = side + string * stringGap
-                when {
-                    fret < 0 -> {
-                        val radius = 5.dp.toPx()
-                        val y = 16.dp.toPx()
-                        drawLine(lineColor, Offset(x - radius, y - radius), Offset(x + radius, y + radius), 2.dp.toPx())
-                        drawLine(lineColor, Offset(x + radius, y - radius), Offset(x - radius, y + radius), 2.dp.toPx())
-                    }
-
-                    fret == 0 -> drawCircle(
-                        lineColor,
-                        radius = 5.dp.toPx(),
-                        center = Offset(x, 16.dp.toPx()),
-                        style = Stroke(2.dp.toPx()),
-                    )
-
-                    else -> {
-                        val row = fret - baseFret
+                voicing.barres.forEach { barreFret ->
+                    val matchingStrings = voicing.frets.indices.filter { voicing.frets[it] == barreFret }
+                    if (matchingStrings.size >= 2) {
+                        val row = barreFret - baseFret
                         val y = top + (row + 0.5f) * fretGap
-                        drawCircle(accent, radius = 8.dp.toPx(), center = Offset(x, y))
-                        drawCircle(lineColor, radius = 8.dp.toPx(), center = Offset(x, y), style = Stroke(1.dp.toPx()))
-                        val finger = voicing.fingers[string]
-                        if (finger > 0) {
-                            val measured = fingerTextMeasurer.measure(finger.toString(), fingerStyle)
-                            drawText(
-                                measured,
-                                topLeft = Offset(x - measured.size.width / 2f, y - measured.size.height / 2f),
-                            )
+                        drawLine(
+                            accent,
+                            Offset(side + requireNotNull(matchingStrings.minOrNull()) * stringGap, y),
+                            Offset(side + requireNotNull(matchingStrings.maxOrNull()) * stringGap, y),
+                            14.dp.toPx(),
+                            StrokeCap.Round,
+                        )
+                    }
+                }
+                voicing.frets.forEachIndexed { string, fret ->
+                    val x = side + string * stringGap
+                    when {
+                        fret < 0 -> {
+                            val radius = 5.dp.toPx()
+                            val y = 16.dp.toPx()
+                            drawLine(lineColor, Offset(x - radius, y - radius), Offset(x + radius, y + radius), 2.dp.toPx())
+                            drawLine(lineColor, Offset(x + radius, y - radius), Offset(x - radius, y + radius), 2.dp.toPx())
+                        }
+
+                        fret == 0 -> drawCircle(
+                            lineColor,
+                            radius = 5.dp.toPx(),
+                            center = Offset(x, 16.dp.toPx()),
+                            style = Stroke(2.dp.toPx()),
+                        )
+
+                        else -> {
+                            val row = fret - baseFret
+                            val y = top + (row + 0.5f) * fretGap
+                            val finger = voicing.fingers[string]
+                            val measured = if (finger > 0) fingerTextMeasurer.measure(
+                                finger.toString(), fingerStyle.copy(fontSize = fingerStyle.fontSize / drawScale),
+                            ) else null
+                            val textSize = measured?.let { maxOf(it.size.width, it.size.height).toFloat() } ?: 0f
+                            val radius = minOf(maxOf(8.dp.toPx(), textSize / 2f + 1.dp.toPx()), stringGap * 0.45f, fretGap * 0.4f)
+                            drawCircle(accent, radius = radius, center = Offset(x, y))
+                            drawCircle(lineColor, radius = radius, center = Offset(x, y), style = Stroke(1.dp.toPx()))
+                            if (measured != null) {
+                                scale(minOf(1f, (2f * radius - 2.dp.toPx()) / textSize), pivot = Offset(x, y)) {
+                                    drawText(measured, topLeft = Offset(x - measured.size.width / 2f, y - measured.size.height / 2f))
+                                }
+                            }
                         }
                     }
                 }

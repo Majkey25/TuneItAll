@@ -1,7 +1,7 @@
 # Intoniva Privacy Policy
 
 Effective date: 8 September 2026
-Last updated: 5 October 2026
+Last updated: 11 October 2026
 
 Intoniva is published by Matěj Teplý, listed on Google Play as Majkey and using
 the MajkeyLab name. He is responsible for personal information received through
@@ -19,9 +19,16 @@ transiently in memory to estimate pitch and are not recorded, retained, uploaded
 or shared.
 
 When you select a song through Android's document picker, Intoniva can read that
-file to estimate chords, notes, tempo, and an acoustic arrangement. The source
-file is not copied or uploaded. Analysis results remain in memory and disappear
-when they are replaced or the app process ends.
+file to estimate chords, notes, tempo, and an acoustic arrangement. A temporary
+copy is stored in private app cache for analysis. Song playback and reanalysis
+retain one copy while the song is loaded, including while paused or in the
+background. The app attempts to delete it when the song is removed or replaced,
+or the app releases the loaded song.
+Tempo analysis and unsuccessful imports attempt to delete their working copies
+when finished. Copies left after a crash or failed deletion may remain until
+startup cleanup, Android cache cleanup, clearing app data, or uninstalling.
+The original file is not changed and no audio is uploaded. Analysis results
+remain in memory and disappear when replaced or when the app process ends.
 
 Settings, favorites, custom tunings, metronome settings, Auto-scroll acceptance,
 and trainer scores remain in the app's private local storage. You can delete them

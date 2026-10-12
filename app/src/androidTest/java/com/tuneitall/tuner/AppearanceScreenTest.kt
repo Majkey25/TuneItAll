@@ -2,14 +2,17 @@ package com.tuneitall.tuner
 
 import android.app.Application
 import android.content.Context
+import android.content.res.Configuration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -17,22 +20,30 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.compositeOver
 import androidx.test.core.app.ApplicationProvider
+import androidx.lifecycle.ViewModelStore
 import com.tuneitall.tuner.storage.UserPreferences
 import com.tuneitall.tuner.ui.AppearanceScreen
 import com.tuneitall.tuner.ui.TunerViewModel
+import com.tuneitall.tuner.ui.bottomNavigationContainerColor
+import com.tuneitall.tuner.ui.bottomNavigationSelectedColors
+import com.tuneitall.tuner.ui.bottomNavigationUnselectedColor
 import com.tuneitall.tuner.ui.theme.AppearanceSettings
 import com.tuneitall.tuner.ui.theme.ThemeFont
 import com.tuneitall.tuner.ui.theme.ThemeLayout
 import com.tuneitall.tuner.ui.theme.ThemeMode
 import com.tuneitall.tuner.ui.theme.ThemePalette
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
+import com.tuneitall.tuner.ui.theme.LocalGlassEffects
+import com.tuneitall.tuner.ui.theme.colorContrast
 import com.tuneitall.tuner.ui.theme.rgb
 import com.tuneitall.tuner.ui.theme.resolveDarkTheme
 import org.junit.Assert.assertEquals
@@ -48,6 +59,62 @@ class AppearanceScreenTest {
     @Before fun resetQaPreferences() {
         check(context.packageName.endsWith(".qa"))
         context.getSharedPreferences("tuneitall_preferences", Context.MODE_PRIVATE).edit().clear().commit()
+    }
+
+    @Test fun systemDarkModeOpensTheMatchingCustomPalette() {
+        val configuration = Configuration(context.resources.configuration).apply {
+            uiMode = (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or Configuration.UI_MODE_NIGHT_YES
+        }
+        compose.setContent {
+            CompositionLocalProvider(LocalConfiguration provides configuration) {
+                TuneItAllTheme(true) {
+                    Surface { AppearanceScreen(AppearanceSettings(), ThemeMode.SYSTEM, {}, {}, {}) }
+                }
+            }
+        }
+        compose.onNodeWithTag("appearance_edit_custom").performScrollTo().performClick()
+        compose.onNodeWithTag("custom_palette_dark").performScrollTo().assertIsSelected()
+    }
+
+    @Test fun glassNavigationUsesActualCustomPlaneAndHighContrastStaysOpaque() {
+        var settings by mutableStateOf(AppearanceSettings(lightTheme = ThemePalette.CUSTOM,
+            customLight = AppearanceSettings().customLight.copy(background = 0xFFFFFF, surface = 0, text = 0xFFFFFF, muted = 0xFFFFFF)))
+        var transparent = false
+        var selectedContrast = 0.0
+        var unselectedContrast = 0.0
+        compose.setContent {
+            TuneItAllTheme(false, settings) {
+                val glass = LocalGlassEffects.current
+                val container = bottomNavigationContainerColor()
+                val plane = container.compositeOver(MaterialTheme.colorScheme.background)
+                val selected = bottomNavigationSelectedColors()
+                val unselected = bottomNavigationUnselectedColor()
+                SideEffect {
+                    transparent = glass && container.alpha < 1f
+                    selectedContrast = colorContrast(selected.text.rgb(), plane.rgb())
+                    unselectedContrast = colorContrast(unselected.rgb(), plane.rgb())
+                }
+                Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
+                    AppearanceScreen(settings, ThemeMode.LIGHT, {
+                        settings = it
+                        UserPreferences(context).appearance = it
+                    }, {}, {})
+                }
+            }
+        }
+        compose.onNodeWithTag("appearance_layout_GLASS").performScrollTo().performClick()
+        compose.runOnIdle {
+            assertEquals(ThemeLayout.GLASS, UserPreferences(context).appearance.layout)
+            assertTrue(transparent)
+            assertTrue(selectedContrast >= 4.5)
+            assertTrue(unselectedContrast >= 4.5)
+        }
+        compose.onNodeWithTag("appearance_contrast").performScrollTo().performClick()
+        compose.runOnIdle {
+            assertTrue(!transparent)
+            assertTrue(selectedContrast >= 4.5)
+            assertTrue(unselectedContrast >= 4.5)
+        }
     }
 
     @Test fun preferenceUpgradePreservesLegacyModeAndRejectsWrongStorageType() {
@@ -165,6 +232,51 @@ class AppearanceScreenTest {
                 if (android.graphics.Color.red(pixel) < 80 && android.graphics.Color.green(pixel) < 80 && android.graphics.Color.blue(pixel) < 80) darkPixels++
             }
             assertTrue("Transparent label $tag disappeared", darkPixels > 10)
+        }
+    }
+
+    @Test fun everyPresetAndLayoutKeepsNavigationAndTrainerActionsReachable() {
+        val vm = TunerViewModel(ApplicationProvider.getApplicationContext<Application>())
+        val store = ViewModelStore().apply { put("appearance-navigation", vm) }
+        compose.setContent {
+            val state by vm.uiState.collectAsState()
+            TuneItAllTheme(resolveDarkTheme(state.themeMode, false), state.appearance) {
+                TuneItAllApp(state, vm, {}, {}, AppLanguage.SYSTEM, {})
+            }
+        }
+        val cases = buildList {
+            for (palette in ThemePalette.entries) for (mode in listOf(ThemeMode.LIGHT, ThemeMode.DARK)) {
+                add(AppearanceSettings(lightTheme = palette, darkTheme = palette) to mode)
+            }
+            for (layout in ThemeLayout.entries.filter { it != ThemeLayout.MATERIAL }) {
+                add(AppearanceSettings(layout = layout, textScale = 130, font = ThemeFont.SERIF) to ThemeMode.DARK)
+            }
+        }
+        try {
+            for ((settings, mode) in cases) {
+                compose.runOnIdle { vm.setAppearance(settings); vm.setThemeMode(mode) }
+                for (destination in listOf("tuner", "metronome", "chords", "auto_scroll", "trainer")) {
+                    compose.onNodeWithTag("bottom_item_$destination").assertIsDisplayed().performClick()
+                    val control = when (destination) {
+                        "tuner" -> "tuning_picker"
+                        "metronome" -> "metronome_bpm_input"
+                        "chords" -> "selected_chord_label"
+                        "auto_scroll" -> "auto_scroll_show_controls"
+                        else -> "trainer_play"
+                    }
+                    compose.waitUntil(5_000) { compose.onAllNodesWithTag(control).fetchSemanticsNodes().isNotEmpty() }
+                    val node = compose.onNodeWithTag(control)
+                    if (destination != "trainer") node.performScrollTo()
+                    node.assertIsDisplayed()
+                    compose.onNodeWithTag("bottom_label_$destination", useUnmergedTree = true).assertIsDisplayed()
+                }
+                compose.onNodeWithTag("trainer_play").assertIsDisplayed()
+                compose.onNodeWithTag("trainer_next_question").assertIsDisplayed()
+                assertEquals(settings, UserPreferences(context).appearance)
+                assertEquals(mode, UserPreferences(context).themeMode)
+            }
+        } finally {
+            compose.runOnIdle { vm.onStop(); store.clear() }
         }
     }
 }

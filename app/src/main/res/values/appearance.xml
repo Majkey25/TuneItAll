@@ -20,6 +20,8 @@
     <string name="appearance_layout">Controls and corners</string>
     <string name="appearance_classic">Classic</string>
     <string name="appearance_material">Material</string>
+    <string name="appearance_glass">Glass</string>
+    <string name="appearance_glass_help">Glass adds subtle translucent surfaces without live blur. High contrast keeps surfaces opaque.</string>
     <string name="appearance_corners">Corner roundness</string>
     <string name="appearance_text">Text</string>
     <string name="appearance_text_size">Text size</string>

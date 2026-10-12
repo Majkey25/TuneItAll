@@ -8,6 +8,22 @@ import kotlin.test.assertTrue
 
 class ThemeContrastTest {
     @Test
+    fun `modern surfaces have hierarchy and readable neutral text`() {
+        for (dark in listOf(false, true)) {
+            val colors = appearanceColorScheme(AppearanceSettings(), dark)
+            assertTrue(colors.surfaceContainerLow != colors.surfaceContainerHigh)
+            assertTrue(colors.surfaceContainer != colors.surfaceContainerHighest)
+            assertTrue(colors.outline != colors.outlineVariant)
+            assertTrue(colors.onSurface != colors.onSurfaceVariant)
+            listOf(colors.surface, colors.surfaceContainerLow, colors.surfaceContainer, colors.surfaceContainerHigh,
+                colors.surfaceContainerHighest).forEach { surface ->
+                assertTrue(contrast(colors.onSurface, surface) >= 4.5f)
+                assertTrue(contrast(colors.onSurfaceVariant, surface) >= 4.5f)
+            }
+        }
+    }
+
+    @Test
     fun `accent text is readable while selected containers keep the brand green`() {
         listOf(TuneItAllLightColors, TuneItAllDarkColors).forEach { colors ->
             listOf(colors.primary, colors.tertiary).forEach { foreground ->

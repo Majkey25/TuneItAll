@@ -209,6 +209,33 @@ class AudioPipelineTest {
     }
 
     @Test
+    fun `blocked reference samples require a whole fresh window before detection resumes`() {
+        val snapshots = mutableListOf<List<Short>>()
+        val assembler = AudioWindowAssembler(4, 2) { snapshots += it.toList() }
+        assembler.append(shortArrayOf(1, 2, 3, 4), 4, generation = 1L)
+        assembler.append(shortArrayOf(99, 99), 2, generation = null)
+        assembler.append(shortArrayOf(5, 6, 7), 3, generation = 2L)
+        assertEquals(listOf(listOf<Short>(1, 2, 3, 4)), snapshots)
+        assembler.append(shortArrayOf(8), 1, generation = 2L)
+        assertEquals(listOf<Short>(5, 6, 7, 8), snapshots.last())
+    }
+
+    @Test
+    fun `capture generation changes discard partial and overlapping old windows`() {
+        val snapshots = mutableListOf<List<Short>>()
+        val assembler = AudioWindowAssembler(4, 2) { snapshots += it.toList() }
+        assembler.append(shortArrayOf(1, 2, 3), 3, generation = 1L)
+        assembler.append(shortArrayOf(4, 5, 6), 3, generation = 2L)
+        assertTrue(snapshots.isEmpty())
+        assembler.append(shortArrayOf(7, 8, 9), 3, generation = 2L)
+        assertEquals(listOf(listOf<Short>(4, 5, 6, 7), listOf<Short>(6, 7, 8, 9)), snapshots)
+        assembler.append(shortArrayOf(10, 11), 2, generation = 3L)
+        assertEquals(2, snapshots.size)
+        assembler.append(shortArrayOf(12, 13), 2, generation = 3L)
+        assertEquals(listOf<Short>(10, 11, 12, 13), snapshots.last())
+    }
+
+    @Test
     fun `reference tone buffer has one second duration and faded edges`() {
         val samples = createToneBuffer(hertz = 1_000.0)
 

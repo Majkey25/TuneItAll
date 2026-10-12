@@ -70,6 +70,7 @@
     <string name="chord_voicing">Voicing for %1$s</string>
     <string name="chord_diagram_description">Chord diagram. Frets from low to high: %1$s</string>
     <string name="chord_shape_standard_only">Canonical diagrams are available for Standard E guitar and Standard C ukulele.</string>
+    <string name="chord_diagram_unavailable">No verified diagram for this chord.</string>
     <string name="fret_number">Fret %1$d</string>
     <string name="import_audio">Analyze a song</string>
     <string name="replace_audio">Analyze another song</string>
@@ -269,6 +270,7 @@
     <string name="copyright_notice">Copyright © 2026 Intoniva. All rights reserved.</string>
     <string name="offline_privacy_summary">Offline. No ads, accounts, analytics, tracking, or network access.</string>
     <string name="microphone_about">Microphone samples are analyzed transiently on this device. They are never recorded, retained, shared, or transmitted.</string>
+    <string name="song_cache_privacy">Selected songs are temporarily copied into private app cache for analysis and playback. Removing or replacing a song releases its playback copy. Cleanup attempts to remove working copies and leftovers on startup; failed deletion or a crash may leave copies until cache cleanup, clearing app data, or uninstalling. Original files are not changed and audio is never uploaded.</string>
     <string name="headstock_icon_attribution">Gibson Les Paul and gibson explorer icons by Alessandro Curci, from thenounproject.com, CC BY 3.0.</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="privacy_policy_full">MajkeyLab (majkeylab@gmail.com) publishes Intoniva. Microphone audio and a song file you select are processed only on your device; chord, note, tempo, and arrangement results stay in memory. Settings, favorites, custom tunings, and trainer scores are stored locally until you clear app data or uninstall. Auto-scroll performs user-requested swipe gestures and cannot retrieve screen content. The app has no accounts, ads, analytics, profiling, tracking, sale, sharing, maintainer-operated server, or internet permission. Buy Me a Coffee and optional email or GitHub support open outside the app under their providers’ terms. If you contact support, MajkeyLab may receive the address or account name, message, and attachments you choose to send for support, abuse prevention, or legal compliance, based on steps you request or legitimate interests. Private support correspondence is normally deleted within 12 months after the request closes unless you ask sooner or law requires longer. Public GitHub issues may remain in project history until edited or removed; that private-support retention period does not apply to them. MajkeyLab cannot erase copies held by other people or services. EU and EEA users may request applicable access, correction, deletion, restriction, objection, or portability rights and complain to their supervisory authority. Applicable US state rights may be requested by email; Intoniva does not sell or share personal information, use targeted advertising or financial incentives, or discriminate for a request. MajkeyLab has no server-side app record to access, export, correct, or delete. Intoniva is not directed to children; a child must not send support information without a parent or guardian.</string>
@@ -320,7 +322,7 @@
     <string name="trainer_choose_chord">Choose chord</string>
     <string name="trainer_learning_bank">Learning</string>
     <string name="trainer_learned_bank">Learned</string>
-    <string name="trainer_set_count">%1$d notes · octave 4</string>
+    <string name="trainer_set_count">Notes: %1$d · octave 4</string>
     <string name="trainer_edit_notes">Edit notes</string>
     <string name="trainer_empty_bank">This bank is empty. Add notes with Edit notes.</string>
     <string name="trainer_two_notes">Choose at least two notes for a quiz. You can hear a single note in Listen.</string>

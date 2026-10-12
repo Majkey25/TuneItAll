@@ -29,13 +29,21 @@ local draft until the user confirms it, so partial values never reschedule audio
 The Chords destination reads canonical Standard E guitar and Standard C ukulele
 shapes from a pinned offline `chords-db` snapshot. It does not generate arbitrary
 fingerings for other tunings. Song analysis opens one user-selected URI through
-the system document picker. `MediaExtractor` and `MediaCodec` stream decoded PCM
-into an 8,192-frame STFT, three-bins-per-semitone log-frequency features, bounded
-tuning correction, temporal standardization, and two-second chord context.
+the system document picker and copies its bytes into a temporary
+`song-import-*.audio` file in private app cache. `MediaExtractor` and `MediaCodec`
+stream decoded PCM into an 8,192-frame STFT, three-bins-per-semitone
+log-frequency features, bounded tuning correction, temporal standardization,
+and two-second chord context.
 Mode-specific sequence decoders produce Classic major/minor/strong dominant
 seventh chords, power chords, or a predominant-note timeline inside a selected
-instrument range. Only bounded features, typed events, and playback position
-remain in memory. The source audio is not copied or uploaded. Trainer audio
+instrument range. Bounded features, typed events, and playback position remain
+in memory. `ChordViewModel` retains one cached source for playback and reanalysis
+while the song is loaded, including while paused or in the background. Cleanup
+is best effort. Working copies are deleted after decoding or when an
+unsuccessful import exits. The retained copy is deleted when the song is removed
+or replaced, or `ChordViewModel` is cleared. The first `SongAudioDecoder` created
+in a new app process attempts to delete leftover import files. The original
+source is not changed and no audio is uploaded. Trainer audio
 reuses the click-free generated-tone player for chord and single-note ear
 exercises and stores only bounded scores.
 

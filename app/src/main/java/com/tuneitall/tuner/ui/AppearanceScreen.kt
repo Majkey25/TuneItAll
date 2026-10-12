@@ -1,12 +1,15 @@
 package com.tuneitall.tuner.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,25 +19,34 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -52,6 +64,10 @@ import com.tuneitall.tuner.ui.theme.ThemeMode
 import com.tuneitall.tuner.ui.theme.ThemePalette
 import com.tuneitall.tuner.ui.theme.appearanceColorScheme
 import com.tuneitall.tuner.ui.theme.asColor
+import com.tuneitall.tuner.ui.theme.readableColor
+import com.tuneitall.tuner.ui.theme.readableAccent
+import com.tuneitall.tuner.ui.theme.resolveDarkTheme
+import com.tuneitall.tuner.ui.theme.rgb
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -63,8 +79,17 @@ fun AppearanceScreen(
     onThemeModeChanged: (ThemeMode) -> Unit,
     onBack: () -> Unit,
 ) {
-    var editingDark by rememberSaveable { mutableStateOf(themeMode == ThemeMode.DARK) }
+    val systemDark = isSystemInDarkTheme()
+    val context = LocalContext.current
+    var editingDark by rememberSaveable { mutableStateOf(resolveDarkTheme(themeMode, systemDark)) }
     var showCustom by rememberSaveable { mutableStateOf(false) }
+    val previews = remember(appearance, context) {
+        ThemePalette.entries.associateWith { palette ->
+            listOf(false, true).map { dark ->
+                appearanceColorScheme(appearance.copy(lightTheme = palette, darkTheme = palette), dark, context)
+            }
+        }
+    }
     Column(
         modifier = Modifier.fillMaxSize().safeDrawingPadding()
             .padding(horizontal = 16.dp, vertical = 8.dp).testTag("appearance_screen"),
@@ -73,13 +98,12 @@ fun AppearanceScreen(
         Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.weight(1f)
             .verticalScroll(rememberScrollState()).padding(top = 16.dp)) {
         Text(stringResource(R.string.appearance_mode), style = MaterialTheme.typography.titleMedium)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ThemeMode.entries.forEach { mode ->
-                FilterChip(
-                    selected = mode == themeMode, onClick = { onThemeModeChanged(mode) },
-                    label = { Text(themeModeName(mode)) },
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("appearance_mode_${mode.name}"),
-                )
+                AppearanceChoice(themeModeName(mode), mode == themeMode, "appearance_mode_${mode.name}") {
+                    editingDark = resolveDarkTheme(mode, systemDark)
+                    onThemeModeChanged(mode)
+                }
             }
         }
         Text(stringResource(R.string.appearance_themes), style = MaterialTheme.typography.titleLarge)
@@ -90,7 +114,7 @@ fun AppearanceScreen(
                 ThemePalette.entries.chunked(columns).forEach { palettes ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                         palettes.forEach { palette ->
-                            ThemeCard(palette, appearance, Modifier.weight(1f)) { dark ->
+                            ThemeCard(palette, appearance, previews.getValue(palette), Modifier.weight(1f)) { dark ->
                                 editingDark = dark
                                 showCustom = palette == ThemePalette.CUSTOM
                                 onAppearanceChanged(if (dark) appearance.copy(darkTheme = palette) else appearance.copy(lightTheme = palette))
@@ -118,19 +142,18 @@ fun AppearanceScreen(
             )
         }
         Text(stringResource(R.string.appearance_layout), style = MaterialTheme.typography.titleLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            ThemeLayout.entries.forEach { layout ->
-                FilterChip(
-                    selected = appearance.layout == layout, onClick = { onAppearanceChanged(appearance.copy(layout = layout)) },
-                    label = { Text(stringResource(when (layout) {
-                        ThemeLayout.CLASSIC -> R.string.appearance_classic
-                        ThemeLayout.MATERIAL -> R.string.appearance_material
-                        ThemeLayout.CUSTOM -> R.string.profile_custom
-                    })) },
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("appearance_layout_${layout.name}"),
-                )
+        BoxWithConstraints {
+            val columns = if (maxWidth >= 320.dp && LocalDensity.current.fontScale <= 1.3f) 2 else 1
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
+                maxItemsInEachRow = columns, modifier = Modifier.fillMaxWidth().selectableGroup()) {
+                ThemeLayout.entries.forEach { layout ->
+                    LayoutCard(layout, appearance, resolveDarkTheme(themeMode, systemDark), Modifier.weight(1f)) {
+                        onAppearanceChanged(appearance.copy(layout = layout))
+                    }
+                }
             }
         }
+        Text(stringResource(R.string.appearance_glass_help), style = MaterialTheme.typography.bodySmall)
         if (appearance.layout == ThemeLayout.CUSTOM) {
             AppearanceSlider(stringResource(R.string.appearance_corners), appearance.cornerRadius, 0..28, "appearance_corners") {
                 onAppearanceChanged(appearance.copy(cornerRadius = it))
@@ -140,17 +163,15 @@ fun AppearanceScreen(
         AppearanceSlider(stringResource(R.string.appearance_text_size), appearance.textScale, 85..130, "appearance_text_scale", "%") {
             onAppearanceChanged(appearance.copy(textScale = it))
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ThemeFont.entries.forEach { font ->
-                FilterChip(
-                    selected = appearance.font == font, onClick = { onAppearanceChanged(appearance.copy(font = font)) },
-                    label = { Text(stringResource(when (font) {
+                AppearanceChoice(stringResource(when (font) {
                         ThemeFont.SYSTEM -> R.string.theme_system
                         ThemeFont.SERIF -> R.string.appearance_serif
                         ThemeFont.MONOSPACE -> R.string.appearance_monospace
-                    })) },
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("appearance_font_${font.name}"),
-                )
+                    }), appearance.font == font, "appearance_font_${font.name}") {
+                    onAppearanceChanged(appearance.copy(font = font))
+                }
             }
         }
         AppearanceSwitch(stringResource(R.string.appearance_contrast), appearance.highContrast, "appearance_contrast") {
@@ -168,8 +189,8 @@ fun AppearanceScreen(
 }
 
 @Composable
-private fun ThemeCard(palette: ThemePalette, appearance: AppearanceSettings, modifier: Modifier, onSelect: (Boolean) -> Unit) {
-    val context = LocalContext.current
+private fun ThemeCard(palette: ThemePalette, appearance: AppearanceSettings, previews: List<ColorScheme>, modifier: Modifier,
+    onSelect: (Boolean) -> Unit) {
     val name = themePaletteName(palette)
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -178,7 +199,7 @@ private fun ThemeCard(palette: ThemePalette, appearance: AppearanceSettings, mod
         Text(name, style = MaterialTheme.typography.titleSmall)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             listOf(false, true).forEach { dark ->
-                val colors = appearanceColorScheme(appearance.copy(lightTheme = palette, darkTheme = palette), dark, context)
+                val colors = previews[if (dark) 1 else 0]
                 val selected = appearance.palette(dark) == palette
                 val modeName = stringResource(if (dark) R.string.theme_dark else R.string.theme_light)
                 val description = stringResource(R.string.appearance_theme_choice, name, modeName)
@@ -206,6 +227,59 @@ private fun ThemeCard(palette: ThemePalette, appearance: AppearanceSettings, mod
 }
 
 @Composable
+private fun LayoutCard(layout: ThemeLayout, appearance: AppearanceSettings, dark: Boolean, modifier: Modifier, onSelect: () -> Unit) {
+    val selected = appearance.layout == layout
+    val context = LocalContext.current
+    val colors = remember(layout, appearance, dark, context) { appearanceColorScheme(appearance.copy(layout = layout), dark, context) }
+    val shape = RoundedCornerShape(when (layout) {
+        ThemeLayout.CLASSIC -> 8
+        ThemeLayout.CUSTOM -> appearance.cornerRadius
+        ThemeLayout.MATERIAL, ThemeLayout.GLASS -> 12
+    }.dp)
+    val glass = layout == ThemeLayout.GLASS && !appearance.highContrast
+    val plane = colors.surfaceContainerHigh.copy(alpha = if (glass) 0.94f else 1f)
+    Surface(
+        modifier = modifier.selectable(selected, role = Role.RadioButton, onClick = onSelect)
+            .heightIn(min = 112.dp).testTag("appearance_layout_${layout.name}"),
+        shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = readableColor(MaterialTheme.colorScheme.onSurface.rgb(), MaterialTheme.colorScheme.surfaceContainerLow.rgb()).asColor(),
+        border = BorderStroke(if (selected) 2.dp else 1.dp,
+            if (selected) readableAccent(MaterialTheme.colorScheme.primary.rgb(),
+                MaterialTheme.colorScheme.surfaceContainerLow.rgb()).asColor() else MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(12.dp)) {
+            Box(Modifier.fillMaxWidth().heightIn(min = 56.dp).background(colors.background, shape).padding(6.dp)) {
+                Surface(modifier = Modifier.fillMaxSize(), shape = shape, color = plane,
+                    contentColor = readableColor(colors.onSurface.rgb(), plane.compositeOver(colors.background).rgb()).asColor(),
+                    border = if (glass) BorderStroke(1.dp, colors.outlineVariant) else null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(8.dp)) {
+                        Text("Aa", style = MaterialTheme.typography.bodyLarge)
+                        Spacer(Modifier.weight(1f))
+                        Box(Modifier.width(32.dp).height(20.dp).background(colors.primaryContainer, shape))
+                    }
+                }
+            }
+            Text(stringResource(when (layout) {
+                ThemeLayout.CLASSIC -> R.string.appearance_classic
+                ThemeLayout.MATERIAL -> R.string.appearance_material
+                ThemeLayout.CUSTOM -> R.string.profile_custom
+                ThemeLayout.GLASS -> R.string.appearance_glass
+            }), style = MaterialTheme.typography.titleSmall)
+        }
+    }
+}
+
+@Composable
+private fun AppearanceChoice(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
+    FilterChip(selected = selected, onClick = onClick, label = { Text(label) },
+        colors = FilterChipDefaults.filterChipColors(labelColor = MaterialTheme.colorScheme.onBackground,
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer),
+        modifier = Modifier.heightIn(min = 48.dp).testTag(tag))
+}
+
+@Composable
 internal fun themePaletteName(palette: ThemePalette): String = stringResource(when (palette) {
     ThemePalette.INTONIVA -> R.string.app_name
     ThemePalette.MATERIAL_YOU -> R.string.appearance_material_you
@@ -226,9 +300,11 @@ internal fun themeModeName(mode: ThemeMode): String = stringResource(when (mode)
 
 @Composable
 private fun AppearanceSlider(label: String, value: Int, range: IntRange, tag: String, suffix: String = "", onChange: (Int) -> Unit) {
-    Text("$label: $value$suffix", style = MaterialTheme.typography.titleMedium)
-    Slider(value.toFloat(), { onChange(it.roundToInt()) }, valueRange = range.first.toFloat()..range.last.toFloat(),
-        steps = range.last - range.first - 1, modifier = Modifier.testTag(tag).semantics { contentDescription = label })
+    var draft by remember(value) { mutableIntStateOf(value) }
+    Text("$label: $draft$suffix", style = MaterialTheme.typography.titleMedium)
+    Slider(draft.toFloat(), { draft = it.roundToInt() }, valueRange = range.first.toFloat()..range.last.toFloat(),
+        onValueChangeFinished = { if (draft != value) onChange(draft) }, steps = range.last - range.first - 1,
+        modifier = Modifier.testTag(tag).semantics { contentDescription = label })
 }
 
 @Composable
@@ -238,7 +314,7 @@ private fun AppearanceSwitch(label: String, value: Boolean, tag: String, onChang
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).toggleable(value, role = Role.Switch, onValueChange = onChange).testTag(tag),
     ) {
         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Switch(value, onCheckedChange = null)
+        Switch(value, onCheckedChange = null, colors = switchColors(MaterialTheme.colorScheme.background))
     }
 }
 
@@ -259,11 +335,10 @@ private enum class ColorRole(val label: Int) {
 @Composable
 private fun CustomColorsEditor(colors: ThemeColors, dark: Boolean, onDarkChanged: (Boolean) -> Unit, onColorsChanged: (ThemeColors) -> Unit) {
     var editingRole by rememberSaveable { mutableStateOf<ColorRole?>(null) }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(false, true).forEach { candidate ->
-            FilterChip(selected = dark == candidate, onClick = { onDarkChanged(candidate) },
-                label = { Text(stringResource(if (candidate) R.string.appearance_custom_dark else R.string.appearance_custom_light)) },
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("custom_palette_${if (candidate) "dark" else "light"}"))
+            AppearanceChoice(stringResource(if (candidate) R.string.appearance_custom_dark else R.string.appearance_custom_light),
+                dark == candidate, "custom_palette_${if (candidate) "dark" else "light"}") { onDarkChanged(candidate) }
         }
     }
     Text(stringResource(R.string.appearance_custom_help), style = MaterialTheme.typography.bodySmall)
