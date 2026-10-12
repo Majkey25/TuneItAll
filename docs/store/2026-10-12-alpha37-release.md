@@ -32,12 +32,27 @@ The owner explicitly chose release authorization without a second human reviewer
 Main protection, restricted signing/publication environments and an owner/admin-only
 release-tag ruleset were configured. Existing local upload and preview identities
 were verified before copying credentials into the corresponding environments.
-Legacy repository credentials remain until environment signing is verified.
+The five legacy repository signing secrets were removed after the environment
+copies were stored and the retained local identities signed this release
+successfully. Original local credentials remain available for recovery. Hosted
+environment signing has not completed: its policy check stops before key access.
 
 ## Delivery
 
-GitHub CI, merge, signed release artifacts and Google Play submission are pending.
-This document records local evidence, not publication.
+- [PR 29](https://github.com/Majkey25/TuneItAll/pull/29) merged to protected main at `f521cc0c62f094f414c674cb30ca7f91f6e6fa9f` after [quality CI](https://github.com/Majkey25/TuneItAll/actions/runs/38228989156) and [all 68 Android 10 instrumentation tests](https://github.com/Majkey25/TuneItAll/actions/runs/38228989173) passed. Main-push CI also passed.
+- [GitHub release v0.3.0-alpha.37](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.37) is published as a prerelease with a downloadable preview APK, SHA-256 checksum and explicit owner-local provenance. The uploaded asset digest matches the verified APK.
+- Unsigned build and credential-free native metadata verification passed in [run 38230182022](https://github.com/Majkey25/TuneItAll/actions/runs/38230182022). Both automated release routes then failed before signing because `GITHUB_TOKEN` cannot inspect classic main-branch protection. The gate remains fail-closed; no broader token was created and no protection was weakened.
+- The owner-local route checked fresh remote tag/main ancestry, clean source, immutable artifact identity and digests, hosted verifier success, all three release policies and pinned certificates. It signed only checked copies, verified complete bundle signatures and checked content equality for every non-signature ZIP entry in both APK and AAB. Native metadata parsers did not run in the owner credential context. This is explicit owner signing, not an Actions environment approval or cryptographic attestation.
+- Signed AAB SHA-256: `5e12d2427eca8f78416fbd77b6376c981649da4544ce209464004c4191c7a734`.
+- Published preview APK SHA-256: `224f517fd256db551a729d780f9b4862ada269e005b0b3b0a518f5a37b42fb5e`.
+- At 10:02 UTC, Google Play had accepted version 40 for a 100% production rollout with no loss of supported devices. The owner submitted the production update and both store descriptions. The console showed “Changes in review”; quick checks precede Google's full review. Managed publishing is off, so approval will publish the update automatically. Version 39 remained live pending approval; version 40 was not yet public on Play.
+- English and Czech store descriptions now disclose the private song-cache copy. GitHub Pages deployed the matching privacy policy from the release source.
+
+Google Play reports two nonblocking warnings: missing deobfuscation mapping and
+native debug symbols. No source mapping or native symbols were fabricated.
+The automated signing routes still need a repository-scoped policy-read credential
+or equivalent platform permission; this owner-local release does not prove those
+routes operational.
 
 ## Accuracy limits
 
