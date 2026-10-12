@@ -74,7 +74,7 @@ jobs:
         run: |
           echo "aab=$(sha256sum app/build/outputs/bundle/release/app-release.aab | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
           echo "apk=$(sha256sum app/build/outputs/apk/debug/app-debug.apk | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         id: unsigned
         with:
           name: unsigned-${{ github.run_id }}-${{ inputs.kind }}
@@ -225,7 +225,7 @@ jobs:
           "aab=$aabHash" >> $env:GITHUB_OUTPUT
           "apk=$apkHash" >> $env:GITHUB_OUTPUT
           "provenance=$((Get-FileHash candidate/provenance.json).Hash.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         id: signed
         with:
           name: intoniva-${{ inputs.kind }}-bundle-${{ needs.build.outputs.source_sha }}
