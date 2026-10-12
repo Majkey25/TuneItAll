@@ -1,6 +1,7 @@
 package com.tuneitall.tuner
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.height
@@ -284,30 +285,33 @@ class MusicToolsScreenTest {
         ))
         compose.setContent {
             TuneItAllTheme {
-                CompositionLocalProvider(LocalDensity provides Density(
-                    if (shortLandscape || normalPortrait) 1f else LocalDensity.current.density,
-                    when { shortLandscape -> 2f; normalPortrait -> 1f; else -> 2.6f },
-                )) {
-                    Box(Modifier
-                        .width(if (shortLandscape) 568.dp else 320.dp)
-                        .height(when { shortLandscape -> 320.dp; normalPortrait -> 640.dp; else -> 568.dp })
-                        .then(if (shortLandscape || normalPortrait) Modifier.consumeWindowInsets(WindowInsets.safeDrawing) else Modifier)
-                        .testTag("song_test_viewport"),
-                    ) {
-                        ChordsScreen(
-                            state = state,
-                            tunings = listOf(tuning),
-                            notation = NoteNotation.SHARPS,
-                            catalog = catalog,
-                            onTabSelected = {},
-                            onChordSelected = {},
-                            onTuningSelected = {},
-                            onTransposeChanged = {},
-                            onLoadSong = {},
-                            onPlayPause = {},
-                            onSeek = {},
-                            onClearSong = {},
-                        )
+                BoxWithConstraints {
+                    val viewportDensity = minOf(1f, constraints.maxWidth / 568f, constraints.maxHeight / 640f)
+                    CompositionLocalProvider(LocalDensity provides Density(
+                        if (shortLandscape || normalPortrait) viewportDensity else LocalDensity.current.density,
+                        when { shortLandscape -> 2f; normalPortrait -> 1f; else -> 2.6f },
+                    )) {
+                        Box(Modifier
+                            .width(if (shortLandscape) 568.dp else 320.dp)
+                            .height(when { shortLandscape -> 320.dp; normalPortrait -> 640.dp; else -> 568.dp })
+                            .then(if (shortLandscape || normalPortrait) Modifier.consumeWindowInsets(WindowInsets.safeDrawing) else Modifier)
+                            .testTag("song_test_viewport"),
+                        ) {
+                            ChordsScreen(
+                                state = state,
+                                tunings = listOf(tuning),
+                                notation = NoteNotation.SHARPS,
+                                catalog = catalog,
+                                onTabSelected = {},
+                                onChordSelected = {},
+                                onTuningSelected = {},
+                                onTransposeChanged = {},
+                                onLoadSong = {},
+                                onPlayPause = {},
+                                onSeek = {},
+                                onClearSong = {},
+                            )
+                        }
                     }
                 }
             }
@@ -333,9 +337,8 @@ class MusicToolsScreenTest {
         compose.onNodeWithTag("song_diagrams_toggle").assertIsDisplayed()
 
         compose.runOnIdle { shortLandscape = true }
-        val viewport = compose.onNodeWithTag("song_test_viewport").fetchSemanticsNode().boundsInRoot
-        assertEquals(568f, viewport.width, 1f)
-        assertEquals(320f, viewport.height, 1f)
+        compose.onNodeWithTag("song_test_viewport")
+            .assertWidthIsEqualTo(568.dp).assertHeightIsEqualTo(320.dp)
         assertCurrentChordBarFits(568f)
         compose.onNodeWithTag("current_song_chord").assertTextEquals("C♯")
         val contentBounds = compose.onNodeWithTag("chords_content").fetchSemanticsNode().boundsInRoot
