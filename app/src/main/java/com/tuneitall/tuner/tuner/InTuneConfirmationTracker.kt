@@ -17,8 +17,12 @@ class InTuneConfirmationTracker {
     fun update(target: MidiNote?, inTune: Boolean, nowMillis: Long, confirmationMillis: Long): Boolean {
         require(nowMillis >= 0L) { "Confirmation time must not be negative" }
         require(confirmationMillis >= 0L) { "Confirmation duration must not be negative" }
-        require(lastUpdateMillis == null || nowMillis >= requireNotNull(lastUpdateMillis)) {
+        val previousUpdateMillis = lastUpdateMillis
+        require(previousUpdateMillis == null || nowMillis >= previousUpdateMillis) {
             "Confirmation time must not move backwards"
+        }
+        if (!confirmed && previousUpdateMillis != null && nowMillis - previousUpdateMillis > MAX_DROPOUT_MILLIS) {
+            inTuneSince = null
         }
         lastUpdateMillis = nowMillis
 
@@ -39,7 +43,10 @@ class InTuneConfirmationTracker {
         }
 
         val missingStartedAt = missingSince
-        if (missingStartedAt != null && nowMillis - missingStartedAt > MAX_DROPOUT_MILLIS) inTuneSince = null
+        if (missingStartedAt != null) {
+            val missingMillis = nowMillis - missingStartedAt
+            inTuneSince = if (missingMillis > MAX_DROPOUT_MILLIS) null else inTuneSince?.plus(missingMillis)
+        }
         missingSince = null
 
         if (inTune) {

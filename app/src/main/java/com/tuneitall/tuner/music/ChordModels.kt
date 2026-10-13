@@ -77,12 +77,15 @@ data class NoteQuestion(
     }
 }
 
-fun trainerChoices(answer: Chord, seed: Int): List<Chord> {
+fun trainerChoices(answer: Chord, seed: Int, heardPitchClasses: Set<Int> = answer.pitchClasses): List<Chord> {
+    require(heardPitchClasses.isNotEmpty() && heardPitchClasses.all { it in 0..11 })
     val random = Random(seed)
     val distractors = buildList {
         for (root in 0..11) {
             instructionalChordQualities.forEach { quality ->
-                Chord(root, quality).takeIf { it != answer }?.let(::add)
+                Chord(root, quality).takeIf {
+                    it.pitchClasses != answer.pitchClasses && it.pitchClasses != heardPitchClasses
+                }?.let(::add)
             }
         }
     }.shuffled(random).take(3)

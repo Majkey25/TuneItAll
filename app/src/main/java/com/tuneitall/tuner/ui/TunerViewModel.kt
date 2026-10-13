@@ -176,7 +176,9 @@ class TunerViewModel(application: Application) : AndroidViewModel(application) {
             notation = preferences.notation,
             themeMode = preferences.themeMode,
             appearance = preferences.appearance,
-            favoriteIds = preferences.favoriteIds,
+            favoriteIds = preferences.favoriteIds.intersect(
+                (TuningCatalog.presets + initialCustomTunings).mapTo(mutableSetOf(), TuningPreset::id),
+            ),
             customTunings = initialCustomTunings,
             reading = null,
             microphoneGranted = false,

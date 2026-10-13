@@ -17,7 +17,7 @@ import org.json.JSONObject
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 
-/** Optional real-electric-guitar identity benchmark. MIDI labels do not establish cent accuracy. */
+/** Optional real-electric-guitar regression gate. MIDI labels do not establish cent accuracy. */
 class RecordedTunerCorpusTest {
     @Test
     fun `evaluate frozen monophonic electric guitar windows`() {
@@ -82,12 +82,15 @@ class RecordedTunerCorpusTest {
                     }
                 }
                 counts.report(id, gain)
+                // Freeze the measured 2026-10-13 baseline; improvements remain allowed.
+                assertEquals(windows.length(), counts.voiced, "$id gain=$gain lost pitch coverage")
+                assertTrue(counts.correct >= listOf(44, 22, 25)[index], "$id gain=$gain lost note agreement")
+                assertTrue(counts.octaves <= if (index == 1) 1 else 0, "$id gain=$gain gained octave errors")
                 totals.getValue(gain).add(counts)
             }
         }
         assertEquals(93, windowCount)
         totals.forEach { (gain, counts) -> counts.report("TOTAL", gain) }
-        // Diagnostic only until a frozen baseline is measured. No invented accuracy threshold.
     }
 
     private fun verifiedFile(root: File, expectedName: String, metadata: JSONObject): ByteArray {

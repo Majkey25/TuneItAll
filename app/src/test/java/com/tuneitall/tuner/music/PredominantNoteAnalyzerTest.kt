@@ -68,6 +68,31 @@ class PredominantNoteAnalyzerTest {
     }
 
     @Test
+    fun `highest piano note survives normal reference tuning offsets`() {
+        val failures = mutableListOf<String>()
+        for (range in listOf(NoteRange.ANY, NoteRange.PIANO)) for (reference in listOf(440.0, 442.0, 444.0)) {
+            for (rate in listOf(44_100, 48_000)) {
+                val events = analyze(sine(rate, 2, midiToHertz(108) * reference / 440.0), range, rate)
+                if (events.map(NoteEvent::midiNote) != listOf(108) || events.singleOrNull()?.durationMillis != 2000L) {
+                    failures += "$range A4=$reference rate=$rate: $events"
+                }
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    @Test
+    fun `a lone note above the selected range does not become a lower octave`() {
+        val failures = mutableListOf<String>()
+        val cases = mapOf(NoteRange.VIOLIN to 101, NoteRange.GUITAR to 89, NoteRange.BASS to 73)
+        for ((range, midi) in cases) for (rate in listOf(44_100, 48_000)) {
+            val events = analyze(sine(rate, 2, midiToHertz(midi)), range, rate)
+            if (events.isNotEmpty()) failures += "$range MIDI=$midi rate=$rate: $events"
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    @Test
     fun `instrument note modes recognize low strings from supported tunings`() {
         val failures = mutableListOf<String>()
         val cases = mapOf(

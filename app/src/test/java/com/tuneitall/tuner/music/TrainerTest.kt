@@ -1,6 +1,7 @@
 package com.tuneitall.tuner.music
 
 import com.tuneitall.tuner.model.TuningCatalog
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -71,6 +72,41 @@ class TrainerTest {
         assertEquals(4, first.size)
         assertEquals(4, first.toSet().size)
         assertTrue(answer in first)
+    }
+
+    @Test
+    fun `quiz choices exclude pitch class equivalent chords`() {
+        val answer = Chord(0, ChordQuality.MAJOR_SIXTH)
+        repeat(256) { seed ->
+            val choices = trainerChoices(answer, seed)
+            assertEquals(4, choices.size)
+            assertEquals(4, choices.toSet().size)
+            assertTrue(answer in choices)
+            assertEquals(1, choices.count { it.pitchClasses == answer.pitchClasses },
+                "Seed $seed offered an ambiguous answer")
+        }
+    }
+
+    @Test
+    fun `C6 quiz choices exclude chords matching the played voicing`() {
+        val catalog = ChordShapeCatalog.parse(
+            guitarJson = File("src/main/res/raw/chords_db_guitar.json").readText(),
+            ukuleleJson = File("src/main/res/raw/chords_db_ukulele.json").readText(),
+        )
+        val tuning = requireNotNull(TuningCatalog.byId("guitar-6-standard"))
+        val answer = Chord(0, ChordQuality.MAJOR_SIXTH)
+        val shape = requireNotNull(catalog.shape(tuning.id, answer))
+        val heardPitchClasses = shape.frets.mapIndexedNotNull { index, fret ->
+            fret.takeIf { it >= 0 }?.let { (tuning.notesLowToHigh[index].value + it) % 12 }
+        }.toSet()
+        repeat(256) { seed ->
+            val choices = trainerChoices(answer, seed, heardPitchClasses)
+            assertEquals(4, choices.size)
+            assertEquals(4, choices.toSet().size)
+            assertTrue(answer in choices)
+            assertTrue(choices.none { it != answer && it.pitchClasses == heardPitchClasses },
+                "Seed $seed offered a chord matching the played voicing")
+        }
     }
 
     @Test

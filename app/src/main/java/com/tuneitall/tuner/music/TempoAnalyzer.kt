@@ -117,18 +117,22 @@ class StreamingTempoAnalyzer internal constructor(
         if (bestLag == 0 || bestCorrelation < MIN_CORRELATION) return null
         // A single matching attack pair is not enough to establish a recurring beat.
         val minimumAttack = onset.sumOf { it.coerceAtLeast(0.0) } / onset.size
-        var attacks = 0
+        fun isAttackPeak(index: Int): Boolean = onset[index] >= minimumAttack &&
+            onset[index] > onset[index - 1] && onset[index] >= onset[index + 1]
+        // Allow 20 ms onset jitter at each end of a matching interval.
+        val lagTolerance = (framesPerSecond * 0.04).roundToInt().coerceAtLeast(1)
+        var pairs = 0
         var lastAttack = -minimumLag
         for (index in 1 until onset.lastIndex) {
             if (index % 1024 == 0) checkAnalysisCancellation(isCancelled)
-            if (index - lastAttack >= minimumLag && onset[index] >= minimumAttack &&
-                onset[index] > onset[index - 1] && onset[index] >= onset[index + 1]
-            ) {
+            if (index - lastAttack >= minimumLag && isAttackPeak(index)) {
                 lastAttack = index
-                if (++attacks == MIN_RECURRING_ATTACKS) break
+                val first = (index - bestLag - lagTolerance).coerceAtLeast(1)
+                val last = (index - bestLag + lagTolerance).coerceAtMost(index - 1)
+                if ((first..last).any(::isAttackPeak) && ++pairs == MIN_RECURRING_PAIRS) break
             }
         }
-        if (attacks < MIN_RECURRING_ATTACKS) return null
+        if (pairs < MIN_RECURRING_PAIRS) return null
         val left = correlations[bestLag - 1]
         val right = correlations[bestLag + 1]
         val offset = (0.5 * (left - right) / (left - 2.0 * bestCorrelation + right)).coerceIn(-0.5, 0.5)
@@ -249,7 +253,7 @@ private const val MAX_TEMPO_BPM = 240
 private const val PREFERRED_TEMPO_BPM = 120.0
 private const val MIN_ONSET_ENERGY = 1e-8
 private const val MIN_CORRELATION = 0.08
-private const val MIN_RECURRING_ATTACKS = 3
+private const val MIN_RECURRING_PAIRS = 2
 private const val STRONG_PERIODICITY = 0.5
 private const val GRID_BEATS = 4
 private const val GRID_STEPS_PER_BPM = 10

@@ -1,0 +1,1 @@
+More reliable in-tune confirmation and calibrated pitch ranges. Better weak-seventh and upper-note handling, safer tempo detection, responsive metronome controls, corrected chord barres and ear-quiz choices. Improved large-text settings and favourites restoration. Auto-scroll stops new gestures when overlay permission is removed. Offline song analysis remains experimental.

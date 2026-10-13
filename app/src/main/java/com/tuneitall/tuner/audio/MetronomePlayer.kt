@@ -157,8 +157,10 @@ class MetronomePlayer internal constructor(
     @Synchronized
     fun requestStop() = session?.requestStop() ?: Unit
 
-    @Synchronized
-    fun phase(): Double = session?.takeIf { it.isAlive }?.phase() ?: 0.0
+    fun phase(): Double {
+        val active = synchronized(this) { session?.takeIf { it.isAlive } }
+        return active?.phase() ?: 0.0
+    }
 
     override fun close() {
         stop()
@@ -345,10 +347,14 @@ private class PlaybackSession(
         }
     }
 
-    fun phase(): Double = if (!playStarted) 0.0 else synchronized(streamLock) {
-        val activeOutput = output ?: return@synchronized 0.0
-        return@synchronized try {
-            stream.phaseAt(playbackFrame(activeOutput))
+    fun phase(): Double {
+        if (!playStarted) return 0.0
+        val activeOutput = output ?: return 0.0
+        return try {
+            val frame = playbackFrame(activeOutput)
+            synchronized(streamLock) {
+                if (output === activeOutput) stream.phaseAt(frame) else 0.0
+            }
         } catch (_: IllegalArgumentException) {
             0.0
         } catch (_: IllegalStateException) {

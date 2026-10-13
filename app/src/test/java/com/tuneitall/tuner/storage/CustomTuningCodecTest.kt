@@ -69,6 +69,18 @@ class CustomTuningCodecTest {
     }
 
     @Test
+    fun `built-in IDs are rejected without discarding custom siblings`() {
+        val encoded = JSONArray(
+            listOf(
+                objectJson("guitar-6-standard", "Conflicting", 40),
+                objectJson("legacy-tuning", "Legacy", 41),
+            ),
+        ).toString()
+
+        assertEquals(listOf("legacy-tuning"), CustomTuningCodec.decode(encoded).map(TuningPreset::id))
+    }
+
+    @Test
     fun `custom tuning count is bounded to one hundred`() {
         val presets = (0..100).map { index -> preset("custom-$index", "Custom $index", 40) }
         val encoded = JSONArray((0..100).map { index -> objectJson("custom-$index", "Custom $index", 40) }).toString()

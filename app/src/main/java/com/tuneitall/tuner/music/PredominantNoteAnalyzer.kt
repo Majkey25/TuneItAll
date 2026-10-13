@@ -21,13 +21,17 @@ internal fun analyzeNotes(
         val harmonicSources = belowRange.filter { midi ->
             observedHarmonicCount(frame, midi - NoteRange.ANY.midiRange.first) >= 2
         }
+        val requireObservedSupport = belowRange.isNotEmpty() ||
+            (midiRange.last + 1..NoteRange.ANY.midiRange.last).any { midi ->
+                frame.observedNoteSalience[midi - NoteRange.ANY.midiRange.first] >= MIN_NOTE_SALIENCE
+            }
         DoubleArray(midiRange.count() + 1).also { scores ->
             scores[0] = maxOf(
                 NO_NOTE_BASE + NO_NOTE_TONAL_WEIGHT * (1.0 - frame.tonalStrength),
                 NO_NOTE_NOISE_WEIGHT * frame.spectralFlatness,
             )
             midiRange.forEachIndexed { index, midi ->
-                scores[index + 1] = noteEmission(frame, midi, belowRange, harmonicSources)
+                scores[index + 1] = noteEmission(frame, midi, belowRange, harmonicSources, requireObservedSupport)
             }
         }
     }
@@ -68,10 +72,16 @@ internal fun analyzeNotes(
     return mergeNoteGaps(events.filter { it.durationMillis >= MIN_NOTE_MILLIS })
 }
 
-private fun noteEmission(frame: HarmonicFrame, midi: Int, belowRange: List<Int>, harmonicSources: List<Int>): Double {
+private fun noteEmission(
+    frame: HarmonicFrame,
+    midi: Int,
+    belowRange: List<Int>,
+    harmonicSources: List<Int>,
+    requireObservedSupport: Boolean,
+): Double {
     if (frame.tonalStrength < MIN_TONAL_STRENGTH) return 0.0
     val index = midi - NoteRange.ANY.midiRange.first
-    if (belowRange.isNotEmpty() && !hasObservedNoteSupport(frame, index)) return 0.0
+    if (requireObservedSupport && !hasObservedNoteSupport(frame, index)) return 0.0
     val projected = frame.noteSalience.getOrElse(index) { 0f }
     // Isolated bass peaks do not establish an overtone family that can erase observed melody notes.
     val salience = if (belowRange.isNotEmpty() && harmonicSources.isEmpty()) {

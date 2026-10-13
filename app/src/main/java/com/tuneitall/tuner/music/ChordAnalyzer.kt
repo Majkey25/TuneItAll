@@ -232,13 +232,15 @@ private fun qualityEmission(frames: List<HarmonicFrame>, index: Int, chord: Chor
     if (!hasStableDefiningIntervals(frames, index, chord)) return INVALID_EMISSION
     val frame = frames[index]
     val score = chordEmission(frame, chord)
+    val exactVoicing = hasStableObservedVoicing(frames, index, chord)
     val intervals = DEFINING_INTERVALS.getValue(chord.quality)
-    val observed = hasDefiningIntervals(frame.observedChroma, chord, intervals) &&
-        ((index > 0 && hasDefiningIntervals(frames[index - 1].observedChroma, chord, intervals)) ||
-            (index < frames.lastIndex && hasDefiningIntervals(frames[index + 1].observedChroma, chord, intervals)))
+    val observed = (exactVoicing && chord.pitchClasses !in AMBIGUOUS_PITCH_CLASS_SETS) ||
+        (hasDefiningIntervals(frame.observedChroma, chord, intervals) &&
+            ((index > 0 && hasDefiningIntervals(frames[index - 1].observedChroma, chord, intervals)) ||
+                (index < frames.lastIndex && hasDefiningIntervals(frames[index + 1].observedChroma, chord, intervals))))
     if (intervals.isNotEmpty() && !observed) return INVALID_EMISSION
     // An exact independently observed voicing must not lose to a subset favored by harmonic averaging.
-    if (observed && hasStableObservedVoicing(frames, index, chord)) return 1.0
+    if (observed && exactVoicing) return 1.0
     return if (score > 0.0 && observed) {
         score + QUALITY_PRIOR_PENALTY.getValue(chord.quality)
     } else score
@@ -342,7 +344,9 @@ private fun hasMultiplePitchClasses(chroma: FloatArray): Boolean {
 
 private fun hasStableDefiningIntervals(frames: List<HarmonicFrame>, index: Int, chord: Chord): Boolean {
     val intervals = DEFINING_INTERVALS.getValue(chord.quality)
-    if (intervals.isEmpty()) return true
+    if (intervals.isEmpty() ||
+        (chord.pitchClasses !in AMBIGUOUS_PITCH_CLASS_SETS && hasStableObservedVoicing(frames, index, chord))
+    ) return true
     if (!hasDefiningIntervals(frames[index].chroma, chord, intervals)) return false
     return (index > 0 && hasDefiningIntervals(frames[index - 1].chroma, chord, intervals)) ||
         (index < frames.lastIndex && hasDefiningIntervals(frames[index + 1].chroma, chord, intervals))
@@ -534,6 +538,10 @@ private const val CONTEXT_TIE_WEIGHT = 0.04
 private const val ONSET_TRANSITION_DISCOUNT = 0.85
 private const val MIN_TRANSITION_SCALE = 0.15
 private const val MAX_ANALYSIS_SECONDS = 30 * 60
+
+private val AMBIGUOUS_PITCH_CLASS_SETS = instructionalChordQualities.flatMap { quality ->
+    List(PITCH_CLASS_COUNT) { root -> Chord(root, quality).pitchClasses }
+}.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
 
 private val DEFINING_INTERVALS = mapOf(
     ChordQuality.MAJOR to emptySet(),

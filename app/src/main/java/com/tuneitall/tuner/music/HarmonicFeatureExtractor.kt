@@ -515,7 +515,8 @@ private const val NOTE_COUNT = MAX_MIDI - MIN_MIDI + 1
 private const val PITCH_CLASS_COUNT = 12
 private const val BINS_PER_SEMITONE = 3
 private const val HIGH_RESOLUTION_BIN_COUNT = (MAX_MIDI - RAW_MIN_MIDI + 1) * BINS_PER_SEMITONE
-private const val MAX_FREQUENCY_HERTZ = 4_200.0
+// Preserve a sharp highest note until tuning correction.
+private val MAX_FREQUENCY_HERTZ = midiToHertz(MAX_MIDI) * 2.0.pow(0.5 / SEMITONES_PER_OCTAVE)
 private const val BASS_MAX_MIDI = 60
 private const val BASS_ROLLOFF = 0.08f
 private const val CENTS_PER_SEMITONE = 100.0

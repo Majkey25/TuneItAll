@@ -196,6 +196,24 @@ class TempoAnalyzerTest {
     }
 
     @Test
+    fun `unrelated weak attack does not turn one matching pair into a recurring tempo`() {
+        val regular = assertNotNull(StreamingTempoAnalyzer(SAMPLE_RATE).apply {
+            accept(clickTrack(120, seconds = 12))
+        }.finish())
+        assertEquals(120, regular.bpm)
+
+        val audio = FloatArray(SAMPLE_RATE * 12)
+        for ((start, gain) in listOf(800 to 0.8, 4_800 to 0.8, 73_040 to 0.005)) {
+            for (offset in 0 until CLICK_FRAMES) {
+                audio[start + offset] = (gain * (1.0 - offset.toDouble() / CLICK_FRAMES) *
+                    sin(2.0 * PI * 1_000.0 * offset / SAMPLE_RATE)).toFloat()
+            }
+        }
+
+        assertEquals(null, StreamingTempoAnalyzer(SAMPLE_RATE).apply { accept(audio) }.finish())
+    }
+
+    @Test
     fun `quiet recurring beats survive one loud unrelated attack`() {
         val audio = drumPattern().also { samples -> samples.indices.forEach { samples[it] *= 0.08f } }
         val random = Random(17)
