@@ -1,7 +1,8 @@
 # Reliability review, 13 October 2026
 
-Working-tree changes, not a new published release. The public GitHub release
-remains alpha 37. No signing credentials or release protections changed.
+Alpha 38 candidate (`0.3.0-alpha.38`, code 41), not yet published at this review
+checkpoint. The public GitHub release was alpha 37 at the start of the review.
+No signing credentials or release protections changed.
 
 ## Accepted fixes
 
@@ -34,8 +35,8 @@ remains alpha 37. No signing credentials or release protections changed.
   an acceptable accuracy standard for arbitrary songs.
 - Auto-scroll checks its overlay permission before every gesture batch and stops
   when permission is missing. An already dispatched batch can still finish within
-  its two-second bound. Device acceptance for this guard is still blocked
-  by the QA accessibility service connection described below.
+  its two-second bound. The normal-Activity device acceptance below verifies this
+  guard independently of the instrumentation service-connection limitation.
 - README download links now point to the verified existing alpha 37 release.
 
 ## Review and evidence
@@ -110,6 +111,43 @@ string. DSP P95 was 2.7–6.4 ms; 1–4 kHz checks were 5.7–9.5 ms, below the
 and 311 ms in VIOLIN. These are single-device, synthetic-input measurements.
 No desktop or Focusrite audio was played. No live guitar was available for this run.
 
+## Final candidate physical acceptance
+
+The complete 191-test instrumentation suite ran on the connected Huawei without an
+emulator: 187 passed, no failures, four skips. The skipped private dense-song case
+requires its missing source file. Three Accessibility gesture cases could not bind
+the QA service under the test runner; their skips are not counted as passes.
+The core block passed 78 cases, the UI/store-capture block 52, the main application
+flows 55, and the non-gesture auto-scroll block two.
+
+A local-only normal QA Activity then used the actual production gesture service,
+without UiAutomation while it was active. It verified movement at speeds 1, 15
+and 30, stable Stop, rapid restart and long-press-sensitive rows at speeds 1 and 15
+without an accidental long press. A separate revocation run removed only the QA
+overlay app-op. The service stopped and measured scroll position remained 492 px
+after both settling periods. The first controller attempt missed its 15-second
+revocation checkpoint; the bounded repeat revoked at a fresh checkpoint and passed.
+The original overlay app-op mode was restored to default and verified.
+
+The temporary probe APK was replaced by the clean candidate QA APK; the package
+scan confirmed the probe Activity was absent. Original QA preferences were restored.
+Final Accessibility Enabled/Bound/Binding sets were empty, QA was stopped and Home
+was sent. The last ADB checks finished at 13:21:52 UTC; the explicit release message
+was sent at 13:22:06 UTC, with no ADB command after the 13:22 boundary. Production
+data, accounts and global services were untouched. Sixteen English/Czech synthetic
+store captures used production composables and were pulled from the phone.
+
+[PR 33](https://github.com/Majkey25/TuneItAll/pull/33) required
+[quality CI](https://github.com/Majkey25/TuneItAll/actions/runs/38398026853)
+passed on the candidate head. The complete local unsigned release gate also passed.
+The optional emulator-only song-decoder workflow was temporarily disabled for this
+release; required CI and protections remained intact. It must be restored after
+the delivery PRs close.
+
+At 13:06–13:10 UTC, the own Play Console tab still showed version 40 in production
+review, managed publishing off and a usable Create new release action. It also
+reported a nonblocking DEX obfuscation warning with a February 2027 deadline.
+
 ## Remaining limits
 
 - A single visible high harmonic can remain ambiguous with a missing fundamental.
@@ -117,7 +155,9 @@ No desktop or Focusrite audio was played. No live guitar was available for this 
 - Two providers that never return from IPC can occupy both import workers.
   Replacing threads would leak resources; a complete fix needs reclaimable process
   isolation, not another timeout wrapper.
-- Auto-scroll permission revocation still needs device acceptance with a connected
-  QA service. Native overlay touch cancellation also remains unverified.
+- Native overlay touch cancellation remains unverified. The service-level overlay
+  permission revocation guard passed the normal-Activity acceptance above.
+- Release code shrinking remains disabled; Play's DEX optimisation warning needs a
+  separate shrunk-build device acceptance before the February 2027 deadline.
 - Allocation and same-root confidence scans have optimisation opportunities, but
   no new missed audio deadline or user-visible slowdown was demonstrated.
