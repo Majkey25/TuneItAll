@@ -120,6 +120,12 @@ the QA service under the test runner; their skips are not counted as passes.
 The core block passed 78 cases, the UI/store-capture block 52, the main application
 flows 55, and the non-gesture auto-scroll block two.
 
+At 13:38–13:40 UTC, the exact private dense-song file was recovered and the skipped
+case rerun on the Huawei. It passed in 27.039 seconds total, asserting coverage
+of at least 85% and analysis within 30 seconds. This adds one passing distinct
+case, not a correctness score for the chords. Only the temporary device copies
+were removed; QA was stopped, Home sent and all ADB released early at 13:40 UTC.
+
 A local-only normal QA Activity then used the actual production gesture service,
 without UiAutomation while it was active. It verified movement at speeds 1, 15
 and 30, stable Stop, rapid restart and long-press-sensitive rows at speeds 1 and 15
@@ -147,6 +153,10 @@ the delivery PRs close.
 At 13:06–13:10 UTC, the own Play Console tab still showed version 40 in production
 review, managed publishing off and a usable Create new release action. It also
 reported a nonblocking DEX obfuscation warning with a February 2027 deadline.
+
+The subsequent [alpha 38 delivery record](store/2026-10-13-alpha38-release.md)
+contains the merged-source CI, published GitHub assets and actual Play submission
+state. Those later delivery facts do not change the benchmark accuracy limits.
 
 ## Remaining limits
 
