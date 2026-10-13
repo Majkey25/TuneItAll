@@ -13,6 +13,7 @@ import com.tuneitall.tuner.model.HeadstockLayout
 import com.tuneitall.tuner.model.Instrument
 import com.tuneitall.tuner.model.MidiNote
 import com.tuneitall.tuner.model.ReferencePitch
+import com.tuneitall.tuner.model.TuningCatalog
 import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.metronome.Bpm
 import com.tuneitall.tuner.metronome.MetronomeSettings
@@ -353,7 +354,7 @@ object CustomTuningCodec {
             if (presets.size == MAX_CUSTOM_TUNINGS) break
             val item = root.optJSONObject(index) ?: continue
             val preset = decodeItem(item) ?: continue
-            if (ids.add(preset.id)) presets += preset
+            if (TuningCatalog.byId(preset.id) == null && ids.add(preset.id)) presets += preset
         }
         return presets
     }

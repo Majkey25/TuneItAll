@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0-alpha.38, 2026-10-13
+
+- Reject phantom notes from constant microphone input and keep calibrated pitch-search ranges valid.
+- Require fresh in-tune evidence for confirmation; missing readings no longer count towards confirmation time.
+- Preserve weak, independently observed sevenths without changing ambiguous chord support requirements.
+- Retain sharp upper notes and reject tested out-of-range octave substitutions during song analysis.
+- Require recurring attack pairs before reporting a song tempo.
+- Keep metronome controls responsive while querying native playback position.
+- Exclude ear-quiz answers that sound identical to the actual played chord voicing.
+- Correct partial barre diagrams and make enlarged controls, language selection and colour-picker handles readable.
+- Restore valid favourites safely and reject custom tuning IDs that overwrite built-in presets.
+- Stop new auto-scroll gesture batches when overlay permission is revoked.
+- Guard recorded tuner and performed-chord accuracy against measured regressions.
+
+Song analysis remains experimental. Real recording benchmarks do not establish
+perfect transcription or microphone accuracy on every phone.
+
 ## 0.3.0-alpha.37, 2026-10-12
 
 - Reduce pitch and song-analysis CPU work without changing the validated reference calculations.

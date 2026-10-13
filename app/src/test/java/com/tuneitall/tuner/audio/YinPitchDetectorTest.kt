@@ -49,6 +49,23 @@ class YinPitchDetectorTest {
     }
 
     @Test
+    fun `constant nonzero PCM returns an unvoiced frame`() {
+        for (value in listOf(Short.MAX_VALUE.toInt(), -Short.MAX_VALUE.toInt(), 10_000, -10_000)) {
+            val frame = detector.analyze(
+                ShortArray(SAMPLES_SIZE) { value.toShort() },
+                SAMPLE_RATE,
+                69.29565774421802,
+                391.99543598174927,
+            )
+
+            assertTrue(frame.candidates.isEmpty(), "Constant PCM $value produced $frame")
+            assertEquals(1.0, frame.unvoicedProbability, 0.0)
+            assertEquals(abs(value) / 32768.0, frame.rms, 1e-12)
+            assertEquals(abs(value) / 32768.0, frame.peak, 0.0)
+        }
+    }
+
+    @Test
     fun `dominant unvoiced probability is not voiced`() {
         val frame = PitchFrame(
             candidates = listOf(PitchCandidate(440.0, probability = 0.20, periodicity = 0.90)),

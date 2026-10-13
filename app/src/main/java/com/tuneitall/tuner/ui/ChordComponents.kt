@@ -42,6 +42,7 @@ import com.tuneitall.tuner.model.TuningPreset
 import com.tuneitall.tuner.music.Chord
 import com.tuneitall.tuner.music.ChordQuality
 import com.tuneitall.tuner.music.ChordShapeCatalog
+import com.tuneitall.tuner.music.ChordVoicing
 import com.tuneitall.tuner.storage.NoteNotation
 import java.util.Locale
 
@@ -155,14 +156,13 @@ fun ChordDiagram(
                     )
                 }
                 voicing.barres.forEach { barreFret ->
-                    val matchingStrings = voicing.frets.indices.filter { voicing.frets[it] == barreFret }
-                    if (matchingStrings.size >= 2) {
+                    chordBarreSpans(voicing, barreFret).forEach { strings ->
                         val row = barreFret - baseFret
                         val y = top + (row + 0.5f) * fretGap
                         drawLine(
                             accent,
-                            Offset(side + requireNotNull(matchingStrings.minOrNull()) * stringGap, y),
-                            Offset(side + requireNotNull(matchingStrings.maxOrNull()) * stringGap, y),
+                            Offset(side + strings.first * stringGap, y),
+                            Offset(side + strings.last * stringGap, y),
                             14.dp.toPx(),
                             StrokeCap.Round,
                         )
@@ -216,6 +216,14 @@ fun ChordDiagram(
         }
     }
 }
+
+internal fun chordBarreSpans(voicing: ChordVoicing, barreFret: Int): List<IntRange> =
+    voicing.frets.indices
+        .filter { voicing.frets[it] == barreFret && voicing.fingers[it] > 0 }
+        .groupBy { voicing.fingers[it] }
+        .values
+        .filter { it.size > 1 }
+        .map { it.first()..it.last() }
 
 @Composable
 fun chordQualityName(quality: ChordQuality): String = stringResource(

@@ -2,7 +2,9 @@ package com.tuneitall.tuner
 
 import android.app.UiAutomation
 import android.content.Context
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
+import android.os.UserManager
 import android.util.Log
 import android.view.ViewConfiguration
 import androidx.compose.foundation.ScrollState
@@ -166,6 +168,63 @@ class AutoScrollStateTest {
             assertTrue("An old callback stopped the restarted run", AutoScrollAccessibilityService.state.value.running)
             assertTrue("The restarted run dispatched no further batch", scroll.value > first)
             Log.i(LOG_TAG, "restartFirstScroll=$first laterScroll=${scroll.value}")
+        }
+    }
+
+    @Test
+    fun revokingQaOverlayPermissionStopsGestures() {
+        check(context.packageName.endsWith(".qa"))
+        assumeTrue(
+            "SKIP: Run the QA overlay regression in the system user",
+            context.getSystemService(UserManager::class.java)?.isSystemUser == true,
+        )
+        assumeTrue(
+            "SKIP: Enable only the QA overlay permission through system UI",
+            AutoScrollPermissionState.canDrawOverlays(context),
+        )
+        val service = activeGestureService()
+        val automation = InstrumentationRegistry.getInstrumentation()
+            .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES)
+        fun shellOutput(command: String): String =
+            ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(command))
+                .bufferedReader().use { it.readText() }
+
+        val packageOp = "--user 0 ${context.packageName} SYSTEM_ALERT_WINDOW"
+        val originalOp = shellOutput("appops get $packageOp")
+        assumeTrue("SKIP: QA overlay permission has a UID-level override", "Uid mode:" !in originalOp)
+        val modePattern = Regex("(?m)^\\s*SYSTEM_ALERT_WINDOW: (allow|ignore|deny|default|foreground)\\b")
+        val originalMode = requireNotNull(modePattern.find(originalOp)) {
+            "Cannot safely restore the QA overlay app-op: $originalOp"
+        }.groupValues[1]
+        val scroll = showScrollFixture()
+        compose.runOnUiThread { assertTrue("Initial gesture was rejected", service.start(30)) }
+        compose.waitUntil(timeoutMillis = 5_000L) { scroll.value > 0 }
+        compose.runOnUiThread { assertTrue(AutoScrollAccessibilityService.state.value.running) }
+
+        try {
+            shellOutput("appops set $packageOp ignore")
+            assertFalse("QA overlay permission was not revoked", AutoScrollPermissionState.canDrawOverlays(context))
+            SystemClock.sleep(GESTURE_SETTLE_MS)
+            compose.runOnUiThread {
+                assertFalse(
+                    "Auto-scroll continued after QA overlay permission was revoked",
+                    AutoScrollAccessibilityService.state.value.running,
+                )
+            }
+            val settled = compose.runOnUiThread { scroll.value }
+            SystemClock.sleep(GESTURE_SETTLE_MS)
+            compose.runOnUiThread {
+                assertEquals("A later batch moved content after permission revocation", settled, scroll.value)
+            }
+        } finally {
+            shellOutput("appops set $packageOp $originalMode")
+            compose.runOnUiThread { service.stop() }
+            assertEquals(
+                "QA overlay app-op mode was not restored",
+                originalMode,
+                modePattern.find(shellOutput("appops get $packageOp"))?.groupValues?.get(1),
+            )
+            assertTrue("QA overlay permission was not restored", AutoScrollPermissionState.canDrawOverlays(context))
         }
     }
 

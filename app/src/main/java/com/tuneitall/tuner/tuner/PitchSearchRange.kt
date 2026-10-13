@@ -23,7 +23,9 @@ internal fun pitchSearchRange(
     referencePitch: ReferencePitch,
 ): PitchSearchRange {
     require(selectedString in tuning.notesLowToHigh.indices) { "Selected string is outside the tuning" }
-    if (mode == TunerMode.CHROMATIC) return PitchSearchRange(MIN_FREQUENCY, MAX_FREQUENCY)
+    val calibration = referencePitch.hertz / ReferencePitch.DEFAULT_HERTZ
+    val supportedRange = PitchSearchRange(MIN_FREQUENCY * calibration, MAX_FREQUENCY * calibration)
+    if (mode == TunerMode.CHROMATIC) return supportedRange
 
     val notes = if (mode == TunerMode.MANUAL) {
         listOf(tuning.notesLowToHigh[selectedString])
@@ -34,10 +36,9 @@ internal fun pitchSearchRange(
         (if (mode == TunerMode.MANUAL) MANUAL_MARGIN_SEMITONES else AUTO_MARGIN_SEMITONES) /
             SEMITONES_PER_OCTAVE,
     )
-    return PitchSearchRange(
-        minHertz = (MusicMath.frequency(notes.minBy { it.value }, referencePitch) / margin).coerceAtLeast(MIN_FREQUENCY),
-        maxHertz = (MusicMath.frequency(notes.maxBy { it.value }, referencePitch) * margin).coerceAtMost(MAX_FREQUENCY),
-    )
+    val minHertz = (MusicMath.frequency(notes.minBy { it.value }, referencePitch) / margin).coerceAtLeast(supportedRange.minHertz)
+    val maxHertz = (MusicMath.frequency(notes.maxBy { it.value }, referencePitch) * margin).coerceAtMost(supportedRange.maxHertz)
+    return if (minHertz < maxHertz) PitchSearchRange(minHertz, maxHertz) else supportedRange
 }
 
 private const val MIN_FREQUENCY = 27.0

@@ -232,7 +232,12 @@ internal fun ChordTrainer(
     var showPicker by remember { mutableStateOf(false) }
     var showDiagram by remember(mode, tuning.id) { mutableStateOf(false) }
     val chord = chords[if (mode == TrainerMode.LEARN) lessonIndex else quizIndex]
-    val choices = remember(chord, choiceSeed) { trainerChoices(chord, choiceSeed) }
+    val heardPitchClasses = remember(chord, tuning, catalog) {
+        requireNotNull(catalog.shape(tuning.id, chord)).frets.mapIndexedNotNull { index, fret ->
+            fret.takeIf { it >= 0 }?.let { (tuning.notesLowToHigh[index].value + it) % 12 }
+        }.toSet()
+    }
+    val choices = remember(chord, choiceSeed, heardPitchClasses) { trainerChoices(chord, choiceSeed, heardPitchClasses) }
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).testTag("trainer_content"),

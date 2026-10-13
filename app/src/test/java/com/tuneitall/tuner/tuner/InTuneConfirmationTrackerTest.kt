@@ -19,6 +19,7 @@ class InTuneConfirmationTrackerTest {
         assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_100, confirmationMillis = 100))
         assertTrue(tracker.isConfirmed)
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_000, confirmationMillis = 100))
+        assertTrue(tracker.isConfirmed)
     }
 
     @Test
@@ -26,8 +27,26 @@ class InTuneConfirmationTrackerTest {
         val tracker = InTuneConfirmationTracker()
 
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_000, confirmationMillis = 1_000))
+        for (nowMillis in 1_100L..1_900L step 100L) {
+            assertFalse(tracker.update(a4, inTune = true, nowMillis = nowMillis, confirmationMillis = 1_000))
+        }
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_999, confirmationMillis = 1_000))
         assertTrue(tracker.update(a4, inTune = true, nowMillis = 2_000, confirmationMillis = 1_000))
+    }
+
+    @Test
+    fun `a callback-free gap requires a fresh continuous confirmation interval`() {
+        val tracker = InTuneConfirmationTracker()
+
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_000, confirmationMillis = 1_000))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 5_000, confirmationMillis = 1_000))
+        assertFalse(tracker.isConfirmed)
+        for (nowMillis in 5_100L..5_900L step 100L) {
+            assertFalse(tracker.update(a4, inTune = true, nowMillis = nowMillis, confirmationMillis = 1_000))
+        }
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 5_999, confirmationMillis = 1_000))
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 6_000, confirmationMillis = 1_000))
+        assertTrue(tracker.isConfirmed)
     }
 
     @Test
@@ -39,6 +58,8 @@ class InTuneConfirmationTrackerTest {
         assertFalse(tracker.update(a4, inTune = false, nowMillis = 2_100, confirmationMillis = 250))
         assertFalse(tracker.isConfirmed)
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_100, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_200, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_300, confirmationMillis = 250))
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_349, confirmationMillis = 250))
         assertTrue(tracker.update(a4, inTune = true, nowMillis = 2_350, confirmationMillis = 250))
     }
@@ -50,6 +71,8 @@ class InTuneConfirmationTrackerTest {
 
         assertFalse(tracker.update(b4, inTune = true, nowMillis = 1_600, confirmationMillis = 250))
         assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(b4, inTune = true, nowMillis = 1_700, confirmationMillis = 250))
+        assertFalse(tracker.update(b4, inTune = true, nowMillis = 1_800, confirmationMillis = 250))
         assertTrue(tracker.update(b4, inTune = true, nowMillis = 1_850, confirmationMillis = 250))
     }
 
@@ -73,6 +96,8 @@ class InTuneConfirmationTrackerTest {
         assertFalse(tracker.update(target = null, inTune = false, nowMillis = 2_100, confirmationMillis = 250))
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_600, confirmationMillis = 250))
         assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_700, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_800, confirmationMillis = 250))
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_849, confirmationMillis = 250))
         assertTrue(tracker.update(a4, inTune = true, nowMillis = 2_850, confirmationMillis = 250))
     }
@@ -87,6 +112,8 @@ class InTuneConfirmationTrackerTest {
         assertFalse(tracker.update(a4, inTune = false, nowMillis = 2_100, confirmationMillis = 250))
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_600, confirmationMillis = 250))
         assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_700, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_800, confirmationMillis = 250))
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 2_849, confirmationMillis = 250))
         assertTrue(tracker.update(a4, inTune = true, nowMillis = 2_850, confirmationMillis = 250))
     }
@@ -106,13 +133,30 @@ class InTuneConfirmationTrackerTest {
     }
 
     @Test
-    fun `brief missing frame preserves pending confirmation until a fresh in-tune reading`() {
+    fun `brief missing frame preserves accumulated in-tune time`() {
         val tracker = InTuneConfirmationTracker()
 
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_000, confirmationMillis = 250))
         assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_100, confirmationMillis = 250))
         assertFalse(tracker.isConfirmed)
-        assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_250, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_250, confirmationMillis = 250))
+        assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_399, confirmationMillis = 250))
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_400, confirmationMillis = 250))
+        assertTrue(tracker.isConfirmed)
+    }
+
+    @Test
+    fun `brief dropout preserves voiced time without counting missing time`() {
+        val tracker = InTuneConfirmationTracker()
+
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 0, confirmationMillis = 150))
+        assertFalse(tracker.update(target = null, inTune = false, nowMillis = 10, confirmationMillis = 150))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 150, confirmationMillis = 150))
+        assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 289, confirmationMillis = 150))
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 290, confirmationMillis = 150))
+        assertTrue(tracker.isConfirmed)
     }
 
     @Test
@@ -123,6 +167,8 @@ class InTuneConfirmationTrackerTest {
         assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_100, confirmationMillis = 250))
         assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_301, confirmationMillis = 250))
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_302, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_402, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_502, confirmationMillis = 250))
         assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_552, confirmationMillis = 250))
     }
 
@@ -134,6 +180,8 @@ class InTuneConfirmationTrackerTest {
         assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_100, confirmationMillis = 250))
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_500, confirmationMillis = 250))
         assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_600, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_700, confirmationMillis = 250))
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_749, confirmationMillis = 250))
         assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_750, confirmationMillis = 250))
     }
@@ -144,7 +192,11 @@ class InTuneConfirmationTrackerTest {
 
         assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_000, confirmationMillis = 250))
         assertFalse(tracker.update(target = null, inTune = false, nowMillis = 1_100, confirmationMillis = 250))
-        assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_300, confirmationMillis = 250))
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_300, confirmationMillis = 250))
+        assertFalse(tracker.isConfirmed)
+        assertFalse(tracker.update(a4, inTune = true, nowMillis = 1_449, confirmationMillis = 250))
+        assertTrue(tracker.update(a4, inTune = true, nowMillis = 1_450, confirmationMillis = 250))
+        assertTrue(tracker.isConfirmed)
     }
 
     @Test
@@ -159,6 +211,8 @@ class InTuneConfirmationTrackerTest {
 
     private fun confirmedTracker(): InTuneConfirmationTracker = InTuneConfirmationTracker().also {
         it.update(a4, inTune = true, nowMillis = 1_000, confirmationMillis = 250)
+        assertFalse(it.update(a4, inTune = true, nowMillis = 1_100, confirmationMillis = 250))
+        assertFalse(it.update(a4, inTune = true, nowMillis = 1_200, confirmationMillis = 250))
         assertTrue(it.update(a4, inTune = true, nowMillis = 1_250, confirmationMillis = 250))
     }
 }

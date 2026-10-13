@@ -91,5 +91,6 @@ internal fun AppearanceColorDialog(title: String, initial: Int, onDismiss: () ->
 private fun ColorSlider(labelId: Int, value: Float, range: ClosedFloatingPointRange<Float>, onChange: (Float) -> Unit) {
     val label = stringResource(labelId)
     Text(label, style = MaterialTheme.typography.labelLarge)
-    Slider(value, onChange, valueRange = range, modifier = Modifier.semantics { contentDescription = label })
+    Slider(value, onChange, valueRange = range, colors = sliderColors(MaterialTheme.colorScheme.surfaceContainerHigh),
+        modifier = Modifier.semantics { contentDescription = label })
 }

@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -349,7 +350,8 @@ private fun RepeatButton(
         onClick = { currentOnRepeat() },
         enabled = enabled,
         modifier = Modifier
-            .size(48.dp)
+            .width(48.dp)
+            .heightIn(min = 48.dp)
             .pointerInput(enabled) {
                 try {
                     if (!enabled) return@pointerInput
@@ -365,7 +367,7 @@ private fun RepeatButton(
             }
             .semantics { contentDescription = description }
             .testTag(tag),
-        contentPadding = ButtonDefaults.ContentPadding,
+        contentPadding = PaddingValues(0.dp),
     ) {
         Text(label, style = MaterialTheme.typography.titleLarge)
     }

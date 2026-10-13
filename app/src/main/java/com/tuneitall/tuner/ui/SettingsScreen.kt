@@ -200,7 +200,7 @@ private fun GeneralSettings(
                 onDismissRequest = { languageDialogOpen = false },
                 title = { Text(stringResource(R.string.choose_language)) },
                 text = {
-                    Column {
+                    Column(Modifier.verticalScroll(rememberScrollState())) {
                         AppLanguage.entries.forEach { language ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,

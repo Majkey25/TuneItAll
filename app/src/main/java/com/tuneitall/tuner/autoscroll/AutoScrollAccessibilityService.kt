@@ -58,6 +58,10 @@ class AutoScrollAccessibilityService : AccessibilityService() {
 
     private fun dispatchNextBatch(): Boolean {
         if (!running) return false
+        if (!AutoScrollPermissionState.canDrawOverlays(this)) {
+            stop()
+            return false
+        }
         val generation = runGeneration
         val profile = AutoScrollGestureProfileFactory.create(AutoScrollSettings.defaults, speedLevel)
         val width = resources.displayMetrics.widthPixels.toFloat()

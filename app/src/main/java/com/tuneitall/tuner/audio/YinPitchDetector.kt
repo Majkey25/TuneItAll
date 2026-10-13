@@ -30,6 +30,12 @@ internal fun decimate(
     require(factor == 1 || factor == 2 || factor == 4)
     require(sampleRate > 0 && maxFrequency.isFinite() && maxFrequency > 0.0)
     val cutoff = minOf(0.4 / factor, maxFrequency * 2.5 / sampleRate)
+    val analysisStart = ceil(4.0 / (cutoff * factor)).toInt()
+    // Avoid turning filter round-off on constant PCM into false periodicity.
+    if (samples.all { it == samples[0] }) {
+        output.fill(samples[0].toDouble())
+        return analysisStart
+    }
     val first = PitchLowPass(cutoff, 0.5411961001, samples.first().toDouble())
     val second = PitchLowPass(cutoff, 1.3065629649, samples.first().toDouble())
     val notches = if (rejectConfirmation) {
@@ -43,7 +49,7 @@ internal fun decimate(
         val value = second.process(first.process(filtered))
         if (index % factor == factor - 1) output[index / factor] = value
     }
-    return ceil(4.0 / (cutoff * factor)).toInt()
+    return analysisStart
 }
 
 private class ChimeNotch(frequency: Double, sampleRate: Int, initial: Double) {

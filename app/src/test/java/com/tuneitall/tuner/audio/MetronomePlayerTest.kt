@@ -425,8 +425,8 @@ class MetronomePlayerTest {
     }
 
     @Test
-    fun `phase falls back when output is released during playback position read`() {
-        val output = FakeOutput(blockWriteCall = 2, failWriteCall = 2, blockPlaybackRead = true)
+    fun `phase position read does not block rendering and tolerates output release`() {
+        val output = FakeOutput(blockWriteCall = 2, failWriteCall = 3, blockPlaybackRead = true)
         val player = testPlayer(output)
         val phase = AtomicReference<Double?>()
         val phaseFailure = AtomicReference<Throwable?>()
@@ -458,6 +458,47 @@ class MetronomePlayerTest {
             output.allowWrite.countDown()
             output.allowPlaybackRead.countDown()
             reader.join(1_000L)
+            player.stop()
+        }
+    }
+
+    @Test
+    fun `phase position read does not block stop controls`() {
+        val output = FakeOutput(blockWriteCall = 2, blockPlaybackRead = true)
+        val player = testPlayer(output)
+        val finishStop = AtomicReference<() -> MetronomeStopResult>()
+        val stopCaptured = CountDownLatch(1)
+        val reader = Thread { player.phase() }
+        val stopper = Thread {
+            player.requestStop()
+            finishStop.set(player.captureStop())
+            stopCaptured.countDown()
+        }
+
+        try {
+            player.start(MetronomeSettings())
+            assertTrue(output.writeBlocked.await(1, TimeUnit.SECONDS))
+            reader.start()
+            assertTrue(output.playbackReadEntered.await(1, TimeUnit.SECONDS))
+
+            stopper.start()
+            assertTrue(stopCaptured.await(1, TimeUnit.SECONDS), "Stop controls waited for playback position")
+            assertTrue(player.status.stopping)
+            assertEquals(0, output.releaseCount.get())
+
+            output.allowPlaybackRead.countDown()
+            output.allowWrite.countDown()
+            reader.join(1_000L)
+            stopper.join(1_000L)
+            assertFalse(reader.isAlive)
+            assertFalse(stopper.isAlive)
+            assertEquals(MetronomeStopResult.STOPPED, requireNotNull(finishStop.get())())
+            assertEquals(1, output.releaseCount.get())
+        } finally {
+            output.allowPlaybackRead.countDown()
+            output.allowWrite.countDown()
+            reader.join(1_000L)
+            stopper.join(1_000L)
             player.stop()
         }
     }

@@ -9,6 +9,7 @@ import org.json.JSONObject
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /** Optional full-recording benchmark; fixture provenance and hashes are frozen in its manifest. */
 class GuitarSetCorpusTest {
@@ -81,6 +82,9 @@ class GuitarSetCorpusTest {
         }
         println("CORPUS,TOTAL,${rootCorrect.toDouble() / referenceTotal},${qualityCorrect.toDouble() / qualityTotal}," +
             "$qualityTotal,${covered.toDouble() / referenceTotal},${tracks.length()},$elapsedTotal")
+        assertTrue(rootCorrect.toDouble() / referenceTotal >= 0.64, "Performed chord root agreement regressed")
+        assertTrue(qualityCorrect.toDouble() / qualityTotal >= 0.57, "Performed chord quality agreement regressed")
+        assertTrue(covered.toDouble() / referenceTotal >= 0.95, "Performed chord coverage regressed")
     }
 
     private fun readMonoWav(bytes: ByteArray, sampleRate: Int): FloatArray {

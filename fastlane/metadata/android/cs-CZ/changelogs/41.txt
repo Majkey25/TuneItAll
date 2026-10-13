@@ -1,0 +1,1 @@
+Spolehlivější potvrzení naladění a kalibrovaný rozsah tónů. Lepší práce se slabými septimami a vysokými tóny, bezpečnější detekce tempa, plynulé ovládání metronomu, opravená barré a odpovědi sluchového kvízu. Čitelnější nastavení a obnova oblíbených ladění. Auto-scroll zastaví nové tahy po odebrání oprávnění překryvu. Offline rozpoznávání skladeb zůstává experimentální.
