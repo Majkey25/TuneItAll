@@ -27,6 +27,26 @@ import org.junit.Test
 
 class SongChordDecoderTest {
     @Test
+    fun localWavBassIntroDoesNotBackdateViolinMelody() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "bass-intro-melody.wav")
+        try {
+            for (rate in listOf(44_100, 48_000)) {
+                file.writeBytes(pcm16Wav(channels = 1, seconds = 2, sampleRate = rate) { frame, _ ->
+                    val frequency = if (frame < rate / 5) 110.0 else 440.0
+                    0.6 * sin(2 * PI * frequency * frame / rate)
+                })
+                val notes = SongAudioDecoder(context).analyze(Uri.fromFile(file), SongAnalysisMode.NOTES, NoteRange.VIOLIN)
+                    .events.filterIsInstance<NoteEvent>()
+                assertEquals("$rate: $notes", listOf(69), notes.map { it.midiNote })
+                assertTrue("$rate: $notes", notes.single().startMillis in 100L..300L)
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
     fun localWavTempoRecognizesEqualLoudnessTimbreChanges() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.cacheDir, "timbre-tempo.wav")

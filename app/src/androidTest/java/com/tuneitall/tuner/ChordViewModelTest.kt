@@ -36,6 +36,31 @@ import org.junit.Test
 
 class ChordViewModelTest {
     @Test
+    fun seekingBeforePreparationDoesNotFailPlayback() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        onMain {
+            val viewModel = ChordViewModel(context.applicationContext as Application)
+            val field = ChordViewModel::class.java.getDeclaredField("player").apply { isAccessible = true }
+            var seekInvoked = false
+            field.set(viewModel, object : MediaPlayer() {
+                override fun seekTo(msec: Long, mode: Int) {
+                    seekInvoked = true
+                    super.seekTo(msec, mode)
+                }
+            })
+            try {
+                viewModel.seekTo(1_000L)
+                assertFalse("An unprepared player was asked to seek", seekInvoked)
+                assertFalse(viewModel.uiState.value.prepared)
+                assertEquals(0L, viewModel.uiState.value.positionMillis)
+                assertNull(viewModel.uiState.value.playbackError)
+            } finally {
+                viewModel.clearSong()
+            }
+        }
+    }
+
+    @Test
     fun changingToNotesKeepsTheSongAndPublishesOnlyNoteEvents() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val application = context.applicationContext as Application

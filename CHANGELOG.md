@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-alpha.39, 2026-10-14
+
+- Prevent song-note analysis from placing a later melody at the beginning of an unsupported bass intro.
+- Ignore timeline and slider seeks until the song player is prepared, preventing unsupported playback-state calls.
+
+Song recognition remains experimental; this release fixes specific reproduced
+or source-confirmed errors, not arbitrary-song transcription.
+
 ## 0.3.0-alpha.38, 2026-10-13
 
 - Reject phantom notes from constant microphone input and keep calibrated pitch-search ranges valid.

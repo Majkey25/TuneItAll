@@ -14,6 +14,21 @@ import kotlin.test.assertTrue
 
 class PredominantNoteAnalyzerTest {
     @Test
+    fun `unsupported bass intro does not backdate the first violin note`() {
+        for (rate in listOf(44_100, 48_000)) {
+            val bass = sine(rate, 1, midiToHertz(45)).copyOf(rate / 5)
+            val extractor = StreamingHarmonicFeatureExtractor(rate, includeLowestNoteMargin = true)
+            extractor.accept(bass + sine(rate, 1, midiToHertz(69)))
+            val frames = extractor.finish()
+            val events = analyzeNotes(frames, NoteRange.VIOLIN, extractor.durationMillis)
+
+            assertEquals(0f, frames.first().observedNoteSalience[69 - 21])
+            assertEquals(listOf(69), events.map(NoteEvent::midiNote), events.toString())
+            assertTrue(events.single().startMillis in 100L..300L, "$rate: $events")
+        }
+    }
+
+    @Test
     fun `fast annotated melody keeps its pitches across sample rates`() {
         val melody = listOf(69, 72, 76, 74, 71, 77, 69, 73)
         for (rate in listOf(44_100, 48_000, 96_000)) for (transpose in listOf(-5, 0, 4)) {
