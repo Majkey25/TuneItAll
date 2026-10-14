@@ -261,6 +261,7 @@ class ChordViewModel internal constructor(
 
     fun seekTo(positionMillis: Long) {
         val activePlayer = player ?: return
+        if (!mutableUiState.value.prepared) return
         val bounded = positionMillis.coerceIn(0L, mutableUiState.value.durationMillis)
         try {
             activePlayer.seekTo(bounded, MediaPlayer.SEEK_CLOSEST)

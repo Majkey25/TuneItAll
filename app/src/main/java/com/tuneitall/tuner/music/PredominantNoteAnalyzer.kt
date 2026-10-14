@@ -116,6 +116,10 @@ private fun decodeNoteStates(
     val stateCount = emissions.first().size
     val backPointers = Array(emissions.size) { ByteArray(stateCount) }
     var previous = emissions.first().copyOf()
+    // A later note cannot start in an initial frame with no supporting evidence.
+    for (state in 1 until stateCount) {
+        if (previous[state] == 0.0) previous[state] = Double.NEGATIVE_INFINITY
+    }
     for (frameIndex in 1 until emissions.size) {
         checkAnalysisCancellation(isCancelled)
         val current = DoubleArray(stateCount)
