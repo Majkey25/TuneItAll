@@ -1,0 +1,1 @@
+Clearer expandable settings for language, appearance and tuner options. Reference pitch is now under Tuner. Added mode icons and better wrapping for narrow screens. The metronome is centered with its full outline visible; sound timing is unchanged.

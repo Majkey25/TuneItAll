@@ -31,9 +31,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -634,6 +637,7 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithTag("settings_section_metronome").assertIsSelected()
         composeRule.onNodeWithTag("settings_section_general").performClick()
         composeRule.onNodeWithTag("settings_appearance").performScrollTo().performClick()
+        composeRule.onNodeWithTag("settings_customize_appearance").performScrollTo().performClick()
         composeRule.onNodeWithTag("appearance_screen").assertIsDisplayed()
         composeRule.onNodeWithTag("back_button").performClick()
         composeRule.onNodeWithTag("settings_section_general").assertIsSelected()
@@ -1184,7 +1188,8 @@ class TuneItAllFlowTest {
     @Test
     fun settingsAccepts444RejectsInvalidAndRequiresExtremeConfirmation() {
         var applied: ReferencePitch? = null
-        composeRule.setContent {
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent {
             TuneItAllTheme {
                 SettingsScreen(
                     state = state(),
@@ -1201,9 +1206,21 @@ class TuneItAllFlowTest {
         }
         composeRule.waitForIdle()
 
+        composeRule.onNodeWithTag("settings_reference_pitch").assertDoesNotExist()
+        composeRule.onNodeWithTag("settings_section_tuner").performClick()
+        composeRule.onNodeWithTag("settings_reference_pitch").performScrollTo()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Collapsed")).performClick()
+
         val input = composeRule.onNode(hasSetTextAction())
         input.performTextClearance()
         input.performTextInput("444.0")
+        composeRule.onNodeWithTag("settings_reference_pitch").performScrollTo().performClick()
+        composeRule.onNode(hasSetTextAction()).assertDoesNotExist()
+        composeRule.onNodeWithTag("settings_reference_pitch").performClick()
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.onNodeWithTag("settings_reference_pitch")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Expanded"))
+        input.performScrollTo().assert(hasText("444.0"))
         composeRule.onNodeWithText("Apply").performScrollTo().assertIsEnabled().performClick()
         assertEquals(444.0, applied?.hertz ?: 0.0, 0.0)
 
@@ -1218,6 +1235,9 @@ class TuneItAllFlowTest {
         assertTrue(applied == null)
         composeRule.onNodeWithText("Confirm value").performScrollTo().performClick()
         assertEquals(420.0, applied?.hertz ?: 0.0, 0.0)
+        composeRule.onNodeWithText(context.getString(R.string.reset_440)).performScrollTo().performClick()
+        input.performScrollTo().assert(hasText("440.0"))
+        assertEquals(440.0, applied?.hertz ?: 0.0, 0.0)
     }
 
     @Test
@@ -1248,11 +1268,11 @@ class TuneItAllFlowTest {
             }
         }
 
-        composeRule.onAllNodesWithText("Universal")[0].assertIsSelected()
-        composeRule.onNodeWithText("Unplugged electric").assertIsDisplayed()
-        composeRule.onNodeWithText("Quiet room").assertIsDisplayed()
-        composeRule.onNodeWithText("Noisy room").assertIsDisplayed()
-        composeRule.onNodeWithText("Fast response").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Universal")[0].performScrollTo().assertIsSelected()
+        composeRule.onNodeWithText("Unplugged electric").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Quiet room").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Noisy room").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Fast response").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Microphone sensitivity")
             .performSemanticsAction(SemanticsActions.SetProgress) { setProgress -> setProgress(37f) }
         composeRule.onNodeWithText("Custom").assertIsSelected()
@@ -1495,14 +1515,15 @@ class TuneItAllFlowTest {
 
     @Test
     fun settingsOffersSplitAndInlineSixLayouts() {
+        var currentState by mutableStateOf(state())
         composeRule.setContent {
             TuneItAllTheme {
                 SettingsScreen(
-                    state = state(),
+                    state = currentState,
                     onThemeModeChanged = {},
                     onReferencePitchChanged = {},
-                    onNotationChanged = {},
-                    onLayoutChanged = {},
+                    onNotationChanged = { currentState = currentState.copy(notation = it) },
+                    onLayoutChanged = { currentState = currentState.copy(headstockLayout = it) },
                     onAudioSettingsChanged = {},
                     onOpenAbout = {},
                     onSupport = {},
@@ -1511,13 +1532,21 @@ class TuneItAllFlowTest {
             }
         }
 
+        composeRule.onNodeWithTag("settings_section_tuner").performClick()
+        composeRule.onNodeWithTag("settings_layout").performScrollTo().performClick()
         composeRule.onNodeWithText("Headstock").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("3 + 3").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("6 inline").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag("settings_layout_SPLIT_3_3").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag("settings_layout_INLINE_6").performScrollTo().assertIsDisplayed().performClick().assertIsSelected()
+        composeRule.onNodeWithTag("settings_notation").performScrollTo().performClick()
+        composeRule.onNodeWithTag("settings_notation_FLATS").performScrollTo().performClick().assertIsSelected()
+        composeRule.runOnIdle {
+            assertEquals(HeadstockLayout.INLINE_6, currentState.headstockLayout)
+            assertEquals(NoteNotation.FLATS, currentState.notation)
+        }
     }
 
     @Test
-    fun settingsSelectsAppLanguageFromCompleteDialog() {
+    fun settingsSelectsAppLanguageFromExpandableList() {
         var selected: AppLanguage? = null
         composeRule.setContent {
             TuneItAllTheme {
@@ -1540,7 +1569,7 @@ class TuneItAllFlowTest {
         composeRule.onNodeWithText("App language").assertIsDisplayed()
         composeRule.onNodeWithText("System default").performClick()
         listOf("English", "Čeština", "Deutsch", "Français", "Español").forEach {
-            composeRule.onNodeWithText(it).assertIsDisplayed()
+            composeRule.onNodeWithText(it).performScrollTo().assertIsDisplayed()
         }
         composeRule.onNodeWithText("Español").performClick()
         composeRule.runOnIdle { assertEquals(AppLanguage.SPANISH, selected) }

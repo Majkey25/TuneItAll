@@ -141,7 +141,7 @@ class ControlAccessibilityRegressionTest {
     }
 
     @Test
-    fun languageDialogCanScrollToLastChoiceInLandscape() {
+    fun languageListCanScrollToLastChoiceInLandscape() {
         val originalOrientation = compose.activity.requestedOrientation
         try {
             compose.activityRule.scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }

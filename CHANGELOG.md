@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-alpha.41, 2026-10-15
+
+- Group language, appearance and tuner options into expandable settings with current-value summaries.
+- Move reference pitch, note notation and headstock layout into Tuner settings.
+- Add icons to appearance modes and choices; let narrow-screen options wrap without squeezing labels.
+- Center the metronome artwork, preserve its full outline and align the animated arm with its pivot.
+
+Audio detection and playback timing are unchanged.
+
 ## 0.3.0-alpha.40, 2026-10-15
 
 - Add consistent icons beside settings in General, Tuner, Metronome and Appearance.

@@ -18,6 +18,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -61,6 +62,25 @@ class AppearanceScreenTest {
         context.getSharedPreferences("tuneitall_preferences", Context.MODE_PRIVATE).edit().clear().commit()
     }
 
+    @Test fun appearanceGroupsCollapseAndRestoreWithoutLosingThemeSelection() {
+        var settings by mutableStateOf(AppearanceSettings())
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent {
+            TuneItAllTheme(false, settings) {
+                Surface { AppearanceScreen(settings, ThemeMode.LIGHT, { settings = it }, {}, {}) }
+            }
+        }
+        compose.onNodeWithTag("appearance_theme_OCEAN_light").assertDoesNotExist()
+        compose.onNodeWithTag("appearance_themes").performScrollTo().performClick()
+        compose.onNodeWithTag("appearance_theme_OCEAN_light").performScrollTo().performClick().assertIsSelected()
+        compose.onNodeWithTag("appearance_themes").performScrollTo().performClick()
+        compose.onNodeWithTag("appearance_theme_OCEAN_light").assertDoesNotExist()
+        compose.onNodeWithTag("appearance_themes").performClick()
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithTag("appearance_theme_OCEAN_light").performScrollTo().assertIsSelected()
+        compose.runOnIdle { assertEquals(ThemePalette.OCEAN, settings.lightTheme) }
+    }
+
     @Test fun systemDarkModeOpensTheMatchingCustomPalette() {
         val configuration = Configuration(context.resources.configuration).apply {
             uiMode = (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or Configuration.UI_MODE_NIGHT_YES
@@ -102,6 +122,7 @@ class AppearanceScreenTest {
                 }
             }
         }
+        compose.onNodeWithTag("appearance_layout").performScrollTo().performClick()
         compose.onNodeWithTag("appearance_layout_GLASS").performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(ThemeLayout.GLASS, UserPreferences(context).appearance.layout)
@@ -143,11 +164,14 @@ class AppearanceScreenTest {
         compose.onNodeWithTag("tuner_settings").performClick()
         compose.onNodeWithTag("settings_section_general").performClick()
         compose.onNodeWithTag("settings_appearance").performScrollTo().performClick()
+        compose.onNodeWithTag("settings_customize_appearance").performScrollTo().performClick()
+        compose.onNodeWithTag("appearance_themes").performScrollTo().performClick()
         compose.onNodeWithTag("appearance_theme_OCEAN_light").performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(ThemePalette.OCEAN, UserPreferences(context).appearance.lightTheme)
             assertEquals(0xF5F9FC, background)
         }
+        compose.onNodeWithTag("appearance_mode").performScrollTo().performClick()
         compose.onNodeWithTag("appearance_mode_DARK").performScrollTo().performClick()
         compose.runOnIdle { assertEquals(0x101010, background) }
         compose.onNodeWithTag("appearance_theme_IRIS_dark").performScrollTo().performClick()
@@ -196,7 +220,9 @@ class AppearanceScreenTest {
                 Surface { AppearanceScreen(settings, mode, { settings = it }, { mode = it }, { back = true }) }
             }
         }
+        compose.onNodeWithTag("appearance_layout").performScrollTo().performClick()
         compose.onNodeWithTag("appearance_layout_MATERIAL").performScrollTo().performClick()
+        compose.onNodeWithTag("appearance_text").performScrollTo().performClick()
         compose.onNodeWithTag("appearance_font_SERIF").performScrollTo().performClick()
         compose.onNodeWithTag("appearance_text_scale").performScrollTo()
             .performSemanticsAction(SemanticsActions.SetProgress) { it(130f) }

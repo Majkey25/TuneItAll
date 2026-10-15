@@ -13,18 +13,52 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Surface
 import com.tuneitall.tuner.metronome.Bpm
 import com.tuneitall.tuner.metronome.MetronomeSettings
 import com.tuneitall.tuner.ui.MetronomeScreen
 import com.tuneitall.tuner.ui.MetronomeUiState
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
 class MetronomeScreenTest {
     @get:Rule
     val compose = createComposeRule()
+
+    @Test
+    fun mechanicalBodyIsCenteredAndHasUnclippedEdges() {
+        compose.setContent {
+            TuneItAllTheme(darkTheme = false) {
+                Surface(color = Color.White) {
+                    MetronomeScreen(MetronomeUiState(), { 0.0 }, {}, onTap = {}, onStart = {}, onStop = {}, onOpenSettings = {})
+                }
+            }
+        }
+        val pixels = compose.onNodeWithTag("metronome_body_exact", useUnmergedTree = true).captureToImage().toPixelMap()
+        var left = pixels.width
+        var right = -1
+        var top = pixels.height
+        var bottom = -1
+        for (y in 0 until pixels.height) for (x in 0 until pixels.width) {
+            val pixel = pixels[x, y]
+            if (pixel.red < 0.3f && pixel.green < 0.3f && pixel.blue < 0.3f) {
+                left = minOf(left, x)
+                right = maxOf(right, x)
+                top = minOf(top, y)
+                bottom = maxOf(bottom, y)
+            }
+        }
+        assertTrue("No metronome artwork was rendered", right > left && bottom > top)
+        assertEquals("Metronome is horizontally offset", (pixels.width - 1) / 2f, (left + right) / 2f, 2f)
+        assertEquals("Metronome is vertically offset", (pixels.height - 1) / 2f, (top + bottom) / 2f, 2f)
+        assertTrue("Metronome touches or crosses its canvas edge", left > 0 && top > 0 && right < pixels.width - 1 && bottom < pixels.height - 1)
+    }
 
     @Test
     fun bpmDraftCommitsOnlyAfterImeDone() {

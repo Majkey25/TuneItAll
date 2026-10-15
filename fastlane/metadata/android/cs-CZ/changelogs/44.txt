@@ -1,0 +1,1 @@
+Přehlednější rozbalovací nastavení jazyka, vzhledu a ladičky. Referenční frekvence je nyní v sekci Tuner. Doplněné ikony režimů a lepší zalamování voleb na úzkých displejích. Metronom je vystředěný a má viditelný celý obrys; časování zvuku se nemění.

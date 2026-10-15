@@ -14,7 +14,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -23,10 +22,8 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -141,14 +138,15 @@ fun SettingsScreen(
                     onAppLanguageChanged = onAppLanguageChanged,
                     onThemeModeChanged = onThemeModeChanged,
                     onOpenAppearance = onOpenAppearance,
-                    onReferencePitchChanged = onReferencePitchChanged,
-                    onNotationChanged = onNotationChanged,
-                    onLayoutChanged = onLayoutChanged,
                     onOpenAbout = onOpenAbout,
                     onSupport = onSupport,
                 )
 
-                SettingsSection.TUNER -> AudioSettings(state, onAudioSettingsChanged)
+                SettingsSection.TUNER -> {
+                    ReferencePitchSettings(state.referencePitch, onReferencePitchChanged)
+                    TunerDisplaySettings(state, onNotationChanged, onLayoutChanged)
+                    AudioSettings(state, onAudioSettingsChanged)
+                }
                 SettingsSection.METRONOME -> MetronomeSettingsControls(
                     state = metronomeState,
                     onNumeratorChange = onMetronomeNumeratorChanged,
@@ -172,88 +170,85 @@ private fun GeneralSettings(
     onAppLanguageChanged: (AppLanguage) -> Unit,
     onThemeModeChanged: (ThemeMode) -> Unit,
     onOpenAppearance: () -> Unit,
-    onReferencePitchChanged: (ReferencePitch) -> Unit,
-    onNotationChanged: (NoteNotation) -> Unit,
-    onLayoutChanged: (HeadstockLayout) -> Unit,
     onOpenAbout: () -> Unit,
     onSupport: () -> Unit,
 ) {
-    var languageDialogOpen by rememberSaveable { mutableStateOf(false) }
-    var input by remember { mutableStateOf(formatPitch(state.referencePitch.hertz)) }
-    var extremeConfirmed by remember { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+        SettingsDisclosure(
+            stringResource(R.string.app_language), R.drawable.ic_setting_language,
+            "settings_language", appLanguageName(appLanguage),
+        ) {
+            AppLanguage.entries.forEach { language ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                        .selectable(language == appLanguage, role = Role.RadioButton,
+                            onClick = { if (language != appLanguage) onAppLanguageChanged(language) }),
+                ) {
+                    SettingIcon(if (language == AppLanguage.SYSTEM) R.drawable.ic_settings else R.drawable.ic_setting_language)
+                    Text(appLanguageName(language), modifier = Modifier.weight(1f))
+                    RadioButton(language == appLanguage, onClick = null, colors = radioButtonColors(MaterialTheme.colorScheme.background))
+                }
+            }
+        }
+        SettingsDisclosure(
+            stringResource(R.string.appearance), R.drawable.ic_setting_palette,
+            "settings_appearance", themeModeName(state.themeMode),
+        ) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ThemeMode.entries.forEach { mode ->
+                    FilterChip(
+                        selected = state.themeMode == mode,
+                        colors = currentPlaneChipColors(),
+                        onClick = { onThemeModeChanged(mode) },
+                        label = { Text(themeModeName(mode)) },
+                        leadingIcon = { SettingIcon(themeModeIcon(mode)) },
+                        modifier = Modifier.heightIn(min = 48.dp),
+                    )
+                }
+            }
+            OutlinedButton(
+                onClick = onOpenAppearance,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("settings_customize_appearance"),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    SettingIcon(R.drawable.ic_setting_tune)
+                    Text(stringResource(R.string.appearance_customize))
+                }
+            }
+        }
+        OutlinedButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                SettingIcon(R.drawable.ic_setting_info)
+                Text(stringResource(R.string.app_details))
+            }
+        }
+        SettingLabel(stringResource(R.string.support_me), R.drawable.ic_coffee, MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.support_description), style = MaterialTheme.typography.bodyMedium)
+        SupportButton(onSupport)
+    }
+}
+
+@Composable
+private fun ReferencePitchSettings(referencePitch: ReferencePitch, onReferencePitchChanged: (ReferencePitch) -> Unit) {
+    var input by rememberSaveable(referencePitch.hertz) { mutableStateOf(formatPitch(referencePitch.hertz)) }
+    var extremeConfirmed by rememberSaveable(referencePitch.hertz) { mutableStateOf(false) }
     val parsed = input.replace(',', '.').toDoubleOrNull()
     val inAllowedRange = parsed != null && parsed.isFinite() && parsed in ReferencePitch.MIN_HERTZ..ReferencePitch.MAX_HERTZ
     val extreme = inAllowedRange && parsed !in NORMAL_REFERENCE_MIN..NORMAL_REFERENCE_MAX
-
-    LaunchedEffect(state.referencePitch) {
-        input = formatPitch(state.referencePitch.hertz)
-        extremeConfirmed = false
-    }
-
     fun updateInput(hertz: Double) {
         input = formatPitch(hertz.coerceIn(ReferencePitch.MIN_HERTZ, ReferencePitch.MAX_HERTZ))
         extremeConfirmed = false
     }
-
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-        SettingLabel(stringResource(R.string.app_language), R.drawable.ic_setting_language, MaterialTheme.typography.titleLarge)
-        OutlinedButton(
-            onClick = { languageDialogOpen = true },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        ) {
-            Text(appLanguageName(appLanguage))
-        }
-        if (languageDialogOpen) {
-            AlertDialog(
-                onDismissRequest = { languageDialogOpen = false },
-                title = { Text(stringResource(R.string.choose_language)) },
-                text = {
-                    Column(Modifier.verticalScroll(rememberScrollState())) {
-                        AppLanguage.entries.forEach { language ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 48.dp)
-                                    .selectable(
-                                        selected = language == appLanguage,
-                                        role = Role.RadioButton,
-                                        onClick = {
-                                            languageDialogOpen = false
-                                            if (language != appLanguage) onAppLanguageChanged(language)
-                                        },
-                                    ),
-                            ) {
-                                RadioButton(selected = language == appLanguage, onClick = null, colors = dialogRadioButtonColors())
-                                Text(appLanguageName(language))
-                            }
-                        }
-                    }
-                },
-                confirmButton = {},
-            )
-        }
-        SettingLabel(stringResource(R.string.appearance), R.drawable.ic_setting_palette, MaterialTheme.typography.titleLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            ThemeMode.entries.forEach { mode ->
-                FilterChip(
-                    selected = state.themeMode == mode,
-                    colors = currentPlaneChipColors(),
-                    onClick = { onThemeModeChanged(mode) },
-                    label = { Text(themeModeName(mode)) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-        OutlinedButton(
-            onClick = onOpenAppearance,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("settings_appearance"),
-        ) { Text(stringResource(R.string.appearance_customize)) }
-        SettingLabel(stringResource(R.string.reference_pitch), R.drawable.ic_setting_music_note, MaterialTheme.typography.titleLarge)
+    SettingsDisclosure(
+        stringResource(R.string.reference_pitch), R.drawable.ic_setting_music_note,
+        "settings_reference_pitch", "A4 · ${formatPitch(referencePitch.hertz)} Hz",
+    ) {
         Text(stringResource(R.string.reference_pitch_help), style = MaterialTheme.typography.bodyMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(
-                onClick = { updateInput((parsed ?: state.referencePitch.hertz) - 0.1) },
+                onClick = { updateInput((parsed ?: referencePitch.hertz) - 0.1) },
                 modifier = Modifier.weight(1f),
             ) { Text("−0.1") }
             OutlinedTextField(
@@ -270,12 +265,12 @@ private fun GeneralSettings(
                 modifier = Modifier.weight(2f),
             )
             OutlinedButton(
-                onClick = { updateInput((parsed ?: state.referencePitch.hertz) + 0.1) },
+                onClick = { updateInput((parsed ?: referencePitch.hertz) + 0.1) },
                 modifier = Modifier.weight(1f),
             ) { Text("+0.1") }
         }
         Slider(
-            value = (parsed?.takeIf { inAllowedRange } ?: state.referencePitch.hertz).toFloat(),
+            value = (parsed?.takeIf { inAllowedRange } ?: referencePitch.hertz).toFloat(),
             onValueChange = { updateInput(round(it * 10.0) / 10.0) },
             valueRange = ReferencePitch.MIN_HERTZ.toFloat()..ReferencePitch.MAX_HERTZ.toFloat(),
             steps = REFERENCE_SLIDER_STEPS,
@@ -298,7 +293,10 @@ private fun GeneralSettings(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(
-                onClick = { onReferencePitchChanged(ReferencePitch(ReferencePitch.DEFAULT_HERTZ)) },
+                onClick = {
+                    updateInput(ReferencePitch.DEFAULT_HERTZ)
+                    onReferencePitchChanged(ReferencePitch(ReferencePitch.DEFAULT_HERTZ))
+                },
                 modifier = Modifier.weight(1f),
             ) {
                 Text(stringResource(R.string.reset_440))
@@ -326,7 +324,13 @@ private fun GeneralSettings(
                 )
             }
         }
-        SettingLabel(stringResource(R.string.note_notation), R.drawable.ic_setting_music_note, MaterialTheme.typography.titleLarge)
+    }
+}
+
+@Composable
+private fun TunerDisplaySettings(state: TunerUiState, onNotationChanged: (NoteNotation) -> Unit, onLayoutChanged: (HeadstockLayout) -> Unit) {
+    SettingsDisclosure(stringResource(R.string.note_notation), R.drawable.ic_setting_music_note, "settings_notation",
+        if (state.notation == NoteNotation.SHARPS) "♯" else "♭") {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             NoteNotation.entries.forEach { notation ->
                 FilterChip(
@@ -334,34 +338,27 @@ private fun GeneralSettings(
                     colors = currentPlaneChipColors(),
                     onClick = { onNotationChanged(notation) },
                     label = { Text(if (notation == NoteNotation.SHARPS) "♯" else "♭") },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).testTag("settings_notation_${notation.name}"),
                 )
             }
         }
-
-        if (state.tuning.layouts.size > 1) {
-            SettingLabel(stringResource(R.string.headstock_layout), R.drawable.ic_setting_view_week, MaterialTheme.typography.titleLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+    }
+    if (state.tuning.layouts.size > 1) {
+        SettingsDisclosure(stringResource(R.string.headstock_layout), R.drawable.ic_setting_view_week,
+            "settings_layout", layoutName(state.headstockLayout)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 state.tuning.layouts.forEach { layout ->
                     FilterChip(
                         selected = state.headstockLayout == layout,
                         colors = currentPlaneChipColors(),
                         onClick = { onLayoutChanged(layout) },
                         label = { Text(layoutName(layout)) },
-                        modifier = Modifier.weight(1f),
+                        leadingIcon = { SettingIcon(R.drawable.ic_setting_view_week) },
+                        modifier = Modifier.heightIn(min = 48.dp).testTag("settings_layout_${layout.name}"),
                     )
                 }
             }
         }
-        OutlinedButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                SettingIcon(R.drawable.ic_setting_info)
-                Text(stringResource(R.string.app_details))
-            }
-        }
-        SettingLabel(stringResource(R.string.support_me), R.drawable.ic_coffee, MaterialTheme.typography.titleLarge)
-        Text(stringResource(R.string.support_description), style = MaterialTheme.typography.bodyMedium)
-        SupportButton(onSupport)
     }
 }
 
@@ -372,7 +369,6 @@ private fun AudioSettings(
 ) {
     val settings = state.audioSettings
     val selectedProfile = TunerProfile.entries.firstOrNull { it.settings == settings }
-    var advancedExpanded by remember { mutableStateOf(false) }
 
     SettingLabel(stringResource(R.string.tuner_audio), R.drawable.ic_setting_tune, MaterialTheme.typography.titleLarge)
     Text(stringResource(R.string.tuner_profiles_help), style = MaterialTheme.typography.bodyMedium)
@@ -405,14 +401,15 @@ private fun AudioSettings(
 
     SettingLabel(stringResource(R.string.response), R.drawable.ic_setting_speed)
     Text(stringResource(R.string.response_help), style = MaterialTheme.typography.bodyMedium)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         ResponseMode.entries.forEach { response ->
             FilterChip(
                 selected = settings.response == response,
                 colors = currentPlaneChipColors(),
                 onClick = { onSettingsChanged(settings.copy(response = response)) },
                 label = { Text(responseName(response)) },
-                modifier = Modifier.weight(1f),
+                leadingIcon = { SettingIcon(R.drawable.ic_setting_speed) },
+                modifier = Modifier.heightIn(min = 48.dp),
             )
         }
     }
@@ -427,16 +424,7 @@ private fun AudioSettings(
         onValueChanged = { onSettingsChanged(settings.copy(needleStability = it)) },
     )
 
-    OutlinedButton(
-        onClick = { advancedExpanded = !advancedExpanded },
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            SettingIcon(R.drawable.ic_setting_tune)
-            Text(stringResource(R.string.advanced_audio))
-        }
-    }
-    if (advancedExpanded) {
+    SettingsDisclosure(stringResource(R.string.advanced_audio), R.drawable.ic_setting_tune, "settings_advanced_audio") {
         AdvancedAudioSettings(state, onSettingsChanged)
     }
     OutlinedButton(
@@ -457,14 +445,21 @@ private fun ProfileRow(
     onSettingsChanged: (TunerAudioSettings) -> Unit,
     showCustom: Boolean = false,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         profiles.forEach { profile ->
             FilterChip(
                 selected = selectedProfile == profile,
                 colors = currentPlaneChipColors(),
                 onClick = { onSettingsChanged(profile.settings) },
                 label = { Text(profileName(profile)) },
-                modifier = Modifier.weight(1f),
+                leadingIcon = { SettingIcon(when (profile) {
+                    TunerProfile.BALANCED -> R.drawable.ic_setting_tune
+                    TunerProfile.UNPLUGGED_ELECTRIC -> R.drawable.ic_notification
+                    TunerProfile.QUIET_ROOM -> R.drawable.ic_setting_volume_off
+                    TunerProfile.NOISY_ROOM -> R.drawable.ic_setting_graphic_eq
+                    TunerProfile.FAST_RESPONSE -> R.drawable.ic_setting_speed
+                }) },
+                modifier = Modifier.heightIn(min = 48.dp),
             )
         }
         if (showCustom) {
@@ -474,7 +469,8 @@ private fun ProfileRow(
                 onClick = {},
                 enabled = false,
                 label = { Text(stringResource(R.string.profile_custom)) },
-                modifier = Modifier.weight(1f),
+                leadingIcon = { SettingIcon(R.drawable.ic_setting_tune) },
+                modifier = Modifier.heightIn(min = 48.dp),
             )
         }
     }
@@ -540,7 +536,7 @@ private fun AdvancedAudioSettings(
 
     SettingLabel(stringResource(R.string.audio_input), R.drawable.ic_setting_mic)
     Text(stringResource(R.string.audio_input_help), style = MaterialTheme.typography.bodyMedium)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         AudioInputSource.entries.forEach { source ->
             FilterChip(
                 selected = settings.inputSource == source,
@@ -548,7 +544,8 @@ private fun AdvancedAudioSettings(
                 onClick = { onSettingsChanged(settings.copy(inputSource = source)) },
                 enabled = source != AudioInputSource.RAW || state.audioInputCapabilities.rawSupported,
                 label = { Text(inputSourceName(source)) },
-                modifier = Modifier.weight(1f),
+                leadingIcon = { SettingIcon(R.drawable.ic_setting_mic) },
+                modifier = Modifier.heightIn(min = 48.dp),
             )
         }
     }

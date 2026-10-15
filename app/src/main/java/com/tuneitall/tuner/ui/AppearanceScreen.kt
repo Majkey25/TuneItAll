@@ -30,6 +30,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -51,10 +52,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import androidx.annotation.DrawableRes
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.ui.theme.AppearanceSettings
 import com.tuneitall.tuner.ui.theme.ThemeColors
@@ -83,6 +88,7 @@ fun AppearanceScreen(
     val context = LocalContext.current
     var editingDark by rememberSaveable { mutableStateOf(resolveDarkTheme(themeMode, systemDark)) }
     var showCustom by rememberSaveable { mutableStateOf(false) }
+    val customState = stringResource(if (showCustom) R.string.section_expanded else R.string.section_collapsed)
     val previews = remember(appearance, context) {
         ThemePalette.entries.associateWith { palette ->
             listOf(false, true).map { dark ->
@@ -97,16 +103,19 @@ fun AppearanceScreen(
         SecondaryHeader(stringResource(R.string.appearance), onBack)
         Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.weight(1f)
             .verticalScroll(rememberScrollState()).padding(top = 16.dp)) {
-        SettingLabel(stringResource(R.string.appearance_mode), R.drawable.ic_setting_contrast)
+        SettingsDisclosure(stringResource(R.string.appearance_mode), themeModeIcon(themeMode),
+            "appearance_mode", themeModeName(themeMode)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ThemeMode.entries.forEach { mode ->
-                AppearanceChoice(themeModeName(mode), mode == themeMode, "appearance_mode_${mode.name}") {
+                AppearanceChoice(themeModeName(mode), mode == themeMode, "appearance_mode_${mode.name}", themeModeIcon(mode)) {
                     editingDark = resolveDarkTheme(mode, systemDark)
                     onThemeModeChanged(mode)
                 }
             }
         }
-        SettingLabel(stringResource(R.string.appearance_themes), R.drawable.ic_setting_palette, MaterialTheme.typography.titleLarge)
+        }
+        SettingsDisclosure(stringResource(R.string.appearance_themes), R.drawable.ic_setting_palette,
+            "appearance_themes", "${themePaletteName(appearance.lightTheme)} / ${themePaletteName(appearance.darkTheme)}") {
         Text(stringResource(R.string.appearance_themes_help), style = MaterialTheme.typography.bodyMedium)
         BoxWithConstraints {
             val columns = if (maxWidth >= 320.dp && LocalDensity.current.fontScale <= 1.3f) 2 else 1
@@ -126,13 +135,20 @@ fun AppearanceScreen(
             }
         }
         Text(stringResource(R.string.appearance_material_help), style = MaterialTheme.typography.bodySmall)
+        }
         OutlinedButton(
             onClick = { showCustom = !showCustom },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("appearance_edit_custom"),
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)
+                .semantics { stateDescription = customState }.testTag("appearance_edit_custom"),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()) {
                 SettingIcon(R.drawable.ic_setting_palette)
-                Text(stringResource(R.string.appearance_custom_colors))
+                Text(stringResource(R.string.appearance_custom_colors), style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f))
+                Icon(painterResource(R.drawable.ic_expand_more), null,
+                    Modifier.size(24.dp).rotate(if (showCustom) 180f else 0f))
             }
         }
         if (showCustom) {
@@ -146,7 +162,8 @@ fun AppearanceScreen(
                 },
             )
         }
-        SettingLabel(stringResource(R.string.appearance_layout), R.drawable.ic_setting_dashboard, MaterialTheme.typography.titleLarge)
+        SettingsDisclosure(stringResource(R.string.appearance_layout), R.drawable.ic_setting_dashboard,
+            "appearance_layout", stringResource(layoutNameResource(appearance.layout))) {
         BoxWithConstraints {
             val columns = if (maxWidth >= 320.dp && LocalDensity.current.fontScale <= 1.3f) 2 else 1
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -164,7 +181,9 @@ fun AppearanceScreen(
                 onAppearanceChanged(appearance.copy(cornerRadius = it))
             }
         }
-        SettingLabel(stringResource(R.string.appearance_text), R.drawable.ic_setting_text_fields, MaterialTheme.typography.titleLarge)
+        }
+        SettingsDisclosure(stringResource(R.string.appearance_text), R.drawable.ic_setting_text_fields,
+            "appearance_text", "${appearance.textScale}%") {
         AppearanceSlider(stringResource(R.string.appearance_text_size), appearance.textScale, 85..130, "appearance_text_scale", "%", R.drawable.ic_setting_text_fields) {
             onAppearanceChanged(appearance.copy(textScale = it))
         }
@@ -174,10 +193,11 @@ fun AppearanceScreen(
                         ThemeFont.SYSTEM -> R.string.theme_system
                         ThemeFont.SERIF -> R.string.appearance_serif
                         ThemeFont.MONOSPACE -> R.string.appearance_monospace
-                    }), appearance.font == font, "appearance_font_${font.name}") {
+                    }), appearance.font == font, "appearance_font_${font.name}", R.drawable.ic_setting_text_fields) {
                     onAppearanceChanged(appearance.copy(font = font))
                 }
             }
+        }
         }
         AppearanceSwitch(stringResource(R.string.appearance_contrast), appearance.highContrast, "appearance_contrast", R.drawable.ic_setting_contrast) {
             onAppearanceChanged(appearance.copy(highContrast = it))
@@ -229,6 +249,7 @@ private fun ThemeCard(palette: ThemePalette, appearance: AppearanceSettings, pre
                         drawCircle(colors.primary, 4.dp.toPx(), Offset(size.width * .5f, size.height * .48f))
                         drawRect(colors.primaryContainer, Offset(size.width * .15f, size.height * .7f), Size(size.width * .7f, size.height * .17f))
                     }
+                    SettingIcon(themeModeIcon(if (dark) ThemeMode.DARK else ThemeMode.LIGHT))
                     Text(modeName, style = MaterialTheme.typography.labelSmall)
                 }
             }
@@ -270,19 +291,15 @@ private fun LayoutCard(layout: ThemeLayout, appearance: AppearanceSettings, dark
                     }
                 }
             }
-            Text(stringResource(when (layout) {
-                ThemeLayout.CLASSIC -> R.string.appearance_classic
-                ThemeLayout.MATERIAL -> R.string.appearance_material
-                ThemeLayout.CUSTOM -> R.string.profile_custom
-                ThemeLayout.GLASS -> R.string.appearance_glass
-            }), style = MaterialTheme.typography.titleSmall)
+            SettingLabel(stringResource(layoutNameResource(layout)), R.drawable.ic_setting_dashboard, MaterialTheme.typography.titleSmall)
         }
     }
 }
 
 @Composable
-private fun AppearanceChoice(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
+private fun AppearanceChoice(label: String, selected: Boolean, tag: String, @DrawableRes icon: Int, onClick: () -> Unit) {
     FilterChip(selected = selected, onClick = onClick, label = { Text(label) },
+        leadingIcon = { SettingIcon(icon) },
         colors = FilterChipDefaults.filterChipColors(labelColor = MaterialTheme.colorScheme.onBackground,
             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
             selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer),
@@ -307,6 +324,20 @@ internal fun themeModeName(mode: ThemeMode): String = stringResource(when (mode)
     ThemeMode.LIGHT -> R.string.theme_light
     ThemeMode.DARK -> R.string.theme_dark
 })
+
+@DrawableRes
+internal fun themeModeIcon(mode: ThemeMode): Int = when (mode) {
+    ThemeMode.SYSTEM -> R.drawable.ic_settings
+    ThemeMode.LIGHT -> R.drawable.ic_setting_light_mode
+    ThemeMode.DARK -> R.drawable.ic_setting_dark_mode
+}
+
+private fun layoutNameResource(layout: ThemeLayout): Int = when (layout) {
+    ThemeLayout.CLASSIC -> R.string.appearance_classic
+    ThemeLayout.MATERIAL -> R.string.appearance_material
+    ThemeLayout.CUSTOM -> R.string.profile_custom
+    ThemeLayout.GLASS -> R.string.appearance_glass
+}
 
 @Composable
 private fun AppearanceSlider(label: String, value: Int, range: IntRange, tag: String, suffix: String = "", icon: Int, onChange: (Int) -> Unit) {
@@ -350,7 +381,8 @@ private fun CustomColorsEditor(colors: ThemeColors, dark: Boolean, onDarkChanged
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(false, true).forEach { candidate ->
             AppearanceChoice(stringResource(if (candidate) R.string.appearance_custom_dark else R.string.appearance_custom_light),
-                dark == candidate, "custom_palette_${if (candidate) "dark" else "light"}") { onDarkChanged(candidate) }
+                dark == candidate, "custom_palette_${if (candidate) "dark" else "light"}",
+                themeModeIcon(if (candidate) ThemeMode.DARK else ThemeMode.LIGHT)) { onDarkChanged(candidate) }
         }
     }
     Text(stringResource(R.string.appearance_custom_help), style = MaterialTheme.typography.bodySmall)
