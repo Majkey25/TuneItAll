@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.ui.MusicChoiceGrid
 import com.tuneitall.tuner.ui.SettingIcon
 import com.tuneitall.tuner.ui.currentPlaneChipColors
-import com.tuneitall.tuner.ui.dialogRadioButtonColors
+import com.tuneitall.tuner.ui.radioButtonColors
 import com.tuneitall.tuner.ui.dialogTextButtonColors
 import com.tuneitall.tuner.ui.outlinedFieldColors
 import com.tuneitall.tuner.ui.sliderColors
@@ -63,6 +63,8 @@ class ControlPlaneContrastTest {
                                 SideEffect { iconContrast = colorContrast(foreground.rgb(), colors.background.rgb()) }
                                 SettingIcon(R.drawable.ic_setting_language)
                             })
+                        RadioButton(selected = true, onClick = null, colors = radioButtonColors(colors.background),
+                            modifier = Modifier.testTag("background_plane_radio"))
                         MusicChoiceGrid(listOf("Choice"), 1, { false }, label = { choice ->
                             val foreground = LocalContentColor.current
                             SideEffect { chipContrast = colorContrast(foreground.rgb(), colors.background.rgb()) }
@@ -91,6 +93,8 @@ class ControlPlaneContrastTest {
             assertTrue("Background contrast: chip=$chipContrast, error=$errorContrast, inputLabel=$inputLabelContrast",
                 chipContrast >= 4.5 && errorContrast >= 4.5 && inputLabelContrast >= 4.5)
         }
+        val pixels = compose.onNodeWithTag("background_plane_radio").captureToImage().toPixelMap()
+        assertTrue("Background radio contrast", colorContrast(pixels[pixels.width / 2, pixels.height / 2].rgb(), pixels[0, 0].rgb()) >= 3.0)
     }
 
     @Test fun dialogActionsUseTheirActualSurfacePlane() {
@@ -110,7 +114,7 @@ class ControlPlaneContrastTest {
                                 SideEffect { chipContrast = colorContrast(foreground.rgb(), plane.rgb()) }
                                 choice
                             }, tag = { "dialog_plane_choice" }, onSelected = {})
-                            RadioButton(selected = true, onClick = null, colors = dialogRadioButtonColors(),
+                            RadioButton(selected = true, onClick = null, colors = radioButtonColors(plane),
                                 modifier = Modifier.testTag("dialog_plane_radio"))
                             OutlinedTextField("FFFFFF", {}, colors = field, readOnly = true)
                         }

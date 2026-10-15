@@ -43,8 +43,9 @@ internal fun outlinedButtonColors(plane: Color): ButtonColors = ButtonDefaults.o
 )
 
 @Composable
-internal fun dialogRadioButtonColors(): RadioButtonColors = RadioButtonDefaults.colors(
-    selectedColor = controlAccent(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.surfaceContainerHigh),
+internal fun radioButtonColors(plane: Color): RadioButtonColors = RadioButtonDefaults.colors(
+    selectedColor = controlAccent(MaterialTheme.colorScheme.primary, plane),
+    unselectedColor = readableColor(MaterialTheme.colorScheme.onSurfaceVariant.rgb(), plane.rgb(), 3.0).asColor(),
 )
 
 private fun controlAccent(preferred: Color, plane: Color): Color =

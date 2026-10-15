@@ -464,10 +464,10 @@ internal fun metronomeArmGeometry(size: Size, density: Float): MetronomeArmGeome
     require(size.width > 0f && size.height > 0f)
     require(density > 0f)
     val centerX = size.width * METRONOME_PIVOT_X_RATIO
-    val weightCenterY = size.height * 0.39f
+    val weightCenterY = size.height * (185.60179f / 466.261f)
     return MetronomeArmGeometry(
         pivot = Offset(centerX, size.height * METRONOME_PIVOT_Y_RATIO),
-        armEnd = Offset(centerX, size.height * 0.10f),
+        armEnd = Offset(centerX, size.height * (55.0261f / 466.261f)),
         weight = Rect(
             left = centerX - 15f * density,
             top = weightCenterY - 8f * density,
@@ -485,8 +485,8 @@ internal fun metronomeArmGeometry(size: Size, density: Float): MetronomeArmGeome
 
 internal fun metronomeArmDegrees(phase: Double): Float = phase.coerceIn(-1.0, 1.0).toFloat() * 24f
 
-internal const val METRONOME_PIVOT_X_RATIO = 0.5544f
-internal const val METRONOME_PIVOT_Y_RATIO = 0.6356f
+internal const val METRONOME_PIVOT_X_RATIO = 0.5f
+internal const val METRONOME_PIVOT_Y_RATIO = 296.181f / 466.261f
 private val METRONOME_ART_SIZE = 188.dp
 
 @Composable

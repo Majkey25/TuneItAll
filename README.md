@@ -15,19 +15,19 @@ analytics, tracking, onboarding, or network permission.
 
 Intoniva is free on [Google Play](https://play.google.com/store/apps/details?id=com.tuneitall.tuner).
 All features are free. There are no subscriptions or paid feature unlocks.
-Latest source version: `0.3.0-alpha.40`. The Play version can lag behind while
-Google reviews an update. See the dated [release record](docs/store/2026-10-15-alpha40-release.md).
+Latest source version: `0.3.0-alpha.41`. The Play version can lag behind while
+Google reviews an update. See the dated [release record](docs/store/2026-10-15-alpha41-release.md).
 
 ## Download
 
 [Google Play: free download](https://play.google.com/store/apps/details?id=com.tuneitall.tuner)
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.40/Intoniva-v0.3.0-alpha.40-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.41/Intoniva-v0.3.0-alpha.41-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.40).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.41).
 
 ## Features
 
@@ -179,9 +179,11 @@ are not included.
 - System, Light, and Dark appearance, with separate light/dark theme choices.
 - Intoniva, Material You, Ocean, Ember, Iris, Slate, and Paper presets, plus custom colours.
 - Wallpaper colours on Android 12+, Material controls, custom corners, fonts, text size, high contrast, and black dark backgrounds.
-- Appearance changes stay on-device and apply immediately. Settings → General → Themes and custom appearance.
+- Appearance changes stay on-device and apply immediately. Settings → General → Appearance → Themes and custom appearance.
 - System-default language or English, Czech, German, French and Spanish.
 - One Settings destination, with General, Tuner and Metronome sections.
+- Expand language and appearance settings to see choices. Appearance groups mode, themes, custom colours, controls and text into separate expandable menus with icons.
+- Reference pitch, note notation and headstock layout are together in Settings → Tuner.
 - About Intoniva includes the version, attribution, licence information,
   privacy notice, legal-policy links and publisher contact.
 - **Support me** at the bottom of General settings, with the same yellow

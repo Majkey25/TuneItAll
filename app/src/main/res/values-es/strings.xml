@@ -32,7 +32,6 @@
     <string name="settings_tuner">Afinador</string>
     <string name="settings_metronome">Metrónomo</string>
     <string name="app_language">Idioma de la aplicación</string>
-    <string name="choose_language">Elegir idioma</string>
     <string name="language_system">Predeterminado del sistema</string>
     <string name="language_english">English</string>
     <string name="language_czech">Čeština</string>
