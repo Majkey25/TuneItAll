@@ -53,6 +53,50 @@ class ControlAccessibilityRegressionTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
+    fun settingsCategoriesStayVisibleWithIconsAndLargeText() {
+        var muted: Boolean? = null
+        compose.setContent {
+            CompositionLocalProvider(
+                LocalDensity provides Density(context.resources.displayMetrics.density, fontScale = 2.0f),
+            ) {
+                TuneItAllTheme(darkTheme = false) {
+                    Box(Modifier.requiredSize(320.dp, 720.dp)) {
+                        SettingsScreen(
+                            state = TunerUiState(
+                                mode = TunerMode.AUTO,
+                                tuning = requireNotNull(TuningCatalog.byId("guitar-6-standard")),
+                                selectedString = 0, headstockLayout = HeadstockLayout.SPLIT_3_3,
+                                referencePitch = ReferencePitch(440.0), notation = NoteNotation.SHARPS,
+                                favoriteIds = emptySet(), customTunings = emptyList(), reading = null,
+                                microphoneGranted = false, microphonePermanentlyDenied = false,
+                                listening = false, referenceTonePlaying = false, error = null,
+                            ),
+                            onThemeModeChanged = {}, onReferencePitchChanged = {}, onNotationChanged = {},
+                            onLayoutChanged = {}, onAudioSettingsChanged = {}, onOpenAbout = {},
+                            onMetronomeMutedChanged = { muted = it },
+                            onSupport = {}, onBack = {},
+                        )
+                    }
+                }
+            }
+        }
+
+        val screen = compose.onNodeWithTag("settings_screen").fetchSemanticsNode().boundsInRoot
+        listOf("general", "tuner", "metronome").forEach { section ->
+            val node = compose.onNodeWithTag("settings_section_$section").assertIsDisplayed().fetchSemanticsNode()
+            val chip = node.boundsInRoot
+            assertTrue("Settings category is clipped: $chip", chip.left >= screen.left && chip.right <= screen.right)
+            assertEquals("Settings category is cropped", node.size.width.toFloat(), chip.width, 1f)
+            assertEquals("Settings category is cropped", node.size.height.toFloat(), chip.height, 1f)
+        }
+        compose.onNodeWithTag("settings_section_tuner").performClick()
+        compose.onNodeWithText(context.getString(R.string.microphone_sensitivity)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("settings_section_metronome").performScrollTo().performClick()
+        compose.onNodeWithTag("metronome_mute").performScrollTo().assertIsDisplayed().performClick()
+        compose.runOnIdle { assertEquals(true, muted) }
+    }
+
+    @Test
     fun metronomeStepGlyphsFitTheirButtonsAtLargeText() {
         compose.setContent {
             CompositionLocalProvider(

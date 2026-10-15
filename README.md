@@ -15,19 +15,19 @@ analytics, tracking, onboarding, or network permission.
 
 Intoniva is free on [Google Play](https://play.google.com/store/apps/details?id=com.tuneitall.tuner).
 All features are free. There are no subscriptions or paid feature unlocks.
-Latest GitHub version: `0.3.0-alpha.39`. The Play version can lag behind while
-Google reviews an update. See the dated [release record](docs/store/2026-10-14-alpha39-release.md).
+Latest source version: `0.3.0-alpha.40`. The Play version can lag behind while
+Google reviews an update. See the dated [release record](docs/store/2026-10-15-alpha40-release.md).
 
 ## Download
 
 [Google Play: free download](https://play.google.com/store/apps/details?id=com.tuneitall.tuner)
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.39/Intoniva-v0.3.0-alpha.39-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.40/Intoniva-v0.3.0-alpha.40-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.39).
+the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.40).
 
 ## Features
 

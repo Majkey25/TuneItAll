@@ -1,0 +1,1 @@
+Nastavení má jednotné ikony v obecných volbách, ladičce, metronomu i vzhledu. Kategorie se na úzkých obrazovkách zalamují a popisky zůstávají čitelné s velkým písmem. Ladění, rozpoznávání skladeb a zvuk se nemění.

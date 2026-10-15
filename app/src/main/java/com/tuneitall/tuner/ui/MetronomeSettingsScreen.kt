@@ -64,8 +64,9 @@ fun MetronomeSettingsControls(
             .testTag("metronome_settings_controls"),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(stringResource(R.string.metronome_rhythm), style = MaterialTheme.typography.titleLarge)
+        SettingLabel(stringResource(R.string.metronome_rhythm), R.drawable.ic_setting_music_note, MaterialTheme.typography.titleLarge)
         IntChoiceStrip(
+            icon = R.drawable.ic_setting_format_list_numbered,
             title = stringResource(R.string.metronome_meter_numerator),
             tagPrefix = "metronome_numerator",
             values = (1..12).toList(),
@@ -73,6 +74,7 @@ fun MetronomeSettingsControls(
             onSelect = onNumeratorChange,
         )
         IntChoiceStrip(
+            icon = R.drawable.ic_setting_music_note,
             title = stringResource(R.string.metronome_meter_denominator),
             tagPrefix = "metronome_denominator",
             values = listOf(2, 4, 8, 16),
@@ -80,6 +82,7 @@ fun MetronomeSettingsControls(
             onSelect = onDenominatorChange,
         )
         IntChoiceStrip(
+            icon = R.drawable.ic_setting_view_week,
             title = stringResource(R.string.metronome_subdivision),
             tagPrefix = "metronome_subdivision",
             values = listOf(1, 2, 3, 4),
@@ -88,7 +91,7 @@ fun MetronomeSettingsControls(
         )
         AccentStrip(state.settings.accentEvery, onAccentEveryChange)
         HorizontalDivider()
-        Text(stringResource(R.string.metronome_sound), style = MaterialTheme.typography.titleLarge)
+        SettingLabel(stringResource(R.string.metronome_sound), R.drawable.ic_setting_graphic_eq, MaterialTheme.typography.titleLarge)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -105,8 +108,9 @@ fun MetronomeSettingsControls(
                 )
             }
         }
-        Text(
-            text = stringResource(R.string.metronome_volume_value, volume.roundToInt()),
+        SettingLabel(
+            label = stringResource(R.string.metronome_volume_value, volume.roundToInt()),
+            icon = R.drawable.ic_setting_volume_up,
             style = MaterialTheme.typography.titleSmall,
         )
         Slider(
@@ -136,10 +140,18 @@ fun MetronomeSettingsControls(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.metronome_mute))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f),
+            ) {
+                SettingIcon(R.drawable.ic_setting_volume_off)
+                Text(stringResource(R.string.metronome_mute), modifier = Modifier.weight(1f))
+            }
             Switch(checked = state.muted, onCheckedChange = null, colors = switchColors(plane))
         }
         IntChoiceStrip(
+            icon = R.drawable.ic_setting_timer,
             title = stringResource(R.string.metronome_count_in),
             tagPrefix = "metronome_count_in",
             values = listOf(0, 1, 2, 4),
@@ -152,6 +164,7 @@ fun MetronomeSettingsControls(
 
 @Composable
 private fun IntChoiceStrip(
+    icon: Int,
     title: String,
     tagPrefix: String,
     values: List<Int>,
@@ -160,7 +173,7 @@ private fun IntChoiceStrip(
     scrollState: ScrollState = rememberScrollState(),
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(title, style = MaterialTheme.typography.titleSmall)
+        SettingLabel(title, icon, MaterialTheme.typography.titleSmall)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -183,8 +196,9 @@ private fun IntChoiceStrip(
 @Composable
 private fun AccentStrip(selected: Int?, onSelect: (Int?) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = stringResource(R.string.metronome_accent),
+        SettingLabel(
+            label = stringResource(R.string.metronome_accent),
+            icon = R.drawable.ic_setting_volume_up,
             style = MaterialTheme.typography.titleSmall,
         )
         Row(
