@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-alpha.40, 2026-10-15
+
+- Add consistent icons beside settings in General, Tuner, Metronome and Appearance.
+- Wrap settings categories on narrow screens instead of hiding them in a horizontal scroll.
+- Keep setting labels readable with large text and verify icon contrast in custom themes.
+
+Audio detection, sound playback and stored preferences are unchanged.
+
 ## 0.3.0-alpha.39, 2026-10-14
 
 - Prevent song-note analysis from placing a later melody at the beginning of an unsupported bass intro.

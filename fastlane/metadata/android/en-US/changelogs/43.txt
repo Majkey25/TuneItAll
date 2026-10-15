@@ -1,0 +1,1 @@
+Settings now have consistent icons across General, Tuner, Metronome and Appearance. Categories wrap on narrow screens and large-text labels remain readable. No changes to tuning, song detection or audio playback.

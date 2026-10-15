@@ -6,7 +6,13 @@ own licenses.
 ## Runtime components
 
 - AndroidX Core, Activity, Lifecycle, Compose, and Material 3: Apache License 2.0
-- Material Design settings and back icons by Google: Apache License 2.0
+- Material Design settings, back and outlined setting icons by Google: Apache License 2.0.
+  Setting icons use `google/material-design-icons` commit
+  `49d4db35df873165d6bd6ba09b063c7dafbac2f4`, converted to Android VectorDrawable
+  paths without changing the artwork.
+  <https://github.com/google/material-design-icons>
+  The complete licence is bundled in
+  [material-icons-LICENSE.txt](app/src/main/assets/third_party/material-icons-LICENSE.txt).
 - Kotlin standard library and Kotlin coroutines: Apache License 2.0
 
 ## Chord data

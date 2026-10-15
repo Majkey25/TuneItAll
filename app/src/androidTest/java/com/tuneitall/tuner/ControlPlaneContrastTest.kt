@@ -3,6 +3,7 @@ package com.tuneitall.tuner
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -21,6 +22,8 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.ui.MusicChoiceGrid
+import com.tuneitall.tuner.ui.SettingIcon
+import com.tuneitall.tuner.ui.currentPlaneChipColors
 import com.tuneitall.tuner.ui.dialogRadioButtonColors
 import com.tuneitall.tuner.ui.dialogTextButtonColors
 import com.tuneitall.tuner.ui.outlinedFieldColors
@@ -44,6 +47,7 @@ class ControlPlaneContrastTest {
 
     @Test fun backgroundControlsUseTheirActualPlane() {
         var chipContrast = 0.0
+        var iconContrast = 0.0
         var errorContrast = 0.0
         var inputLabelContrast = 0.0
         compose.setContent {
@@ -53,6 +57,12 @@ class ControlPlaneContrastTest {
                 val nativeSelection = LocalTextSelectionColors.current
                 Surface(color = colors.background, contentColor = colors.onBackground) {
                     Column {
+                        FilterChip(selected = false, onClick = {}, colors = currentPlaneChipColors(),
+                            label = { Text("Settings") }, leadingIcon = {
+                                val foreground = LocalContentColor.current
+                                SideEffect { iconContrast = colorContrast(foreground.rgb(), colors.background.rgb()) }
+                                SettingIcon(R.drawable.ic_setting_language)
+                            })
                         MusicChoiceGrid(listOf("Choice"), 1, { false }, label = { choice ->
                             val foreground = LocalContentColor.current
                             SideEffect { chipContrast = colorContrast(foreground.rgb(), colors.background.rgb()) }
@@ -77,6 +87,7 @@ class ControlPlaneContrastTest {
             }
         }
         compose.runOnIdle {
+            assertTrue("Settings icon contrast: $iconContrast", iconContrast >= 3.0)
             assertTrue("Background contrast: chip=$chipContrast, error=$errorContrast, inputLabel=$inputLabelContrast",
                 chipContrast >= 4.5 && errorContrast >= 4.5 && inputLabelContrast >= 4.5)
         }
