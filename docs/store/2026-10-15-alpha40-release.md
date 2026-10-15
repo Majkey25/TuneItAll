@@ -68,7 +68,6 @@ was released at 07:59:52 UTC. No production user data was changed.
   at 07:32 UTC.
 - Play showed no blocking release errors or loss of supported devices.
   Two existing warnings remain: no deobfuscation mapping and no native debug symbols.
-  The reported download increase is 19.1 kB.
 
 Signed Play bundle SHA-256:
 `a6afefa3a848f155ea35bc8b0d9b62a499202883b954f2813e3be70410cd9fcc`.
