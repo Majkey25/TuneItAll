@@ -58,7 +58,7 @@ jobs:
           [[ "$code" =~ ^[1-9][0-9]*$ ]]
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "version_code=$code" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "17"
@@ -97,7 +97,7 @@ jobs:
           ref: main
           persist-credentials: false
           path: trusted
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "17"
@@ -154,7 +154,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $tagSha -cne $env:SOURCE_SHA) { throw "Release tag differs from verified source" }
           & git -C trusted merge-base --is-ancestor $env:SOURCE_SHA origin/main
           if ($LASTEXITCODE -ne 0) { throw "Release source is not on protected main" }
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "17"
@@ -246,7 +246,7 @@ jobs:
           ref: main
           persist-credentials: false
           path: trusted
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "17"
