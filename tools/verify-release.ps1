@@ -15,6 +15,66 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 if ([string]::IsNullOrWhiteSpace($ArtifactDirectory)) { $ArtifactDirectory = Join-Path $repoRoot "app/build/outputs" }
 $apk = Join-Path $ArtifactDirectory "apk/debug/app-debug.apk"
 $aab = Join-Path $ArtifactDirectory "bundle/release/app-release.aab"
+$androidNamespace = "http://schemas.android.com/apk/res/android"
+
+function Read-ArtifactXml([string[]]$Text) {
+    $settings = [System.Xml.XmlReaderSettings]::new()
+    $settings.DtdProcessing = [System.Xml.DtdProcessing]::Prohibit
+    $settings.XmlResolver = $null
+    $reader = [System.Xml.XmlReader]::Create([IO.StringReader]::new(($Text -join "`n")), $settings)
+    $xml = [xml]::new()
+    try { $xml.Load($reader) } finally { $reader.Dispose() }
+    return $xml
+}
+
+function Get-AccessibilityResource([xml]$Manifest, [string]$ResourcePattern) {
+    $services = @($Manifest.manifest.application.SelectNodes('service') | Where-Object {
+        $_.GetAttribute("permission", $androidNamespace) -ceq "android.permission.BIND_ACCESSIBILITY_SERVICE"
+    })
+    if ($services.Count -ne 1 -or
+        $services[0].GetAttribute("name", $androidNamespace) -cne "com.tuneitall.tuner.autoscroll.AutoScrollAccessibilityService") {
+        throw "Unexpected Accessibility service declarations"
+    }
+    if ($services[0].GetAttribute("exported", $androidNamespace) -cne "true") {
+        throw "Accessibility service must be exported for the Android system to bind it"
+    }
+    $metadata = @($services[0].SelectNodes('meta-data') | Where-Object {
+        $_.GetAttribute("name", $androidNamespace) -ceq "android.accessibilityservice"
+    })
+    if ($metadata.Count -ne 1 -or $metadata[0].GetAttribute("resource", $androidNamespace) -cnotmatch $ResourcePattern) {
+        throw "Accessibility service metadata is missing or invalid"
+    }
+    return $metadata[0].GetAttribute("resource", $androidNamespace)
+}
+
+function Assert-AccessibilityXml([string]$ApkPath, [string[]]$ResourcePaths, [string]$DescriptionId) {
+    $approvedAttributes = @(
+        "description(0x01010020)=@$DescriptionId", 'accessibilityEventTypes(0x01010380)=0x00000020',
+        'accessibilityFeedbackType(0x01010382)=0x00000010', 'notificationTimeout(0x01010383)=0',
+        'canRetrieveWindowContent(0x01010385)=false', 'canPerformGestures(0x0101050d)=true'
+    )
+    foreach ($resourcePath in $ResourcePaths) {
+        $accessibility = & $aapt dump xmltree $ApkPath --file $resourcePath 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) { throw "aapt2 could not inspect Accessibility metadata: $accessibility" }
+        $attributes = @([regex]::Matches($accessibility, '(?m)^\s+A: (.+\(0x[0-9a-f]+\))=(.+)\r?$') | ForEach-Object {
+            $name = $_.Groups[1].Value
+            if (-not $name.StartsWith("${androidNamespace}:", [StringComparison]::Ordinal)) {
+                throw "Accessibility attribute has an unexpected namespace"
+            }
+            $name.Substring($androidNamespace.Length + 1) + '=' + $_.Groups[2].Value.Trim()
+        })
+        if ('canRetrieveWindowContent(0x01010385)=false' -cnotin $attributes) {
+            throw "Accessibility service must not retrieve window content"
+        }
+        if ('canPerformGestures(0x0101050d)=true' -cnotin $attributes) {
+            throw "Accessibility service gesture capability is missing"
+        }
+        if ($attributes.Count -ne $approvedAttributes.Count -or
+            (Compare-Object $approvedAttributes $attributes -CaseSensitive)) {
+            throw "Accessibility capabilities differ from approved metadata"
+        }
+    }
+}
 
 foreach ($artifact in @($apk, $aab)) {
     if (-not (Test-Path -LiteralPath $artifact -PathType Leaf)) {
@@ -48,6 +108,11 @@ if ($null -eq $buildTools) {
     throw "aapt2 is unavailable under $sdkRoot/build-tools"
 }
 $aapt = Join-Path $buildTools.FullName $aaptName
+$analyzerName = if ($isWindowsHost) { "apkanalyzer.bat" } else { "apkanalyzer" }
+$apkAnalyzer = Join-Path $sdkRoot "cmdline-tools/latest/bin/$analyzerName"
+if (-not (Test-Path -LiteralPath $apkAnalyzer -PathType Leaf)) {
+    throw "apkanalyzer is unavailable; install Android SDK Command-Line Tools (latest)"
+}
 
 if ($ExpectedSha256 -and (Get-FileHash -Algorithm SHA256 -LiteralPath $aab).Hash -ne $ExpectedSha256) {
     throw "Bundle differs from approved SHA-256"
@@ -82,13 +147,7 @@ if ((Get-FileHash -Algorithm SHA256 -LiteralPath $BundletoolPath).Hash -ne
 }
 $manifestText = & java -jar $BundletoolPath dump manifest "--bundle=$aab" --module=base
 if ($LASTEXITCODE -ne 0) { throw "Could not inspect exact bundle manifest" }
-$xmlSettings = [System.Xml.XmlReaderSettings]::new()
-$xmlSettings.DtdProcessing = [System.Xml.DtdProcessing]::Prohibit
-$xmlSettings.XmlResolver = $null
-$reader = [System.Xml.XmlReader]::Create([IO.StringReader]::new(($manifestText -join "`n")), $xmlSettings)
-$manifest = [xml]::new()
-try { $manifest.Load($reader) } finally { $reader.Dispose() }
-$androidNamespace = "http://schemas.android.com/apk/res/android"
+$manifest = Read-ArtifactXml $manifestText
 $applicationId = $manifest.manifest.package
 $versionCode = $manifest.manifest.GetAttribute("versionCode", $androidNamespace)
 $versionName = $manifest.manifest.GetAttribute("versionName", $androidNamespace)
@@ -133,32 +192,11 @@ foreach ($requiredPermission in @(
         throw "$requiredPermission is missing"
     }
 }
-$accessibilityServices = @($manifest.manifest.application.SelectNodes('service') | Where-Object {
-    $_.GetAttribute("permission", $androidNamespace) -ceq "android.permission.BIND_ACCESSIBILITY_SERVICE"
-})
-if ($accessibilityServices.Count -ne 1 -or
-    $accessibilityServices[0].GetAttribute("name", $androidNamespace) -cne "com.tuneitall.tuner.autoscroll.AutoScrollAccessibilityService") {
-    throw "Unexpected Accessibility service declarations"
-}
-$accessibilityService = $accessibilityServices[0]
-if ($accessibilityService.GetAttribute("exported", $androidNamespace) -cne "true") {
-    throw "Accessibility service must be exported for the Android system to bind it"
-}
-if ($accessibilityService.GetAttribute("permission", $androidNamespace) -ne "android.permission.BIND_ACCESSIBILITY_SERVICE") {
-    throw "Accessibility service binding permission is missing"
-}
-
-$metadata = @($accessibilityService.SelectNodes('meta-data') | Where-Object {
-    $_.GetAttribute("name", $androidNamespace) -ceq "android.accessibilityservice"
-})
-if ($metadata.Count -ne 1 -or $metadata[0].GetAttribute("resource", $androidNamespace) -notmatch '^@xml/[a-z0-9_]+$') {
-    throw "Accessibility service metadata is missing or invalid"
-}
-$resource = $metadata[0].GetAttribute("resource", $androidNamespace).Substring(1)
+$resource = (Get-AccessibilityResource $manifest '^@xml/[a-z0-9_]+$').Substring(1)
 $resources = & java -jar $BundletoolPath dump resources "--bundle=$aab" "--resource=$resource" --values
 if ($LASTEXITCODE -ne 0) { throw "Could not resolve bundle Accessibility resource" }
-$resourcePaths = @($resources | Where-Object { $_ -match '^\s+\(' } | ForEach-Object {
-    if ($_ -notmatch '^\s+\([^\r\n]+\) - \[FILE\] (res/xml(?:-[a-zA-Z0-9_-]+)?/[a-z0-9_]+\.xml)$') {
+$resourcePaths = @($resources | Where-Object { $_ -match '^\s+\S' } | ForEach-Object {
+    if ($_ -notmatch '^\s+[^\r\n]+ - \[FILE\] (res/xml(?:-[a-zA-Z0-9_-]+)?/[a-z0-9_]+\.xml)$') {
         throw "Unsupported bundle Accessibility resource value"
     }
     $Matches[1]
@@ -169,11 +207,26 @@ if ($LASTEXITCODE -ne 0 -or ($descriptionResource -join "`n") -cnotmatch '(?m)^(
     throw "Accessibility description resource is missing"
 }
 $descriptionId = $Matches[1]
-$approvedAttributes = @(
-    "description=@$descriptionId", 'accessibilityEventTypes=0x00000020',
-    'accessibilityFeedbackType=0x00000010', 'notificationTimeout=0',
-    'canRetrieveWindowContent=false', 'canPerformGestures=true'
-)
+
+# The preview APK is built separately; its capabilities must pass independently.
+$apkManifestText = & $apkAnalyzer manifest print $apk
+if ($LASTEXITCODE -ne 0) { throw "Could not inspect exact APK manifest" }
+$apkResourceId = (Get-AccessibilityResource (Read-ArtifactXml $apkManifestText) '^@ref/0x[0-9a-f]+$').Substring(5)
+$apkResources = & $aapt dump resources $apk 2>&1 | Out-String
+if ($LASTEXITCODE -ne 0) { throw "Could not inspect exact APK resources" }
+$apkResource = [regex]::Match($apkResources,
+    "(?m)^ +resource $apkResourceId xml/[a-z0-9_]+\r?\n((?: +\([^\r\n]*\)[^\r\n]*\r?\n)+)")
+if (-not $apkResource.Success) { throw "APK Accessibility resource has no XML values" }
+$apkResourcePaths = @($apkResource.Groups[1].Value.TrimEnd() -split '\r?\n' | ForEach-Object {
+    if ($_ -cnotmatch '^ +\([^\r\n]*\) \(file\) (res/xml(?:-[a-zA-Z0-9_-]+)?/[a-z0-9_]+\.xml) type=XML$') {
+        throw "Unsupported APK Accessibility resource value"
+    }
+    $Matches[1]
+} | Sort-Object -Unique)
+if ($apkResources -cnotmatch '(?m)^ +resource (0x[0-9a-f]+) string/auto_scroll_accessibility_description\r?$') {
+    throw "APK Accessibility description resource is missing"
+}
+Assert-AccessibilityXml $apk $apkResourcePaths $Matches[1]
 
 $scratchRoot = Join-Path $repoRoot ".reference/tmp"
 $scratch = Join-Path $scratchRoot ("aab-verifier-" + [guid]::NewGuid())
@@ -189,27 +242,7 @@ try {
         if ($null -eq $entry) { throw "Bundle verification APK is missing" }
         [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $bundleApk)
     } finally { $archive.Dispose() }
-    foreach ($resourcePath in $resourcePaths) {
-        $accessibility = & $aapt dump xmltree $bundleApk --file $resourcePath 2>&1 | Out-String
-        if ($LASTEXITCODE -ne 0) { throw "aapt2 could not inspect bundle Accessibility metadata: $accessibility" }
-        $attributes = @([regex]::Matches($accessibility, '(?m)^\s+A: (.+)\(0x[0-9a-f]+\)=(.+)\r?$') | ForEach-Object {
-            $name = $_.Groups[1].Value
-            if (-not $name.StartsWith("${androidNamespace}:", [StringComparison]::Ordinal)) {
-                throw "Accessibility attribute has an unexpected namespace"
-            }
-            $name.Substring($androidNamespace.Length + 1) + '=' + $_.Groups[2].Value.Trim()
-        })
-        if ('canRetrieveWindowContent=false' -cnotin $attributes) {
-            throw "Accessibility service must not retrieve window content"
-        }
-        if ('canPerformGestures=true' -cnotin $attributes) {
-            throw "Accessibility service gesture capability is missing"
-        }
-        if ($attributes.Count -ne $approvedAttributes.Count -or
-            (Compare-Object $approvedAttributes $attributes -CaseSensitive)) {
-            throw "Accessibility capabilities differ from approved metadata"
-        }
-    }
+    Assert-AccessibilityXml $bundleApk $resourcePaths $descriptionId
 } finally {
     $resolved = (Resolve-Path -LiteralPath $scratch).Path
     $expectedRoot = [IO.Path]::GetFullPath($scratchRoot) + [IO.Path]::DirectorySeparatorChar

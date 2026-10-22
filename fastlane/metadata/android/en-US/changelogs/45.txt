@@ -1,0 +1,1 @@
+Safer preview release verification checks Accessibility capabilities in both APKs and bundles, including Android-version variants. Song-import progress follows decoded audio and stays bounded when file metadata is invalid.

@@ -76,12 +76,16 @@ class SongImportSecurityTest {
     fun delayedNormalProviderStillDecodesTheNote() = runBlocking {
         control("reset")
         try {
+            val progress = mutableListOf<Int>()
             val result = runSongImport { cancelled ->
                 SongAudioDecoder(context).analyze(baseUri.buildUpon().appendPath("delayed").build(),
-                    mode = SongAnalysisMode.NOTES, isCancelled = cancelled)
+                    mode = SongAnalysisMode.NOTES, isCancelled = cancelled, onProgress = { progress += it })
             }
             assertEquals(1000L, result.durationMillis)
             assertEquals(listOf(69), result.events.filterIsInstance<NoteEvent>().map { it.midiNote })
+            assertEquals(100, progress.last())
+            assertTrue(progress.size <= 93)
+            assertTrue(progress.zipWithNext().all { (before, after) -> after > before })
         } finally {
             control("release")
         }

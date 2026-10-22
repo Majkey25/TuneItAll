@@ -49,6 +49,7 @@ try {
     $fixtureSource = Join-Path $scratch "ReleaseBundleFixture.java"
     [IO.File]::WriteAllText($fixtureSource, @'
 import com.android.aapt.Resources.XmlNode;
+import com.android.aapt.Resources.ResourceTable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.ZipEntry;
@@ -67,6 +68,29 @@ class ReleaseBundleFixture {
                 if (name.equals("META-INF/MANIFEST.MF") || name.matches("META-INF/[^/]+\\.(SF|RSA|DSA|EC)")) continue;
                 byte[] bytes;
                 try (var stream = input.getInputStream(entry)) { bytes = stream.readAllBytes(); }
+                if (name.equals("base/resources.pb") && args[2].equals("qualified-window-content")) {
+                    var table = ResourceTable.parseFrom(bytes).toBuilder();
+                    for (var pkg : table.getPackageBuilderList()) {
+                        for (var type : pkg.getTypeBuilderList()) {
+                            for (var resource : type.getEntryBuilderList()) {
+                                if (!type.getName().equals("xml") || !resource.getName().equals("auto_scroll_accessibility_service")) continue;
+                                var value = resource.getConfigValue(0).toBuilder();
+                                value.getConfigBuilder().setSdkVersion(35);
+                                value.getValueBuilder().getItemBuilder().getFileBuilder()
+                                    .setPath("res/xml-v35/auto_scroll_accessibility_service.xml");
+                                resource.addConfigValue(value);
+                            }
+                        }
+                    }
+                    bytes = table.build().toByteArray();
+                }
+                if (name.equals("base/res/xml/auto_scroll_accessibility_service.xml") && args[2].equals("qualified-window-content")) {
+                    var xml = XmlNode.parseFrom(bytes).toBuilder();
+                    alter(xml, "window-content");
+                    output.putNextEntry(new ZipEntry("base/res/xml-v35/auto_scroll_accessibility_service.xml"));
+                    output.write(xml.build().toByteArray());
+                    output.closeEntry();
+                }
                 if (name.equals("base/manifest/AndroidManifest.xml") ||
                     name.equals("base/res/xml/auto_scroll_accessibility_service.xml")) {
                     var xml = XmlNode.parseFrom(bytes).toBuilder();
@@ -103,6 +127,13 @@ class ReleaseBundleFixture {
             }
             element.addChild(service); changes++;
         }
+        if (element.getName().equals("accessibility-service") && variant.equals("swapped-attribute-ids")) {
+            for (var attribute : element.getAttributeBuilderList()) {
+                if (attribute.getName().equals("canRetrieveWindowContent")) attribute.setResourceId(0x0101050d);
+                if (attribute.getName().equals("canPerformGestures")) attribute.setResourceId(0x01010385);
+            }
+            changes++;
+        }
         if (element.getName().equals("accessibility-service") && variant.equals("extra-capability")) {
             var attribute = element.getAttributeList().stream()
                 .filter(item -> item.getName().equals("canRetrieveWindowContent")).findFirst().orElseThrow().toBuilder();
@@ -135,13 +166,28 @@ class ReleaseBundleFixture {
         @{ Variant = "sdk-internet"; Error = "INTERNET permission must not be present" },
         @{ Variant = "sdk-ad-id"; Error = "AD_ID permission must not be present" },
         @{ Variant = "window-content"; Error = "Accessibility service must not retrieve window content" },
+        @{ Variant = "qualified-window-content"; Error = "Accessibility service must not retrieve window content" },
+        @{ Variant = "swapped-attribute-ids"; Error = "Accessibility service must not retrieve window content" },
         @{ Variant = "missing-metadata"; Error = "Accessibility service metadata is missing" },
         @{ Variant = "second-service"; Error = "Unexpected Accessibility service declarations" },
         @{ Variant = "extra-capability"; Error = "Accessibility capabilities differ from approved metadata" }
     )) {
+        Copy-Item -LiteralPath (Join-Path $outputs "apk/debug/app-debug.apk") -Destination (Join-Path $scratch "apk/debug/app-debug.apk")
         & java --class-path $BundletoolPath $fixtureSource (Join-Path $outputs "bundle/release/app-release.aab") (Join-Path $scratch "bundle/release/app-release.aab") $case.Variant
         if ($LASTEXITCODE -ne 0) { throw "Could not create adversarial release fixture" }
         Assert-Rejected $invalid $case.Variant $case.Error
+
+        # Keep the approved AAB intact while substituting a same-identity APK.
+        $apkSet = Join-Path $scratch "mutated.apks"
+        & java -jar $BundletoolPath build-apks "--bundle=$(Join-Path $scratch 'bundle/release/app-release.aab')" "--output=$apkSet" --mode=universal --overwrite --max-threads=2 | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "Could not create adversarial APK fixture" }
+        $archive = [IO.Compression.ZipFile]::OpenRead($apkSet)
+        try {
+            [IO.Compression.ZipFileExtensions]::ExtractToFile($archive.GetEntry("universal.apk"), (Join-Path $scratch "apk/debug/app-debug.apk"), $true)
+        } finally { $archive.Dispose() }
+        Copy-Item -LiteralPath (Join-Path $outputs "bundle/release/app-release.aab") -Destination (Join-Path $scratch "bundle/release/app-release.aab")
+        $apkError = if ($case.Variant.StartsWith('sdk-')) { "APK and bundle permissions differ" } else { $case.Error }
+        Assert-Rejected $invalid "APK-only $($case.Variant)" $apkError
     }
     Write-Output "Passed release identity + digest controls"
 } finally {

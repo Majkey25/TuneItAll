@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0-alpha.42, 2026-10-22
+
+- Verify Accessibility capabilities in the exact preview APK and every qualified resource variant before signing and publication.
+- Keep song-import progress bounded and increasing even when media timestamps or duration metadata are invalid.
+
 ## 0.3.0-alpha.41, 2026-10-15
 
 - Group language, appearance and tuner options into expandable settings with current-value summaries.
