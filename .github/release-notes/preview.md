@@ -1,13 +1,10 @@
-Intoniva `v0.3.0-alpha.36` testing build.
+Intoniva `v0.3.0-alpha.43` testing build.
 
-- New Appearance screen under Settings → General.
-- Seven built-in themes, Material You wallpaper colours on Android 12+, and separate light/dark choices.
-- Custom palettes, font, text size, Material controls, corners, contrast, and black-background controls.
-- Immediate local saving, a reset button, and a back button that stays visible while scrolling.
-- Readable tuner feedback and system icons with custom colours.
+- Gradle 9.8.2 fixes daemon deserialization and repository TLS failures in the build tools.
+- Compatible Android build tools, Kotlin, Compose compiler, Core and Lifecycle updates.
+- Updated pinned CI actions preserve signing boundaries and artifact identity checks.
 
-All app features remain free. Pitch/song analysis, metronome playback,
-permissions and dependencies are unchanged.
+All app features remain free. Android 8.0 support, target API 36 and app permissions remain unchanged.
 
 Google Play production access has been granted. Play release review and public
 availability are separate from this GitHub testing release.

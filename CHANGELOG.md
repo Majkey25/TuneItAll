@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-alpha.43, 2026-10-22
+
+- Update Gradle to 9.8.2 with fixes for daemon deserialization and repository TLS failures.
+- Align Android build tools, Kotlin, Compose compiler, Core and Lifecycle dependencies while keeping Android 8.0 support and target API 36.
+- Update pinned CI actions without changing signing boundaries or artifact identity checks.
+
 ## 0.3.0-alpha.42, 2026-10-22
 
 - Verify Accessibility capabilities in the exact preview APK and every qualified resource variant before signing and publication.
