@@ -107,7 +107,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation(kotlin("test"))
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.4.21")
     testImplementation("org.json:json:20260719")
 
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
