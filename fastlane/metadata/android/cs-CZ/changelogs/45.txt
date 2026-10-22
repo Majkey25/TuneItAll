@@ -1,0 +1,1 @@
+Bezpečnější ověřování testovacích vydání kontroluje funkce usnadnění přístupu v APK i balíčcích včetně variant pro různé verze Androidu. Průběh importu skladeb vychází z dekódovaného audia a zůstává v mezích i při neplatných metadatech souboru.

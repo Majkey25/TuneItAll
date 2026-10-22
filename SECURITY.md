@@ -18,6 +18,8 @@ Signed release workflows build without signing secrets and use a separate runner
 for signing. That runner executes only verifier/signing logic from `main`, never
 candidate Gradle or build scripts. It checks the tag, immutable source SHA,
 unsigned digests, exact artifact identity and every bundle payload signer.
+Separate verification jobs check Accessibility declarations and resource variants
+in both the AAB and the independently built preview APK before and after signing.
 Publication checks the final signed digests again. Signing changes archive bytes;
 `provenance.json` records both unsigned and signed SHA-256 values.
 

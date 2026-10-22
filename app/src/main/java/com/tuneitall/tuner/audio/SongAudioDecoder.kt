@@ -251,8 +251,8 @@ class SongAudioDecoder(context: Context) {
                             onSamples(sampleRate, channels, samples)
                             producedOutput = true
                             if (durationMicros > 0L) {
-                                val progress = (bufferInfo.presentationTimeUs * 90L / durationMicros).toInt().coerceIn(0, 89)
-                                if (progress != lastProgress) {
+                                val progress = decodedClock.progress(durationMicros)
+                                if (progress > lastProgress) {
                                     lastProgress = progress
                                     onProgress(progress)
                                 }
@@ -298,6 +298,9 @@ internal class DecodedAudioClock {
 
     val durationMillis: Long
         get() = if (sampleRate == 0) 0L else sampleCount * MILLIS_PER_SECOND / sampleRate
+
+    fun progress(durationMicros: Long): Int =
+        if (durationMicros > 0L) (durationMillis * 90_000L / durationMicros).coerceIn(0L, 89L).toInt() else 0
 
     fun accept(rate: Int, count: Int, channels: Int) {
         if (rate !in 8_000..192_000 || channels !in 1..8 || count < 0 ||

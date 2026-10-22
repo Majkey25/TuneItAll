@@ -71,6 +71,22 @@ class SongAudioDecoderTest {
             assertFailsWith<SongDecodeException> { clock.accept(48_000, 48_000 * 1800, 2) }.reason)
         assertEquals(1000L, clock.durationMillis)
     }
+
+    @Test
+    fun `decode progress follows bounded frames and saturates without wrapping`() {
+        val clock = DecodedAudioClock()
+        assertEquals(0, clock.progress(1_000_000))
+        clock.accept(48_000, 24_000, 2)
+        assertEquals(45, clock.progress(1_000_000))
+        clock.accept(48_000, 24_000, 2)
+        assertEquals(89, clock.progress(1_000_000))
+        clock.accept(48_000, 48_000 * 1799, 2)
+        assertEquals(89, clock.progress(1))
+        assertEquals(89, clock.progress(1_800_000_000))
+        for (duration in listOf(Long.MIN_VALUE, -1L, 0L, Long.MAX_VALUE)) {
+            assertEquals(0, clock.progress(duration))
+        }
+    }
     @Test
     fun `pcm16 decoder preserves every channel including opposite polarity`() {
         val source = shortArrayOf(Short.MAX_VALUE, Short.MIN_VALUE, 16_384, -16_384, 0, 8_192)

@@ -262,7 +262,7 @@ emulator audio is not treated as microphone evidence.
 Requirements:
 
 - JDK 17
-- Android SDK 36
+- Android SDK 36 with Android SDK Command-Line Tools (latest)
 - A connected Android 8.0+ device or emulator for live QA
 
 Windows PowerShell:
