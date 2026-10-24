@@ -1,0 +1,1 @@
+Removed external donations and payment links from the Google Play version. All music tools remain free. Tuning, song analysis and saved settings are unchanged.

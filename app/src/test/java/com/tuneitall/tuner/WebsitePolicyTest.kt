@@ -10,7 +10,7 @@ class WebsitePolicyTest {
     @Test
     fun policyPagesHaveWorkingLocalLinksAndNoEmbeddedTracking() {
         val root = File("../docs").canonicalFile
-        val pages = listOf("", "legal", "privacy", "terms", "refunds", "cookies", "support")
+        val pages = listOf("", "legal", "privacy", "terms", "refunds", "cookies", "support", "play")
         pages.forEach { page ->
             val file = File(File(root, page), "index.html").canonicalFile
             val html = file.readText()
@@ -33,6 +33,20 @@ class WebsitePolicyTest {
                 assertTrue(target.isFile, "$page: $url")
                 if ('#' in url) assertTrue(target.readText().contains("id=\"${url.substringAfter('#')}\""), url)
             }
+        }
+    }
+
+    @Test
+    fun playPoliciesCannotLinkBackToDonationPages() {
+        val html = File("../docs/play/index.html").readText()
+        assertFalse(Regex("buymeacoffee|buy me a coffee|donat", RegexOption.IGNORE_CASE).containsMatchIn(html))
+        Regex("href=\"([^\"]+)\"").findAll(html).forEach { match ->
+            val url = match.groupValues[1]
+            assertTrue(
+                url.startsWith("#") || url.startsWith("mailto:") || url.startsWith("../assets/") ||
+                    url == "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+                url,
+            )
         }
     }
 }

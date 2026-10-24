@@ -19,9 +19,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.SUPPORT_URL
 
 @Composable
 internal fun SupportButton(onSupport: () -> Unit) {
+    if (SUPPORT_URL.isEmpty()) return
     val context = LocalContext.current
     val supportNotice = stringResource(R.string.support_app_notice)
     Button(

@@ -1613,6 +1613,14 @@ class TuneItAllFlowTest {
 
         composeRule.onNodeWithTag("tuner_settings").performClick()
         composeRule.onNodeWithTag("settings_section_general").performClick()
+        if (SUPPORT_URL.isEmpty()) {
+            composeRule.onNodeWithText("Support me").assertDoesNotExist()
+            composeRule.onNodeWithText("Support this app → Buy Me a Coffee").assertDoesNotExist()
+            composeRule.onNodeWithText(context.getString(R.string.app_details)).performScrollTo().performClick()
+            composeRule.onNodeWithText("Support this app → Buy Me a Coffee").assertDoesNotExist()
+            composeRule.runOnIdle { assertEquals(0, supportCount) }
+            return
+        }
         composeRule.onNodeWithText("Support me").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Support this app → Buy Me a Coffee")
             .performScrollTo().assertIsDisplayed().performClick()
@@ -1643,10 +1651,13 @@ class TuneItAllFlowTest {
             }
         }
 
-        composeRule.onNodeWithText("Support this app → Buy Me a Coffee")
-            .performScrollTo()
-            .performClick()
-        composeRule.runOnIdle { assertTrue(supportOpened) }
+        val supportButton = composeRule.onNodeWithText("Support this app → Buy Me a Coffee")
+        if (SUPPORT_URL.isEmpty()) {
+            supportButton.assertDoesNotExist()
+        } else {
+            supportButton.performScrollTo().performClick()
+        }
+        composeRule.runOnIdle { assertEquals(SUPPORT_URL.isNotEmpty(), supportOpened) }
     }
 
     @Test
