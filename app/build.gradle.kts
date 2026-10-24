@@ -108,7 +108,7 @@ android {
 }
 
 tasks.configureEach {
-    if (name == "bundleRelease" && distributionChannel == "github") {
+    if (name == "packageReleaseBundle" && distributionChannel == "github") {
         doFirst { error("Google Play bundles must use distributionChannel=play") }
     }
 }
