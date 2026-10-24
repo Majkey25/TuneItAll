@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0-alpha.44, 2026-10-24
+
+- Remove external donation buttons and payment actions from Google Play builds, including linked legal pages.
+- Keep optional support in GitHub APKs. Tuning, song analysis and stored data are unchanged.
+
 ## 0.3.0-alpha.43, 2026-10-22
 
 - Update Gradle to 9.8.2 with fixes for daemon deserialization and repository TLS failures.

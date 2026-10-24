@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.AppLanguage
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.SUPPORT_URL
 import com.tuneitall.tuner.audio.AudioInputSource
 import com.tuneitall.tuner.audio.DetectionSensitivity
 import com.tuneitall.tuner.audio.ResponseMode
@@ -224,9 +225,11 @@ private fun GeneralSettings(
                 Text(stringResource(R.string.app_details))
             }
         }
-        SettingLabel(stringResource(R.string.support_me), R.drawable.ic_coffee, MaterialTheme.typography.titleLarge)
-        Text(stringResource(R.string.support_description), style = MaterialTheme.typography.bodyMedium)
-        SupportButton(onSupport)
+        if (SUPPORT_URL.isNotEmpty()) {
+            SettingLabel(stringResource(R.string.support_me), R.drawable.ic_coffee, MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.support_description), style = MaterialTheme.typography.bodyMedium)
+            SupportButton(onSupport)
+        }
     }
 }
 

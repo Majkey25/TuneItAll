@@ -68,7 +68,7 @@ jobs:
       - name: Build without signing secrets or write authority
         run: |
           chmod +x gradlew
-          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:bundleRelease --no-daemon --max-workers=2
+          ./gradlew :app:testDebugUnitTest :app:testReleaseUnitTest :app:lintDebug :app:assembleDebug :app:bundleRelease --no-daemon --max-workers=2
       - name: Record candidate digests
         id: digests
         run: |

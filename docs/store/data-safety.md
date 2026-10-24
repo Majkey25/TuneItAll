@@ -27,10 +27,11 @@ Its metadata explicitly disables window-content retrieval. Floating controls
 use Android's overlay and foreground-service APIs. Intoniva does not read,
 store, record, or transmit screen content.
 
-The optional Buy Me a Coffee, email, and GitHub support paths open outside the
-app. Data that a user voluntarily sends through those external services is not
-collected by Intoniva. The public privacy policy separately describes that
-support correspondence and its providers.
+Google Play builds contain no external donation action or payment link. Email
+and issue-reporting support opens outside the app. Data voluntarily sent through
+those external services is not collected by Intoniva. The Play privacy policy
+describes support correspondence and its providers. GitHub APKs separately retain
+optional Buy Me a Coffee support and the original legal pages.
 
 Evidence gates before submission:
 

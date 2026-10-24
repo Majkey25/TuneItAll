@@ -86,6 +86,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openSupportPage() {
+        if (SUPPORT_URL.isEmpty()) return
         try {
             startActivity(Intent(Intent.ACTION_VIEW, SUPPORT_URL.toUri()))
         } catch (_: ActivityNotFoundException) {

@@ -3,6 +3,14 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val distributionChannel = providers.gradleProperty("distributionChannel").orNull
+require(distributionChannel == null || distributionChannel in setOf("play", "github")) {
+    "distributionChannel must be play or github"
+}
+val donationUrl = "https://www.buymeacoffee.com/majkey"
+val playPoliciesUrl = "https://majkey25.github.io/TuneItAll/play/"
+val githubPoliciesUrl = "https://majkey25.github.io/TuneItAll/legal/"
+
 val releaseStorePath = providers.environmentVariable("TUNEITALL_KEYSTORE_PATH").orNull
 val releaseStorePassword = providers.environmentVariable("TUNEITALL_KEYSTORE_PASSWORD").orNull
 val releaseKeyAlias = providers.environmentVariable("TUNEITALL_KEY_ALIAS").orNull
@@ -27,9 +35,12 @@ android {
         applicationId = "com.tuneitall.tuner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 46
-        versionName = "0.3.0-alpha.43"
+        versionCode = 47
+        versionName = "0.3.0-alpha.44"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "DISTRIBUTION_CHANNEL", "\"${distributionChannel ?: "play"}\"")
+        buildConfigField("String", "SUPPORT_URL", "\"${if (distributionChannel == "github") donationUrl else ""}\"")
+        buildConfigField("String", "POLICIES_URL", "\"${if (distributionChannel == "github") githubPoliciesUrl else playPoliciesUrl}\"")
     }
 
     signingConfigs {
@@ -52,6 +63,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "DISTRIBUTION_CHANNEL", "\"${distributionChannel ?: "github"}\"")
+            buildConfigField("String", "SUPPORT_URL", "\"${if (distributionChannel == "play") "" else donationUrl}\"")
+            buildConfigField("String", "POLICIES_URL", "\"${if (distributionChannel == "play") playPoliciesUrl else githubPoliciesUrl}\"")
+        }
         create("qa") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".qa"
@@ -88,6 +104,12 @@ android {
 
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    }
+}
+
+tasks.configureEach {
+    if (name == "packageReleaseBundle" && distributionChannel == "github") {
+        doFirst { error("Google Play bundles must use distributionChannel=play") }
     }
 }
 

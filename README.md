@@ -186,8 +186,8 @@ are not included.
 - Reference pitch, note notation and headstock layout are together in Settings → Tuner.
 - About Intoniva includes the version, attribution, licence information,
   privacy notice, legal-policy links and publisher contact.
-- **Support me** at the bottom of General settings, with the same yellow
-  Buy Me a Coffee button also available in About Intoniva.
+- GitHub APKs keep **Support me** at the bottom of General settings and in
+  About Intoniva. Google Play builds contain no donation button or payment link.
 - Support is optional. It opens an external browser, unlocks no features
   and does not change support priority. External websites have their own
   privacy practices; in-app payment information is not collected by Intoniva.
@@ -292,6 +292,13 @@ Release bundle generation:
 
 The generated bundle is unsigned for production until a private Play App
 Signing/upload-key configuration is supplied outside the repository.
+
+Release bundles default to the `play` distribution channel. Debug APKs default
+to `github`, preserving optional support in GitHub Releases. Use
+`-PdistributionChannel=play` for Play-channel device tests, or
+`-PdistributionChannel=github` for a donation-enabled release APK. The build
+rejects Google Play bundles with the GitHub channel. Play uses separate legal
+pages that do not link to external donations.
 
 ## CI and releases
 

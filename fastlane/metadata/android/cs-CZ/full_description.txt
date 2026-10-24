@@ -32,5 +32,3 @@ Intoniva neobsahuje reklamy, účet, analytiku ani sledování a nežádá o př
 Vybranou písničku zkopíruje do soukromé mezipaměti aplikace pro místní analýzu a přehrávání. Nikdy ji neodesílá.
 
 Automatické posouvání používá Usnadnění Androidu pouze k provedení gest přejetí vyžádaných uživatelem. Nemůže načítat obsah obrazovky a nic z obrazovky nečte, neukládá, nenahrává ani neodesílá. Shizuku není potřeba.
-
-Volitelná podpora v podrobnostech o aplikaci otevře Buy Me a Coffee v externím prohlížeči. Neodemkne žádnou funkci.

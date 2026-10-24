@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.BuildConfig
 import com.tuneitall.tuner.POLICIES_URL
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.SUPPORT_URL
 
 @Composable
 fun AboutScreen(
@@ -68,9 +69,9 @@ fun AboutScreen(
             Text(stringResource(R.string.privacy_policy))
         }
         if (showPrivacy) {
-            Text(stringResource(R.string.privacy_policy_full))
+            Text(stringResource(if (SUPPORT_URL.isEmpty()) R.string.offline_privacy_summary else R.string.privacy_policy_full))
             Text(stringResource(R.string.song_cache_privacy))
-            Text(stringResource(R.string.support_payment_privacy))
+            if (SUPPORT_URL.isNotEmpty()) Text(stringResource(R.string.support_payment_privacy))
         }
         TextButton(
             onClick = { showLicense = !showLicense },

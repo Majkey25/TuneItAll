@@ -54,6 +54,3 @@ can remain for playback and reanalysis while the song is loaded, including while
 paused or in the background. Cleanup is attempted when copies are no longer
 needed and on a fresh app start. The original file is unchanged and no audio is
 uploaded.
-
-Optional support in App details opens Buy Me a Coffee in an external browser.
-It does not unlock app features.

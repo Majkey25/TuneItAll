@@ -53,6 +53,3 @@ v zařízení. Kopie může zůstat uložená pro přehrávání a opakovanou an
 dokud je skladba načtená, i při pozastavení nebo na pozadí. Aplikace se pokouší
 nepotřebné kopie mazat a při novém spuštění uklidit zbylé soubory. Zdrojový
 soubor nemění a žádný zvuk neodesílá.
-
-Volitelná podpora v podrobnostech o aplikaci otevře Buy Me a Coffee v externím
-prohlížeči. Neodemkne žádnou funkci.
