@@ -27,6 +27,6 @@ The downloaded CI archive matched GitHub digest `b0b02f346d3b383a85c3db19d66cd7e
 * Signed Play AAB SHA256: `09e49baddbb3886c08178054eb867ea8dc19e98de1e960520689a1bc1058db97`.
 * Published preview APK SHA256: `50c917080bb7b030b27b3d1a288ee190e022b82fa9a93d23caad80309016620e`.
 
-The signed Play48 bundle is prepared but has not been uploaded, submitted, approved or made live. The browser tool still returns `Local browser use is disabled in Work settings` despite coordinated retries and no conflicting browser lease. Donations enforcement was resolved in the last available Console check on 30 October; this does not prove the new DEX warning has disappeared.
+At 10:54 UTC on 31 October, the signed Play48 bundle was prepared but not uploaded, submitted, approved or live. The browser tool still returned `Local browser use is disabled in Work settings` despite coordinated retries and no conflicting browser lease. Donations enforcement was resolved in the last available Console check on 30 October; this does not prove the new DEX warning has disappeared.
 
 This release does not change audio-detection algorithms or establish new live-guitar accuracy. Play memory metrics had insufficient data. Point-in-time PSS samples are not the new 28-day anonymous-RSS-plus-swap metric. No universal policy-compliance claim is made.

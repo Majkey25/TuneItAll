@@ -15,8 +15,8 @@ analytics, tracking, onboarding, or network permission.
 
 Intoniva is free on [Google Play](https://play.google.com/store/apps/details?id=com.tuneitall.tuner).
 All features are free. There are no subscriptions or paid feature unlocks.
-Latest source version: `0.3.0-alpha.45`. The signed Play update is prepared but
-has not been uploaded. See the dated [release record](docs/store/2026-10-31-alpha45-release.md).
+Latest source version: `0.3.0-alpha.45`. The Play version can lag behind while
+Google reviews an update. See the dated [release record](docs/store/2026-10-31-alpha45-release.md).
 
 ## Download
 
