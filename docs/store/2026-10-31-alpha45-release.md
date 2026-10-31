@@ -38,3 +38,17 @@ On 31 October, version 48 was submitted for production and the existing closed A
 The Console confirmed **Changes in review**, initially with quick checks running and managed publishing off. A later check confirmed that the quick checks had finished and Google was assessing the changes. Successful review should publish the update automatically; submission and quick checks are not approval or availability. The new artifact includes the ReTrace mapping file. Google estimated 1.87 MB for new installs, 6.85 MB smaller than the previous release, with no loss of supported devices. One nonblocking warning remains for missing native debug symbols.
 
 The Policy Center was checked again after submission and explicitly reported **No issues found**. This confirms the current Google status, not universal legal compliance or the disappearance of the old release 47 DEX warning before the new rollout.
+
+## Availability and dashboard follow-up
+
+On 31 October, the Console confirmed production 48 as **Available on Google Play** and closed Alpha 48 as **Available to selected testers**. Both show a release time of 12:42 in the Console's local timezone. Production remains at 100% across 178 countries. The availability monitor was paused after saving proof of both track states.
+
+Policy Center still reports no issues, and all required app-content declarations are complete. Automatic installer protection is active, 1 of 1. Store protections are active, 7 of 7. Optional Play Integrity API integration and billing protections are not added to this offline app merely to fill their counters. The app has neither a backend nor Play purchases.
+
+The previous DEX optimization warning is no longer listed in the current Android vitals overview. That page now lists two edge-to-edge recommendations for 48, not a new memory failure. Crash, ANR, LMK, memory, startup and rendering data remain insufficient. The current Console has no pre-launch test result; absence of data is not a passing result.
+
+The edge-to-edge callers map to AndroidX Activity compatibility code and a generated AndroidX API outline. The app already enables edge-to-edge and applies safe drawing and keyboard insets. The [current recommended WindowCompat helper](https://developer.android.com/reference/androidx/core/view/WindowCompat) also calls the legacy system-bar color APIs and uses the short-edge cutout mode on older Android versions. No compatibility code was removed just to hide a static warning. The existing physical tests ran on Android 10, not Android 15 or 16, so newer-device behavior is not claimed as verified.
+
+The nonblocking native-symbol warning remains. The only native dependency, AndroidX graphics-path 1.0.1, ships all four ABI binaries already stripped of their static symbol table and debug sections. Its AAR supplies no separate symbols. As [Android's symbol guidance](https://developer.android.com/build/include-native-symbols) explains, enabling symbol extraction cannot recover stripped vendor metadata. Matching unstripped binaries are needed; no fabricated symbols or replacement release payload were uploaded.
+
+This follow-up changes the release record only. It does not change the app, signing identities or published artifacts.
