@@ -30,3 +30,11 @@ The downloaded CI archive matched GitHub digest `b0b02f346d3b383a85c3db19d66cd7e
 At 10:54 UTC on 31 October, the signed Play48 bundle was prepared but not uploaded, submitted, approved or live. The browser tool still returned `Local browser use is disabled in Work settings` despite coordinated retries and no conflicting browser lease. Donations enforcement was resolved in the last available Console check on 30 October; this does not prove the new DEX warning has disappeared.
 
 This release does not change audio-detection algorithms or establish new live-guitar accuracy. Play memory metrics had insufficient data. Point-in-time PSS samples are not the new 28-day anonymous-RSS-plus-swap metric. No universal policy-compliance claim is made.
+
+## Play submission
+
+On 31 October, version48 was submitted for production and the existing closed Alpha channel. The production rollout preserves 100% and all178 existing target countries. Tester selection is unchanged. Both English and Czech release notes were saved.
+
+The Console confirmed **Changes in review**, with quick checks running and managed publishing off. Successful review should publish the update automatically; submission and quick checks are not approval or availability. The new artifact includes the ReTrace mapping file. Google estimated 1.87MB for new installs, 6.85MB smaller than the previous release, with no loss of supported devices. One nonblocking warning remains for missing native debug symbols.
+
+The Policy Center was checked again after submission and explicitly reported **No issues found**. This confirms the current Google status, not universal legal compliance or the disappearance of the old release47 DEX warning before the new rollout.
