@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-alpha.47, 2026-10-31
+
+* Keep General, Tuner and Metronome settings tabs visible while scrolling, with a separate saved position and form state for each section.
+* Use native Material list rows for expandable settings with clearer labels and current values.
+* Add consistent dropdown icons and expanded-state announcements to tuning and trainer note selectors.
+
 ## 0.3.0-alpha.46, 2026-10-31
 
 * Configure system bars and display cutouts through Android-version-specific themes instead of deprecated window color setters.
