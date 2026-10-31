@@ -71,6 +71,14 @@ class ReleaseBundleFixture {
                 }
                 byte[] bytes;
                 try (var stream = input.getInputStream(entry)) { bytes = stream.readAllBytes(); }
+                if (name.equals("base/dex/classes.dex") && args[2].startsWith("dex-")) {
+                    String marker = args[2].equals("dex-bridge") ? "androidx/graphics/path/PathIterator" : "setStatusBarColor";
+                    byte[] suffix = marker.getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+                    int length = bytes.length;
+                    bytes = java.util.Arrays.copyOf(bytes, length + suffix.length);
+                    System.arraycopy(suffix, 0, bytes, length, suffix.length);
+                    changes++;
+                }
                 if (name.equals("BUNDLE-METADATA/com.android.tools/r8.json") && args[2].equals("r8-unoptimized")) {
                     String json = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
                     bytes = json.replace("\"isObfuscationEnabled\":true", "\"isObfuscationEnabled\":false")
@@ -121,6 +129,12 @@ class ReleaseBundleFixture {
                 output.putNextEntry(new ZipEntry(name));
                 output.write(bytes);
                 output.closeEntry();
+            }
+            if (args[2].equals("native-code")) {
+                output.putNextEntry(new ZipEntry("base/lib/arm64-v8a/libunexpected.so"));
+                output.write(new byte[] {0x7f, 'E', 'L', 'F'});
+                output.closeEntry();
+                changes++;
             }
         }
         if (changes != 1) throw new AssertionError("Expected one fixture mutation, got " + changes);
@@ -187,6 +201,9 @@ class ReleaseBundleFixture {
 }
 '@)
     foreach ($case in @(
+        @{ Variant = "native-code"; Error = "Optimized release must not contain unused native libraries" },
+        @{ Variant = "dex-bridge"; Error = "Release still references the removed graphics-path native bridge" },
+        @{ Variant = "dex-window-color"; Error = "Release still references deprecated system-bar color setters" },
         @{ Variant = "r8-missing"; Error = "R8 optimization metadata is missing" },
         @{ Variant = "r8-unoptimized"; Error = "Release code and resource optimization must stay enabled" },
         @{ Variant = "r8-low-score"; Error = "Release DEX optimization is below 25%" },
@@ -203,7 +220,7 @@ class ReleaseBundleFixture {
         & java --class-path $BundletoolPath $fixtureSource (Join-Path $outputs "bundle/release/app-release.aab") (Join-Path $scratch "bundle/release/app-release.aab") $case.Variant
         if ($LASTEXITCODE -ne 0) { throw "Could not create adversarial release fixture" }
         Assert-Rejected $invalid $case.Variant $case.Error
-        if ($case.Variant.StartsWith('r8-')) { continue }
+        if ($case.Variant.StartsWith('r8-') -or $case.Variant.StartsWith('dex-') -or $case.Variant -eq 'native-code') { continue }
 
         # Keep the approved AAB intact while substituting a same-identity APK.
         $apkSet = Join-Path $scratch "mutated.apks"

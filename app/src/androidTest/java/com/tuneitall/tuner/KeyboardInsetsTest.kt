@@ -7,7 +7,11 @@ import android.content.pm.PackageManager
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.ParcelFileDescriptor
+import android.os.Build
 import android.graphics.Rect
+import android.graphics.Color
+import android.view.View
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityWindowInfo
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -48,6 +52,28 @@ class KeyboardInsetsTest {
             assertEquals(PackageManager.PERMISSION_GRANTED, context.checkSelfPermission(Manifest.permission.RECORD_AUDIO))
         }
     }).around(compose)
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun windowStylePreservesTransparentBarsAndVersionedCutoutMode() {
+        compose.runOnIdle {
+            val window = compose.activity.window
+            assertEquals(Color.TRANSPARENT, window.statusBarColor)
+            assertEquals(Color.TRANSPARENT, window.navigationBarColor)
+            if (Build.VERSION.SDK_INT < 30) {
+                val layoutFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                assertEquals(layoutFlags, window.decorView.systemUiVisibility and layoutFlags)
+            }
+            if (Build.VERSION.SDK_INT >= 28) {
+                val expected = if (Build.VERSION.SDK_INT < 30) {
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                } else WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                assertEquals(expected, window.attributes.layoutInDisplayCutoutMode)
+            }
+            if (Build.VERSION.SDK_INT >= 29) assertTrue(!window.isNavigationBarContrastEnforced)
+        }
+    }
 
     @Test
     fun customTuningLastStringAndSaveRemainReachableWithKeyboardOpen() {

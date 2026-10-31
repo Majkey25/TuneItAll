@@ -35,8 +35,8 @@ android {
         applicationId = "com.tuneitall.tuner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 48
-        versionName = "0.3.0-alpha.45"
+        versionCode = 49
+        versionName = "0.3.0-alpha.46"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "DISTRIBUTION_CHANNEL", "\"${distributionChannel ?: "play"}\"")
         buildConfigField("String", "SUPPORT_URL", "\"${if (distributionChannel == "github") donationUrl else ""}\"")
@@ -77,6 +77,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            optimization.keepRules { ignoreFrom("androidx.graphics:graphics-path") }
             if (releaseSigningEnabled) signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -106,6 +107,11 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+}
+
+androidComponents.onVariants(androidComponents.selector().withBuildType("release")) {
+    // Release verification rejects surviving graphics-path code before this unused JNI library can ship.
+    it.packaging.jniLibs.excludes.add("**/libandroidx.graphics.path.so")
 }
 
 tasks.configureEach {

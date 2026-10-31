@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-alpha.46, 2026-10-31
+
+* Configure system bars and display cutouts through Android-version-specific themes instead of deprecated window color setters.
+* Preserve transparent bars, theme icon contrast and notched landscape layouts on older Android versions.
+* Remove unused graphics-path JNI code and binaries from optimized Play builds. Reject releases that reintroduce its native bridge or deprecated color setters.
+
 ## 0.3.0-alpha.44, 2026-10-24
 
 - Remove external donation buttons and payment actions from Google Play builds, including linked legal pages.
