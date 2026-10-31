@@ -136,6 +136,24 @@ Write-Output $signatureResult.Trim()
 
 $archive = [IO.Compression.ZipFile]::OpenRead($aab)
 try {
+    if (@($archive.Entries | Where-Object FullName -Like 'base/lib/*.so').Count -ne 0) {
+        throw 'Optimized release must not contain unused native libraries'
+    }
+    foreach ($dex in @($archive.Entries | Where-Object FullName -Like 'base/dex/*.dex')) {
+        if ($dex.Length -gt 64MB) { throw 'DEX exceeds inspection limit' }
+        $reader = [IO.BinaryReader]::new($dex.Open())
+        try {
+            $bytes = $reader.ReadBytes([int]$dex.Length + 1)
+            if ($bytes.Length -ne $dex.Length) { throw 'DEX size differs from ZIP metadata' }
+            $strings = [Text.Encoding]::Latin1.GetString($bytes)
+        } finally { $reader.Dispose() }
+        if ($strings.Contains('androidx/graphics/path/') -or $strings.Contains('androidx.graphics.path')) {
+            throw 'Release still references the removed graphics-path native bridge'
+        }
+        if ($strings.Contains('setStatusBarColor') -or $strings.Contains('setNavigationBarColor')) {
+            throw 'Release still references deprecated system-bar color setters'
+        }
+    }
     $metadata = $archive.GetEntry('BUNDLE-METADATA/com.android.tools/r8.json')
     if ($null -eq $metadata -or $metadata.Length -gt 1MB) { throw 'R8 optimization metadata is missing or oversized' }
     $reader = [IO.StreamReader]::new($metadata.Open())
