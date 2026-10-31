@@ -66,8 +66,29 @@ class ReleaseBundleFixture {
                 var entry = entries.nextElement();
                 String name = entry.getName();
                 if (name.equals("META-INF/MANIFEST.MF") || name.matches("META-INF/[^/]+\\.(SF|RSA|DSA|EC)")) continue;
+                if (name.equals("BUNDLE-METADATA/com.android.tools/r8.json") && args[2].equals("r8-missing")) {
+                    changes++; continue;
+                }
                 byte[] bytes;
                 try (var stream = input.getInputStream(entry)) { bytes = stream.readAllBytes(); }
+                if (name.equals("BUNDLE-METADATA/com.android.tools/r8.json") && args[2].equals("r8-unoptimized")) {
+                    String json = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+                    bytes = json.replace("\"isObfuscationEnabled\":true", "\"isObfuscationEnabled\":false")
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    if (java.util.Arrays.equals(bytes, json.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+                        throw new AssertionError("Missing R8 optimization fixture field");
+                    }
+                    changes++;
+                }
+                if (name.equals("BUNDLE-METADATA/com.android.tools/r8.json") && args[2].equals("r8-low-score")) {
+                    String json = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+                    bytes = json.replaceAll("\"noObfuscationPercentage\"\\s*:\\s*[0-9.]+", "\"noObfuscationPercentage\":99")
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    if (java.util.Arrays.equals(bytes, json.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+                        throw new AssertionError("Missing R8 score fixture field");
+                    }
+                    changes++;
+                }
                 if (name.equals("base/resources.pb") && args[2].equals("qualified-window-content")) {
                     var table = ResourceTable.parseFrom(bytes).toBuilder();
                     for (var pkg : table.getPackageBuilderList()) {
@@ -114,7 +135,7 @@ class ReleaseBundleFixture {
             for (var attribute : permission.getElementBuilder().getAttributeBuilderList()) {
                 if (attribute.getName().equals("name")) {
                     String value = variant.equals("sdk-internet") ? "android.permission.INTERNET" : "com.google.android.gms.permission.AD_ID";
-                    attribute.setValue(value).clearCompiledItem();
+                    attribute.setValue(value).getCompiledItemBuilder().getStrBuilder().setValue(value);
                 }
             }
             element.addChild(permission); changes++;
@@ -123,7 +144,10 @@ class ReleaseBundleFixture {
             var service = element.getChildList().stream()
                 .filter(child -> child.getElement().getName().equals("service")).findFirst().orElseThrow().toBuilder();
             for (var attribute : service.getElementBuilder().getAttributeBuilderList()) {
-                if (attribute.getName().equals("name")) attribute.setValue("com.example.UnapprovedService").clearCompiledItem();
+                if (attribute.getName().equals("name")) {
+                    attribute.setValue("com.example.UnapprovedService").getCompiledItemBuilder()
+                        .getStrBuilder().setValue("com.example.UnapprovedService");
+                }
             }
             element.addChild(service); changes++;
         }
@@ -163,6 +187,9 @@ class ReleaseBundleFixture {
 }
 '@)
     foreach ($case in @(
+        @{ Variant = "r8-missing"; Error = "R8 optimization metadata is missing" },
+        @{ Variant = "r8-unoptimized"; Error = "Release code and resource optimization must stay enabled" },
+        @{ Variant = "r8-low-score"; Error = "Release DEX optimization is below 25%" },
         @{ Variant = "sdk-internet"; Error = "INTERNET permission must not be present" },
         @{ Variant = "sdk-ad-id"; Error = "AD_ID permission must not be present" },
         @{ Variant = "window-content"; Error = "Accessibility service must not retrieve window content" },
@@ -176,6 +203,7 @@ class ReleaseBundleFixture {
         & java --class-path $BundletoolPath $fixtureSource (Join-Path $outputs "bundle/release/app-release.aab") (Join-Path $scratch "bundle/release/app-release.aab") $case.Variant
         if ($LASTEXITCODE -ne 0) { throw "Could not create adversarial release fixture" }
         Assert-Rejected $invalid $case.Variant $case.Error
+        if ($case.Variant.StartsWith('r8-')) { continue }
 
         # Keep the approved AAB intact while substituting a same-identity APK.
         $apkSet = Join-Path $scratch "mutated.apks"

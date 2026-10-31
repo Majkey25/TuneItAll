@@ -134,6 +134,27 @@ try {
 if ($global:LASTEXITCODE -ne 0) { throw "Bundle entry signature verification failed: $signatureResult" }
 Write-Output $signatureResult.Trim()
 
+$archive = [IO.Compression.ZipFile]::OpenRead($aab)
+try {
+    $metadata = $archive.GetEntry('BUNDLE-METADATA/com.android.tools/r8.json')
+    if ($null -eq $metadata -or $metadata.Length -gt 1MB) { throw 'R8 optimization metadata is missing or oversized' }
+    $reader = [IO.StreamReader]::new($metadata.Open())
+    try { $optimization = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
+    if ($optimization.options.isObfuscationEnabled -ne $true -or
+        $optimization.options.isOptimizationsEnabled -ne $true -or
+        $optimization.options.isShrinkingEnabled -ne $true -or
+        $optimization.resourceOptimization.isOptimizedShrinkingEnabled -ne $true) {
+        throw 'Release code and resource optimization must stay enabled'
+    }
+    foreach ($metric in @('noObfuscationPercentage', 'noOptimizationPercentage', 'noShrinkingPercentage')) {
+        $value = $optimization.stats.$metric
+        if (($value -isnot [double] -and $value -isnot [long] -and $value -isnot [int]) -or
+            -not [double]::IsFinite([double]$value) -or $value -lt 0 -or $value -gt 75) {
+            throw "Release DEX optimization is below 25%: $metric"
+        }
+    }
+} finally { $archive.Dispose() }
+
 if ([string]::IsNullOrWhiteSpace($BundletoolPath)) {
     $BundletoolPath = Join-Path $repoRoot ".reference/tmp/bundletool-all-1.18.3.jar"
     if (-not (Test-Path -LiteralPath $BundletoolPath -PathType Leaf)) {

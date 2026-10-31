@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -32,6 +33,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.tuneitall.tuner.R
 import com.tuneitall.tuner.ui.theme.asColor
 import com.tuneitall.tuner.ui.theme.parseHexColor
@@ -49,6 +51,8 @@ internal fun AppearanceColorDialog(title: String, initial: Int, onDismiss: () ->
         hex = String.format(Locale.ROOT, "%06X", AndroidColor.HSVToColor(floatArrayOf(hue, saturation, brightness)) and 0xFFFFFF)
     }
     AlertDialog(
+        modifier = Modifier.safeDrawingPadding(),
+        properties = DialogProperties(decorFitsSystemWindows = false),
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
