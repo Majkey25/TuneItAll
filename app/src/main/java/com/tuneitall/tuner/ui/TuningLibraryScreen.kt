@@ -71,134 +71,141 @@ fun TuningLibraryScreen(
             (!favoritesOnly || preset.id in favoriteIds)
     }.sortedByDescending { preset -> preset.id in favoriteIds }
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .safeDrawingPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .testTag("tuning_library"),
     ) {
-        SecondaryHeader(stringResource(R.string.tuning_library), onBack)
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            label = { Text(stringResource(R.string.search_tunings)) },
-            colors = outlinedFieldColors(),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            item {
-                FilterChip(
-                    selected = favoritesOnly,
-                    colors = currentPlaneChipColors(),
-                    onClick = {
-                        favoritesOnly = !favoritesOnly
-                        if (favoritesOnly) instrument = null
-                    },
-                    label = { Text(stringResource(R.string.favorites)) },
-                    modifier = Modifier.testTag("tuning_filter_favorites"),
+        item {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(bottom = 10.dp),
+            ) {
+                SecondaryHeader(stringResource(R.string.tuning_library), onBack)
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text(stringResource(R.string.search_tunings)) },
+                    colors = outlinedFieldColors(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
                 )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        FilterChip(
+                            selected = favoritesOnly,
+                            colors = currentPlaneChipColors(),
+                            onClick = {
+                                favoritesOnly = !favoritesOnly
+                                if (favoritesOnly) instrument = null
+                            },
+                            label = { Text(stringResource(R.string.favorites)) },
+                            modifier = Modifier.testTag("tuning_filter_favorites"),
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = instrument == null && !favoritesOnly,
+                            colors = currentPlaneChipColors(),
+                            onClick = {
+                                instrument = null
+                                favoritesOnly = false
+                            },
+                            label = { Text(stringResource(R.string.all_instruments)) },
+                            modifier = Modifier.testTag("tuning_filter_all"),
+                        )
+                    }
+                    items(Instrument.entries.filterNot { it == Instrument.CHROMATIC }) { option ->
+                        FilterChip(
+                            selected = instrument == option && !favoritesOnly,
+                            colors = currentPlaneChipColors(),
+                            onClick = {
+                                instrument = option
+                                favoritesOnly = false
+                            },
+                            label = { Text(instrumentName(option)) },
+                            modifier = Modifier.testTag("tuning_filter_${option.name.lowercase()}"),
+                        )
+                    }
+                }
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        FilterChip(
+                            selected = stringCount == null,
+                            colors = currentPlaneChipColors(),
+                            onClick = { stringCount = null },
+                            label = { Text(stringResource(R.string.all_strings)) },
+                        )
+                    }
+                    items(listOf(4, 5, 6, 7, 8, 9)) { count ->
+                        FilterChip(
+                            selected = stringCount == count,
+                            colors = currentPlaneChipColors(),
+                            onClick = { stringCount = count },
+                            label = { Text(pluralStringResource(R.plurals.string_count, count, count)) },
+                        )
+                    }
+                }
+                TextButton(
+                    onClick = onCreateCustom,
+                    colors = textButtonColors,
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text(stringResource(R.string.create_custom_tuning))
+                }
             }
-            item {
-                FilterChip(
-                    selected = instrument == null && !favoritesOnly,
-                    colors = currentPlaneChipColors(),
-                    onClick = {
-                        instrument = null
-                        favoritesOnly = false
-                    },
-                    label = { Text(stringResource(R.string.all_instruments)) },
-                    modifier = Modifier.testTag("tuning_filter_all"),
-                )
-            }
-            items(Instrument.entries.filterNot { it == Instrument.CHROMATIC }) { option ->
-                FilterChip(
-                    selected = instrument == option && !favoritesOnly,
-                    colors = currentPlaneChipColors(),
-                    onClick = {
-                        instrument = option
-                        favoritesOnly = false
-                    },
-                    label = { Text(instrumentName(option)) },
-                    modifier = Modifier.testTag("tuning_filter_${option.name.lowercase()}"),
-                )
-            }
-        }
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            item {
-                FilterChip(
-                    selected = stringCount == null,
-                    colors = currentPlaneChipColors(),
-                    onClick = { stringCount = null },
-                    label = { Text(stringResource(R.string.all_strings)) },
-                )
-            }
-            items(listOf(4, 5, 6, 7, 8, 9)) { count ->
-                FilterChip(
-                    selected = stringCount == count,
-                    colors = currentPlaneChipColors(),
-                    onClick = { stringCount = count },
-                    label = { Text(pluralStringResource(R.plurals.string_count, count, count)) },
-                )
-            }
-        }
-        TextButton(
-            onClick = onCreateCustom,
-            colors = textButtonColors,
-            modifier = Modifier.align(Alignment.End),
-        ) {
-            Text(stringResource(R.string.create_custom_tuning))
         }
         if (filtered.isEmpty()) {
-            Text(
-                text = stringResource(R.string.no_tunings_found),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(16.dp),
-            )
+            item {
+                Text(
+                    text = stringResource(R.string.no_tunings_found),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(16.dp),
+                )
+            }
         } else {
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(filtered, key = TuningPreset::id) { preset ->
-                    ListItem(
-                        headlineContent = { Text(preset.name) },
-                        supportingContent = {
-                            Text(
-                                "${instrumentName(preset.instrument)} · " +
-                                    preset.notesLowToHigh.joinToString("  ") { formatNote(it, notation) },
-                            )
-                        },
-                        trailingContent = {
-                            val favoriteDescription = stringResource(
-                                if (preset.id in favoriteIds) {
-                                    R.string.remove_favorite
-                                } else {
-                                    R.string.add_favorite
+            items(filtered, key = TuningPreset::id) { preset ->
+                ListItem(
+                    headlineContent = { Text(preset.name) },
+                    supportingContent = {
+                        Text(
+                            "${instrumentName(preset.instrument)} · " +
+                                preset.notesLowToHigh.joinToString("  ") { formatNote(it, notation) },
+                        )
+                    },
+                    trailingContent = {
+                        val favoriteDescription = stringResource(
+                            if (preset.id in favoriteIds) {
+                                R.string.remove_favorite
+                            } else {
+                                R.string.add_favorite
+                            },
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(
+                                onClick = { onToggleFavorite(preset.id) },
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                                modifier = Modifier.semantics {
+                                    contentDescription = "$favoriteDescription: ${preset.name}"
                                 },
-                            )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            ) {
+                                Text(if (preset.id in favoriteIds) "★" else "☆")
+                            }
+                            if (preset.id in customIds) {
                                 TextButton(
-                                    onClick = { onToggleFavorite(preset.id) },
+                                    onClick = { pendingDeletion = preset },
                                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-                                    modifier = Modifier.semantics {
-                                        contentDescription = "$favoriteDescription: ${preset.name}"
-                                    },
+                                    modifier = Modifier.testTag("delete_tuning_${preset.id}"),
                                 ) {
-                                    Text(if (preset.id in favoriteIds) "★" else "☆")
-                                }
-                                if (preset.id in customIds) {
-                                    TextButton(
-                                        onClick = { pendingDeletion = preset },
-                                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-                                        modifier = Modifier.testTag("delete_tuning_${preset.id}"),
-                                    ) {
-                                        Text(stringResource(R.string.delete))
-                                    }
+                                    Text(stringResource(R.string.delete))
                                 }
                             }
-                        },
-                        modifier = Modifier.clickable { onSelect(preset) }.testTag("tuning_item_${preset.id}"),
-                    )
-                }
+                        }
+                    },
+                    modifier = Modifier.clickable { onSelect(preset) }.testTag("tuning_item_${preset.id}"),
+                )
             }
         }
     }

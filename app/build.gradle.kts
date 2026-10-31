@@ -35,8 +35,8 @@ android {
         applicationId = "com.tuneitall.tuner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 47
-        versionName = "0.3.0-alpha.44"
+        versionCode = 48
+        versionName = "0.3.0-alpha.45"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "DISTRIBUTION_CHANNEL", "\"${distributionChannel ?: "play"}\"")
         buildConfigField("String", "SUPPORT_URL", "\"${if (distributionChannel == "github") donationUrl else ""}\"")
@@ -75,7 +75,8 @@ android {
             matchingFallbacks += listOf("debug")
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             if (releaseSigningEnabled) signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
