@@ -8,8 +8,8 @@ require(distributionChannel == null || distributionChannel in setOf("play", "git
     "distributionChannel must be play or github"
 }
 val donationUrl = "https://www.buymeacoffee.com/majkey"
-val playPoliciesUrl = "https://majkey25.github.io/TuneItAll/play/"
-val githubPoliciesUrl = "https://majkey25.github.io/TuneItAll/legal/"
+val playPoliciesUrl = "https://majkey25.github.io/Intoniva/play/"
+val githubPoliciesUrl = "https://majkey25.github.io/Intoniva/legal/"
 
 val releaseStorePath = providers.environmentVariable("TUNEITALL_KEYSTORE_PATH").orNull
 val releaseStorePassword = providers.environmentVariable("TUNEITALL_KEYSTORE_PASSWORD").orNull

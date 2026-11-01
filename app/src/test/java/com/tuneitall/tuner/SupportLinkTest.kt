@@ -7,7 +7,7 @@ class SupportLinkTest {
     @Test
     fun legalPoliciesUseThisProjectsGitHubPages() {
         assertEquals(
-            "https://majkey25.github.io/TuneItAll/${if (SUPPORT_URL.isEmpty()) "play" else "legal"}/",
+            "https://majkey25.github.io/Intoniva/${if (SUPPORT_URL.isEmpty()) "play" else "legal"}/",
             POLICIES_URL,
         )
     }

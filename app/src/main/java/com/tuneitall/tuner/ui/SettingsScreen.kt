@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -32,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -100,7 +103,8 @@ fun SettingsScreen(
             .testTag("settings_screen"),
     ) {
         SecondaryHeader(stringResource(R.string.settings), onBack)
-        SecondaryTabRow(
+        // Reserve the short landscape viewport for editing while the keyboard is open.
+        if (WindowInsets.ime.getBottom(LocalDensity.current) == 0) SecondaryTabRow(
             selectedTabIndex = section.ordinal,
             containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onBackground,
@@ -109,6 +113,7 @@ fun SettingsScreen(
             SettingsSection.entries.forEach { candidate ->
                 Tab(
                     selected = section == candidate,
+                    unselectedContentColor = mutedBackgroundColor(),
                     onClick = { section = candidate },
                     text = {
                         Text(stringResource(when (candidate) {
