@@ -48,6 +48,9 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
@@ -101,6 +104,8 @@ import com.tuneitall.tuner.ui.components.CentsRail
 import com.tuneitall.tuner.ui.components.Headstock
 import com.tuneitall.tuner.ui.theme.TuneItAllTheme
 import com.tuneitall.tuner.ui.theme.ThemeMode
+import com.tuneitall.tuner.ui.theme.AppearanceSettings
+import com.tuneitall.tuner.ui.theme.ThemePalette
 import com.tuneitall.tuner.ui.theme.resolveDarkTheme
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
@@ -1183,6 +1188,72 @@ class TuneItAllFlowTest {
         UserPreferences(context).tunerAudioSettings = expected
 
         assertEquals(expected, UserPreferences(context).tunerAudioSettings)
+    }
+
+    @Test
+    fun settingsSectionsStayReachableAfterScrollingAtLargeText() {
+        composeRule.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(context.resources.displayMetrics.density, 1.5f)) {
+                TuneItAllTheme {
+                    Box(Modifier.requiredSize(width = 320.dp, height = 520.dp)) {
+                        SettingsScreen(
+                            state = state(), initialSection = SettingsSection.TUNER,
+                            onThemeModeChanged = {}, onReferencePitchChanged = {}, onNotationChanged = {},
+                            onLayoutChanged = {}, onAudioSettingsChanged = {}, onOpenAbout = {},
+                            onSupport = {}, onBack = {},
+                        )
+                    }
+                }
+            }
+        }
+        composeRule.onNodeWithTag("settings_reference_pitch").performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("445.0")
+        composeRule.onNodeWithText(context.getString(R.string.reset_audio_settings)).performScrollTo().assertIsDisplayed()
+        SettingsSection.entries.forEach { section ->
+            composeRule.onNodeWithTag("settings_section_${section.name.lowercase()}").assertIsDisplayed()
+        }
+        composeRule.onNodeWithTag("settings_section_general").performClick()
+        composeRule.onNodeWithTag("settings_language").assertIsDisplayed()
+        composeRule.onNodeWithTag("settings_section_metronome").performClick().assertIsSelected()
+        composeRule.onNodeWithTag("settings_section_tuner").performClick()
+        composeRule.onNodeWithText(context.getString(R.string.reset_audio_settings)).assertIsDisplayed()
+        composeRule.onNodeWithTag("settings_reference_pitch").performScrollTo()
+        composeRule.onNode(hasSetTextAction()).assert(hasText("445.0"))
+    }
+
+    @Test
+    fun settingsTabsKeepTheirBackgroundPlaneWithInvertedCustomSurfaces() {
+        val appearance = AppearanceSettings(lightTheme = ThemePalette.CUSTOM,
+            customLight = AppearanceSettings().customLight.copy(background = 0, surface = 0xFFFFFF, accent = 0xFFFFFF))
+        composeRule.setContent {
+            TuneItAllTheme(false, appearance) {
+                SettingsScreen(
+                    state = state().copy(appearance = appearance), onThemeModeChanged = {},
+                    onReferencePitchChanged = {}, onNotationChanged = {}, onLayoutChanged = {},
+                    onAudioSettingsChanged = {}, onOpenAbout = {}, onSupport = {}, onBack = {},
+                )
+            }
+        }
+        val bitmap = composeRule.onNodeWithTag("settings_sections").captureToImage().asAndroidBitmap()
+        assertEquals(android.graphics.Color.BLACK, bitmap.getPixel(0, 0))
+        composeRule.onNodeWithTag("settings_section_general").assertIsSelected()
+    }
+
+    @Test
+    fun tuningSelectorAnnouncesWhetherItsMenuIsExpanded() {
+        composeRule.setContent {
+            TuneItAllTheme {
+                com.tuneitall.tuner.ui.TuningSelector(listOf(standardTuning()), standardTuning().id, {})
+            }
+        }
+        composeRule.onNodeWithTag("chord_tuning_selector")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, context.getString(R.string.section_collapsed)))
+            .performClick()
+        composeRule.onNodeWithTag("chord_tuning_selector")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, context.getString(R.string.section_expanded)))
+        composeRule.onNodeWithTag("chord_tuning_${standardTuning().id}").performClick()
+        composeRule.onNodeWithTag("chord_tuning_selector")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, context.getString(R.string.section_collapsed)))
     }
 
     @Test

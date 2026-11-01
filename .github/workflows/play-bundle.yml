@@ -17,7 +17,7 @@ jobs:
       # The reusable workflow declares conditional publication; executed Play jobs stay read-only.
       contents: write
       actions: read
-    uses: Majkey25/TuneItAll/.github/workflows/secure-release.yml@main
+    uses: Majkey25/Intoniva/.github/workflows/secure-release.yml@main
     with:
       kind: play
       tag: ${{ inputs.release_tag }}

@@ -8,8 +8,8 @@ require(distributionChannel == null || distributionChannel in setOf("play", "git
     "distributionChannel must be play or github"
 }
 val donationUrl = "https://www.buymeacoffee.com/majkey"
-val playPoliciesUrl = "https://majkey25.github.io/TuneItAll/play/"
-val githubPoliciesUrl = "https://majkey25.github.io/TuneItAll/legal/"
+val playPoliciesUrl = "https://majkey25.github.io/Intoniva/play/"
+val githubPoliciesUrl = "https://majkey25.github.io/Intoniva/legal/"
 
 val releaseStorePath = providers.environmentVariable("TUNEITALL_KEYSTORE_PATH").orNull
 val releaseStorePassword = providers.environmentVariable("TUNEITALL_KEYSTORE_PASSWORD").orNull
@@ -35,8 +35,8 @@ android {
         applicationId = "com.tuneitall.tuner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 49
-        versionName = "0.3.0-alpha.46"
+        versionCode = 50
+        versionName = "0.3.0-alpha.47"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "DISTRIBUTION_CHANNEL", "\"${distributionChannel ?: "play"}\"")
         buildConfigField("String", "SUPPORT_URL", "\"${if (distributionChannel == "github") donationUrl else ""}\"")

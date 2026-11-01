@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -19,16 +21,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -87,6 +93,7 @@ fun SettingsScreen(
     onOpenAppearance: () -> Unit = {},
 ) {
     var section by rememberSaveable(initialSection) { mutableStateOf(initialSection) }
+    val sectionState = rememberSaveableStateHolder()
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
@@ -96,69 +103,69 @@ fun SettingsScreen(
             .testTag("settings_screen"),
     ) {
         SecondaryHeader(stringResource(R.string.settings), onBack)
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+        // Reserve the short landscape viewport for editing while the keyboard is open.
+        if (WindowInsets.ime.getBottom(LocalDensity.current) == 0) SecondaryTabRow(
+            selectedTabIndex = section.ordinal,
+            containerColor = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.testTag("settings_sections"),
         ) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            SettingsSection.entries.forEach { candidate ->
+                Tab(
+                    selected = section == candidate,
+                    unselectedContentColor = mutedBackgroundColor(),
+                    onClick = { section = candidate },
+                    text = {
+                        Text(stringResource(when (candidate) {
+                            SettingsSection.GENERAL -> R.string.settings_general
+                            SettingsSection.TUNER -> R.string.settings_tuner
+                            SettingsSection.METRONOME -> R.string.settings_metronome
+                        }))
+                    },
+                    icon = {
+                        SettingIcon(when (candidate) {
+                            SettingsSection.GENERAL -> R.drawable.ic_settings
+                            SettingsSection.TUNER -> R.drawable.ic_notification
+                            SettingsSection.METRONOME -> R.drawable.ic_setting_timer
+                        })
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag("settings_section_${candidate.name.lowercase()}"),
+                )
+            }
+        }
+        sectionState.SaveableStateProvider(section.name) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
             ) {
-                SettingsSection.entries.forEach { candidate ->
-                    FilterChip(
-                        selected = section == candidate,
-                        colors = currentPlaneChipColors(),
-                        onClick = { section = candidate },
-                        label = {
-                            Text(
-                                stringResource(
-                                    when (candidate) {
-                                        SettingsSection.GENERAL -> R.string.settings_general
-                                        SettingsSection.TUNER -> R.string.settings_tuner
-                                        SettingsSection.METRONOME -> R.string.settings_metronome
-                                    },
-                                ),
-                            )
-                        },
-                        leadingIcon = {
-                            SettingIcon(when (candidate) {
-                                SettingsSection.GENERAL -> R.drawable.ic_settings
-                                SettingsSection.TUNER -> R.drawable.ic_notification
-                                SettingsSection.METRONOME -> R.drawable.ic_setting_timer
-                            })
-                        },
-                        modifier = Modifier.heightIn(min = 48.dp).testTag("settings_section_${candidate.name.lowercase()}"),
+                when (section) {
+                    SettingsSection.GENERAL -> GeneralSettings(
+                        state = state,
+                        appLanguage = appLanguage,
+                        onAppLanguageChanged = onAppLanguageChanged,
+                        onThemeModeChanged = onThemeModeChanged,
+                        onOpenAppearance = onOpenAppearance,
+                        onOpenAbout = onOpenAbout,
+                        onSupport = onSupport,
+                    )
+
+                    SettingsSection.TUNER -> {
+                        ReferencePitchSettings(state.referencePitch, onReferencePitchChanged)
+                        TunerDisplaySettings(state, onNotationChanged, onLayoutChanged)
+                        AudioSettings(state, onAudioSettingsChanged)
+                    }
+                    SettingsSection.METRONOME -> MetronomeSettingsControls(
+                        state = metronomeState,
+                        onNumeratorChange = onMetronomeNumeratorChanged,
+                        onDenominatorChange = onMetronomeDenominatorChanged,
+                        onSubdivisionChange = onMetronomeSubdivisionChanged,
+                        onAccentEveryChange = onMetronomeAccentChanged,
+                        onSoundChange = onMetronomeSoundChanged,
+                        onVolumeChange = onMetronomeVolumeChanged,
+                        onMutedChange = onMetronomeMutedChanged,
+                        onCountInChange = onMetronomeCountInChanged,
                     )
                 }
-            }
-            when (section) {
-                SettingsSection.GENERAL -> GeneralSettings(
-                    state = state,
-                    appLanguage = appLanguage,
-                    onAppLanguageChanged = onAppLanguageChanged,
-                    onThemeModeChanged = onThemeModeChanged,
-                    onOpenAppearance = onOpenAppearance,
-                    onOpenAbout = onOpenAbout,
-                    onSupport = onSupport,
-                )
-
-                SettingsSection.TUNER -> {
-                    ReferencePitchSettings(state.referencePitch, onReferencePitchChanged)
-                    TunerDisplaySettings(state, onNotationChanged, onLayoutChanged)
-                    AudioSettings(state, onAudioSettingsChanged)
-                }
-                SettingsSection.METRONOME -> MetronomeSettingsControls(
-                    state = metronomeState,
-                    onNumeratorChange = onMetronomeNumeratorChanged,
-                    onDenominatorChange = onMetronomeDenominatorChanged,
-                    onSubdivisionChange = onMetronomeSubdivisionChanged,
-                    onAccentEveryChange = onMetronomeAccentChanged,
-                    onSoundChange = onMetronomeSoundChanged,
-                    onVolumeChange = onMetronomeVolumeChanged,
-                    onMutedChange = onMetronomeMutedChanged,
-                    onCountInChange = onMetronomeCountInChanged,
-                )
             }
         }
     }

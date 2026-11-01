@@ -2,10 +2,10 @@
 
 # Intoniva
 
-[![Android CI](https://github.com/Majkey25/TuneItAll/actions/workflows/android.yml/badge.svg)](https://github.com/Majkey25/TuneItAll/actions/workflows/android.yml)
-[![Release](https://img.shields.io/github/v/release/Majkey25/TuneItAll?include_prereleases&sort=semver)](https://github.com/Majkey25/TuneItAll/releases)
-[![Downloads](https://img.shields.io/github/downloads/Majkey25/TuneItAll/total)](https://github.com/Majkey25/TuneItAll/releases)
-[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases)
+[![Android CI](https://github.com/Majkey25/Intoniva/actions/workflows/android.yml/badge.svg)](https://github.com/Majkey25/Intoniva/actions/workflows/android.yml)
+[![Release](https://img.shields.io/github/v/release/Majkey25/Intoniva?include_prereleases&sort=semver)](https://github.com/Majkey25/Intoniva/releases)
+[![Downloads](https://img.shields.io/github/downloads/Majkey25/Intoniva/total)](https://github.com/Majkey25/Intoniva/releases)
+[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/Majkey25/Intoniva/releases)
 [![Kotlin](https://img.shields.io/badge/Kotlin-native-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![License](https://img.shields.io/badge/license-proprietary-lightgrey)](LICENSE)
 
@@ -15,19 +15,19 @@ analytics, tracking, onboarding, or network permission.
 
 Intoniva is free on [Google Play](https://play.google.com/store/apps/details?id=com.tuneitall.tuner).
 All features are free. There are no subscriptions or paid feature unlocks.
-Latest source version: `0.3.0-alpha.46`. The Play version can lag behind while
-Google reviews an update. See the dated [release record](docs/store/2026-10-31-alpha46-release.md).
+Latest source version: `0.3.0-alpha.47`. The Play version can lag behind while
+Google reviews an update. See the dated [release record](docs/store/2026-10-31-alpha47-release.md).
 
 ## Download
 
 [Google Play: free download](https://play.google.com/store/apps/details?id=com.tuneitall.tuner)
 
-[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/TuneItAll/releases/download/v0.3.0-alpha.46/Intoniva-v0.3.0-alpha.46-debug.apk)
+[![Download Intoniva APK](https://img.shields.io/badge/Download-Intoniva_APK-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Majkey25/Intoniva/releases/download/v0.3.0-alpha.47/Intoniva-v0.3.0-alpha.47-debug.apk)
 
 The current APK supports Android 8.0 and newer. It is a debug-signed testing
 build distributed through GitHub, so Android may ask for permission to install
 an app from this source. The APK and its SHA-256 checksum are also available on
-the [release page](https://github.com/Majkey25/TuneItAll/releases/tag/v0.3.0-alpha.46).
+the [release page](https://github.com/Majkey25/Intoniva/releases/tag/v0.3.0-alpha.47).
 
 ## Features
 
@@ -341,8 +341,8 @@ records rejected alternatives and the remaining accuracy limits.
   Regenerate the 1080×1920 framed artwork with `java -Dfile.encoding=UTF-8 tools/RenderStoreScreenshots.java`.
 - English/Czech listings: `docs/store/`
 - Privacy policies: `docs/privacy/`
-- Public website: `https://majkey25.github.io/TuneItAll/`
-- Public privacy policy: `https://majkey25.github.io/TuneItAll/privacy/`
+- Public website: `https://majkey25.github.io/Intoniva/`
+- Public privacy policy: `https://majkey25.github.io/Intoniva/privacy/`
 - Data Safety record and release checklist: `docs/store/`
 - Deterministic SVG sources: `assets/source/`
 
@@ -350,12 +350,12 @@ records rejected alternatives and the remaining accuracy limits.
 
 Published on this application's GitHub Pages:
 
-- [All policies and publisher contact](https://majkey25.github.io/TuneItAll/legal/)
-- [Privacy policy](https://majkey25.github.io/TuneItAll/privacy/)
-- [Terms of use](https://majkey25.github.io/TuneItAll/terms/)
-- [Refund policy](https://majkey25.github.io/TuneItAll/refunds/)
-- [Cookies policy](https://majkey25.github.io/TuneItAll/cookies/)
-- [Support](https://majkey25.github.io/TuneItAll/support/) · [Email MajkeyLab](mailto:majkeylab@gmail.com)
+- [All policies and publisher contact](https://majkey25.github.io/Intoniva/legal/)
+- [Privacy policy](https://majkey25.github.io/Intoniva/privacy/)
+- [Terms of use](https://majkey25.github.io/Intoniva/terms/)
+- [Refund policy](https://majkey25.github.io/Intoniva/refunds/)
+- [Cookies policy](https://majkey25.github.io/Intoniva/cookies/)
+- [Support](https://majkey25.github.io/Intoniva/support/) · [Email MajkeyLab](mailto:majkeylab@gmail.com)
 
 The app is free. This website has no analytics, contact forms, or optional
 tracking cookies. GitHub Pages processes technical hosting data as described

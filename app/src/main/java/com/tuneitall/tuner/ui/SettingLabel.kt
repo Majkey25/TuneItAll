@@ -5,10 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,13 +22,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
+import com.tuneitall.tuner.ui.theme.mutedBackgroundColor
 
 @Composable
 internal fun SettingIcon(@DrawableRes icon: Int) {
@@ -45,20 +49,26 @@ internal fun SettingsDisclosure(
     var expanded by rememberSaveable { mutableStateOf(false) }
     val description = stringResource(if (expanded) R.string.section_expanded else R.string.section_collapsed)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-        OutlinedButton(
-            onClick = { expanded = !expanded },
-            shape = MaterialTheme.shapes.medium,
+        ListItem(
+            headlineContent = { Text(label, style = MaterialTheme.typography.titleMedium) },
+            supportingContent = summary?.let { { Text(it, style = MaterialTheme.typography.bodyMedium) } },
+            leadingContent = { SettingIcon(icon) },
+            trailingContent = {
+                Icon(painterResource(R.drawable.ic_expand_more), null,
+                    Modifier.size(24.dp).rotate(if (expanded) 180f else 0f))
+            },
+            colors = ListItemDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.background,
+                headlineColor = MaterialTheme.colorScheme.onBackground,
+                supportingColor = mutedBackgroundColor(),
+                leadingIconColor = MaterialTheme.colorScheme.onBackground,
+                trailingIconColor = MaterialTheme.colorScheme.onBackground,
+            ),
             modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .clickable(role = Role.Button) { expanded = !expanded }
                 .semantics { stateDescription = description }.testTag(tag),
-        ) {
-            SettingIcon(icon)
-            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(label, style = MaterialTheme.typography.titleMedium)
-                summary?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-            }
-            Icon(painterResource(R.drawable.ic_expand_more), null,
-                Modifier.size(24.dp).rotate(if (expanded) 180f else 0f))
-        }
+        )
         if (expanded) content()
     }
 }

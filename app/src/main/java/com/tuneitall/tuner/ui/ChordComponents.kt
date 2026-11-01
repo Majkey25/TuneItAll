@@ -3,15 +3,18 @@ package com.tuneitall.tuner.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,8 +31,10 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -56,12 +61,17 @@ fun TuningSelector(
     require(tunings.isNotEmpty())
     var expanded by remember { mutableStateOf(false) }
     val selected = tunings.firstOrNull { it.id == selectedId } ?: tunings.first()
+    val menuState = stringResource(if (expanded) R.string.section_expanded else R.string.section_collapsed)
     Box(modifier) {
         OutlinedButton(
             onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("chord_tuning_selector"),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                .semantics { stateDescription = menuState }.testTag("chord_tuning_selector"),
         ) {
-            Text("${instrumentName(selected.instrument)} · ${selected.name}")
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("${instrumentName(selected.instrument)} · ${selected.name}", Modifier.weight(1f))
+                Icon(painterResource(R.drawable.ic_expand_more), null, Modifier.size(24.dp))
+            }
         }
         DropdownMenu(
             expanded = expanded,

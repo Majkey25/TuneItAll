@@ -100,6 +100,28 @@ class KeyboardInsetsTest {
     }
 
     @Test
+    fun referencePitchApplyRemainsReachableInLandscapeWithKeyboardOpen() {
+        val originalOrientation = compose.activity.resources.configuration.orientation
+        try {
+            compose.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            compose.waitUntil(5_000) {
+                compose.activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            }
+            compose.onNodeWithTag("tuner_settings").performClick()
+            compose.onNodeWithTag("settings_reference_pitch").performScrollTo().performClick()
+            compose.onNode(hasSetTextAction()).performScrollTo().performClick().performTextReplacement("444")
+            requireKeyboard()
+            compose.onNodeWithText(text(R.string.apply)).performScrollTo().assertIsDisplayed()
+            requireKeyboard()
+        } finally {
+            compose.activity.requestedOrientation = if (originalOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            } else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            compose.waitUntil(5_000) { compose.activity.resources.configuration.orientation == originalOrientation }
+        }
+    }
+
+    @Test
     fun metronomeControlsAndNavigationRemainAboveKeyboard() {
         compose.onNodeWithTag("bottom_item_metronome").performClick()
         compose.onNodeWithTag("metronome_bpm_input").performClick().performTextReplacement("135")

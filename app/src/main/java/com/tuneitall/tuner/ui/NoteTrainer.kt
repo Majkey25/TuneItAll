@@ -31,6 +31,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tuneitall.tuner.R
@@ -230,9 +232,15 @@ private fun NotePicker(
     plane: Color = MaterialTheme.colorScheme.background, onSelected: (Int) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val menuState = stringResource(if (expanded) R.string.section_expanded else R.string.section_collapsed)
     Box(modifier) {
-        OutlinedButton(onClick = { expanded = true }, colors = outlinedButtonColors(plane), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("trainer_pick_$slot")) {
-            Text("$slot · ${formatMidiNote(60 + selected, notation)} ▾")
+        OutlinedButton(onClick = { expanded = true }, colors = outlinedButtonColors(plane),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                .semantics { stateDescription = menuState }.testTag("trainer_pick_$slot")) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("$slot · ${formatMidiNote(60 + selected, notation)}", Modifier.weight(1f))
+                Icon(painterResource(R.drawable.ic_expand_more), null, Modifier.size(24.dp))
+            }
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             notes.forEach { note ->
