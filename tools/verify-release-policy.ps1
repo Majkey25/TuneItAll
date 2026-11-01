@@ -11,6 +11,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Assert-PolicyAuthentication([bool]$InGitHubActions, [string]$Token) {
+    if ($InGitHubActions -and [string]::IsNullOrWhiteSpace($Token)) {
+        throw 'Release policy token missing: configure RELEASE_POLICY_TOKEN with repository-only Administration: read and Actions: read in the protected release environment'
+    }
+}
+
 function Assert-MainProtection([pscustomobject]$Rule) {
     if ($null -eq $Rule -or $Rule.requiresStatusChecks -ne $true -or $Rule.requiresStrictStatusChecks -ne $true -or
         'Test, lint, and build' -cnotin @($Rule.requiredStatusCheckContexts) -or
@@ -52,6 +58,8 @@ function Assert-EnvironmentPolicy(
 }
 
 if ($SelfTest) {
+    Assert-PolicyAuthentication $false ''
+    Assert-PolicyAuthentication $true 'configured-test-token'
     $rule = [pscustomobject]@{
         requiresStatusChecks = $true; requiresStrictStatusChecks = $true; requiredStatusCheckContexts = @('Test, lint, and build')
         isAdminEnforced = $true; allowsForcePushes = $false; allowsDeletions = $false
@@ -68,7 +76,12 @@ if ($SelfTest) {
     $tagPolicies = [pscustomobject]@{ total_count = 1; branch_policies = @(@{ type = 'tag'; name = 'v*' }) }
     Assert-EnvironmentPolicy $policy $tagPolicies 'preview-signing' 'preview' 'v0.3.0-alpha.37' 'tag' 'v0.3.0-alpha.37'
     Assert-EnvironmentPolicy $policy $tagPolicies 'release-publication' 'release' 'v0.3.0' 'tag' 'v0.3.0'
-    $checks = 3
+    $checks = 5
+    foreach ($token in @('', ' ')) {
+        try { Assert-PolicyAuthentication $true $token }
+        catch { if (-not $_.Exception.Message.StartsWith('Release policy token missing:')) { throw }; $checks++; continue }
+        throw 'Accepted missing release policy authentication in GitHub Actions'
+    }
     foreach ($change in @(
         @{ requiresStatusChecks = $false }, @{ requiresStrictStatusChecks = $false }, @{ requiredStatusCheckContexts = @() },
         @{ requiredStatusCheckContexts = @('Unrelated check') },
@@ -104,6 +117,7 @@ if ($SelfTest) {
 if ($Repository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$' -or -not $ReleaseEnvironment -or -not $ReleaseKind) {
     throw 'Release repository, environment and kind are required'
 }
+Assert-PolicyAuthentication ($env:GITHUB_ACTIONS -ceq 'true') $env:GH_TOKEN
 $owner, $name = $Repository.Split('/')
 $query = 'query($owner:String!,$name:String!){repository(owner:$owner,name:$name){ref(qualifiedName:"refs/heads/main"){branchProtectionRule{requiresStatusChecks requiresStrictStatusChecks requiredStatusCheckContexts isAdminEnforced allowsForcePushes allowsDeletions bypassForcePushAllowances{totalCount}}}}}'
 $branchJson = & gh api graphql -f "query=$query" -f "owner=$owner" -f "name=$name"

@@ -23,6 +23,18 @@ Restrict `v*` tag creation, updates and deletion to the repository owner/admin.
 The owner authorizes releases; no independent reviewer is required. Signing
 credentials must not remain at repository or organization scope.
 
+## Policy-check authentication
+
+`GITHUB_TOKEN` cannot read the required branch-protection details. Set a dedicated
+`RELEASE_POLICY_TOKEN` in `play-signing`, `preview-signing` and `release-publication`.
+Limit a fine-grained token to `Majkey25/Intoniva` with `Administration: read` and
+`Actions: read`; leave all write permissions disabled. GitHub documents these
+requirements for [branch protection](https://docs.github.com/en/rest/branches/branch-protection#get-branch-protection)
+and [deployment environments](https://docs.github.com/en/rest/deployments/environments#get-an-environment).
+Create and enter the token through trusted GitHub or CLI secret-input controls,
+never chat, committed files or command arguments. Before expiry, replace all three
+environment copies. Missing or expired credentials must stop the workflow, not skip checks.
+
 ## Stable Play release
 
 1. Complete `docs/store/release-checklist.md`.

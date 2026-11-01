@@ -36,6 +36,10 @@ Before enabling this workflow, the repository owner must:
   in `play-signing`; put `TUNEITALL_PREVIEW_KEYSTORE_BASE64` only in
   `preview-signing`. Remove their repository/organization-scoped copies after
   confirming the environment copies. Never commit or print key material.
+- Store `RELEASE_POLICY_TOKEN` only in those three protected environments.
+  Limit it to this repository with `Administration: read` and `Actions: read`.
+  Policy checks use it only in their own step. Build, signing and publication
+  commands must not receive this token. Do not reuse an owner token or grant write access.
 - Check the immutable SHA and unsigned artifact digests before signing;
   check the signed provenance before publication.
 
