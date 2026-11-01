@@ -142,7 +142,7 @@ jobs:
       - name: Require protected main and signing refs
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_POLICY_TOKEN }}
           SIGNING_ENVIRONMENT: ${{ inputs.kind == 'preview' && 'preview-signing' || 'play-signing' }}
           RELEASE_KIND: ${{ inputs.kind }}
           SOURCE_SHA: ${{ needs.build.outputs.source_sha }}
@@ -293,7 +293,7 @@ jobs:
       - name: Require publication policy and intended refs
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_POLICY_TOKEN }}
           RELEASE_KIND: ${{ inputs.kind }}
           RELEASE_TAG: ${{ inputs.tag }}
         run: ./trusted/tools/verify-release-policy.ps1 -ReleaseEnvironment release-publication -ReleaseKind $env:RELEASE_KIND -ReleaseTag $env:RELEASE_TAG
